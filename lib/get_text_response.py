@@ -90,7 +90,7 @@ def generate_detailed_blog(blog_keywords):
     while('' in blog_topic_arr):
         blog_topic_arr.remove('')
 
-    print(f"Generated Blog Topics: {type(blog_topic_arr)}---- {blog_topic_arr}")
+    print(f"Generated Blog Topics:---- {blog_topic_arr}")
     
     # For each of blog topic, generate content.
     for a_blog_topic in blog_topic_arr:
@@ -102,7 +102,7 @@ def generate_detailed_blog(blog_keywords):
         a_topic = re.sub(r"^\W*\D*", "", a_blog_topic)
         
         tpc_cnt = generate_topic_content(a_topic)
-        #print(f"{a_topic} ------ {tpc_cnt}")
+        print(f"{a_topic} ------ {tpc_cnt}")
 
         # We now need to concatenate all the sections and sew it into blog content.
         tmp_blog_markdown_str = blog_markdown_str + " " + a_blog_topic + " " + f"{tpc_cnt}"
@@ -111,7 +111,12 @@ def generate_detailed_blog(blog_keywords):
     # print/check the final blog content.
     print(f"Final blog content: {blog_markdown_str}")
     # Save the blog content as a .md file. Markdown or HTML ?
-    # Best to name the file
+    # Use chatgpt to convert the text into HTML or markdown.
+
+    # Now, we need perform some *basic checks on the blog content, such as:
+    # is_content_ai_generated.py, plagiarism_checker_from_known_sources.py
+    # seo_analyzer.py . These are present in the lib folder.
+    # prompt: Rewrite, improve and paraphrase [text] and use headings and subheadings to break up the content and make it easier to read using the keyword [keyword].
 
 
 
@@ -195,6 +200,3 @@ def get_long_tailed_keywords(blog_article):
     """
     #  want you to generate a list of long-tail keywords that are related to the following blog post [Enter blog post text here]
     pass
-
-
-
