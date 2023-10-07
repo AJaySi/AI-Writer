@@ -1,0 +1,4 @@
+Move all hard coded values from the modules and put the them in a config file.
+Suggest functions that be improved upon on readibility, polymorphism and remove redundany.
+Make the code conform to PEP standards.
+Include try and except. Include exception at possible places. Include detailed excpetions and error messages.

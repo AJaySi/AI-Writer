@@ -1,0 +1,6 @@
+loguru
+openai
+Pillow
+requests
+tqdm
+urllib3
