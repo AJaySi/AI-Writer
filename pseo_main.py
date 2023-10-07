@@ -10,6 +10,7 @@
 #########################################################
 import sys
 
+import argparse
 import json
 import traceback
 from loguru import logger
@@ -19,19 +20,48 @@ from lib.generate_image_from_prompt import generate_image, gen_new_from_given_im
 from lib.get_text_response import get_prompt_reply, generate_detailed_blog
 
 
-try:
-    logger.info("Starting homebrew pseo blog generator.")
-    prompt = "Create a detailed and technical blog of best AI tools for text-to-video conversion in 2023, along with features, pricing, pros, cons, and website links and if free or paid version. Summarize this blog in conclusion at the end. Write in markdown."
-    #txt_reply = get_prompt_reply(prompt, 2000)
+def main():
+    """Parses user arguments and prints them to the console.
 
-    # The idea is to 
-    #generate_image(logger)
-    #gen_new_from_given_img(logger)
+    Raises:
+        TypeError: If the user input is not valid.
+        ValueError: If the number of blogs is less than 1.
+    """
 
-    # Generate detailed blog by only providing keywords from blog title.
-    # Example: AI text to video tools
-    generate_detailed_blog("text to video AI tools")
+    parser = argparse.ArgumentParser(
+        description="Accepts user input for the number of blogs, keywords, and niche."
+    )
+    parser.add_argument("--num_blogs", type=int, default=1, help="The number of blogs (default: 1).")
+    parser.add_argument("--keywords", type=str, required=True, help="The keywords.")
+    parser.add_argument("--niche", type=bool, default=False, help="Whether the blog is a niche blog (default: False).")
 
-except Exception as err:
-    #logger.exception(f"traceback.print_exc()")
-    logger.error(f"Error occured in main::{err}")
+    args = parser.parse_args()
+
+    # Check if the user input is valid
+    if not isinstance(args.num_blogs, int) or not isinstance(args.keywords, str) or not isinstance(args.niche, bool):
+        raise TypeError("Invalid user input.")
+
+    # Check if the number of blogs is less than 1
+    if args.num_blogs < 1:
+        raise ValueError("The number of blogs must be at least 1.")
+
+    # Print the user input to the console
+    print(f"Number of blogs: {args.num_blogs}")
+    print(f"Keywords: {args.keywords}")
+    print(f"Niche blog: {args.niche}")
+
+    return args.num_blogs, args.keywords, args.niche
+
+
+if __name__ == "__main__":
+    # Check if we have everything, we need to start writing blogs.
+    try:
+        num_blogs, keywords, niche = main()
+        print(f"returned value: {num_blogs} {keywords}")
+    except TypeError as e:
+        print(e)
+    except ValueError as e:
+        print(e)
+    else:
+        print(f"Starting to write {num_blogs} on {keywords}")
+        generate_detailed_blog(num_blogs, keywords, niche)
