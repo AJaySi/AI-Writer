@@ -8,6 +8,26 @@
 # We can craft prompts to get an idea on what to generate blogs on. 
 # Divide them in topic and write for most searched ones, as below:
 
+When using GPT to generate content, it is important to provide it with clear and concise instructions. 
+For example, if you are asking GPT to generate a blog post outline, you should provide it with the following information:
+
+- Topic: What is the topic of the blog post?
+- Audience: Who is the target audience for the blog post?
+- Purpose: What is the purpose of the blog post? (To inform, entertain, sell, etc.)
+- Keywords: What keywords do you want the blog post to rank for?
+
+-------------------------------------------------------------------
+
+Generate a list of the top {X} most popular and semantically related keywords and entities for the topic of {X}, categorized by search intent (informational, commercial, transactional).
+    
+Generate a list of the top {X} most popular and semantically related long-tail keywords and entities for the topic of {X}, categorized by buyer stage (awareness, consideration, decision).
+    
+Generate a list of the top {X} most popular and semantically related keywords and entities for the topic of {X} that are relevant to my target audience (e.g., small businesses in the United States).
+    
+Generate a list of the top {X} most popular and semantically related keywords and entities for the topic of {X} that are used in high-quality content.
+    
+Generate a list of the top {X} most popular and semantically related keywords and entities for the topic of {X} that are relevant to my competitors.
+
 -------------------------------------------------------------------
 
 --- Write seven subheadings for the blog article with the title [title]; the titles should be catchy and 60 characters max.

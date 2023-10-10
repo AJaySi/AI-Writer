@@ -14,10 +14,14 @@ import argparse
 import json
 import traceback
 from loguru import logger
-logger.add(sys.stdout, colorize=True, format="<green>{time}</green> <level>{message}</level>")
+logger.remove()
+logger.add(sys.stdout, 
+        colorize=True, 
+        format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
+    )
 
 from lib.generate_image_from_prompt import generate_image, gen_new_from_given_img
-from lib.get_text_response import get_prompt_reply, generate_detailed_blog
+from lib.get_text_response import generate_detailed_blog
 
 
 def main():
@@ -31,24 +35,24 @@ def main():
     parser = argparse.ArgumentParser(
         description="Accepts user input for the number of blogs, keywords, and niche."
     )
-    parser.add_argument("--num_blogs", type=int, default=1, help="The number of blogs (default: 1).")
-    parser.add_argument("--keywords", type=str, required=True, help="The keywords.")
-    parser.add_argument("--niche", type=bool, default=False, help="Whether the blog is a niche blog (default: False).")
+    parser.add_argument("--num_blogs", type=int, default=1, help="The number of blogs (default: 5).")
+    parser.add_argument("--keywords", type=str, required=True, help="The keywords.A broad idea to write multiple blogs on.")
+    parser.add_argument("--niche", type=bool, default=False, help="Written blogs on long tailed search topics (default: False).")
 
     args = parser.parse_args()
 
     # Check if the user input is valid
     if not isinstance(args.num_blogs, int) or not isinstance(args.keywords, str) or not isinstance(args.niche, bool):
-        raise TypeError("Invalid user input.")
+        raise TypeError("Invalid: So, int, str, quotes should be present in command.")
 
     # Check if the number of blogs is less than 1
     if args.num_blogs < 1:
         raise ValueError("The number of blogs must be at least 1.")
 
     # Print the user input to the console
-    print(f"Number of blogs: {args.num_blogs}")
-    print(f"Keywords: {args.keywords}")
-    print(f"Niche blog: {args.niche}")
+    logger.info(f"Number of blogs: {args.num_blogs}")
+    logger.info(f"Keywords: {args.keywords}")
+    logger.info(f"Niche blog: {args.niche}")
 
     return args.num_blogs, args.keywords, args.niche
 
@@ -57,11 +61,11 @@ if __name__ == "__main__":
     # Check if we have everything, we need to start writing blogs.
     try:
         num_blogs, keywords, niche = main()
-        print(f"returned value: {num_blogs} {keywords}")
+        logger.info(f"returned value: {num_blogs} {keywords}")
     except TypeError as e:
-        print(e)
+        logger.error(e)
     except ValueError as e:
-        print(e)
+        logger.error(e)
     else:
-        print(f"Starting to write {num_blogs} on {keywords}")
+        logger.info(f"Starting to write {num_blogs} blogs on {keywords}")
         generate_detailed_blog(num_blogs, keywords, niche)

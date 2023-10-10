@@ -42,9 +42,22 @@ options:
   --niche NICHE         Whether the blog is a niche blog (default: False).
 
 *Example:
-python3 pseo_main.py --num_blogs "10" --keywords Python, programming, data science --niche True
+python3 pseo_main.py --num_blogs "10" --keywords "Python, programming, data science" --niche True
 
 ----------------------------------
+
+The generated blogs are present in generated_blogs folder. Presently, the blog template is rigid and follows the
+below pattern:
+[Blog Title]
+[Introduction of n chars]
+[Body]
+[Body][topic][content of n chars on sub-topic]
+[Conclusion]
+
+TBD: More templates and an easy way to change prompts are in pipeline.
+
+-----------------------------------
+
 
 # The detailed SEO checks are as follows:
 
