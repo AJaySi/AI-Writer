@@ -38,8 +38,8 @@ def upload_blog_post(wix_site_id, wix_api_key, blog_post_title, blog_post_conten
 
 ###########################################################################################
 # Example usage:
-wix_site_id = "1234567890"
-wix_api_key = "YOUR_WIX_API_KEY"
+wix_site_id = ""
+wix_api_key = ""
 blog_post_title = "My first blog post"
 blog_post_content = "This is my first blog post."
 

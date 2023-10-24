@@ -8,16 +8,19 @@
 ########################################################################
 
 import json
+import os
+import datetime #I wish
 
 import openai
 from tqdm import tqdm, trange
 import time
 import re
+from textwrap import dedent
 
 from .gpt_providers.openai_gpt_provider import openai_chatgpt
 
 
-def generate_detailed_blog(num_blogs, blog_keywords, niche):
+def generate_detailed_blog(num_blogs, blog_keywords, niche, num_subtopics):
     """
     This function will take a blog Topic to first generate sections for it
     and then generate content for each section.
@@ -34,34 +37,44 @@ def generate_detailed_blog(num_blogs, blog_keywords, niche):
 
     # Use to store the blog in a string, to save in a *.md file.
     blog_markdown_str = ""
-    
+
+    # TBD: Check if the generated topics are equal to what user asked.
     blog_topic_arr = generate_blog_topics(blog_keywords, num_blogs, niche)
-    print(f"Generated Blog Topics:---- {blog_topic_arr}")
+    print(f"Generated Blog Topics:---- {blog_topic_arr}\n")
     
     # For each of blog topic, generate content.
     for a_blog_topic in blog_topic_arr:
         # if md/html
-        blog_markdown_str = "# " + a_blog_topic + "\n"
-        
+        blog_markdown_str = "# " + a_blog_topic.replace('"', '') + "\n\n"
         # Get the introduction specific to blog title and sub topics.
-        tpc_outlines = generate_topic_outline(a_blog_topic)
+        tpc_outlines = generate_topic_outline(a_blog_topic, num_subtopics)
         blog_intro = get_blog_intro(a_blog_topic, tpc_outlines)
-        blog_markdown_str = blog_markdown_str + "### Introduction" + "\n" + f"{blog_intro}" + "\n"
-
+        print(f"The intro is:\n {blog_intro}")
+        blog_markdown_str = blog_markdown_str + "### Introduction" + "\n\n" + f"{blog_intro}" + "\n\n"
         # Now, for each blog we have sub topic. Generate content for each of the sub topic.
         for a_outline in tpc_outlines:
             sub_topic_content = generate_topic_content(blog_keywords, a_outline)
-            blog_markdown_str = blog_markdown_str + "\n" + f"\n{sub_topic_content}" + "\n"
+            print(f"Generating content for sub-topic: {a_outline}")
+            # a_outline is sub topic heading, hence part ToC also.
+            blog_markdown_str = blog_markdown_str + "\n\n" + f"### {a_outline}" + "\n\n"
+            blog_markdown_str = blog_markdown_str + "\n" + f"\n {sub_topic_content}" + "\n\n"
             blog_markdown_str = blog_markdown_str + "\n" + "-------------------------" + "\n"
 
         # Get the Conclusion of the blog, by passing the generated blog.
         blog_conclusion = get_blog_conclusion(blog_markdown_str)
-        blog_markdown_str = blog_markdown_str + "# Conclusion" + "\n" + f"{blog_conclusion}" + "\n"
+        blog_markdown_str = blog_markdown_str + "### Conclusion" + "\n" + f"{blog_conclusion}" + "\n"
 
         # print/check the final blog content.
         print(f"Final blog content: {blog_markdown_str}")
-        # Save the blog content as a .md file. Markdown or HTML ?
-        save_blog_to_file(blog_markdown_str)
+        blog_meta_desc = generate_blog_description(blog_markdown_str)
+        print(f"\nGet the blog meta description:{blog_meta_desc}")
+        blog_tags = get_blog_tags(blog_markdown_str)
+        print(f"\nBlog tags for generated content: {blog_tags}")
+        blog_categories = get_blog_categories(blog_markdown_str)
+        print(f"Generated blog categories: {blog_categories}")
+
+        # TBD: Save the blog content as a .md file. Markdown or HTML ?
+        save_blog_to_file(blog_markdown_str, a_blog_topic, blog_meta_desc, blog_tags, blog_categories)
 
         exit(1)
 
@@ -82,24 +95,25 @@ def generate_blog_topics(blog_keywords, num_blogs, niche):
     one for generating unique blog content.
     Ex: Generate SEO optimized blog topics on given keywords
     """
-    # Get more keywords, based on user given keywords.
+    prompt = f"""As an SEO specialist and blog content writer, please write {num_blogs} catchy 
+    and SEO-friendly blog topics on {blog_keywords}. The blog title must be less than 80 characters.
+    """
     # Beware of keywords stuffing, clustering, semantic should help avoid.
-    more_keywords = get_related_keywords(num_blogs, blog_keywords, niche)
-    # f"including the following keywords: {more_keywords}." 
-    prompt = ("As an SEO specialist and blog content writer, "
-            f"please write {num_blogs} catchy and SEO-friendly blog topics on {blog_keywords},"
-            f"including the following keywords: {more_keywords}."
-        )
-    print(f"prompt used for blog titles: {prompt}")
+    if num_blogs > 5:
+        # Get more keywords, based on user given keywords.
+        more_keywords = get_related_keywords(num_blogs, blog_keywords, niche)
+        prompt = prompt + """Use the following keywords wisely, without keyword stuffing: {more_keywords}"""
+
+    print(f"prompt used for blog titles: {prompt}\n")
     # Calculate the max tokens based on the number of blogs
     max_tokens = min(1000, num_blogs * 100)
     try:
         response = openai_chatgpt(
                 prompt, 
                 model="text-davinci-003", 
-                temperature=0.9, 
+                temperature=0.1, 
                 max_tokens=max_tokens, 
-                top_p=0.9,
+                top_p=1,
                 n=1
                 )
         topic_list = extract_key_text(response)
@@ -108,23 +122,23 @@ def generate_blog_topics(blog_keywords, num_blogs, niche):
         SystemError(f"Error in generating blog topics: {err}")
 
 
-def generate_topic_outline(blog_title):
+def generate_topic_outline(blog_title, num_subtopics):
     """
     Given a blog title generate an outline for it
     """
     # TBD: Remove hardcoding, make dynamic
-    prompt = ("As a technical writer and SEO expert, suggest 7 beginner-friendly and helpful sub-topics"
-            f"for the blog title '{blog_title}',"
-            "Include 2 sub topics on related long-tailed keywords and "
-            "2 sub topics on most popular questions."
-            )
+    prompt = f"""As a SEO expert, suggest only {num_subtopics} 
+        beginner-friendly and insightful sub topic for the blog title: {blog_title}.
+        """
+    # The suggested {num_subtopics} outline should include few long-tailed keywords and most popular questions.
+    # TBD: Include --niche
     print(f"prompt used for blog title Outline :{prompt}")
     # TBD: Add logic for which_provider and which_model
     response = openai_chatgpt(
             prompt,
             model="text-davinci-003",
-            temperature=0.7,
-            max_tokens=1000,
+            temperature=0.1,
+            max_tokens=100,
             top_p=0.9,
             n=1
             )
@@ -139,9 +153,13 @@ def generate_topic_content(blog_keywords, sub_topic):
     For each of given topic generate content for it.
     """
     # The outline should contain various subheadings and include the starting sentence for each section.
-    prompt = (f"As a professional writer and topic authority on '{blog_keywords}',"
-            f"craft a captivating, inviting and factual (no more than 700 characters) blog content on {sub_topic}."
-            f"Use bulleit points and other readibility enhancers."
+    # TBD: Depending on the usecase 'Voice and style' will change to professional etc.
+    prompt = (f"As a professional blogger and topic authority on '{blog_keywords}',"
+            f"craft factual (no more than 700 characters) blog content on {sub_topic}."
+            "Your response should reflect Experience, Expertise, Authoritativeness, and Trustworthiness from content."
+            "Voice and style guide: Write in a professional manner, giving enlightening details and reasons."
+            "Use natural language and phrases that a real person would use: in normal conversations."
+            "Format your response using markdown. Use headings, subheadings, bullet points, and bold to organize the information."
             )
     try:
         response = openai_chatgpt(prompt)
@@ -167,16 +185,16 @@ def get_blog_intro(blog_title, blog_topics):
     """
     Generate blog introduction as per title and sub topics
     """
-    prompt = (f"As a professional writer, craft a captivating, inviting, and concise (no more than 550 characters)"
-            f"introduction for the blog titled '{blog_title}' with the following sub-topics: '{blog_topics}'"
-            f"The introduction should compel readers to delve deeper into the blog post."
-            )
+    prompt = f"""As a professional writer, craft a captivating, inviting, and concise (no more than 550 characters).
+            The introduction should compel readers to delve deeper into the blog post,
+            titled: {blog_title} with the following sub-topics: {blog_topics}
+            """
     try:
         # TBD: Add logic for which_provider and which_model
         response = openai_chatgpt(
             prompt,
             model="text-davinci-003",
-            temperature=0.7,
+            temperature=0.1,
             max_tokens=1000,
             top_p=0.9,
             n=1
@@ -193,15 +211,16 @@ def get_blog_conclusion(blog_content):
     """
     Accepts a blog content and concludes it.
     """
-    prompt = ("As an expert SEO and blog writer, please conclude the given blog providing vital take aways,"
-            "summarise key points (no more than 300 characters). The blog content: '{blog_content}'"
-            )
+    prompt = f"""As an expert SEO and blog writer, please conclude the given blog providing vital take aways,
+            summarise key points (no more than 300 characters) in bullet points. The blog content: {blog_content}
+            """
+    print(f"Generating blog conclusion iwth prompt: {prompt}")
     try:
         # TBD: Add logic for which_provider and which_model
         response = openai_chatgpt(
             prompt,
             model="text-davinci-003",
-            temperature=0.9,
+            temperature=0.1,
             max_tokens=450,
             top_p=0.7,
             n=1
@@ -214,15 +233,37 @@ def get_blog_conclusion(blog_content):
         SystemError(f"Error in generating blog conclusion: {err}")
 
 
-def generate_blog_description():
+def generate_blog_description(blog_content):
     """
         Prompt designed to give SEO optimized blog descripton
     """
     # Suggest keywords that I should include in my meta description for my blog post on [topic]
     # I want to generate high CTR meta and keyword rich meta title and meta descriptions in text format. 
     # My keywords are – [keyword 1], [keyword 2], [keyword 3]
+    # Suggest a meta description for the content above, make it user-friendly 
+    # and with a call to action, include the keyword [keyword].
+    prompt = f"""As an expert SEO and blog writer, write meta description for given blog content.
+        The description should be between 150 and 160 characters long, uses strong, active verbs,
+        avoids using all caps or excessive punctuation, and is relevant to the blog content.
+        It should be engaging and encourages users to click on the link.
+        The blog content: {blog_content}"""
 
-    pass
+    try:
+        # TBD: Add logic for which_provider and which_model
+        response = openai_chatgpt(
+            prompt,
+            model="text-davinci-003",
+            temperature=0.1,
+            max_tokens=450,
+            top_p=0.7,
+            n=1
+        )
+        text_values = []
+        for choice in response["choices"]:
+            text_values.extend(choice["text"].split("\n"))
+        return (' '.join([element for element in text_values if element]))
+    except Exception as err:
+        SystemError(f"Error in generating blog description: {err}")
 
 
 def get_blog_tags(blog_article):
@@ -230,33 +271,101 @@ def get_blog_tags(blog_article):
         Function to suggest tags for the given blog content
     """
     # Suggest at least 5 tags for the following blog post [Enter your blog post text here].
-    pass
+    prompt = f"""As an expert SEO and blog writer, suggest 3 to 5 relevant, specific, 
+                and popular tags that are unique and consistent to improve the visibility 
+                and discoverability of following blog content: {blog_article}"
+            """
+    try:
+        # TBD: Add logic for which_provider and which_model
+        response = openai_chatgpt(
+            prompt,
+            model="text-davinci-003",
+            temperature=0.1,
+            max_tokens=450,
+            top_p=0.7,
+            n=1
+        )   
+        text_values = []
+        for choice in response["choices"]:
+            text_values.extend(choice["text"].split("\n"))
+        return (' '.join([element for element in text_values if element]))
+    except Exception as err:
+        SystemError(f"Error in generating blog tags: {err}")
 
 
-def get_long_tailed_keywords(blog_article):
+def get_blog_categories(blog_article):
     """
-        Function to get long tailed keywords for the blog article.
+    Function to generate blog categories for given blog content.
     """
-    # Want you to generate a list of long-tail keywords that are related 
-    # to the following blog post [Enter blog post text here]
-    pass
+    prompt = f"""As an expert SEO and content writer, Suggest 2-3 blog categories by identifying 
+            the main topic, most relevant categories, considering the target 
+            audience and the blog's category taxonomy for the following blog content: {blog_article}"
+            """
+    try:
+        # TBD: Add logic for which_provider and which_model
+        response = openai_chatgpt(
+            prompt,
+            model="text-davinci-003",
+            temperature=0.1,
+            max_tokens=100,
+            top_p=0.7,
+            n=1
+        )   
+        text_values = []
+        for choice in response["choices"]:
+            text_values.extend(choice["text"].split("\n"))
+        return (' '.join([element for element in text_values if element]))
+    except Exception as err:
+        SystemError(f"Error in generating blog categories: {err}")
 
 
-def save_blog_to_file(blog_content, file_type="md"):
+def save_blog_to_file(blog_content, blog_title, 
+        blog_meta_desc, blog_tags, blog_categories, file_type="md"
+        ):
     """ Common function to save the generated blog to a file.
     arg: file_type can be md or html
     """
-    output_path = "../generated_blogs"
+    # TBD: This can come from config file.
+    output_path = "pseo_website/_posts/"
+    output_path = os.path.join(os.getcwd(), output_path)
+    # Convert the spaces in blog_title with dash
+    regex = re.compile('[^a-zA-Z0-9- ]')
+    blog_title = regex.sub('', blog_title)
+    blog_title = re.sub('--+', '-', blog_title)
+    blog_title = blog_title.replace(' ', '-')
+
     if not os.path.exists(output_path):
         # If the directory does not exist, create it
-        os.makedirs(output_path)
+        #os.makedirs(output_path)
+        print("Error: Blog output directory is set to {output_path}, which Does Not Exist.")
 
-    output_today = os.path.join(output_path, f'{datetime.date.today().strftime("%d-%m-%y")}')
-    if not os.path.exists(output_today):
-        os.makedirs(output_today)
-    else:
-        with open(f"{output_today}/{blog_title}.md", "w") as f:
-            f.write(blog_content)
+    if file_type in "md":
+        # fill the Front Matter as below at the top of the post: https://jekyllrb.com/docs/front-matter/
+        # date: YYYY-MM-DD HH:MM:SS +/-TTTT
+        formatted_date = f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S %z}"
+        blog_frontmatter = """---
+                           title: {blog_title}
+                           date: {formatted_date}
+                           categories: [{blog_categories}]
+                           tags: [{blog_tags}]
+                           description: {blog_meta_desc}
+                           img_path: '/posts/20180809'
+                           ---\n\n"""
+
+        # Create a new file named YYYY-MM-DD-TITLE.EXTENSION and put it in the _posts of the root directory. 
+        # Please note that the EXTENSION must be one of md or markdown
+        blog_output_path = os.path.join(
+                output_path,
+                f"{datetime.date.today().strftime('%Y-%m-%d')}-{blog_title}.md"
+                )
+        # Save the generated blog content to a file.
+        try:
+            with open(blog_output_path, "w") as f:
+                f.write(dedent(blog_frontmatter))
+                f.write(blog_content)
+        except Exception as e:
+            raise Exception(f"Failed to write blog content: {e}")
+        print(f"\nSuccessfully saved and Posted blog at: {blog_output_path,}\n")
 
 
 def extract_key_text(json_data):
@@ -311,36 +420,39 @@ def get_related_keywords(num_blogs, keywords, niche):
                 f" semantically related keywords and entities for the topic of {keywords} that are used"
                 " in high-quality content and relevant to my competitors."
                 )
-    # TBD: Add logic for which_provider and which_model
-    response = openai_chatgpt(
-            prompt,
-            model="text-davinci-003",
-            temperature=0.7,
-            max_tokens=100,
-            top_p=0.9,
-            n=10 
-            )
+    try:
+        # TBD: Add logic for which_provider and which_model
+        response = openai_chatgpt(
+                prompt,
+                model="text-davinci-003",
+                temperature=0.7,
+                max_tokens=100,
+                top_p=0.9,
+                n=10 
+                )
 
-    # Extract the keywords from the response
-    keywords = []
-    for choice in response.choices:
-        # Split the response into words
-        words = choice.text.split(" ")
+        # Extract the keywords from the response
+        keywords = []
+        for choice in response.choices:
+            # Split the response into words
+            words = choice.text.split(" ")
 
-    # Add the words to the list of keywords
-    for text in words:
-        # Remove digits
-        text = re.sub(r'\d', '', text)
+        # Add the words to the list of keywords
+        for text in words:
+            # Remove digits
+            text = re.sub(r'\d', '', text)
 
-        # Remove special characters
-        text = re.sub(r'[^\w\s]', '', text)
-        # Remove newline characters
-        text = text.replace('\n', '')
+            # Remove special characters
+            text = re.sub(r'[^\w\s]', '', text)
+            # Remove newline characters
+            text = text.replace('\n', '')
 
-        keywords.append(text)
+            keywords.append(text)
 
-    # Remove any duplicate keywords
-    keywords = set(keywords)
+        # Remove any duplicate keywords
+        keywords = set(keywords)
 
-    # Return the list of keywords
-    return (' '.join(keywords))
+        # Return the list of keywords
+        return (' '.join(keywords))
+    except Exception as err:
+        SystemError(f"Error in getting related keywords.")

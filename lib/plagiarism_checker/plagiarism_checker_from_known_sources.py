@@ -1,5 +1,14 @@
 import re
 
+#######################################################################
+#
+# I want you to act as a plagiarism checker. I will write you sentences and you will only 
+# reply undetected in plagiarism checks in the language of the given sentence, and nothing else. 
+# Do not write explanations on replies. My first sentence is {}
+#
+######################################################################
+
+
 class PlagiarismChecker:
     def __init__(self, known_sources):
         self.known_sources = known_sources

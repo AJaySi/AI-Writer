@@ -7,3 +7,7 @@
 
 6). We need memory to store blogs posts and not repeat them. 
 Have a database, or query from web hosting, of all the blogs present.
+
+7). Incorporate prompttemplate.
+
+8). Integrate website support for flask, django, wordpress, wix etc

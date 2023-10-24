@@ -1,0 +1,142 @@
+
+
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>http://localhost:4000/</id>
+  <title>AI-Takia</title>
+  <subtitle>Begginer friendly AI technologies simplified &amp; explained. Know &amp; boost productivity with latest AI tools.</subtitle>
+  <updated>2023-10-22T14:10:02+05:30</updated>
+  <author>
+    <name>ajaysi</name>
+    <uri>http://localhost:4000/</uri>
+  </author>
+  <link rel="self" type="application/atom+xml" href="http://localhost:4000/feed.xml"/>
+  <link rel="alternate" type="text/html" hreflang="en"
+    href="http://localhost:4000/"/>
+  <generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator>
+  <rights> © 2023 ajaysi </rights>
+  <icon>/assets/img/favicons/favicon.ico</icon>
+  <logo>/assets/img/favicons/favicon-96x96.png</logo>
+
+
+  
+  <entry>
+    <title>This Is Blog Title</title>
+    <link href="http://localhost:4000/posts/This-is-Blog-Title/" rel="alternate" type="text/html" title="This Is Blog Title" />
+    <published>2023-10-22T00:00:00+05:30</published>
+  
+    <updated>2023-10-22T00:00:00+05:30</updated>
+  
+    <id>http://localhost:4000/posts/This-is-Blog-Title/</id>
+    <content src="http://localhost:4000/posts/This-is-Blog-Title/" />
+    <author>
+      <name>ajaysi</name>
+    </author>
+
+  
+    
+  
+
+  
+    <summary>
+      
+
+
+
+
+
+      This is the content of my blog post.
+
+    </summary>
+  
+
+  </entry>
+
+  
+  <entry>
+    <title>Mansarovar Trek</title>
+    <link href="http://localhost:4000/posts/mansarovar-trek/" rel="alternate" type="text/html" title="Mansarovar Trek" />
+    <published>2019-08-09T18:25:00+05:30</published>
+  
+    <updated>2019-08-09T18:25:00+05:30</updated>
+  
+    <id>http://localhost:4000/posts/mansarovar-trek/</id>
+    <content src="http://localhost:4000/posts/mansarovar-trek/" />
+    <author>
+      <name>cotes</name>
+    </author>
+
+  
+    
+    <category term="Blogging" />
+    
+    <category term="Tutorial" />
+    
+  
+
+  
+    <summary>
+      
+
+
+
+
+
+      Discover the Ancient Tibetan Tradition of Gurla Parikrama and Mandhata in Simikot, Rara Lake, and Kailash Plateau.
+Introduction
+Dive into the depths of Tibetan history and tradition with the ancient Gurla Parikrama and Mandhata. Explore the spiritual significance, the breathtakingly beautiful landscapes, and the captivating culture of Simikot, Rara Lake, and Kailash Plateau. Discover the best r...
+    </summary>
+  
+
+  </entry>
+
+  
+  <entry>
+    <title>Getting Started</title>
+    <link href="http://localhost:4000/posts/getting-started/" rel="alternate" type="text/html" title="Getting Started" />
+    <published>2019-08-09T18:25:00+05:30</published>
+  
+    <updated>2019-08-09T18:25:00+05:30</updated>
+  
+    <id>http://localhost:4000/posts/getting-started/</id>
+    <content src="http://localhost:4000/posts/getting-started/" />
+    <author>
+      <name>cotes</name>
+    </author>
+
+  
+    
+    <category term="Blogging" />
+    
+    <category term="Tutorial" />
+    
+  
+
+  
+    <summary>
+      
+
+
+
+
+
+      Prerequisites
+
+Follow the instructions in the Jekyll Docs to complete the installation of the basic environment. Git also needs to be installed.
+
+Installation
+
+Creating a New Site
+
+There are two ways to create a new repository for this theme:
+
+
+  Using the Chirpy Starter - Easy to upgrade, isolates irrelevant project files so you can focus on writing.
+  GitHub Fork - Convenient for custom devel...
+    </summary>
+  
+
+  </entry>
+
+</feed>
+
+

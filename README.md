@@ -11,11 +11,12 @@ Presently, wordpress and WIX integration is present for uploading the generated 
 ### This is based on openai gpt models for content generation, google bard for keyword research and some basic tools for plagiarism checker, SEO audit and suggestions to improve the generated content.
 As prompts are the important ingredients to get the best result, they are stored in prompts folder. Edit these prompts to produce results as per your likings.
 
-### API based blog generation are much cheaper, almost 10x, but difficult to use for everyone. We use bard for search related prompts and chatgpt for generative requirements.
-
+- API based blog generation are much cheaper, almost 10x, but difficult to use for everyone. We use bard for search related prompts and chatgpt for generative requirements.
+- Jekyll static website is included for checking how blogs will look locally.
+ 
 ### Check TBD for features currently under development.
 
-### Amazon affiliate links are also supported. Given, affiliate tag, your affiliate product links will included in the blogs.
+- Amazon affiliate links are also supported. Given, affiliate tag, your affiliate product links will included in the blogs.
 To use the module, simply create an instance of the AmazonAffiliateImages class, passing in your Amazon affiliate tag. 
 Then, you can use the get_image_url() or get_image_html() methods to get the Amazon affiliate image URL or HTML 
 for a product, passing in either the product ASIN or the product URL.
@@ -24,7 +25,7 @@ for a product, passing in either the product ASIN or the product URL.
 
 ## How to use this tool
 
-*Prerequisites: pip install requirements.txt
+### Prerequisites: pip install requirements.txt
 
 This is in active development and needs ironing out. The main concern is make it general purpose, for all. 
 Usuability and extendibility are major concerns. This section will be updated soon. 
@@ -41,8 +42,12 @@ options:
   --keywords KEYWORDS   The keywords.
   --niche NICHE         Whether the blog is a niche blog (default: False).
 
-*Example:
+- Example:
 python3 pseo_main.py --num_blogs "10" --keywords "Python, programming, data science" --niche True
+
+- Output is directly written as blog post for pseo_website and can found in pseo_website/_posts directory
+- Note: Follow instructions here to install jekyll : https://jekyllrb.com/docs/installation/
+- Read this: https://chirpy.cotes.page/posts/write-a-new-post/
 
 ----------------------------------
 
@@ -58,6 +63,14 @@ TBD: More templates and an easy way to change prompts are in pipeline.
 
 -----------------------------------
 
+PSEO Website:
+
+We are using jekyll static page generator and chirpy theme for it.
+This is easy enough to programmatically control and publish content.
+
+Checkout pseo_website directory for details.
+
+-----------------------------------
 
 # The detailed SEO checks are as follows:
 
