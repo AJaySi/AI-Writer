@@ -4,7 +4,7 @@
   <id>http://localhost:4000/</id>
   <title>AI-Takia</title>
   <subtitle>Begginer friendly AI technologies simplified &amp; explained. Know &amp; boost productivity with latest AI tools.</subtitle>
-  <updated>2023-10-22T14:10:02+05:30</updated>
+  <updated>2023-11-09T10:34:41+05:30</updated>
   <author>
     <name>ajaysi</name>
     <uri>http://localhost:4000/</uri>
@@ -20,20 +20,24 @@
 
   
   <entry>
-    <title>This Is Blog Title</title>
-    <link href="http://localhost:4000/posts/This-is-Blog-Title/" rel="alternate" type="text/html" title="This Is Blog Title" />
-    <published>2023-10-22T00:00:00+05:30</published>
+    <title>The Top 5 AI Animation Software Tools Choose the Perfect Tool for Your Animation Needs</title>
+    <link href="http://localhost:4000/posts/The-Top-5-AI-Animation-Software-Tools-Choose-the-Perfect-Tool-for-Your-Animation-Needs/" rel="alternate" type="text/html" title="The Top 5 AI Animation Software Tools Choose the Perfect Tool for Your Animation Needs" />
+    <published>2023-11-09T09:13:28+05:30</published>
   
-    <updated>2023-10-22T00:00:00+05:30</updated>
+    <updated>2023-11-09T09:13:28+05:30</updated>
   
-    <id>http://localhost:4000/posts/This-is-Blog-Title/</id>
-    <content src="http://localhost:4000/posts/This-is-Blog-Title/" />
+    <id>http://localhost:4000/posts/The-Top-5-AI-Animation-Software-Tools-Choose-the-Perfect-Tool-for-Your-Animation-Needs/</id>
+    <content src="http://localhost:4000/posts/The-Top-5-AI-Animation-Software-Tools-Choose-the-Perfect-Tool-for-Your-Animation-Needs/" />
     <author>
       <name>ajaysi</name>
     </author>
 
   
     
+    <category term="Animation" />
+    
+    <category term="Technology" />
+    
   
 
   
@@ -44,8 +48,8 @@
 
 
 
-      This is the content of my blog post.
-
+      Introduction:
+Creating animations has never been easier, thanks to advancements in technology. AI animation software has revolutionized the industry, allowing professional animators and motion designers to produce high-quality films without the challenges of traditional animation. Whether you’re a beginner or an advanced user, there are numerous AI animation software tools available in the mark...
     </summary>
   
 
@@ -53,23 +57,23 @@
 
   
   <entry>
-    <title>Mansarovar Trek</title>
-    <link href="http://localhost:4000/posts/mansarovar-trek/" rel="alternate" type="text/html" title="Mansarovar Trek" />
-    <published>2019-08-09T18:25:00+05:30</published>
+    <title>How to Use Stable Diffusion in Google Colab for Free A Step-by-Step Guide</title>
+    <link href="http://localhost:4000/posts/How-to-Use-Stable-Diffusion-in-Google-Colab-for-Free-A-Step-by-Step-Guide/" rel="alternate" type="text/html" title="How to Use Stable Diffusion in Google Colab for Free A Step-by-Step Guide" />
+    <published>2023-11-09T08:51:09+05:30</published>
   
-    <updated>2019-08-09T18:25:00+05:30</updated>
+    <updated>2023-11-09T08:51:09+05:30</updated>
   
-    <id>http://localhost:4000/posts/mansarovar-trek/</id>
-    <content src="http://localhost:4000/posts/mansarovar-trek/" />
+    <id>http://localhost:4000/posts/How-to-Use-Stable-Diffusion-in-Google-Colab-for-Free-A-Step-by-Step-Guide/</id>
+    <content src="http://localhost:4000/posts/How-to-Use-Stable-Diffusion-in-Google-Colab-for-Free-A-Step-by-Step-Guide/" />
     <author>
-      <name>cotes</name>
+      <name>ajaysi</name>
     </author>
 
   
     
-    <category term="Blogging" />
+    <category term="Technology" />
     
-    <category term="Tutorial" />
+    <category term="Artificial Intelligence" />
     
   
 
@@ -81,9 +85,12 @@
 
 
 
-      Discover the Ancient Tibetan Tradition of Gurla Parikrama and Mandhata in Simikot, Rara Lake, and Kailash Plateau.
-Introduction
-Dive into the depths of Tibetan history and tradition with the ancient Gurla Parikrama and Mandhata. Explore the spiritual significance, the breathtakingly beautiful landscapes, and the captivating culture of Simikot, Rara Lake, and Kailash Plateau. Discover the best r...
+      Introduction:
+Are you ready to unlock the power of Stable Diffusion without the need for a high-end GPU or CPU? In this step-by-step guide, we’ll show you how to use Stable Diffusion in Google Colab for free. Get ready to create stunning, high-quality images using this incredible tool. No more limitations - let’s dive in!
+
+Image Caption
+
+Title: How to Use Stable Diffusion in Google Colab for Fr...
     </summary>
   
 
@@ -91,23 +98,25 @@ Dive into the depths of Tibetan history and tradition with the ancient Gurla Par
 
   
   <entry>
-    <title>Getting Started</title>
-    <link href="http://localhost:4000/posts/getting-started/" rel="alternate" type="text/html" title="Getting Started" />
-    <published>2019-08-09T18:25:00+05:30</published>
+    <title>Grok Elon Musk's Revolutionary AI Chatbot Redefining the Industry</title>
+    <link href="http://localhost:4000/posts/Grok-Elon-Musks-Revolutionary-AI-Chatbot-Redefining-the-Industry/" rel="alternate" type="text/html" title="Grok Elon Musk&amp;apos;s Revolutionary AI Chatbot Redefining the Industry" />
+    <published>2023-11-09T07:57:21+05:30</published>
   
-    <updated>2019-08-09T18:25:00+05:30</updated>
+    <updated>2023-11-09T07:57:21+05:30</updated>
   
-    <id>http://localhost:4000/posts/getting-started/</id>
-    <content src="http://localhost:4000/posts/getting-started/" />
+    <id>http://localhost:4000/posts/Grok-Elon-Musks-Revolutionary-AI-Chatbot-Redefining-the-Industry/</id>
+    <content src="http://localhost:4000/posts/Grok-Elon-Musks-Revolutionary-AI-Chatbot-Redefining-the-Industry/" />
     <author>
-      <name>cotes</name>
+      <name>ajaysi</name>
     </author>
 
   
     
-    <category term="Blogging" />
+    <category term="Technology" />
     
-    <category term="Tutorial" />
+    <category term="Artificial Intelligence" />
+    
+    <category term="chatbots" />
     
   
 
@@ -119,19 +128,86 @@ Dive into the depths of Tibetan history and tradition with the ancient Gurla Par
 
 
 
-      Prerequisites
+      Title: Elon Musk’s Grok: The Revolutionary AI Chatbot Revolutionizing the Industry
 
-Follow the instructions in the Jekyll Docs to complete the installation of the basic environment. Git also needs to be installed.
+Meta-description: Discover the groundbreaking features and advantages of Elon Musk’s latest AI creation, Grok. Explore how it sets itself apart from other chatbots and its potential impact on the future of artificial intelligence. Stay updated on the latest tech news and developments with NBC News.
 
-Installation
+Introduction...
+    </summary>
+  
 
-Creating a New Site
+  </entry>
 
-There are two ways to create a new repository for this theme:
+  
+  <entry>
+    <title>State of AI Report 2022 Unveiling Innovations and Future Trends in Artificial Intelligence</title>
+    <link href="http://localhost:4000/posts/State-of-AI-Report-2022-Unveiling-Innovations-and-Future-Trends-in-Artificial-Intelligence/" rel="alternate" type="text/html" title="State of AI Report 2022 Unveiling Innovations and Future Trends in Artificial Intelligence" />
+    <published>2023-11-09T07:32:15+05:30</published>
+  
+    <updated>2023-11-09T07:32:15+05:30</updated>
+  
+    <id>http://localhost:4000/posts/State-of-AI-Report-2022-Unveiling-Innovations-and-Future-Trends-in-Artificial-Intelligence/</id>
+    <content src="http://localhost:4000/posts/State-of-AI-Report-2022-Unveiling-Innovations-and-Future-Trends-in-Artificial-Intelligence/" />
+    <author>
+      <name>ajaysi</name>
+    </author>
+
+  
+    
+    <category term="Technology" />
+    
+    <category term="Artificial Intelligence" />
+    
+  
+
+  
+    <summary>
+      
 
 
-  Using the Chirpy Starter - Easy to upgrade, isolates irrelevant project files so you can focus on writing.
-  GitHub Fork - Convenient for custom devel...
+
+
+
+      Welcome to the captivating world of Artificial Intelligence! In this blog article, we will delve into the highly influential State of AI Report 2022, unveiling the latest advancements and future potential in the field. From mind-boggling real-time thought to image decoding to revolutionary progress in language models, we will explore the cutting-edge innovations that are shaping the future of A...
+    </summary>
+  
+
+  </entry>
+
+  
+  <entry>
+    <title>Exciting AI Advancements- Musk's Chatbot to Apple's M3 Chips</title>
+    <link href="http://localhost:4000/posts/Exciting-AI-Advancements-Musks-Chatbot-to-Apples-M3-Chips/" rel="alternate" type="text/html" title="Exciting AI Advancements- Musk&amp;apos;s Chatbot to Apple&amp;apos;s M3 Chips" />
+    <published>2023-11-08T23:44:30+05:30</published>
+  
+    <updated>2023-11-08T23:44:30+05:30</updated>
+  
+    <id>http://localhost:4000/posts/Exciting-AI-Advancements-Musks-Chatbot-to-Apples-M3-Chips/</id>
+    <content src="http://localhost:4000/posts/Exciting-AI-Advancements-Musks-Chatbot-to-Apples-M3-Chips/" />
+    <author>
+      <name>ajaysi</name>
+    </author>
+
+  
+    
+    <category term="AI Advancements" />
+    
+    <category term="Tech News" />
+    
+  
+
+  
+    <summary>
+      
+
+
+
+
+
+      Welcome to the exciting world of AI advancements! From Elon Musk’s groundbreaking chatbot to Apple’s powerful M3 chips, this blog will take you on a journey through the latest and most intriguing developments in artificial intelligence. Discover how AI is revolutionizing industries like filmmaking, explore the impact of new regulations, and delve into the job market landscape.
+
+
+  Exciting AI a...
     </summary>
   
 
