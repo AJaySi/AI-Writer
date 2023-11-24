@@ -18,13 +18,16 @@ import time
 import re
 from textwrap import dedent
 import nltk
-nltk.download('punkt')
+nltk.download('punkt', quiet=True)
 from nltk.corpus import stopwords
-nltk.download('stopwords')
+nltk.download('stopwords', quiet=True)
 
 from .gpt_providers.openai_gpt_provider import openai_chatgpt, gen_new_from_given_img
+from .gpt_providers.openai_gpt_provider import analyze_and_extract_details_from_image
 from .generate_image_from_prompt import generate_image
 from .write_blogs_from_youtube_videos import youtube_to_blog
+from .wordpress_blog_uploader import compress_image, upload_blog_post, upload_media
+
 from loguru import logger
 logger.remove()
 logger.add(sys.stdout,
@@ -38,7 +41,9 @@ image_dir = os.path.join(os.getcwd(), image_dir)
 # TBD: This can come from config file.
 output_path = "pseo_website/_posts/"
 output_path = os.path.join(os.getcwd(), output_path)
-
+wordpress_url = 'https://latestaitools.in/'
+wordpress_username = 'upaudel750'
+wordpress_password = 'YvCS VbzQ QSp8 4XZe 0DUw Myys'
 
 
 def generate_youtube_blog(yt_url_list):
@@ -70,9 +75,9 @@ def generate_youtube_blog(yt_url_list):
             #logger.info(f"Image path: {main_img_path} and varied path: {varied_img_path}")
             #blog_markdown_str = blog_markdown_str + f'![img-description]({os.path.basename(varied_img_path)})' + '_Image Caption_'
 
-            stbdiff_img_path = generate_image(yt_img_path, image_dir, "stable_diffusion")
-            logger.info(f"Image path: {main_img_path} from stable diffusion: {stbdiff_img_path}")
-            blog_markdown_str = blog_markdown_str + f'![img-description]({os.path.basename(stbdiff_img_path)})' + f'_{title}_'
+            #stbdiff_img_path = generate_image(yt_img_path, image_dir, "stable_diffusion")
+            #logger.info(f"Image path: {main_img_path} from stable diffusion: {stbdiff_img_path}")
+            #blog_markdown_str = blog_markdown_str + f'![img-description]({os.path.basename(stbdiff_img_path)})' + f'_{title}_'
             
             # Add the body of the blog content.
             blog_markdown_str = blog_markdown_str + "\n\n" + f'{yt_blog}' + "\n\n"
@@ -90,7 +95,10 @@ def generate_youtube_blog(yt_url_list):
             logger.info(f"Blog categories are: {blog_categories}")
 
             save_blog_to_file(blog_markdown_str, title, blog_meta_desc, blog_tags, blog_categories, main_img_path)
-            #html_blog = convert_markdown_to_html(blog_markdown_str)
+            if 'html' in output_format:
+                blog_markdown_str = convert_markdown_to_html(blog_markdown_str)
+
+            save_blog_to_file(blog_markdown_str, title, blog_meta_desc, blog_tags, blog_categories, main_img_path)
             #print(html_blog)
 
         except Exception as e:
@@ -99,7 +107,8 @@ def generate_youtube_blog(yt_url_list):
             exit(1)
 
 
-def generate_detailed_blog(num_blogs, blog_keywords, niche, num_subtopics):
+def generate_detailed_blog(num_blogs, blog_keywords, niche, num_subtopics,
+        wordpress=False, output_format="HTML"):
     """
     This function will take a blog Topic to first generate sections for it
     and then generate content for each section.
@@ -109,27 +118,34 @@ def generate_detailed_blog(num_blogs, blog_keywords, niche, num_subtopics):
 
     # TBD: Check if the generated topics are equal to what user asked.
     blog_topic_arr = generate_blog_topics(blog_keywords, num_blogs, niche)
-    logger.info(f"Generated Blog Topics:---- {blog_topic_arr}\n")
-    
+    logger.info(f"Generated Blog Topics:---- \n{blog_topic_arr}\n")
+    # Split the string at newlines
+    blog_topic_arr = blog_topic_arr.split('\n')
+
     # For each of blog topic, generate content.
     for a_blog_topic in blog_topic_arr:
         # if md/html
-        blog_markdown_str = "# " + a_blog_topic.replace('"', '') + "\n\n"
+        a_blog_topic = a_blog_topic.replace('"', '')
+        a_blog_topic = re.sub(r'^[\d.\s]+', '', a_blog_topic)
+        blog_markdown_str = "# " + a_blog_topic + "\n\n"
+        
         # Get the introduction specific to blog title and sub topics.
         tpc_outlines = generate_topic_outline(a_blog_topic, num_subtopics)
+        tpc_outlines = tpc_outlines.split("\n")
         
         blog_intro = get_blog_intro(a_blog_topic, tpc_outlines)
-        logger.info(f"The intro is:\n {blog_intro}")
+        logger.info(f"The intro is:\n{blog_intro}")
         blog_markdown_str = blog_markdown_str + "### Introduction" + "\n\n" + f"{blog_intro}" + "\n\n"
-
+        print(f"\n\n 1 -- BLOG_STR : {blog_markdown_str}\n\n")
         # Now, for each blog we have sub topic. Generate content for each of the sub topic.
         for a_outline in tpc_outlines:
-            sub_topic_content = generate_topic_content(blog_keywords, a_outline)
+            a_outline = a_outline.replace('"', '')
             logger.info(f"Generating content for sub-topic: {a_outline}")
+            sub_topic_content = generate_topic_content(blog_keywords, a_outline)
             # a_outline is sub topic heading, hence part ToC also.
-            blog_markdown_str = blog_markdown_str + "\n\n" + f"### {a_outline}" + "\n\n"
+            #blog_markdown_str = blog_markdown_str + "\n\n" + f"### {a_outline}" + "\n\n"
             blog_markdown_str = blog_markdown_str + "\n" + f"\n {sub_topic_content}" + "\n\n"
-            blog_markdown_str = blog_markdown_str + "\n" + "-------------------------" + "\n"
+            print(f"\n\n 3 -- BLOG_STR : {blog_markdown_str}\n\n")
 
         # Get the Conclusion of the blog, by passing the generated blog.
         blog_conclusion = get_blog_conclusion(blog_markdown_str)
@@ -139,7 +155,11 @@ def generate_detailed_blog(num_blogs, blog_keywords, niche, num_subtopics):
         logger.info(f"Final blog content: {blog_markdown_str}")
 
         blog_meta_desc = generate_blog_description(blog_markdown_str)
-        logger.info(f"\nGet the blog meta description:{blog_meta_desc}")
+        logger.info(f"\nThe blog meta description is:{blog_meta_desc}\n")
+
+        # Generate an image based on meta description
+        logger.info(f"Calling Image generation with prompt: {blog_meta_desc}")
+        main_img_path = generate_image(blog_meta_desc, image_dir, "dalle3")
         
         blog_tags = get_blog_tags(blog_markdown_str)
         logger.info(f"\nBlog tags for generated content: {blog_tags}")
@@ -147,10 +167,46 @@ def generate_detailed_blog(num_blogs, blog_keywords, niche, num_subtopics):
         blog_categories = get_blog_categories(blog_markdown_str)
         logger.info(f"Generated blog categories: {blog_categories}")
 
-        # TBD: Save the blog content as a .md file. Markdown or HTML ?
-        save_blog_to_file(blog_markdown_str, a_blog_topic, blog_meta_desc, blog_tags, blog_categories)
+        # Use chatgpt to convert the text into HTML or markdown.
+        if 'html' in output_format:
+            blog_markdown_str = convert_markdown_to_html(blog_markdown_str)
 
-    # Use chatgpt to convert the text into HTML or markdown.
+        # Check if blog needs to be posted on wordpress.
+        if wordpress:
+            # Fixme: Fetch all tags and categories to check, if present ones are present and
+            # use them else create new ones. Its better to use chatgpt than string comparison.
+            # Similar tags and categories will be missed.
+            # blog_categories = 
+            # blog_tags = 
+            main_img_path = compress_image(main_img_path, quality=85)
+            try:
+                img_details = analyze_and_extract_details_from_image(main_img_path)
+                alt_text = img_details.get('alt_text')
+                img_description = img_details.get('description')
+                img_title = img_details.get('title')
+                caption = img_details.get('caption')
+                try:
+                    media = upload_media(wordpress_url, wordpress_username, wordpress_password, 
+                        main_img_path, alt_text, img_description, img_title, caption)
+                except Exception as err:
+                    sys.exit(f"Error occurred in upload_media: {err}")
+            except Exception as e:
+                sys.exit(f"Error occurred in analyze_and_extract_details_from_image: {e}")
+
+            # Then create the post with the uploaded media as the featured image
+            media_id = media['id']
+            blog_markdown_str = convert_markdown_to_html(blog_markdown_str)
+            try:
+                upload_blog_post(wordpress_url, wordpress_username, wordpress_password, a_blog_topic, 
+                        blog_markdown_str, media_id, blog_meta_desc, blog_categories, blog_tags, status='publish')
+            except Exception as err:
+                sys.exit(f"Failed to upload blog to wordpress.Error: {err}")
+
+        # TBD: Save the blog content as a .md file. Markdown or HTML ?
+        save_blog_to_file(blog_markdown_str,
+                a_blog_topic,
+                blog_meta_desc, blog_tags,
+                blog_categories, main_img_path)
 
     # Now, we need perform some *basic checks on the blog content, such as:
     # is_content_ai_generated.py, plagiarism_checker_from_known_sources.py
@@ -167,18 +223,18 @@ def generate_blog_topics(blog_keywords, num_blogs, niche):
     one for generating unique blog content.
     Ex: Generate SEO optimized blog topics on given keywords
     """
-    prompt = f"""As an SEO specialist and blog content writer, please write {num_blogs} catchy 
+    prompt = f"""As an SEO specialist and blog writer, write {num_blogs} catchy
     and SEO-friendly blog topics on {blog_keywords}. The blog title must be less than 80 characters.
-    """
+    The blog titles must follow best SEO practises, be engaging and invite/tempt users to read full blog.
+    Do not include descriptions, explanations. Do not number the result."""
+
     # Beware of keywords stuffing, clustering, semantic should help avoid.
     if num_blogs > 5:
         # Get more keywords, based on user given keywords.
         more_keywords = get_related_keywords(num_blogs, blog_keywords, niche)
         prompt = prompt + """Use the following keywords wisely, without keyword stuffing: {more_keywords}"""
 
-    logger.info(f"prompt used for blog topics: {prompt}\n")
-    # Calculate the max tokens based on the number of blogs
-    max_tokens = min(1000, num_blogs * 100)
+    logger.info(f"Prompt used for generating blog topics: \n{prompt}\n")
     try:
         response = openai_chatgpt(prompt)
         return response
@@ -211,12 +267,13 @@ def generate_topic_outline(blog_title, num_subtopics):
     Given a blog title generate an outline for it
     """
     # TBD: Remove hardcoding, make dynamic
-    prompt = f"""As a SEO expert, suggest only {num_subtopics} 
-        beginner-friendly and insightful sub topic for the blog title: {blog_title}.
-        """
+    prompt = f"""As a SEO expert, suggest only {num_subtopics} beginner-friendly and 
+        insightful sub topics for the blog title: {blog_title}.
+        Respond with only answer and no description, explanations."""
+
     # The suggested {num_subtopics} outline should include few long-tailed keywords and most popular questions.
     # TBD: Include --niche
-    logger.info(f"\nPrompt used for blog title Outline :{prompt}\n\n")
+    logger.info(f"Prompt used for blog title Outline :\n{prompt}\n")
     # TBD: Add logic for which_provider and which_model
     try:
         response = openai_chatgpt(prompt)
@@ -231,41 +288,30 @@ def generate_topic_content(blog_keywords, sub_topic):
     """
     # The outline should contain various subheadings and include the starting sentence for each section.
     # TBD: Depending on the usecase 'Voice and style' will change to professional etc.
-    prompt = (f"As a professional blogger and topic authority on '{blog_keywords}',"
-            f"craft factual (no more than 700 characters) blog content on {sub_topic}."
-            "Your response should reflect Experience, Expertise, Authoritativeness, and Trustworthiness from content."
-            "Voice and style guide: Write in a professional manner, giving enlightening details and reasons."
-            "Use natural language and phrases that a real person would use: in normal conversations."
-            "Format your response using markdown. Use headings, subheadings, bullet points, and bold to organize the information."
-            )
+    prompt = f"""As a professional blogger and topic authority on {blog_keywords},
+            craft factual (no more than 200 characters) subtopic content on {sub_topic}.
+            Your response should reflect Experience, Expertise, Authoritativeness and Trustworthiness from content.
+            Voice and style guide: Write in a professional manner, giving enlightening details and reasons.
+            Use natural language and phrases that a real person would use: in normal conversations.
+            Format your response using markdown. REMEMBER Not to include introduction or conclusion in your response.
+            Use headings(h3 to h6 only), subheadings, bullet points, and bold to organize the information."""
+    logger.info(f"Generate topic content using prompt:\n{prompt}\n")
     try:
-        response = openai_chatgpt(
-            prompt,
-            model="gpt-3.5-turbo",
-            temperature=0.2,
-            max_tokens=1000,
-            top_p=0.9,
-            n=1
-            )
-        text_values = []
-        for choice in response["choices"]:
-            text_values.extend(choice["text"].split("\n"))
-        return (' '.join([element for element in text_values if element]))
+        response = openai_chatgpt(prompt)
+        return response
     except Exception as err:
         SystemError(f"Error in generating topic content: {err}")
-
-    return response.choices[0].text
 
 
 def get_blog_intro(blog_title, blog_topics):
     """
     Generate blog introduction as per title and sub topics
     """
-    prompt = f"""As a skilled wordsmith, I'll equip you with a blog title and relevant topics, tasking you with crafting an engaging introduction. Your challenge: Create a brief, compelling entry that entices readers to explore the entire post. This introduction must be concise (under 250 characters) yet powerful, clearly stating the blog's purpose and what readers stand to gain.
+    prompt = f"""As a skilled wordsmith, I'll equip you with a blog title and relevant topics, tasking you with crafting an engaging introduction. Your challenge: Create a brief, compelling entry that entices readers to explore the entire post. This introduction must be concise (under 250 characters) yet powerful, clearly stating the blog's purpose and what readers stand to gain. Reply with only the introduction.
 
 Intrigue your audience from the start with vibrant language, employing strong verbs and vivid descriptions. Address a common challenge your readers face, demonstrating empathy and positioning yourself as their go-to expert. Pose thought-provoking questions that prompt reader engagement and contemplation.
 
-Remember, your words matter. This introduction serves as the cornerstone of the blog post. It should not only captivate attention but also encourage deeper exploration. Additionally, strategically integrate relevant keywords to enhance visibility on search engine results pages (SERPs). Your mission: Craft an introduction that resonates, leaving readers eager to delve further into the titled piece: '{blog_title}', covering these intriguing sub-topics: {blog_topics}."""
+Remember, your words matter. This introduction serves as the cornerstone of the blog post. It should not only captivate attention but also encourage deeper exploration. Additionally, strategically integrate relevant keywords to enhance visibility on search engine results pages (SERPs). Your mission: Craft a blog introduction that resonates, leaving readers eager to delve further into the titled piece: '{blog_title}', covering these sub-topics: {blog_topics}."""
 
     try:
         # TBD: Add logic for which_provider and which_model
@@ -431,48 +477,6 @@ def get_related_keywords(num_blogs, keywords, niche):
         SystemError(f"Error in getting related keywords.")
 
 
-def convert_markdown_to_html(md_content):
-    """ Helper function to convert given text to HTML 
-    """
-    html_response = openai.ChatCompletion.create(
-          model="gpt-3.5-turbo-16k",
-          messages=[
-            {"role": "system", "content": """
-Convert Markdown to HTML:
-You are a skilled developer tasked with converting a Markdown-formatted text to HTML. You will be given text in markdown format. Follow these steps to perform the conversion:
-
-1. Parse User's Markdown Input: You will receive a Markdown-formatted text as input from the user. Carefully analyze the provided Markdown text, paying attention to different elements such as headings (#), lists (unordered and ordered), bold and italic text, links, images, and code blocks.
-2. Generate and Validate HTML: Generate corresponding HTML code for each Markdown element following the conversion guidelines below. Ensure the generated HTML is well-structured and syntactically correct.
-3. Preserve Line Breaks: Markdown line breaks (soft breaks) represented by two spaces at the end of a line should be converted to <br> tags in HTML to preserve the line breaks.
-4. REMEMBER to generate complete, valid HTML response only.
-
-Follow below Conversion Guidelines:
-- Headers: Convert Markdown headers (#, ##, ###, etc.) to corresponding HTML header tags (<h1>, <h2>, <h3>, etc.).
-- Lists: Convert unordered lists (*) and ordered lists (1., 2., 3., etc.) to <ul> and <ol> HTML tags, respectively. List items should be enclosed in <li> tags.
-- Emphasis: Convert bold (**) and italic (*) text to <strong> and <em> HTML tags, respectively.
-- Links: Convert Markdown links ([text](url)) to HTML anchor (<a>) tags. Ensure the href attribute contains the correct URL.
-- Images: Convert Markdown image tags (![alt text](image_url)) to HTML image (<img>) tags. Include the alt attribute for accessibility.
-- Code: Convert inline code (`code`) to <code> HTML tags. Convert code blocks (```) to <pre> HTML tags for preserving formatting.
-- Blockquotes: Convert blockquotes (>) to <blockquote> HTML tags.
-
-"""
-},
-            {"role": "user", "content": f"Convert the following Markdown text to HTML:\n\n{md_content}"}
-        ],
-          max_tokens=8192,
-          temperature=1,
-          n=1,
-          stream=True
-    )
-    for chunk in response:
-        print(chunk)
-    logger.info("Finished converting markdown to html.")
-    if "choices" in html_response and len(html_response["choices"]) > 0:
-      return html_response["choices"][0]["message"]["content"]
-    else:
-      return None
-
-
 # Helper function
 def remove_stop_words(sentence):
     # Tokenize the sentence into words
@@ -493,36 +497,35 @@ def remove_stop_words(sentence):
 def convert_markdown_to_html(md_content):
     """ Helper function to convert given text to HTML
     """
-    html_response = openai.ChatCompletion.create(
-          model="gpt-3.5-turbo-16k",
-          messages=[
-            {"role": "system", "content": """
-Convert Markdown to HTML:
-You are a skilled developer tasked with converting a Markdown-formatted text to HTML. You will be given text in markdown format. Follow these steps to perform the conversion:
-
-1. Parse User's Markdown Input: You will receive a Markdown-formatted text as input from the user. Carefully analyze the provided Markdown text, paying attention to different elements such as headings (#), lists (unordered and ordered), bold and italic text, links, images, and code blocks.
-2. Generate and Validate HTML: Generate corresponding HTML code for each Markdown element following the conversion guidelines below. Ensure the generated HTML is well-structured and syntactically correct.
-3. Preserve Line Breaks: Markdown line breaks (soft breaks) represented by two spaces at the end of a line should be converted to <br> tags in HTML to preserve the line breaks.
-4. REMEMBER to generate complete, valid HTML response only.
-
-Follow below Conversion Guidelines:
-- Headers: Convert Markdown headers (#, ##, ###, etc.) to corresponding HTML header tags (<h1>, <h2>, <h3>, etc.).
-- Lists: Convert unordered lists (*) and ordered lists (1., 2., 3., etc.) to <ul> and <ol> HTML tags, respectively. List items should be enclosed in <li> tags.
-- Emphasis: Convert bold (**) and italic (*) text to <strong> and <em> HTML tags, respectively.
-- Links: Convert Markdown links ([text](url)) to HTML anchor (<a>) tags. Ensure the href attribute contains the correct URL.
-- Images: Convert Markdown image tags (![alt text](image_url)) to HTML image (<img>) tags. Include the alt attribute for accessibility.
-- Code: Convert inline code (`code`) to <code> HTML tags. Convert code blocks (```) to <pre> HTML tags for preserving formatting.
-- Blockquotes: Convert blockquotes (>) to <blockquote> HTML tags.
-"""
-},
-            {"role": "user", "content": f"Convert the following Markdown text to HTML:\n\n{md_content}"}
-        ],
-          max_tokens=8192,
-          temperature=1,
-          n=1,
-    )
-    logger.info("Finished converting markdown to html.")
-    if "choices" in html_response and len(html_response["choices"]) > 0:
-      return html_response["choices"][0]["message"]["content"]
-    else:
-      return None
+    prompt =f"""
+			You are a skilled web developer tasked with converting a Markdown-formatted text to HTML. 
+            You will be given text in markdown format. Follow these steps to perform the conversion:
+			
+			1. Parse User's Markdown Input: You will receive a Markdown-formatted text as input from the user. 
+            Carefully analyze the provided Markdown text, paying attention to different elements such as headings (#), 
+            lists (unordered and ordered), bold and italic text, links, images, and code blocks.
+			2. Generate and Validate HTML: Generate corresponding HTML code for each Markdown element following 
+            the conversion guidelines below. Ensure the generated HTML is well-structured and syntactically correct.
+			3. Preserve Line Breaks: Markdown line breaks (soft breaks) represented by two spaces at the end of a 
+            line should be converted to <br> tags in HTML to preserve the line breaks.
+			4. REMEMBER to generate complete, valid HTML response only.
+			
+			Follow below Conversion Guidelines:
+			- Headers: Convert Markdown headers (#, ##, ###, etc.) to corresponding HTML header tags (<h1>, <h2>, <h3>, etc.).
+			- Lists: Convert unordered lists (*) and ordered lists (1., 2., 3., etc.) to <ul> and <ol> HTML tags, respectively. 
+            List items should be enclosed in <li> tags.
+			- Emphasis: Convert bold (**) and italic (*) text to <strong> and <em> HTML tags, respectively.
+			- Links: Convert Markdown links ([text](url)) to HTML anchor (<a>) tags. Ensure the href attribute contains the correct URL.
+			- Images: Convert Markdown image tags (![alt text](image_url)) to HTML image (<img>) tags. 
+            Include the alt attribute for accessibility.
+			- Code: Convert inline code (`code`) to <code> HTML tags. Convert code blocks (```) to <pre> HTML tags 
+            for preserving formatting.
+			- Blockquotes: Convert blockquotes (>) to <blockquote> HTML tags.
+			Convert the following Markdown text to HTML:  {md_content}
+            """
+    try:
+        # TBD: Add logic for which_provider and which_model
+        response = openai_chatgpt(prompt)
+        return response
+    except Exception as err:
+        SystemError(f"Error in getting related keywords.")

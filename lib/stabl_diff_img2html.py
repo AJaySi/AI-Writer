@@ -13,11 +13,8 @@ os.environ['STABILITY_HOST'] = 'grpc.stability.ai:443'
 # Click on the following link once you have created an account to be taken to your API Key.
 # https://platform.stability.ai/account/keys
 
-# Paste your API Key below.
-os.environ['STABILITY_KEY'] = 'sk-KGCeQFf4iQYogzAe6WEISIOij12g4Ztvnkw92dJTJZ7vsL0j'
 
-def generate_stable_diffusion_image(prompt):
-
+def generate_stable_diffusion_image(prompt, image_dir):
     # Set up our connection to the API.
     # Check out the following link for a list of available engines: 
     # https://platform.stability.ai/docs/features/api-parameters#engine
@@ -63,3 +60,8 @@ def generate_stable_diffusion_image(prompt):
                 img.show()
                 img.save(img_name) 
                 # Save our generated images with their seed number as the filename.
+
+prompt = "An image of a digital marketing campaign with various elements such as social media ads, email marketing, data analysis, and customer interaction. The image should depict the integration of generative AI technologies, such as machine learning algorithms and neural networks, into the digital marketing process. It should showcase how these technologies revolutionize the field by enhancing efficiency, personalization, creativity, decision making, and customer experience. The image should also illustrate the potential for better return on investment (ROI) and hyper-personalization through generative AI in digital marketing."
+
+image_dir = '/home/ajsingh/pseo_experiments/lib'
+generate_stable_diffusion_image(prompt, image_dir)
