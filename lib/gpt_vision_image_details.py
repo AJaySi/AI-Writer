@@ -77,15 +77,3 @@ def analyze_and_extract_details_from_image(image_path, api_key):
         sys.exit(f"Error: Failed to communicate with OpenAI API. Error: {e}")
     except Exception as e:
         sys.exit(f"Error occurred: {e}")
-
-
-# Example usage
-if __name__ == "__main__":
-
-    api_key = "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"
-    image_path = "/home/ajsingh/pseo_experiments/pseo_website/assets/generated_image_2023-11-08-21-43-44.png"
-    try:
-        details = analyze_and_extract_details_from_image(image_path, api_key)
-        print(details)
-    except Exception as e:
-        sys.exit(f"Error occurred: {e}")
