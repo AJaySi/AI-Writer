@@ -41,9 +41,9 @@ image_dir = os.path.join(os.getcwd(), image_dir)
 # TBD: This can come from config file.
 output_path = "pseo_website/_posts/"
 output_path = os.path.join(os.getcwd(), output_path)
-wordpress_url = 'https://latestaitools.in/'
-wordpress_username = 'upaudel750'
-wordpress_password = 'YvCS VbzQ QSp8 4XZe 0DUw Myys'
+wordpress_url = ''
+wordpress_username = ''
+wordpress_password = ''
 
 
 def generate_youtube_blog(yt_url_list):
