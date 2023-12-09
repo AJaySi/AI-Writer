@@ -1,0 +1,8 @@
+{
+    "wordpress_url": "https://latestaitools.in/",
+    "wordpress_username": "username",
+    "wordpress_password": "password",
+    "image_dir": "path/to/image_dir",
+    "output_path": "path/to/output_path"
+}
+

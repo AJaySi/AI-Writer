@@ -20,7 +20,12 @@ import tempfile
 from html2image import Html2Image
 import datetime
 from PIL import Image
+import moviepy.editor as mp
 import requests
+from moviepy.editor import AudioFileClip
+from concurrent.futures import ThreadPoolExecutor
+
+from ..gpt_online_researcher import do_online_research
 
 from loguru import logger
 logger.remove()
@@ -28,8 +33,6 @@ logger.add(sys.stdout,
         colorize=True,
         format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
     )
-
-
 
 def analyze_and_extract_details_from_image(image_path):
     """
@@ -103,12 +106,14 @@ def analyze_and_extract_details_from_image(image_path):
         return image_details
 
     except requests.RequestException as e:
-        sys.exit(f"Error: Failed to communicate with OpenAI API. Error: {e}")
+        #sys.exit(f"Error: GPT-Vision: Failed to communicate with OpenAI API. Error: {e}")
+        logger.error(f"Error: GPT-Vision: Failed to communicate with OpenAI API. Error: {e}")
     except Exception as e:
-        sys.exit(f"Error occurred: {e}")
+        #sys.exit(f"Error occurred- GPT-Vision: {e}")
+        logger.error(f"Error occurred- GPT-Vision: {e}")
 
 
-def openai_chatgpt(prompt, model="gpt-3.5-turbo-16k", temperature=0.2, max_tokens=8192, top_p=0.9, n=1):
+def openai_chatgpt(prompt, model="gpt-4-1106-preview", temperature=0.2, max_tokens=4096, top_p=0.9, n=1):
     """
     Wrapper function for openai chat Completion
     """
@@ -119,6 +124,10 @@ def openai_chatgpt(prompt, model="gpt-3.5-turbo-16k", temperature=0.2, max_token
 
     try:
         client = OpenAI()
+    except Exception as err:
+        print("Error: OpenAI Client.")
+        exit(1)
+    try:
         # using OpenAI's Completion module that helps execute any tasks involving text
         response = client.chat.completions.create(
             # model name used, there are many other models available under the umbrella of GPT-3
@@ -142,6 +151,8 @@ def openai_chatgpt(prompt, model="gpt-3.5-turbo-16k", temperature=0.2, max_token
     except openai.RateLimitError as e:
         #Handle rate limit error (we recommend using exponential backoff)
         SystemError(f"OpenAI API request exceeded rate limit: {e}")
+    except Exception as err:
+        SystemError(f"OpenAI client Error: {err}")
 
     return response.choices[0].message.content
 
@@ -231,39 +242,57 @@ def generate_dalle3_images(img_prompt, image_dir, size="1024x1024", quality="hd"
         return img_path
 
 
-def speech_to_text(video_url):
-    """ Common openai function for speech to text. """
-    client = OpenAI()
+
+def speech_to_text(video_url, output_path='.'):
+    """ Transcribes speech to text from a YouTube video URL. """
     try:
-        # Download YouTube video
-        logger.info(f"Download YouTube video: {video_url}")
+        # Create a YouTube object
+        print(f"Accessing YouTube URL: {video_url}")
         yt = YouTube(video_url)
-        stream = yt.streams.filter(only_audio=True).first()
 
-        # Save the video in a temporary file
-        logger.info(f"Finished Downloading, Saving video for transcription.")
-        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_file:
-            temp_file_name = temp_file.name
+        # Select the highest quality audio stream
+        print("Fetching audio stream. Select the highest quality audio stream")
+        audio_stream = yt.streams.filter(only_audio=True).first()
 
-        stream.download(output_path=os.path.dirname(temp_file_name), filename=os.path.basename(temp_file_name))
-        try:
-            # Transcribe the video using OpenAI's Whisper API
-            logger.info(f"Transcribe the video using OpenAI's Whisper API")
-            with open(temp_file_name, "rb") as audio_file:
+        if audio_stream is None:
+            print("No audio stream found for this video.")
+            return
+        else:
+            # Download the audio stream
+            print(f"Downloading audio for: {yt.title}")
+            audio_file = audio_stream.download(output_path)
+            print(f"Downloaded: {yt.title} to {output_path}")
+
+            try:
+                # Check if the audio file size is less than 24MB
+                max_file_size = 24 * 1024 * 1024  # 24MB in bytes
+                file_size = os.path.getsize(audio_file)
+                if file_size > max_file_size:
+                    print("Error: File size exceeds 24MB limit.")
+                    exit(1)
+
+                # File uploads are currently limited to 25 MB and the following input 
+                # file types are supported: mp3, mp4, mpeg, mpga, m4a, wav, and webm.
+                try:
+                    client = OpenAI()
+                except Exception as err:
+                    SystemExit("Unable to get openai client object: {err}")
+
+                print("Transcribing using Openai whisper.")
                 transcript = client.audio.transcriptions.create(
-                        model="whisper-1", 
-                        file=audio_file
+                        model="whisper-1",
+                        file=open(audio_file, "rb"),
+                        response_format="text"
                         )
-        except Exception as err:
-            logger.error(f"Failed to transcribe using whisper model: {err}")
-        
-        logger.info("Finished Transcribing. Creating a blog from the transcript.")
-        # Remove the temporary file after transcription
-        os.remove(temp_file_name)
-        return(transcript)
+                return transcript
+            except Exception as err:
+                print(f"Failed in whisper transcription: {err}")
+                exit(1)
 
     except Exception as e:
-        logger.error(f"Error: speech-to-text, Failed to transcribe url: {video_url} with error: {e}")
+        print(f"YT video download, An error occurred: {e}")
+        exit(1)
+    os.remove(audio_file)
 
 
 # The idea is to download images from other blogs and recreate from it.

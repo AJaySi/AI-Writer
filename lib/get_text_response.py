@@ -22,11 +22,13 @@ nltk.download('punkt', quiet=True)
 from nltk.corpus import stopwords
 nltk.download('stopwords', quiet=True)
 
-from .gpt_providers.openai_gpt_provider import openai_chatgpt, gen_new_from_given_img
-from .gpt_providers.openai_gpt_provider import analyze_and_extract_details_from_image
+from .gpt_providers.openai_gpt_provider import gen_new_from_given_img
+from .gpt_providers.openai_chat_completion import openai_chatgpt
+from .gpt_providers.gpt_vision_img_details import analyze_and_extract_details_from_image
 from .generate_image_from_prompt import generate_image
 from .write_blogs_from_youtube_videos import youtube_to_blog
 from .wordpress_blog_uploader import compress_image, upload_blog_post, upload_media
+from .gpt_online_researcher import do_online_research
 
 from loguru import logger
 logger.remove()
@@ -35,33 +37,69 @@ logger.add(sys.stdout,
         format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
     )
 
+# Load configuration
+#with open('config.json') as config_file:
+#    config = json.load(config_file)
+
+#wordpress_url = config['wordpress_url']
 # fixme: Remove the hardcoding, need add another option OR in config ?
-image_dir = "pseo_website/assets/"
+image_dir = "blog_images"
 image_dir = os.path.join(os.getcwd(), image_dir)
 # TBD: This can come from config file.
-output_path = "pseo_website/_posts/"
+output_path = "blogs"
 output_path = os.path.join(os.getcwd(), output_path)
 wordpress_url = ''
-wordpress_username = ''
-wordpress_password = ''
+wordpress_username = 'upaudel750'
+wordpress_password = 'YvCS VbzQ QSp8 4XZe 0DUw Myys'
 
 
-def generate_youtube_blog(yt_url_list):
+def generate_youtube_blog(yt_url_list, output_format="markdown"):
     """Takes a list of youtube videos and generates blog for each one of them.
     """
     # Use to store the blog in a string, to save in a *.md file.
     blog_markdown_str = ""
     for a_yt_url in yt_url_list:
         try:
-            yt_img_path, yt_blog = youtube_to_blog(a_yt_url)
+            logger.info(f"Starting to write blog on URL: {a_yt_url}")
+            yt_blog, yt_title = youtube_to_blog(a_yt_url)
+            if not yt_title or not yt_blog:
+                logger.error("No content or title for audio to proceed.")
+                sys.exit(1)
+        except Exception as e:
+            logger.error(f"Error in youtube_to_blog: {e}")
+            sys.exit(1)
 
+        try:
+            logger.info(f"Starting with online research for URL title: {yt_title}")
+            research_report = do_online_research(yt_title)
+            if not research_report:
+                logger.error(f"Error in do_online_research returned no report: {e}")
+                sys.exit(1)
+        except Exception as e:
+            logger.error(f"Error in do_online_research: {e}")
+            sys.exit(1)
+
+        try:
+            # Note: Check if the order of input matters for your function
+            logger.info("Preparing a blog content from audio script and online research content...")
+            blog_with_research(research_report, yt_blog)
+        except Exception as e:
+            logger.error(f"Error in blog_with_research: {e}")
+            sys.exit(1)
+
+        try:
             # Get the title and meta description of the blog.
-            title = generate_blog_title(yt_blog)
             blog_meta_desc = generate_blog_description(yt_blog)
+            title = generate_blog_title(blog_meta_desc)
             logger.info(f"Title is {title} and description is {blog_meta_desc}")
-            #blog_markdown_str = "# " + title.replace('"', '') + "\n\n"
-            # Generate an introduction for the blog
+            blog_markdown_str = "# " + title.replace('"', '') + "\n\n"
+            # Get blog tags and categories.
+            blog_tags = get_blog_tags(blog_meta_desc)
+            logger.info(f"Blog tags are: {blog_tags}")
+            blog_categories = get_blog_categories(blog_meta_desc)
+            logger.info(f"Blog categories are: {blog_categories}")
 
+            # Generate an introduction for the blog
             blog_intro = get_blog_intro(title, yt_blog)
             logger.info(f"The Blog intro is:\n {blog_intro}")
             blog_markdown_str = blog_markdown_str + "\n\n" + f"{blog_intro}" + "\n\n"
@@ -86,20 +124,23 @@ def generate_youtube_blog(yt_url_list):
             blog_conclusion = get_blog_conclusion(blog_markdown_str)
             # TBD: Add another image.
             blog_markdown_str = blog_markdown_str + "### Conclusion" + "\n\n" + f"{blog_conclusion}" + "\n"
-            print(f"Conclusion: {blog_markdown_str}")
-            
-            # Get blog tags and categories.
-            blog_tags = get_blog_tags(yt_blog)
-            logger.info(f"Blog tags are: {blog_tags}")
-            blog_categories = get_blog_categories(yt_blog)
-            logger.info(f"Blog categories are: {blog_categories}")
 
-            save_blog_to_file(blog_markdown_str, title, blog_meta_desc, blog_tags, blog_categories, main_img_path)
+            # Proofread the blog, edit and remove dubplicates and refine it further.
+            # Presently, fixing the blog keywords to be tags and categories.
+            blog_keywords = f"{blog_tags} + {blog_categories}"
+            blog_markdown_str = blog_proof_editor(blog_markdown_str, blog_keywords)
+
+            # Check the type of blog format needed by the user.
             if 'html' in output_format:
+                blog_markdown_str = convert_tomarkdown_format(blog_markdown_str)
+            elif 'markdown' in output_path:
                 blog_markdown_str = convert_markdown_to_html(blog_markdown_str)
 
-            save_blog_to_file(blog_markdown_str, title, blog_meta_desc, blog_tags, blog_categories, main_img_path)
-            #print(html_blog)
+            # Try to save the blog content in a file, in whichever format. Just dump it.
+            try:
+                save_blog_to_file(blog_markdown_str, title, blog_meta_desc, blog_tags, blog_categories, main_img_path)
+            except Exception as err:
+                logger.error("Failed to Save blog content: {blog_markdown_str}")
 
         except Exception as e:
             # raise assertionerror
@@ -108,7 +149,7 @@ def generate_youtube_blog(yt_url_list):
 
 
 def generate_detailed_blog(num_blogs, blog_keywords, niche, num_subtopics,
-        wordpress=False, output_format="HTML"):
+        wordpress=False, research_online=False, output_format="HTML"):
     """
     This function will take a blog Topic to first generate sections for it
     and then generate content for each section.
@@ -136,7 +177,7 @@ def generate_detailed_blog(num_blogs, blog_keywords, niche, num_subtopics,
         blog_intro = get_blog_intro(a_blog_topic, tpc_outlines)
         logger.info(f"The intro is:\n{blog_intro}")
         blog_markdown_str = blog_markdown_str + "### Introduction" + "\n\n" + f"{blog_intro}" + "\n\n"
-        print(f"\n\n 1 -- BLOG_STR : {blog_markdown_str}\n\n")
+        
         # Now, for each blog we have sub topic. Generate content for each of the sub topic.
         for a_outline in tpc_outlines:
             a_outline = a_outline.replace('"', '')
@@ -145,7 +186,6 @@ def generate_detailed_blog(num_blogs, blog_keywords, niche, num_subtopics,
             # a_outline is sub topic heading, hence part ToC also.
             #blog_markdown_str = blog_markdown_str + "\n\n" + f"### {a_outline}" + "\n\n"
             blog_markdown_str = blog_markdown_str + "\n" + f"\n {sub_topic_content}" + "\n\n"
-            print(f"\n\n 3 -- BLOG_STR : {blog_markdown_str}\n\n")
 
         # Get the Conclusion of the blog, by passing the generated blog.
         blog_conclusion = get_blog_conclusion(blog_markdown_str)
@@ -153,6 +193,11 @@ def generate_detailed_blog(num_blogs, blog_keywords, niche, num_subtopics,
 
         # logger.info/check the final blog content.
         logger.info(f"Final blog content: {blog_markdown_str}")
+
+        #if research_online:
+        #    # Call on the got-researcher, tavily apis for this. So many apis floating around.
+        #    report = do_online_research_on(blog_keywords)
+        #    blog_markdown_str = blog_with_research(report, blog_markdown_str)
 
         blog_meta_desc = generate_blog_description(blog_markdown_str)
         logger.info(f"\nThe blog meta description is:{blog_meta_desc}\n")
@@ -162,10 +207,10 @@ def generate_detailed_blog(num_blogs, blog_keywords, niche, num_subtopics,
         main_img_path = generate_image(blog_meta_desc, image_dir, "dalle3")
         
         blog_tags = get_blog_tags(blog_markdown_str)
-        logger.info(f"\nBlog tags for generated content: {blog_tags}")
+        logger.info(f"\nBlog tags for generated content: {blog_tags}\n")
 
         blog_categories = get_blog_categories(blog_markdown_str)
-        logger.info(f"Generated blog categories: {blog_categories}")
+        logger.info(f"Generated blog categories: {blog_categories}\n")
 
         # Use chatgpt to convert the text into HTML or markdown.
         if 'html' in output_format:
@@ -178,6 +223,7 @@ def generate_detailed_blog(num_blogs, blog_keywords, niche, num_subtopics,
             # Similar tags and categories will be missed.
             # blog_categories = 
             # blog_tags = 
+            logger.info("Uploading the blog to wordpress.\n")
             main_img_path = compress_image(main_img_path, quality=85)
             try:
                 img_details = analyze_and_extract_details_from_image(main_img_path)
@@ -247,14 +293,16 @@ def generate_blog_title(blog_meta_desc):
     Given a blog title generate an outline for it
     """
     # TBD: Remove hardcoding, make dynamic
-    prompt = f"""As a SEO expert and content writer, I will provide you with blog. Your task is write title for it.
+    prompt = f"""As a SEO expert and content writer, I will provide you with meta description of blog. 
+        Your task is write a SEO optimized, call to action and engaging blog title for it.
         Follows SEO best practises to suggest the blog title. 
         Please keep the titles concise, not exceeding 60 words, and ensure to maintain their meaning. 
-        Respond with only one title and no description, for this given blog content: {blog_meta_desc}
+        Respond with only one title and no description or keyword like Title: 
+        Generate blog title for this given meta description: {blog_meta_desc}
         """
     # The suggested {num_subtopics} outline should include few long-tailed keywords and most popular questions.
     # TBD: Include --niche
-    logger.debug(f"Prompt used for blog title :{prompt}")
+    logger.info(f"Prompt used for blog title :{prompt}")
     try:
         response = openai_chatgpt(prompt)
     except Exception as err:
@@ -494,6 +542,35 @@ def remove_stop_words(sentence):
     return filtered_sentence
 
 
+def convert_tomarkdown_format(blog_content):
+    """ Helper for converting content to markdown format for static sites. """
+    prompt = f"""
+    As an expert in markdown language format and font matter, used for static webpages.
+    Your task is to convert and improve formatting of given blog content.
+    Do Not modify the content, only modify to convert it into highly readable blog content.
+
+    Use below guidelines and include other best practises:
+    1). Headers for Structure: Use # for main headings and increase the number of # for 
+    subheadings (##, ###, etc.). Organize given content into clear, hierarchical sections.
+    2). Emphasizing Text: Use single asterisks or underscores for italic (*italic* or _italic_), 
+    double for bold (**bold** or __bold__), and triple for bold italic (***bold italic***).
+    3). Lists: For unordered lists, use dashes, asterisks, or plus signs (-, *, +). 
+    For ordered lists, use numbers followed by periods (1., 2., etc.).
+    4). Blockquotes: Use > for blockquotes, and add additional > for nested blockquotes.
+    5). Code Blocks: Use backticks for inline code (code) and triple backticks for code blocks. 
+    Specify a language for syntax highlighting.
+    6). Horizontal Lines: Create a horizontal line using three or more asterisks, dashes, or underscores (---, ***).
+    7). Table Formatting: Use pipes | and dashes - to create tables. Align text with colons.
+
+    Convert the given blog content in well organised markdown content: {blog_content}"""
+    try:
+        # TBD: Add logic for which_provider and which_model
+        response = openai_chatgpt(prompt)
+        return response
+    except Exception as err:
+        SystemError(f"Error in converting to Markdown format.")
+
+
 def convert_markdown_to_html(md_content):
     """ Helper function to convert given text to HTML
     """
@@ -528,4 +605,85 @@ def convert_markdown_to_html(md_content):
         response = openai_chatgpt(prompt)
         return response
     except Exception as err:
+        SystemError(f"Error in convert to HTML")
+
+
+def blog_with_research(report, blog):
+    """Combine the given online research and gpt blog content"""
+
+    prompt = f"""
+        You are an expert copywriter specializing in content optimization for SEO.
+        I will provide you with a research report and a blog content on the same topic.
+        Treat the research report as the context for the blog and better it accordingly.
+        Your task is to transform and combine the given research and blog content into a well-structured, unique
+        and engaging blog article. 
+        Your objectives include:
+        1. Master the report and blog content: Understand main ideas, key points, and the core message.
+        2. Sentence Structure: Rephrase while preserving logical flow and coherence.
+        3. Identify Main Keyword: Determine the primary topic and combine the articles on the main topic.
+        4. Keyword Integration: Naturally integrate keywords in headings, subheadings, and body text, avoiding overuse.
+        5. Write Unique Content: Avoid direct copying from given report and blog; rewrite in your own words and style.
+        6. Optimize for SEO: Generate high quality informative content. 
+        Implement SEO best practises with appropriate keyword density.
+        7. Craft Engaging and Informative Article: Provide value and insight to readers.
+        8. Proofread: Important to Check for grammar, spelling, and punctuation errors.
+        9. Use Creative and Human-like Style: Incorporate contractions, idioms, transitional phrases, 
+        interjections, and colloquialisms. Avoid repetitive phrases and unnatural sentence structures.
+        10. Structuring: Include an Introduction, subtopics and use bullet points or 
+        numbered lists if appropriate. Important to include FAQs, and Conclusion.
+        11. Ensure Uniqueness: Guarantee the article is plagiarism-free. Write in unique, informative style.
+        12. Punctuation: Use appropriate question marks at the end of questions.
+        13. Pass AI Detection Tools: Create content that easily passes AI plagiarism detection tools.
+        14. REMEMBER to give final response as complete HTML.
+        Follow these guidelines to create a well-optimized, unique, and informative article 
+        that will rank well in search engine results and engage readers effectively.
+
+        Create a blog post from the given research report and blog content below.
+        Research report: {report}
+        Blog content: {blog}
+        """
+    try:
+        # TBD: Add logic for which_provider and which_model
+        response = openai_chatgpt(prompt)
+        return response
+    except Exception as err:
         SystemError(f"Error in getting related keywords.")
+
+
+def blog_proof_editor(blog_content, blog_keywords):
+    """
+        Helper for blog proof reading.
+    """
+    if not blog_content and not blog_keywords:
+        logger.error("Blog proof reader has no content to proofread.")
+        exit(1)
+
+    prompt = f"""I am looking for detailed editing and enhancement of the given blog post, 
+        with a particular focus on maintaining originality. 
+        The topic of the content is [{blog_keywords}]. Please go through the blog and make direct edits to improve it, 
+        ensuring the final output is both high-quality and original. 
+        Note: There are duplicates headings and corresponding paragraphs, rewrite into one subheading.
+
+        Here are the specific areas to focus on:
+
+        1). Ensure Originality: Edit any sections that lack originality, replacing them with unique and creative content.
+        2). Eliminate Repetitive Language: Rewrite repetitive phrases with varied and engaging language.
+        3). Vocabulary and Grammar Enhancement: Directly correct any grammatical errors and upgrade the 
+        vocabulary for better readability.
+        4). Improve Sentence Structure: Enhance sentence construction for better clarity and flow.
+        5). Tone and Brand Alignment: Adjust the tone, voice, personality of given content to make it unique.
+        6). Optimize Content Structure: Reorganize the content for a more impactful presentation, 
+        including better paragraphing and transitions.
+        7). Remove Redundancies: Important, Cut out any redundant information or overly complex jargon.
+        8). Refine Overall Structure: Make structural changes to improve the overall impact of the content.
+        9). Remember, rewrite all content that repeated, while maintaining the formatting of the given blog text.
+
+        Please apply these changes directly to the following blog text and provide the edited version: 
+        [{blog_content}]. """
+
+    try:
+        # TBD: Add logic for which_provider and which_model
+        response = openai_chatgpt(prompt)
+        return response
+    except Exception as err:
+        SystemError(f"Error Blog Proof Reading: {err}")

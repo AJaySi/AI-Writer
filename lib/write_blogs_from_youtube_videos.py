@@ -14,23 +14,34 @@ logger.add(sys.stdout,
         format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
     )
 
-from .gpt_providers.openai_gpt_provider import openai_chatgpt, openai_chatgpt_streaming_text, speech_to_text
+from .gpt_providers.stt_audio_blog import speech_to_text
+from .gpt_providers.openai_chat_completion import openai_chatgpt
 
 
 def youtube_to_blog(video_url):
     """Function to transcribe a given youtube url """
     # fixme: Doesnt work all types of yt urls.
     vid_id = video_url.split("=")[1]
-    hti = Html2Image(output_path="../blog_images")
-    hti.screenshot(url=video_url, save_as=f"yt-img-{vid_id}.png")
-    yt_img_path = os.path.join("../blog_images", f"yt-img-{vid_id}.png")
+    #hti = Html2Image(output_path="../blog_images")
+    #hti.screenshot(url=video_url, save_as=f"yt-img-{vid_id}.png")
+    #yt_img_path = os.path.join("../blog_images", f"yt-img-{vid_id}.png")
 
     try:
-        audio_text = speech_to_text(video_url)
-        audio_blog_content = summarize_youtube_video(audio_text)
-        return(yt_img_path, audio_blog_content)
+        # Starting the speech-to-text process
+        logger.info("Starting with Speech to Text.")
+        audio_text, audio_title = speech_to_text(video_url)
     except Exception as e:
-        logger.error(f"Error: Failed to transcribe YouTube video_url: {video_url} with error: {e}")
+        logger.error(f"Error in speech_to_text: {e}")
+        sys.exit(1)  # Exit the program due to error in speech_to_text
+
+    try:
+        # Summarizing the content of the YouTube video
+        audio_blog_content = summarize_youtube_video(audio_text)
+        return audio_blog_content, audio_title
+    except Exception as e:
+        logger.error(f"Error in summarize_youtube_video: {e}")
+        sys.exit(1)  # Exit the program due to error in summarize_youtube_video
+    return audio_blog_content
 
 
 def summarize_youtube_video(user_content):
@@ -42,6 +53,7 @@ def summarize_youtube_video(user_content):
     Returns:
       A string containing the summary of the video.
     """
+    logger.info("Start summarize_youtube_video..")
     prompt = f"""
         You are an expert copywriter specializing in content optimization for SEO. 
         Your task is to transform a given transcript into a well-structured and engaging blog article. Your objectives include:
@@ -65,6 +77,8 @@ def summarize_youtube_video(user_content):
         Follow the above guidelines to create a well-optimized, unique, and informative article that will rank well in search engine results and engage readers effectively.
         Craft a blog content from the following transcript:\n{user_content}
         """
-    #completion_text = openai_chatgpt_streaming_text(prompt)
-    completion_text = openai_chatgpt(prompt)
-    return completion_text
+    try:
+        response = openai_chatgpt(prompt)
+        return response
+    except Exception as err:
+        SystemError(f"Error in generating blog summary: {err}")

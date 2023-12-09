@@ -1,25 +1,43 @@
+# AI Blog Creation and Management Toolkit
+
 ## Introduction
+This toolkit automates and enhances the process of blog creation, optimization, and management. Leveraging AI technologies, it assists content creators and digital marketers in generating, formatting, and uploading blog content efficiently. The toolkit integrates advanced AI models for text generation, image creation, and data analysis, streamlining the content creation pipeline.
 
-Given high level domain keywords like "Fishing baits online" Or any 2-3 main key words that describe, broadly, your business.
-This tool will produce a SEO optimized blogs. This tool will suggest most popular blog topics, divide them in sub topics and write content for each sub topic. For each of the paragraphs, we summarise it and pass the line for text to image.
-Thus, the generated blog will have text and relevant images.
+## Features
 
-(TBD) Provide the blog output as plain text, markdown Or HTML.
+### Blog Generation and Optimization
+- **YouTube to Blog Conversion**: Converts YouTube videos into detailed blog posts by extracting and transcribing audio, then generating text-based content.
+- **Online Research Integration**: Enhances blog content by integrating insights and information gathered from online research, ensuring the content is informative and up-to-date.
+- **Image Generation and Processing**: Utilizes AI models like DALL-E 3 to create relevant images based on blog content. Offers features to process and optimize images for web usage.
+- **SEO Optimization**: Employs AI to generate SEO-friendly blog titles, meta descriptions, tags, and categories. Ensures content is optimized for search engines.
 
-Presently, wordpress and WIX integration is present for uploading the generated blog, but needs testing.
+### Speech-to-Text Conversion
+- **Audio Transcription**: Converts speech from video content into text, facilitating the creation of blogs and articles from video sources.
 
-### This is based on openai gpt models for content generation, google bard for keyword research and some basic tools for plagiarism checker, SEO audit and suggestions to improve the generated content.
-As prompts are the important ingredients to get the best result, they are stored in prompts folder. Edit these prompts to produce results as per your likings.
+### AI-Driven Content Creation
+- **Text Generation with OpenAI ChatGPT**: Leverages OpenAI's ChatGPT for generating creative and relevant text for blogs.
+- **Customizable AI Parameters**: Offers flexibility in adjusting AI parameters like model selection, temperature, and token limits to suit different content needs.
 
-- API based blog generation are much cheaper, almost 10x, but difficult to use for everyone. We use bard for search related prompts and chatgpt for generative requirements.
-- Jekyll static website is included for checking how blogs will look locally.
- 
-### Check TBD for features currently under development.
+### Image Detail Extraction
+- **Analyzing and Extracting Image Details**: Uses OpenAI's Vision API to analyze images and extract details such as alt text, descriptions, titles, and captions, enhancing the SEO of image content.
 
-- Amazon affiliate links are also supported. Given, affiliate tag, your affiliate product links will included in the blogs.
-To use the module, simply create an instance of the AmazonAffiliateImages class, passing in your Amazon affiliate tag. 
-Then, you can use the get_image_url() or get_image_html() methods to get the Amazon affiliate image URL or HTML 
-for a product, passing in either the product ASIN or the product URL.
+
+## Installation and Configuration
+1. **Clone the Repository**: Clone the toolkit from the provided repository link.
+2. **Install Dependencies**: Install necessary Python packages and libraries.
+
+
+## Usage
+The toolkit provides functions for generating blogs from YouTube videos, detailed blogs from provided keywords, and optimizing them for SEO and readability. It supports content uploading to WordPress and includes comprehensive error handling.
+
+## Installation
+- Requires Python 3.x.
+- Install dependencies: `openai`, `nltk`, `tqdm`, `loguru`.
+- Set up API keys and credentials for OpenAI and WordPress.
+
+---
+
+**Note**: This toolkit is designed for automated blog management and requires appropriate API keys and access credentials for full functionality.
 
 ----------------------------------
 
@@ -45,30 +63,6 @@ options:
 - Example:
 python3 pseo_main.py --num_blogs "10" --keywords "Python, programming, data science" --niche True
 
-- Output is directly written as blog post for pseo_website and can found in pseo_website/_posts directory
-- Note: Follow instructions here to install jekyll : https://jekyllrb.com/docs/installation/
-- Read this: https://chirpy.cotes.page/posts/write-a-new-post/
-
-----------------------------------
-
-The generated blogs are present in generated_blogs folder. Presently, the blog template is rigid and follows the
-below pattern:
-[Blog Title]
-[Introduction of n chars]
-[Body]
-[Body][topic][content of n chars on sub-topic]
-[Conclusion]
-
-TBD: More templates and an easy way to change prompts are in pipeline.
-
------------------------------------
-
-PSEO Website:
-
-We are using jekyll static page generator and chirpy theme for it.
-This is easy enough to programmatically control and publish content.
-
-Checkout pseo_website directory for details.
 
 -----------------------------------
 

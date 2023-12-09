@@ -25,15 +25,16 @@ def parse_arguments():
     Returns:
         argparse.Namespace: Parsed arguments.
     """
+
     parser = argparse.ArgumentParser(description="Generate blogs based on user input.")
     parser.add_argument("--num_blogs", type=int, default=5, help="Number of blogs to generate (default: 5).")
     parser.add_argument("--keywords", type=str, help="Keywords for blog generation.")
-    parser.add_argument("--niche", action='store_true', help="Flag to generate niche blogs (default: False).")
+    parser.add_argument("--niche", action='store_true', default=False, help="Flag to generate niche blogs (default: False).")
     parser.add_argument("--num_subtopics", type=int, default=6, help="Number of subtopics per blog (default: 6).")
     parser.add_argument("--youtube_urls", type=str, help="Comma-separated YouTube URLs for blog generation.")
-    parser.add_argument("--wordpress", action='store_true', help="Flag to upload blogs to WordPress (default: False).")
-    parser.add_argument("--output_format", choices=['plaintext', 'markdown', 'html'], default='plaintext', 
-                        help="Output format of the blogs (default: plaintext).")
+    parser.add_argument("--wordpress", action='store_true', default=False, help="Flag to upload blogs to WordPress (default: False).")
+    parser.add_argument("--output_format", choices=['plaintext', 'markdown', 'html'], default='plaintext', help="Output format of the blogs (default: plaintext).")
+    parser.add_argument("--research", action='store_true', default=False, help="Flag to perform online research for given keywords (default: False).")
 
     return parser.parse_args()
 
@@ -72,7 +73,7 @@ def main():
         if args.youtube_urls:
             yt_urls = args.youtube_urls.split(",")
             logger.info(f"Generating blogs from YouTube URLs: {yt_urls}")
-            generate_youtube_blog(yt_urls, args.wordpress, args.output_format)
+            generate_youtube_blog(yt_urls)
         elif args.keywords:
             logger.info(f"Generating {args.num_blogs} blogs on '{args.keywords}' with {args.num_subtopics} subtopics.")
             generate_detailed_blog(args.num_blogs, args.keywords, args.niche,

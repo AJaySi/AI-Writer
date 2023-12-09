@@ -1,9 +1,0 @@
-loguru
-openai
-Pillow
-requests
-tqdm
-urllib3
-pytube
-html2image
-nltk

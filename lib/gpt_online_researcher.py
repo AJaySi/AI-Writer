@@ -16,54 +16,68 @@
 # 
 ##############################################################
 
-# import and connect
+import os
+import logging
 from tavily import TavilyClient
+from langchain.adapters.openai import convert_openai_messages
+from langchain.chat_models import ChatOpenAI
 
-def do_research_on(research_query):
-    """
-    Basically sending in the blog title to do research on.
-    gpt-researcher API version to do extensive web research for given keywords.
-    """
-    # $ export TAVILY_API_KEY={Your Tavily API Key here}
+logging.basicConfig(level=logging.INFO, format='%(asctime)s-%(levelname)s-%(module)s-%(lineno)d-%(message)s')
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_random_exponential,
+)  # for exponential backoff
+
+
+@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
+def do_online_research(query):
     try:
-        client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
-    except Exception as err:
-        SystemExit(f"Failed to create TavilyClient: {err}")
+        # Retrieve API keys
+        api_key = os.getenv('TAVILY_API_KEY')
+        openai_api_key = os.getenv('OPENAI_API_KEY')
+        if not api_key or not openai_api_key:
+            raise ValueError("API keys for Tavily or OpenAI are not set.")
 
-    try:
-        # run tavily search
-        research_content = client.search(
-                research_query,
-                search_depth="advanced",
-                include_answer=True,
-                max_results=10)["results"]
-    except Exception as err:
-        SystemExit(f"Unable to do tavily search: {err}")
+        # Initialize Tavily client
+        try:
+            client = TavilyClient(api_key=api_key)
+        except Exception as err:
+            logging.error("Failed to create Tavily client. Check TAVILY_API_KEY")
+            exit(1)
 
-    # setup prompt
-    prompt = [{
-        "role": "system",
-        "content":  f'You are an AI critical thinker research assistant. '\
-                f'Your sole purpose is to write well written, critically acclaimed,'\
-                f'objective and structured reports on given text.'
+        # Run tavily search
+        logging.info(f"Running Tavily search on: {query}")
+        try:
+            content = client.search(query, search_depth="advanced")["results"]
+        except Exception as err:
+            logging.error(f"Failed to do Tavily Research: {err}")
+            exit(1)
+
+        # Setup prompt for GPT-4
+        prompt = [{
+            "role": "system",
+            "content": ('You are an AI critical thinker research assistant. '
+                        'Your sole purpose is to write well written, critically acclaimed, '
+                        'objective and structured reports on given text.')
         }, {
-        "role": "user",
-        "content": f'Information: """{research_content}"""\n\n' \
-               f'Using the above information, answer the following'\
-               f'query: "{research_query}" in a detailed report --'\
-               f'Please use MLA format and markdown syntax.'
+            "role": "user",
+            "content": (f'Information: """{content}"""\n\n'
+                        f'Using the above information, answer the following '
+                        f'query: "{query}" in a detailed report --'
+                        f'Please use MLA format and markdown syntax.')
         }]
-
-    # run gpt-4
-    try:
+        # Run GPT-4
+        logging.info("Generating report with GPT-4...")
         lc_messages = convert_openai_messages(prompt)
-        research_report = ChatOpenAI(
-                model='gpt-4',
-                openai_api_key=openai_api_key
-                ).invoke(lc_messages).content
-    except Exception as err:
-        SystemExit(f"Failed to convert OpenAI message and get response.")
+        try:
+            report = ChatOpenAI(model='gpt-4', openai_api_key=openai_api_key).invoke(lc_messages).content
+            logging.info(f"\n Below is the online research report for given keywords/title: \n\n{report}")
+            return report
+        except Exception as err:
+            logging.error("Failed to generate do_online_research with ChatOpenAI")
+            exit(1)
 
-    # print report
-    print(research_report)
-    return research_report
+    except Exception as e:
+        logging.error(f"Failed in online research: {e}")
+        exit(1)
