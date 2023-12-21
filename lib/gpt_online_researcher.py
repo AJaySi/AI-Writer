@@ -68,11 +68,11 @@ def do_online_research(query):
                         f'Please use MLA format and markdown syntax.')
         }]
         # Run GPT-4
-        logging.info("Generating report with GPT-4...")
+        logging.info("Generating Research report with GPT-4...")
         lc_messages = convert_openai_messages(prompt)
         try:
             report = ChatOpenAI(model='gpt-4', openai_api_key=openai_api_key).invoke(lc_messages).content
-            logging.info(f"\n Below is the online research report for given keywords/title: \n\n{report}")
+            #logging.info(f"\n Below is the online research report for given keywords/title: \n\n{report}")
             return report
         except Exception as err:
             logging.error("Failed to generate do_online_research with ChatOpenAI")

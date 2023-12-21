@@ -71,7 +71,7 @@ def speech_to_text(video_url, output_path='.'):
                 file=open(audio_file, "rb"),
                 response_format="text"
             )
-            logger.info("\nYouTube video transcription:\n\n{transcript}\n")
+            logger.info(f"\nYouTube video transcription:\n\n{transcript}\n")
             return transcript, yt.title
 
         except Exception as e:

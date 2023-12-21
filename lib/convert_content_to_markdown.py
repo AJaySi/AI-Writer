@@ -1,3 +1,6 @@
+from .gpt_providers.openai_chat_completion import openai_chatgpt
+
+
 def convert_tomarkdown_format(blog_content):
     """ Helper for converting content to markdown format for static sites. """
     prompt = f"""
@@ -17,6 +20,7 @@ def convert_tomarkdown_format(blog_content):
     Specify a language for syntax highlighting.
     6). Horizontal Lines: Create a horizontal line using three or more asterisks, dashes, or underscores (---, ***).
     7). Table Formatting: Use pipes | and dashes - to create tables. Align text with colons.
+    8). Remember to use suitable emojis for the given blog content.
 
     Convert the given blog content in well organised markdown content: {blog_content}"""
     try:

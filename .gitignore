@@ -16,4 +16,4 @@ pseo-experiments/lib/python3.10/
 pseo-experiments/bin/
 blog_images/
 blogs/
-pseo_website/
+.env

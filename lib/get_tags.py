@@ -2,17 +2,15 @@ from .gpt_providers.openai_chat_completion import openai_chatgpt
 import google.generativeai as genai
 
 
-def generate_blog_title(blog_meta_desc, gpt_providers):
+def get_blog_tags(blog_article, gpt_providers):
     """
-    Given a blog title generate an outline for it
+        Function to suggest tags for the given blog content
     """
-    prompt = f"""As a SEO expert and content writer, I will provide you with meta description of blog. 
-        Your task is write a SEO optimized, call to action and engaging blog title for it.
-        Follows SEO best practises to suggest the blog title. 
-        Please keep the titles concise, not exceeding 60 words, and ensure to maintain their meaning. 
-        Respond with only one title and no description or keyword like Title: 
-        Generate blog title for this given meta description: {blog_meta_desc}
-        """
+    # Suggest at least 5 tags for the following blog post [Enter your blog post text here].
+    prompt = f"""As an expert SEO and blog writer, suggest only 2 relevant and specific blog tags
+         for the given blog content. Only reply with comma separated values. 
+         Blog content:  {blog_article}."""
+
    if 'gemini' in gpt_providers:
         try:
             genai.configure(api_key=os.getenv('GEMINI_API_KEY'))

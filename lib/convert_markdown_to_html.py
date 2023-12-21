@@ -1,3 +1,5 @@
+from .gpt_providers.openai_chat_completion import openai_chatgpt
+
 def convert_markdown_to_html(md_content):
     """ Helper function to convert given text to HTML
     """

@@ -1,76 +1,101 @@
-def save_blog_to_file(blog_content, blog_title, 
-        blog_meta_desc, blog_tags, blog_categories, main_img_path, file_type="md"):
-    """ Common function to save the generated blog to a file.
-    arg: file_type can be md or html
+import sys
+import os
+import re
+import datetime
+from textwrap import dedent
+import logging
+from zoneinfo import ZoneInfo
+import nltk
+from nltk.corpus import stopwords
+from loguru import logger
+logger.remove()
+logger.add(sys.stdout,
+        colorize=True,
+        format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
+    )
+
+
+def save_blog_to_file(blog_content, blog_title, blog_meta_desc, blog_tags, blog_categories, main_img_path, output_path, file_type="md"):
     """
-    # Convert the spaces in blog_title with dash
-    logger.info(f"The blog will be saved at: {output_path}")
-    logger.debug(f"Blog Title is: {blog_title}")
-    blog_title_md = blog_title
-    regex = re.compile('[^a-zA-Z0-9- ]')
-    blog_title_md = regex.sub('', blog_title_md)
-    blog_title= blog_title.replace(":", "")
-    blog_title_md = re.sub('--+', '-', blog_title_md)
-    blog_title_md = blog_title_md.replace(' ', '-')
+    Saves the provided blog content to a file in the specified format.
+
+    Args:
+        blog_content (str): The main content of the blog.
+        blog_title (str): Title of the blog.
+        blog_meta_desc (str): Meta description of the blog.
+        blog_tags (list): List of tags associated with the blog.
+        blog_categories (list): List of categories associated with the blog.
+        main_img_path (str): Path to the main image of the blog.
+        output_path (str): Path to the directory where the blog will be saved.
+        file_type (str, optional): The file format for saving the blog ('md' for Markdown or 'html' for HTML). Defaults to 'md'.
+
+    Raises:
+        FileNotFoundError: If the output_path does not exist.
+        Exception: If the blog content cannot be written to the file.
+    """
+    # Sanitize and prepare the blog title
+    # Remove colon and ampersand
+    blog_title_md = blog_title.replace(":", "").replace("&", "")
+    # Replace spaces with hyphens
+    blog_title_md = blog_title_md.replace(" ", "-")
+    blog_title_md = re.sub('[^A-Za-z0-9-]', '', blog_title_md)
+    # Replace multiple consecutive dashes with a single dash
+    blog_title_md = re.sub('-+', '-', blog_title_md)
     blog_title_md = remove_stop_words(blog_title_md)
+    logger.debug(f"Blog Title is: {blog_title_md}")
 
-    if ':' in blog_meta_desc:
-        blog_meta_desc  = blog_meta_desc.split(':')[1].strip()
-
+    # Check if output path exists
     if not os.path.exists(output_path):
-        logger.error("Error: Blog output directory is set to {output_path}, which Does Not Exist.")
+        logger.error(f"Error: Blog output directory is set to {output_path}, which does not exist.")
+        raise FileNotFoundError(f"Output directory does not exist: {output_path}")
 
-    # Different output formats are plaintext, html and markdown.
-    if file_type in "md":
-        logger.info(f"Writing/Saving the resultant blog content in Markdown format.")
-        # fill the Front Matter as below at the top of the post: https://jekyllrb.com/docs/front-matter/
-        # date: YYYY-MM-DD HH:MM:SS +/-TTTT
-        from zoneinfo import ZoneInfo
-        tz=ZoneInfo('Asia/Kolkata')
-        dtobj = datetime.datetime.now(tz=ZoneInfo('Asia/Kolkata'))
-        formatted_date = f"{dtobj.strftime('%Y-%m-%d %H:%M:%S %z')}"
-
-        blog_frontmatter = f"""\
+    # Handle Markdown file type
+    if file_type == "md":
+        logger.info("Writing/Saving the resultant blog content in Markdown format.")
+        dtobj = datetime.datetime.now(ZoneInfo('Asia/Kolkata'))
+        formatted_date = dtobj.strftime('%Y-%m-%d %H:%M:%S %z')
+        blog_title = blog_title.replace(":", "-").replace('"', '')
+        blog_frontmatter = dedent(f"""\
                         ---
                         title: {blog_title}
                         date: {formatted_date}
                         categories: [{blog_categories}]
                         tags: [{blog_tags}]
-                        description: {blog_meta_desc}
+                        description: {blog_meta_desc.replace(":", "-")}
                         img_path: '/assets/'
                         image:
                             path: {os.path.basename(main_img_path)}
                             alt: {blog_title}
-                        ---\n\n"""
+                        ---\n\n""")
 
-        # Create a new file named YYYY-MM-DD-TITLE.EXTENSION and put it in the _posts of the root directory. 
-        # Please note that the EXTENSION must be one of md or markdown
         blog_output_path = os.path.join(
-                output_path,
-                f"{datetime.date.today().strftime('%Y-%m-%d')}-{blog_title_md}.md"
-                )
-        # Save the generated blog content to a file.
+            output_path,
+            f"{datetime.date.today().strftime('%Y-%m-%d')}-{blog_title_md}.md"
+        )
+
+        # Write to the file
         try:
             with open(blog_output_path, "w") as f:
-                f.write(dedent(blog_frontmatter))
+                f.write(blog_frontmatter)
                 f.write(blog_content)
         except Exception as e:
             raise Exception(f"Failed to write blog content: {e}")
-        logger.info(f"\nSuccessfully saved and Posted blog at: {blog_output_path,}\n")
+
+        logger.info(f"Successfully saved and posted blog at: {blog_output_path}")
 
 
 # Helper function
 def remove_stop_words(sentence):
-    # Tokenize the sentence into words
+    """
+    Removes stop words from a given sentence.
+
+    Args:
+        sentence (str): The sentence from which to remove stop words.
+
+    Returns:
+        str: The sentence after removing stop words.
+    """
     words = nltk.word_tokenize(sentence)
-
-    # Get the list of English stop words
     stop_words = set(stopwords.words('english'))
-
-    # Remove stop words from the sentence
     filtered_words = [word for word in words if word.lower() not in stop_words]
-
-    # Join the filtered words back into a sentence
-    filtered_sentence = ' '.join(filtered_words)
-
-    return filtered_sentence
+    return ' '.join(filtered_words)
