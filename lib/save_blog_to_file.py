@@ -14,8 +14,15 @@ logger.add(sys.stdout,
         format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
     )
 
+# fixme: Remove the hardcoding, need add another option OR in config ?
+image_dir = "blog_images"
+image_dir = os.path.join(os.getcwd(), image_dir)
+# TBD: This can come from config file.
+output_path = "blogs"
+output_path = os.path.join(os.getcwd(), output_path)
 
-def save_blog_to_file(blog_content, blog_title, blog_meta_desc, blog_tags, blog_categories, main_img_path, output_path, file_type="md"):
+
+def save_blog_to_file(blog_content, blog_title, blog_meta_desc, blog_tags, blog_categories, main_img_path=None, file_type="md"):
     """
     Saves the provided blog content to a file in the specified format.
 
@@ -33,6 +40,7 @@ def save_blog_to_file(blog_content, blog_title, blog_meta_desc, blog_tags, blog_
         FileNotFoundError: If the output_path does not exist.
         Exception: If the blog content cannot be written to the file.
     """
+    blog_frontmatter = ''
     # Sanitize and prepare the blog title
     # Remove colon and ampersand
     blog_title_md = blog_title.replace(":", "").replace("&", "")
@@ -55,18 +63,28 @@ def save_blog_to_file(blog_content, blog_title, blog_meta_desc, blog_tags, blog_
         dtobj = datetime.datetime.now(ZoneInfo('Asia/Kolkata'))
         formatted_date = dtobj.strftime('%Y-%m-%d %H:%M:%S %z')
         blog_title = blog_title.replace(":", "-").replace('"', '')
-        blog_frontmatter = dedent(f"""\
-                        ---
-                        title: {blog_title}
-                        date: {formatted_date}
-                        categories: [{blog_categories}]
-                        tags: [{blog_tags}]
-                        description: {blog_meta_desc.replace(":", "-")}
-                        img_path: '/assets/'
-                        image:
-                            path: {os.path.basename(main_img_path)}
-                            alt: {blog_title}
-                        ---\n\n""")
+        if main_img_path:
+            blog_frontmatter = dedent(f"""\
+                ---
+                title: {blog_title}
+                date: {formatted_date}
+                categories: [{blog_categories}]
+                tags: [{blog_tags}]
+                description: {blog_meta_desc.replace(":", "-")}
+                img_path: '/assets/'
+                image:
+                    path: {os.path.basename(main_img_path)}
+                    alt: {blog_title}
+                ---\n\n""")
+        else:
+            blog_frontmatter = dedent(f"""\
+                ---
+                title: {blog_title}
+                date: {formatted_date}
+                categories: [{blog_categories}]
+                tags: [{blog_tags}]
+                description: {blog_meta_desc.replace(":", "-")}
+                ---\n\n""")
 
         blog_output_path = os.path.join(
             output_path,

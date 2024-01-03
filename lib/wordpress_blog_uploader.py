@@ -19,6 +19,38 @@ logger.add(sys.stdout,
         format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
     )
 
+## Check if blog needs to be posted on wordpress.
+#if wordpress:
+## Fixme: Fetch all tags and categories to check, if present ones are present and
+## use them else create new ones. Its better to use chatgpt than string comparison.
+## Similar tags and categories will be missed.
+## blog_categories = 
+## blog_tags = 
+#logger.info("Uploading the blog to wordpress.\n")
+#main_img_path = compress_image(main_img_path, quality=85)
+#try:
+#    img_details = analyze_and_extract_details_from_image(main_img_path)
+#    alt_text = img_details.get('alt_text')
+#    img_description = img_details.get('description')
+#    img_title = img_details.get('title')
+#    caption = img_details.get('caption')
+#    try:
+#        media = upload_media(wordpress_url, wordpress_username, wordpress_password,
+#                main_img_path, alt_text, img_description, img_title, caption)
+#    except Exception as err:
+#        sys.exit(f"Error occurred in upload_media: {err}")
+#except Exception as e:
+#    sys.exit(f"Error occurred in analyze_and_extract_details_from_image: {e}")
+#
+## Then create the post with the uploaded media as the featured image
+#media_id = media['id']
+#blog_markdown_str = convert_markdown_to_html(blog_markdown_str)
+#try:
+#   upload_blog_post(wordpress_url, wordpress_username, wordpress_password, a_blog_topic,
+#       blog_markdown_str, media_id, blog_meta_desc, blog_categories, blog_tags, status='publish')
+#except Exception as err:
+#    sys.exit(f"Failed to upload blog to wordpress.Error: {err}")
+
 
 def compress_image(image_path, quality=85):
     """

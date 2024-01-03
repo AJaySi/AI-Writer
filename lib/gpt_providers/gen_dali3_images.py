@@ -51,11 +51,3 @@ def generate_dalle3_images(img_prompt, image_dir, size="1024x1024", quality="hd"
     except Exception as e:
         logger.error(f"Failed to generate images with Dalle3: {e}")
         sys.exit("Exiting due to a general error in image generation.")
-
-# Example usage
-if __name__ == "__main__":
-    try:
-        image_path = generate_dalle3_images("A futuristic cityscape", "/path/to/image/dir")
-        print(f"Image generated and saved at: {image_path}")
-    except SystemExit as e:
-        print(f"Terminated: {e}")

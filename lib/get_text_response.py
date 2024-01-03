@@ -34,7 +34,7 @@ from .get_tags import get_blog_tags
 from .get_blog_category import get_blog_categories
 from .convert_content_to_markdown import convert_tomarkdown_format
 from .convert_markdown_to_html import convert_markdown_to_html
-
+from .utils.youtube_keyword_research import research_yt
 from loguru import logger
 logger.remove()
 logger.add(sys.stdout,
@@ -57,12 +57,13 @@ wordpress_url = ''
 wordpress_username = ''
 wordpress_password = ''
 
-
 def generate_youtube_blog(yt_url_list, output_format="markdown"):
     """Takes a list of youtube videos and generates blog for each one of them.
     """
     # Use to store the blog in a string, to save in a *.md file.
     blog_markdown_str = ""
+    if isinstance(yt_url_list, str):
+        yt_url_list = [yt_url_list]
     for a_yt_url in yt_url_list:
         try:
             logger.info(f"Starting to write blog on URL: {a_yt_url}")
@@ -89,8 +90,8 @@ def generate_youtube_blog(yt_url_list, output_format="markdown"):
         except Exception as e:
             logger.error(f"Error in do_online_research: {e}")
             sys.exit(1)
+
         try:
-            # Note: Check if the order of input matters for your function
             logger.info("Preparing a blog content from audio script and online research content...")
             blog_markdown_str = blog_with_research(research_report, blog_markdown_str)
             logger.warning("\n\n--------------- Second Blog Draft after online research: --------\n\n")
@@ -102,7 +103,9 @@ def generate_youtube_blog(yt_url_list, output_format="markdown"):
 
         try:
             # Get the title and meta description of the blog.
+            logger.info("Generating Blog Description.")
             blog_meta_desc = generate_blog_description(blog_markdown_str, "gemini")
+            logger.info("Generating Blog Title.")
             title = generate_blog_title(blog_meta_desc, "gemini")
             logger.info(f"Title is {title} and description is {blog_meta_desc}")
             # Regex pattern to match 'Title:', 'title:', 'TITLE:', etc., followed by optional whitespace
@@ -110,9 +113,9 @@ def generate_youtube_blog(yt_url_list, output_format="markdown"):
             #blog_markdown_str = "# " + title.replace('"', '') + "\n\n"
 
             # Get blog tags and categories.
-            blog_tags = get_blog_tags(blog_meta_desc)
+            blog_tags = get_blog_tags(blog_meta_desc, "gemini")
             logger.info(f"Blog tags are: {blog_tags}")
-            blog_categories = get_blog_categories(blog_meta_desc)
+            blog_categories = get_blog_categories(blog_meta_desc, "gemini")
             logger.info(f"Blog categories are: {blog_categories}")
 
             # Generate an introduction for the blog
@@ -171,7 +174,7 @@ def generate_youtube_blog(yt_url_list, output_format="markdown"):
 
         except Exception as e:
             # raise assertionerror
-            logger.info(f"Error: Failed to generate_youtube_blog: {e}")
+            logger.error(f"Error: Failed to generate_youtube_blog: {e}")
             exit(1)
 
 

@@ -38,7 +38,7 @@ def youtube_to_blog(video_url):
 
     try:
         # Summarizing the content of the YouTube video
-        audio_blog_content = summarize_youtube_video_openai(audio_text, "gemini")
+        audio_blog_content = summarize_youtube_video(audio_text, "gemini")
         logger.info("Successfully converted given URL to blog article.")
         return audio_blog_content, audio_title
     except Exception as e:
@@ -47,7 +47,7 @@ def youtube_to_blog(video_url):
     return audio_blog_content
 
 
-def summarize_youtube_video(user_contenti, gpt_providers):
+def summarize_youtube_video(user_content, gpt_providers):
     """Generates a summary of a YouTube video using OpenAI GPT-3 and displays a progress bar. 
     Args:
       video_link: The URL of the YouTube video to summarize.
