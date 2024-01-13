@@ -36,4 +36,4 @@ def generate_blog_title(blog_article, gpt_providers="openai"):
             response = openai_chatgpt(prompt)
             return response
         except Exception as err:
-            SystemError(f"Error in generating blog summary: {err}") 
+            SystemError(f"Failed to get response from Openai: {err}") 

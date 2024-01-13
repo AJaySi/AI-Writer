@@ -44,27 +44,15 @@ def screenshot_api(url, generated_image_filepath):
 
     return generated_image_filepath
 
-
-def take_screenshot(url, generated_image_filepath, full_screenshot):
+def take_screenshot(url, generated_image_filepath):
     # Create a webdriver instance
     driver = webdriver.Chrome()
 
     # Navigate to the given url
     driver.get(url)
 
-    # Get the height of the webpage
-    page_height = driver.execute_script("return document.body.scrollHeight")
-
-    # Scroll down to the bottom of the webpage
-    for i in range(0, page_height, 100):
-        driver.execute_script(f"window.scrollTo(0, {i})")
-
-    # Get the total height of the webpage
-    total_height = driver.execute_script("return document.body.scrollHeight")
-
-    # Resize the webdriver window to the height of the webpage
-    if full_screenshot:
-        driver.set_window_size(800, total_height)
+    # Set a fixed window size (you can adjust this as needed)
+    driver.set_window_size(800, 600)
 
     # Take a screenshot of the webpage
     screenshot = driver.get_screenshot_as_png()

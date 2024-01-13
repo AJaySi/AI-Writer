@@ -22,6 +22,7 @@ logger.add(sys.stdout, colorize=True, format="<level>{level}</level>|<green>{fil
 from lib.get_text_response import generate_detailed_blog, generate_youtube_blog
 from lib.main_youtube_research_blog import generate_youtube_research_blog
 from lib.main_keywords_to_blog import generate_keyword_blog
+from lib.main_arxiv_to_blog import blog_arxiv_keyword, blog_arxiv_url_list
 
 
 def parse_arguments():
@@ -30,15 +31,24 @@ def parse_arguments():
     Returns:
         argparse.Namespace: Parsed arguments.
     """
-    parser = argparse.ArgumentParser(description="Generate blogs based on user input.")
+    example_usage = """
+    Example Usage:
+    Keyword usage: python pseo_main.py --keywords "Writesonic AI SEO-optimized blog writing,PepperType AI virtual content assistant,Copysmith AI enterprise eCommerce content,Copy AI artificial intelligence content generator,Jasper AI creative content platform,Contents generative AI content strategy"
+    YouTube usage: python pseo_main.py --youtube https://www.youtube.com/watch?v=yu27PWzJI_Y,https://www.youtube.com/watch?v=WGzoBD-xthI,https://www.youtube.com/watch?v=zizonToFXDs
+    Scholar usage: python pseo_main.py --scholar "GPT-4 Technical Report"
+    """
+
+    parser = argparse.ArgumentParser(description="Generate blogs based on user input.", epilog=example_usage, formatter_class=argparse.RawDescriptionHelpFormatter)
+    # Inputs csv, keywords, youtube_urls and scholar are mandatory.
     parser.add_argument("--csv", type=str, help="Provide path csv file. Check the template csv for example.")
     parser.add_argument("--keywords", type=str, help="Keywords for blog generation.")
-    parser.add_argument("--niche", action='store_true', default=False, help="Flag to generate niche blogs (default: False).")
-    parser.add_argument("--num_subtopics", type=int, default=6, help="Number of subtopics per blog (default: 6).")
     parser.add_argument("--youtube_urls", type=str, help="Comma-separated YouTube URLs for blog generation.")
+    parser.add_argument("--scholar", type=str, help="Write blog from latest research papers on given keywords. Use 'arxiv_papers_url' to provide a file arxiv url list.")
+    # Optional options.
+    parser.add_argument("--niche", action='store_true', default=False, help="Flag to generate niche blogs (default: False).")
     parser.add_argument("--wordpress", action='store_true', default=False, help="Flag to upload blogs to WordPress (default: False).")
-    parser.add_argument("--output_format", choices=['plaintext', 'markdown', 'html'], default='plaintext', help="Output format of the blogs (default: plaintext).")
-    parser.add_argument("--research", action='store_true', default=False, help="Flag to perform online research for given keywords (default: False).")
+    # Add options for blog_tone and blog_personality.
+    parser.add_argument("--output_format", choices=['plaintext', 'markdown', 'html'], default='markdown', help="Output format of the blogs (default: plaintext).")
 
     return parser.parse_args()
 
@@ -63,8 +73,8 @@ def main():
         args = parse_arguments()
         logger.info("Fetch and Validate Openai key.")
         # Validate user input
-        if not args.keywords and not args.youtube_urls and not args.csv:
-            raise ValueError("Either --keywords or --youtube_urls must be provided.")
+        if not args.keywords and not args.youtube_urls and not args.csv and not args.scholar:
+            raise ValueError("Either --keywords, --youtube_urls, --csv Or --scholar must be provided.")
 
         # Validate OpenAI API key
         openai_api_key = os.environ.get("OPENAI_API_KEY")
@@ -103,7 +113,25 @@ def main():
             except Exception as err:
                 logger.error(f"Failed to generate blogs the CSV file:{err}")
                 sys.exit(1)
-            
+
+        elif args.scholar:
+            logger.info(f"Writing blog on {args.scholar} from research papers of arxiv, google & Semantic scholar.")
+            # Write from arxiv urls given in a file.
+            if 'arxiv_papers_url' in args.scholar:
+                try:
+                    logger.info(f"Writing scholar blogs from arxiv url list.")
+                    blog_arxiv_url_list(args.scholar)
+                except Exception as err:
+                    logger.error(f"Failed to write from file {args.scholar} in present directory: {err}")
+                    sys.exit(1)
+            # Write scholar blogs from given keywords.
+            else:
+                try:
+                    blog_arxiv_keyword(args.scholar)
+                except Exception as err:
+                    logger.error(f"Failed to write blog from research papers: {err}")
+                    raise err
+
     except Exception as e:
         logger.error(f"An error occurred: {e}")
         sys.exit(1)

@@ -4,12 +4,13 @@ from .gpt_providers.gemini_pro_text import gemini_text_response
 
 def convert_tomarkdown_format(blog_content, gpt_provider="openai"):
     """ Helper for converting content to markdown format for static sites. """
-    prompt = f"""
-    As an expert in markdown language format and font matter,
+    
+    prompt = f"""As an expert in markdown language format and font matter,
     I will provide you with a blog post.
-    Your task is to improve formatting of given blog post.
+    Your task is to only Improve the formatting and structure of a blog post to enhance readability, visual appeal, and overall user experience. Do not alter the content of the provided blog. Modify only for the formatting.
+    Dont provide explanations, just your final response.
 
-    Use below guidelines to do formatting, structuring to make it highly readable:
+    Guidelines to do formatting:
     1. **Headings for Structure:**
    - Use # for the main title of the blog post.
    - Use ## for subheadings that divide the post into clear sections.
@@ -54,8 +55,6 @@ def convert_tomarkdown_format(blog_content, gpt_provider="openai"):
    - Keep the blog post organized and easy to navigate.
    - Use a consistent formatting style throughout the post.
     
-    Dont provide explanations, just your final response.
-    Convert the given blog post in well organised markdown content:\n
     Blog Post: '{blog_content}'"""
     
     if 'openai' in gpt_provider:
@@ -65,6 +64,10 @@ def convert_tomarkdown_format(blog_content, gpt_provider="openai"):
         except Exception as err:
             SystemError(f"Openai Error in converting to Markdown format.")
     elif 'gemini' in gpt_provider:
+
+        prompt = f""" Convert the given blog post into well structured MARKDOWN content. 
+        Do not alter the given blog post.
+        blog post: "{blog_content}" """
         try:
             response = gemini_text_response(prompt)
             return response

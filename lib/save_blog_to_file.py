@@ -2,6 +2,8 @@ import sys
 import os
 import re
 import datetime
+import random
+from dateutil.relativedelta import relativedelta
 from textwrap import dedent
 import logging
 from zoneinfo import ZoneInfo
@@ -20,6 +22,18 @@ image_dir = os.path.join(os.getcwd(), image_dir)
 # TBD: This can come from config file.
 output_path = "blogs"
 output_path = os.path.join(os.getcwd(), output_path)
+
+
+def random_date_last_three_months():
+    current_date = datetime.datetime.now(ZoneInfo('Asia/Kolkata'))
+    three_months_ago = current_date - relativedelta(months=3)
+
+    # Generate a random date between three_months_ago and current_date
+    random_date = three_months_ago + datetime.timedelta(
+        seconds=random.randint(0, int((current_date - three_months_ago).total_seconds()))
+    )
+
+    return random_date.strftime('%Y-%m-%d %H:%M:%S %z')
 
 
 def save_blog_to_file(blog_content, blog_title, blog_meta_desc, blog_tags, blog_categories, main_img_path=None, file_type="md"):
@@ -60,9 +74,11 @@ def save_blog_to_file(blog_content, blog_title, blog_meta_desc, blog_tags, blog_
     # Handle Markdown file type
     if file_type == "md":
         logger.info("Writing/Saving the resultant blog content in Markdown format.")
-        dtobj = datetime.datetime.now(ZoneInfo('Asia/Kolkata'))
-        formatted_date = dtobj.strftime('%Y-%m-%d %H:%M:%S %z')
-        blog_title = blog_title.replace(":", "-").replace('"', '')
+        # Hmmmm, bulk generation will benefit from randomizing publishing dates.
+        #dtobj = datetime.datetime.now(ZoneInfo('Asia/Kolkata'))
+        #formatted_date = dtobj.strftime('%Y-%m-%d %H:%M:%S %z')
+        formatted_date = random_date_last_three_months()
+        blog_title = blog_title.replace(":", "-").replace('"', '').replace('**', '')
         if main_img_path:
             blog_frontmatter = dedent(f"""\
                 ---
@@ -70,7 +86,7 @@ def save_blog_to_file(blog_content, blog_title, blog_meta_desc, blog_tags, blog_
                 date: {formatted_date}
                 categories: [{blog_categories}]
                 tags: [{blog_tags}]
-                description: {blog_meta_desc.replace(":", "-")}
+                description: {blog_meta_desc.replace(":", "-").replace('**', '')}
                 img_path: '/assets/'
                 image:
                     path: {os.path.basename(main_img_path)}
