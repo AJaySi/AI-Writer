@@ -93,13 +93,6 @@ def blog_arxiv_url_list(file_path):
     # Read already written IDs
     written_ids = read_written_ids('papers_already_written_on.txt')
 
-    # Write blogs on each of arxiv_id from the file.
-    for arxiv_id in extracted_ids:
-        # Check if we have already written on this research_paper. For this, all arxiv ids are written in
-        # a file called 'papers_already_written_on.txt'. If arxiv ID is found in this file, skip writing again.        
-        # YUP, use a DB. KISS for now.
-        written_ids = read_written_ids('papers_already_written_on.txt')
-
     # Loop through extracted IDs
     for arxiv_id in extracted_ids:
         if arxiv_id not in written_ids:
@@ -178,8 +171,8 @@ def blog_postprocessing(arxiv_id, research_review):
         save_blog_to_file(research_review, blog_title, blog_meta_desc, blog_tags,\
                 blog_categories, generated_image_filepath)
     except Exception as err:
-        logger.__repr__ror(f"Failed to save blog to a file: {err}")
-        raise err
+        logger.error(f"Failed to save blog to a file: {err}")
+        sys.exit(1)
 
 
 def take_paper_screenshot(arxiv_url):

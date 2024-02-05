@@ -32,11 +32,9 @@ def gemini_text_response(prompt):
     model = genai.GenerativeModel(model_name="gemini-pro", generation_config=generation_config)
     try:
         response = model.generate_content(prompt)
-
     except Exception as err:
         logger.error(f"Failed to get response from Gemini: {err}. Retrying.")
         # Try with minstral.
-        print(f"\n\n\n--MINSTRAL--\n\n\n\n")
-        response = mistral_text_response(prompt)
-        return response
+        #response = mistral_text_response(prompt)
+        #return response
     return response.text

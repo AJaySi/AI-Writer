@@ -1,0 +1,26 @@
+╒════════╤═══════════════════════════╤═════════════════════════════════════╤════════════════════════════════════════════════════╕
+│  Rank  │ Title                     │ Link                                │ Snippet                                            │
+╞════════╪═══════════════════════════╪═════════════════════════════════════╪════════════════════════════════════════════════════╡
+│   1    │ What is LlamaIndex?: How  │ https://nanonets.com/blog/llamainde │ The core essence of LlamaIndex lies in its ability │
+│        │ It Works, and Optimizing  │ x/                                  │ to build structured indices over ingested data,    │
+│        │ Data Query                │                                     │ represented as either Documents or Nodes.          │
+├────────┼───────────────────────────┼─────────────────────────────────────┼────────────────────────────────────────────────────┤
+│   2    │ Starter Tutorial -        │ https://docs.llamaindex.ai/en/lates │ The easiest way to get it is to download it via    │
+│        │ LlamaIndex 0.9.43         │ t/getting_started/starter_example.h │ this link and save it in a folder called data .    │
+│        │                           │ tml                                 │ Set ...                                            │
+├────────┼───────────────────────────┼─────────────────────────────────────┼────────────────────────────────────────────────────┤
+│   3    │ LlamaIndex: Adding        │ https://www.datacamp.com/tutorial/l │ You can download your resume by going on to the    │
+│        │ Personal Data to LLMs -   │ lama-index-adding-personal-data-to- │ Linkedin profile page, clicking on More, and then  │
+│        │ DataCamp                  │ llms                                │ Save to PDF.                                       │
+├────────┼───────────────────────────┼─────────────────────────────────────┼────────────────────────────────────────────────────┤
+│   4    │ LlamaIndex 0.9.43         │ https://docs.llamaindex.ai/         │ LlamaIndex is a data framework for LLM-based       │
+│        │                           │                                     │ applications to ingest, structure, and access      │
+│        │                           │                                     │ private or domain-specific data. It's available in │
+│        │                           │                                     │ Python (these docs) ...                            │
+├────────┼───────────────────────────┼─────────────────────────────────────┼────────────────────────────────────────────────────┤
+│   5    │ Generative AI: An         │ https://www.singlestore.com/blog/ge │ Delve into the world of LlamaIndex with this       │
+│        │ Absolute Beginner's Guide │ nerative-ai-a-guide-to-llamaindex/  │ comprehensive beginner's guide, including an       │
+│        │ to LlamaIndex             │                                     │ insightful tutorial.                               │
+╘════════╧═══════════════════════════╧═════════════════════════════════════╧════════════════════════════════════════════════════╛
+
+

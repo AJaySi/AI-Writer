@@ -1,0 +1,38 @@
+###################################################
+#
+# This is the main config file which drives the code.
+# This config will restrict code modifications and hence
+# ease of usuability.
+#
+##################################################
+
+
+###################################################
+#
+# Define Blog Content charateristics
+#
+###################################################
+
+blog_tone="professional, how-to, begginer, research, programming,"
+blog_character="???"
+blog_tempo="???"
+blog_audience="???"
+blog_geographic="COUNTRY, hyper local"
+
+search_intent="informational, commercial, company, news, finance, competitor, programming, scholar"
+search_language="EN"
+
+##################################################
+#
+# Blog postprocessing.
+#
+##################################################
+
+# Specify the output format of the blog as: HTML, markdown, plaintext. Defaults to markdown.
+blog_output_format="markdown"
+
+# Specify full path to folder where the final blog should be stored. ex: _posts
+blog_output_folder=""
+
+# Specify full path to folder where blog images will be stored. ex: assets
+blog_image_output_folder=""

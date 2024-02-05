@@ -1,0 +1,78 @@
+╒══════════════════════╤══════════════════════╤══════════════════╤══════════════════════════════════════════════════════════════╕
+│ URL                  │ Title                │ Published Date   │ Summary                                                      │
+╞══════════════════════╪══════════════════════╪══════════════════╪══════════════════════════════════════════════════════════════╡
+│ https://tech.dentsus │ LlamaIndexを使ってロ │ 2024-01-22       │ LlamaIndex Library using Retrieval Augmented Generation      │
+│ oken.com/entry/2024/ │ ーカル環境でRAGを実  │                  │ (RAG) to Implement Chatbot Systems Locally - LlamaIndex is a │
+│ 01/22/LlamaIndex%E3% │ 行する方法           │                  │ library for ingesting, structuring, and accessing private or │
+│ 82%92%E4%BD%BF%E3%81 │                      │                  │ domain-specific data to build LLM-based applications. - It   │
+│ %A3%E3%81%A6%E3%83%A │                      │                  │ facilitates local implementation of RAG, a technique that    │
+│ D%E3%83%BC%E3%82%AB% │                      │                  │ combines document search and LLM to generate responses with  │
+│ E3%83%AB%E7%92%B0%E5 │                      │                  │ reduced hallucination and improved accuracy. - The article   │
+│ %A2%83%E3%81%A7RAG%E │                      │                  │ provides a step-by-step guide for setting up a development   │
+│ 3%82%92%E5%AE%9F%E8% │                      │                  │ environment using WSL, devcontainer, and the LlamaIndex      │
+│ A1%8C%E3%81%99%E3%82 │                      │                  │ library. - It demonstrates RAG implementation using Python   │
+│ %8B%E6%96%B9%E6%B3%9 │                      │                  │ and explains how to configure the prompt, query engine, and  │
+│ 5                    │                      │                  │ other components. - The resulting chatbot can perform Q&A    │
+│                      │                      │                  │ tasks based on the provided context, as demonstrated with    │
+│                      │                      │                  │ examples using a text file derived from the青空文庫 novel    │
+│                      │                      │                  │ 走れメロス. - The author discusses potential improvements,   │
+│                      │                      │                  │ such as optimizing speed and accuracy.                       │
+├──────────────────────┼──────────────────────┼──────────────────┼──────────────────────────────────────────────────────────────┤
+│ https://blog.llamain │ LlamaIndex Blog      │ 2024-01-23       │ The LlamaIndex blog is the official blog of LlamaIndex,      │
+│ dex.ai/?gi=a117797fb │                      │                  │ featuring release updates, guides, community showcases, and  │
+│ bc8                  │                      │                  │ more. The blog contains articles from January 2023 and       │
+│                      │                      │                  │ earlier, with titles such as "LlamaIndex Newsletter,"        │
+│                      │                      │                  │ "Building Multi-Tenancy RAG System with LlamaIndex," "AI     │
+│                      │                      │                  │ Voice Assistant with LlamaIndex and GPT3.5," "Join Thousands │
+│                      │                      │                  │ in our Free Advanced RAG Certification," "Query Pipelines in │
+│                      │                      │                  │ LlamaIndex," and more. The blog also provides a cheat sheet  │
+│                      │                      │                  │ and recipes for building advanced RAG, as well as            │
+│                      │                      │                  │ information on scaling LlamaIndex with AWS and Hugging Face. │
+├──────────────────────┼──────────────────────┼──────────────────┼──────────────────────────────────────────────────────────────┤
+│ https://levelup.gitc │ Live Indexing for    │ 2024-01-08       │ - PDFs contain valuable information, but AI systems struggle │
+│ onnected.com/live-   │ RAG: A Guide For     │                  │ to process and understand them.   - RAG frameworks and LLMs  │
+│ indexing-for-rag-a-  │ Real-Time Indexing   │                  │ have evolved to provide a readily deployable platform for    │
+│ guide-for-real-time- │ Using LlamaIndex and │                  │ creating full-stack applications.   - With just a few lines  │
+│ indexing-using-      │ AWS                  │                  │ of code, LlamaIndex can be used to create a chat-with-PDFs   │
+│ llamaindex-and-aws-5 │                      │                  │ application.   - Additional work is still required by AI     │
+│ 1353083ace4?gi=472c9 │                      │                  │ engineers to create enterprise RAG applications, such as     │
+│ 89ddb71&source=rss   │                      │                  │ addressing the need to re-index and live update data         │
+│ ----5517fd7b58a6---4 │                      │                  │ sources.                                                     │
+├──────────────────────┼──────────────────────┼──────────────────┼──────────────────────────────────────────────────────────────┤
+│ https://dev.to/lgram │ Create Your Own      │ 2024-01-13       │ Sure, here is a summary of the content of the webpage you    │
+│ mel/create-your-own- │ Local Chatbot with   │                  │ provided:  The article explains how to create a local        │
+│ local-chatbot-with-  │ Next.js, Llama.cpp,  │                  │ chatbot using Next.js, Llama.cpp, and ModelFusion. The       │
+│ nextjs-llamacpp-and- │ and ModelFusion      │                  │ chatbot will run on the user's computer and will be able to  │
+│ modelfusion-461j     │                      │                  │ generate responses to user messages in real-time using the   │
+│                      │                      │                  │ OpenHermes 2.5 Mistral Large Language Model (LLM). To build  │
+│                      │                      │                  │ the chatbot, the user will need to set up Llama.cpp, create  │
+│                      │                      │                  │ a Next.js project, install the required libraries, configure │
+│                      │                      │                  │ an API route for the chatbot, add a chat interface, and      │
+│                      │                      │                  │ finally run the chatbot application. The full code for a     │
+│                      │                      │                  │ starter project with more examples can be found on GitHub.   │
+│                      │                      │                  │ The article includes step-by-step instructions, code         │
+│                      │                      │                  │ snippets, and a screenshot of what the chatbot interface     │
+│                      │                      │                  │ looks like when running. The author also provides a brief    │
+│                      │                      │                  │ introduction to each technology used and explains the        │
+│                      │                      │                  │ architecture of the chatbot.                                 │
+├──────────────────────┼──────────────────────┼──────────────────┼──────────────────────────────────────────────────────────────┤
+│ https://blog.llamain │ A Cheat Sheet and    │ 2024-01-05       │ This webpage shares a comprehensive RAG Cheat Sheet that     │
+│ dex.ai/a-cheat-      │ Some Recipes For     │                  │ provides motivations for RAG, techniques, and strategies for │
+│ sheet-and-some-      │ Building Advanced    │                  │ creating advanced RAG systems. It begins with Basic RAG,     │
+│ recipes-for-         │ RAG                  │                  │ where documents are retrieved from an external database and  │
+│ building-advanced-   │                      │                  │ passed along with the user query to an LLM for response      │
+│ rag-803a9d94c41b     │                      │                  │ generation. Two high-level success requirements for RAG are  │
+│                      │                      │                  │ defined: retrieval must find relevant documents, and         │
+│                      │                      │                  │ generation must use retrieved documents to answer user       │
+│                      │                      │                  │ queries. To achieve these requirements, advanced techniques  │
+│                      │                      │                  │ can address each requirement independently or                │
+│                      │                      │                  │ simultaneously. The webpage briefly describes chunk-size     │
+│                      │                      │                  │ optimization, structured external knowledge, and interleaved │
+│                      │                      │                  │ retrieval as advanced Retrieval techniques. For the          │
+│                      │                      │                  │ Generation component, advanced techniques include in-context │
+│                      │                      │                  │ learning, prompt engineering, and policy learning. The       │
+│                      │                      │                  │ provided RAG cheat sheet offers a visual representation of   │
+│                      │                      │                  │ these concepts.                                              │
+╘══════════════════════╧══════════════════════╧══════════════════╧══════════════════════════════════════════════════════════════╛
+
+

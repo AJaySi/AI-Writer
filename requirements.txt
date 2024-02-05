@@ -1,4 +1,5 @@
 aiofiles
+typer[all]
 aiohttp
 aiosignal
 annotated-types

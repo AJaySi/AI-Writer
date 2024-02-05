@@ -258,6 +258,15 @@ def arxiv_bibtex(arxiv_id):
 #search = GoogleSearch(params)
 #results = search.get_dict()
 
+#from llmsherpa.readers import LayoutPDFReader
+
+#llmsherpa_api_url = "https://readers.llmsherpa.com/api/document/developer/parseDocument?renderFormat=all"
+#pdf_url = "https://arxiv.org/pdf/1910.13461.pdf" # also allowed is a file path e.g. /home/downloads/xyz.pdf
+#pdf_reader = LayoutPDFReader(llmsherpa_api_url)
+#doc = pdf_reader.read_pdf(pdf_url)
+
+
+
 
 def extract_arxiv_ids_from_line(line):
     """

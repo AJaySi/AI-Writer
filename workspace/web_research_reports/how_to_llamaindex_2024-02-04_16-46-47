@@ -1,0 +1,83 @@
+╒════════════════════════════════╤══════════════════════════════════════════════════════════════╤════════════════════════════════╕
+│ Title                          │ Snippet                                                      │ Link                           │
+╞════════════════════════════════╪══════════════════════════════════════════════════════════════╪════════════════════════════════╡
+│ LlamaIndex: A Data Framework   │ Setting up LlamaIndex  LlamaIndex Use Cases  How LlamaIndex  │ https://www.datacamp.com/tutor │
+│ for the Large Language Models  │ Works?  to the LlamaIndex documentation.LlamaIndex is a data │ ial/llama-index-adding-        │
+│ ... - DataCamp                 │ framework for Large Language Models (LLMs) based             │ personal-data-to-llms          │
+│                                │ applications. LLMs like GPT-4 come pre-trained on massive    │                                │
+│                                │ public datasets, allowing for incredible natural language    │                                │
+│                                │ processing capabilities out of the box. However, their       │                                │
+│                                │ utility is limited without access to your own private data.  │                                │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────┼────────────────────────────────┤
+│ A Beginner's Guide to          │ What is LlamaIndex?  How LlamaIndex works  LlamaIndex core   │ https://dev.to/pavanbelagatti/ │
+│ LlamaIndex! - DEV Community    │ functionalities + applications  you'd like to index.How      │ a-beginners-guide-to-          │
+│                                │ LlamaIndex works LlamaIndex serves as a bridge, connecting   │ llamaindex-3mip                │
+│                                │ the powerful capabilities of LLMs with diverse data sources, │                                │
+│                                │ thereby unlocking a new realm of applications that can       │                                │
+│                                │ leverage the synergy between custom data and advanced        │                                │
+│                                │ language models.                                             │                                │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────┼────────────────────────────────┤
+│ What is LlamaIndex?: How It    │ Understanding LlamaIndex  Then follow either of the two      │ https://nanonets.com/blog/llam │
+│ Works, and Optimizing Data     │ approaches below - Creating Llamaindex Documents  LlamaIndex │ aindex/                        │
+│ Query - Nanonets               │ provides a high-level API that facilitates straightforward   │                                │
+│                                │ querying, ideal for common use cases.  LlamaIndex equips you │                                │
+│                                │ with a suite of tools to shape your knowledge                │                                │
+│                                │ base:LlamaIndex is your go-to platform for creating robust   │                                │
+│                                │ applications powered by Large Language Models (LLMs) over    │                                │
+│                                │ your customized data. Be it a sophisticated Q&A system, an   │                                │
+│                                │ interactive chatbot, or intelligent agents, LlamaIndex lays  │                                │
+│                                │ down the foundation for your ventures into the realm of      │                                │
+│                                │ Retrieval Augmented Generation (RAG).                        │                                │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────┼────────────────────────────────┤
+│ LlamaIndex 0.9.42.post1 - Read │ LlamaIndex is a data framework for LLM-based applications to │ https://docs.llamaindex.ai/en/ │
+│ the Docs                       │ ingest, structure, and access private or domain-specific  🦙 │ stable/                        │
+│                                │ How can LlamaIndex help?# LlamaIndex provides the following  │                                │
+│                                │ tools:  Getting Started# To install the library: pip install │                                │
+│                                │ llama-index  LLM to generate an answer immediately,          │                                │
+│                                │ LlamaIndex:LlamaIndex provides tools for beginners, advanced │                                │
+│                                │ users, and everyone in between. Our high-level API allows    │                                │
+│                                │ beginner users to use LlamaIndex to ingest and query their   │                                │
+│                                │ data in 5 lines of code. For more complex applications, our  │                                │
+│                                │ lower-level APIs allow advanced users to customize and       │                                │
+│                                │ extend any module—data connectors, indices, retrievers,      │                                │
+│                                │ query ...                                                    │                                │
+├────────────────────────────────┼──────────────────────────────────────────────────────────────┼────────────────────────────────┤
+│ Getting Started With           │ LlamaIndex does number 3. Here’s how it works:  Creating a   │ https://betterprogramming.pub/ │
+│ LlamaIndex - Better            │ new LlamaIndex Project  4. Store the Index  3. Index         │ getting-started-with-          │
+│ Programming                    │ Construction Actually, things do get simpler. Take a look at │ llamaindex-169bbf475a94        │
+│                                │ the code below:The basic workflow in LlamaIndex Starting     │                                │
+│                                │ with your documents, you first load them into LlamaIndex. It │                                │
+│                                │ comes with many ready-made readers for sources such as       │                                │
+│                                │ databases, Discord, Slack, Google Docs, Notion, and (the one │                                │
+│                                │ we will use today) GitHub repos. Next, you use LlamaIndex to │                                │
+│                                │ parse the documents into nodes — basically chunks of text.   │                                │
+╘════════════════════════════════╧══════════════════════════════════════════════════════════════╧════════════════════════════════╛
+
+
+╒══════════════════════════════════════════════════════════════════════════════════╕
+│ The answer to search query: how to llamaindex                                    │
+╞══════════════════════════════════════════════════════════════════════════════════╡
+│ LlamaIndex is a data framework for LLM-based applications that allows users to   │
+│ ingest, structure, and access private or domain-specific data. It provides tools │
+│ for beginners as well as advanced users. To get started with LlamaIndex, you can │
+│ install the library using the command "pip install llama-index". LlamaIndex      │
+│ offers a high-level API that enables beginners to ingest and query their data    │
+│ with just a few lines of code. For more complex applications, there are lower-   │
+│ level APIs available for customization and extension. LlamaIndex supports        │
+│ various data sources such as databases, Discord, Slack, Google Docs, Notion, and │
+│ GitHub repos. You can parse the documents into nodes using LlamaIndex. By        │
+│ connecting LLMs with diverse data sources, LlamaIndex unlocks new possibilities  │
+│ for applications that leverage the synergy between custom data and advanced      │
+│ language models.                                                                 │
+╘══════════════════════════════════════════════════════════════════════════════════╛
+
+
+╒════════════════════════════════════════════════════════════════════════════════╕
+│ Search Engine follow up questions for query: how to llamaindex                 │
+╞════════════════════════════════════════════════════════════════════════════════╡
+│ ['What is the purpose of llamaindex?', 'What are the benefits of using         │
+│ llamaindex?', 'Are there any alternative methods to achieve the same result as │
+│ llamaindex?']                                                                  │
+╘════════════════════════════════════════════════════════════════════════════════╛
+
+

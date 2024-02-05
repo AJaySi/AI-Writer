@@ -1,0 +1,100 @@
+╒══════════════════════╤══════════════════════╤══════════════════╤══════════════════════════════════════════════════════════════╕
+│ URL                  │ Title                │ Published Date   │ Summary                                                      │
+╞══════════════════════╪══════════════════════╪══════════════════╪══════════════════════════════════════════════════════════════╡
+│ https://tech.dentsus │ LlamaIndexを使ってロ │ 2024-01-22       │ - Retrieval-Augmented Generation (RAG) is a technique to     │
+│ oken.com/entry/2024/ │ ーカル環境でRAGを実  │                  │ improve the accuracy and reduce hallucination of Large       │
+│ 01/22/LlamaIndex%E3% │ 行する方法           │                  │ Language Models (LLMs) by providing relevant information     │
+│ 82%92%E4%BD%BF%E3%81 │                      │                  │ from a knowledge base. - LlamaIndex is a Python and          │
+│ %A3%E3%81%A6%E3%83%A │                      │                  │ Typescript framework specifically designed for implementing  │
+│ D%E3%83%BC%E3%82%AB% │                      │                  │ RAG-based applications. - To implement RAG locally, you can  │
+│ E3%83%AB%E7%92%B0%E5 │                      │                  │ use LlamaIndex and a GPU-enabled environment such as Windows │
+│ %A2%83%E3%81%A7RAG%E │                      │                  │ with WSL and devcontainer. - A step-by-step guide is         │
+│ 3%82%92%E5%AE%9F%E8% │                      │                  │ provided to build the local RAG implementation environment   │
+│ A1%8C%E3%81%99%E3%82 │                      │                  │ and execute the RAG system using LlamaIndex. - The           │
+│ %8B%E6%96%B9%E6%B3%9 │                      │                  │ implemented RAG system can answer questions based on the     │
+│ 5                    │                      │                  │ context derived from text files using a                      │
+│                      │                      │                  │ Multilingual-E5-large embedding model and ELYZA-japanese-    │
+│                      │                      │                  │ Llama LLM model. - Suggestions for improving the performance │
+│                      │                      │                  │ and accuracy of the RAG system are discussed, including      │
+│                      │                      │                  │ reducing query latency and optimizing context selection.     │
+├──────────────────────┼──────────────────────┼──────────────────┼──────────────────────────────────────────────────────────────┤
+│ https://levelup.gitc │ Live Indexing for    │ 2024-01-08       │ - The analysis of PDFs can be a challenging task for AI      │
+│ onnected.com/live-   │ RAG: A Guide For     │                  │ systems due to their complex information, such as nested     │
+│ indexing-for-rag-a-  │ Real-Time Indexing   │                  │ tables, figures, equations, and photos. - Large Language     │
+│ guide-for-real-time- │ Using LlamaIndex and │                  │ Models (LLMs) often make mistakes and produce hallucinations │
+│ indexing-using-      │ AWS                  │                  │ when analyzing PDFs. - RAG frameworks like LlamaIndex and    │
+│ llamaindex-and-aws-5 │                      │                  │ Langchain, along with the rise of LLMs, have transformed the │
+│ 1353083ace4?gi=472c9 │                      │                  │ ecosystem for creating full-stack applications. - LlamaIndex │
+│ 89ddb71&source=rss   │                      │                  │ is a prominent RAG framework that allows users to create     │
+│ ----5517fd7b58a6---4 │                      │                  │ chat-with-PDFs applications with minimal code. - To turn a   │
+│                      │                      │                  │ RAG application into an enterprise-grade application, AI     │
+│                      │                      │                  │ engineers need to address challenges like re-indexing and    │
+│                      │                      │                  │ live updating data.                                          │
+├──────────────────────┼──────────────────────┼──────────────────┼──────────────────────────────────────────────────────────────┤
+│ https://blog.llamain │ LlamaIndex Blog      │ 2024-01-23       │ - The LlamaIndex Blog is the official blog of LlamaIndex. -  │
+│ dex.ai/?gi=a117797fb │                      │                  │ Posts include release updates, guides, community showcases,  │
+│ bc8                  │                      │                  │ and more. - Recent posts discussed building a secure Multi-  │
+│                      │                      │                  │ Tenancy RAG System, enhancing accessibility in AI,           │
+│                      │                      │                  │ introducing Query Pipelines within LlamaIndex, scaling       │
+│                      │                      │                  │ LlamaIndex with AWS and Hugging Face, and more.              │
+├──────────────────────┼──────────────────────┼──────────────────┼──────────────────────────────────────────────────────────────┤
+│ https://blog.llamain │ A Cheat Sheet and    │ 2024-01-05       │ This web page provides a comprehensive overview of           │
+│ dex.ai/a-cheat-      │ Some Recipes For     │                  │ Retrieval-Augmented Generation (RAG) systems, covering the   │
+│ sheet-and-some-      │ Building Advanced    │                  │ basics, advanced techniques, and success requirements. RAG   │
+│ recipes-for-         │ RAG                  │                  │ involves retrieving relevant documents from an external      │
+│ building-advanced-   │                      │                  │ knowledge base and feeding them along with the user's query  │
+│ rag-803a9d94c41b     │                      │                  │ to a large language model (LLM) for response generation. To  │
+│                      │                      │                  │ ensure the success of a RAG system, both retrieval and       │
+│                      │                      │                  │ generation components must perform well. Advanced RAG        │
+│                      │                      │                  │ techniques focus on enhancing these components independently │
+│                      │                      │                  │ or simultaneously. The page presents sophisticated           │
+│                      │                      │                  │ techniques like Chunk-Size Optimization and Structured       │
+│                      │                      │                  │ External Knowledge to improve retrieval performance.         │
+│                      │                      │                  │ Additionally, it emphasizes the significance of prompt       │
+│                      │                      │                  │ engineering, explorative data analysis, and dataset          │
+│                      │                      │                  │ selection in developing effective RAG systems. The goal of   │
+│                      │                      │                  │ advanced RAG is to refine the system to generate high-       │
+│                      │                      │                  │ quality, informative, and relevant responses to user         │
+│                      │                      │                  │ queries.                                                     │
+├──────────────────────┼──────────────────────┼──────────────────┼──────────────────────────────────────────────────────────────┤
+│ https://dev.to/lgram │ Create Your Own      │ 2024-01-13       │ The webpage contains instructions and code to create a local │
+│ mel/create-your-own- │ Local Chatbot with   │                  │ chatbot using Next.js, Llama.cpp, and ModelFusion. Llama.cpp │
+│ local-chatbot-with-  │ Next.js, Llama.cpp,  │                  │ is used to serve the OpenHermes 2.5 Mistral LLM locally, the │
+│ nextjs-llamacpp-and- │ and ModelFusion      │                  │ Vercel AI SDK is used to handle stream forwarding and        │
+│ modelfusion-461j     │                      │                  │ rendering, and ModelFusion is used to integrate Llama.cpp    │
+│                      │                      │                  │ with the Vercel AI SDK. The chatbot is able to generate      │
+│                      │                      │                  │ responses to user messages in real time. Here is a summary   │
+│                      │                      │                  │ of the instructions:  1. **Set up Llama.cpp**    - Clone the │
+│                      │                      │                  │ Llama.cpp repository and build it on your machine.    -      │
+│                      │                      │                  │ Download the OpenHermes 2.5 Mistral GGUF model from          │
+│                      │                      │                  │ HuggingFace and move it to the models/ directory of your     │
+│                      │                      │                  │ local Llama.cpp repository.    - Start the Llama.cpp server. │
+│                      │                      │                  │ 2. **Create the Next.js Project**   - Create a new Next.js   │
+│                      │                      │                  │ project using the create-next-app command.   - Configure the │
+│                      │                      │                  │ project settings using the prompts.   - Navigate to the      │
+│                      │                      │                  │ project directory.  3. **Install the Required Libraries**    │
+│                      │                      │                  │ - Install the Vercel AI SDK, ModelFusion, and the            │
+│                      │                      │                  │ ModelFusion Vercel AI SDK Integration using the npm install  │
+│                      │                      │                  │ command.  4. **Create an API Route for the Chatbot**   -     │
+│                      │                      │                  │ Create a new file named route.ts in the src/app/api/chat/    │
+│                      │                      │                  │ directory.   - Import the necessary libraries and classes.   │
+│                      │                      │                  │ - Create a POST request that takes a list of messages as     │
+│                      │                      │                  │ input.   - Initialize a ModelFusion text generation model    │
+│                      │                      │                  │ and create a ModelFusion chat prompt from the AI SDK         │
+│                      │                      │                  │ messages.   - Use ModelFusion to call Llama.cpp and generate │
+│                      │                      │                  │ a streaming response.   - Return the streaming text response │
+│                      │                      │                  │ using the Vercel AI SDK.  5. **Add the Chat Interface**   -  │
+│                      │                      │                  │ Create a dedicated chat page at src/app/page.tsx.   - Use    │
+│                      │                      │                  │ the useChat hook from the Vercel AI SDK to call the          │
+│                      │                      │                  │ /api/chat route and process the streaming response.   -      │
+│                      │                      │                  │ Render the messages as they arrive.   - Clean up the global  │
+│                      │                      │                  │ styles for a more visually appealing chat interface.  6.     │
+│                      │                      │                  │ **Run the Chatbot Application**   - Launch the development   │
+│                      │                      │                  │ server using the npm run dev command.   - Navigate to        │
+│                      │                      │                  │ http://localhost:3000 in a browser to see the chat page.   - │
+│                      │                      │                  │ Interact with the chatbot by typing messages into the input  │
+│                      │                      │                  │ field.  The chatbot will be able to generate responses to    │
+│                      │                      │                  │ your messages in real-time.                                  │
+╘══════════════════════╧══════════════════════╧══════════════════╧══════════════════════════════════════════════════════════════╛
+
+
