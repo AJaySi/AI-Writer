@@ -47,33 +47,33 @@ def gpt_web_researcher(search_keywords, time_range=None, include_domains=list(),
     google_result = None
     tavily_result = None
     report = None
-#    try:
-#        logger.info(f"Doing Google search for: {search_keywords}\n")
-#        google_result = google_search(search_keywords)
-#        blog_titles.append(extract_info(google_result, "titles"))
-#    except Exception as err:
-#        logger.error(f"Failed to do Google Serpapi research: {err}")
-#        # Not failing, as tavily would do same and then GPT-V to search.
-#
-#    try:
-#        # FIXME: Include the follow-up questions as blog FAQs.
-#        logger.info(f"Doing Tavily AI search for: {search_keywords}")
-#        tavily_result = get_tavilyai_results(search_keywords, include_domains)
-#        blog_titles.append(tavily_extract_information(tavily_result, "titles"))
-#    except Exception as err:
-#        logger.error(f"Failed to do Tavily AI Search: {err}")
+    try:
+        logger.info(f"Doing Google search for: {search_keywords}\n")
+        google_result = google_search(search_keywords)
+        blog_titles.append(extract_info(google_result, "titles"))
+    except Exception as err:
+        logger.error(f"Failed to do Google Serpapi research: {err}")
+        # Not failing, as tavily would do same and then GPT-V to search.
 
-#    try:
-#        logger.info(f"Start Semantic/Neural web search with Metahpor: {search_keywords}")
-#        response_articles = metaphor_search_articles(
-#                search_keywords, 
-#                include_domains=include_domains, 
-#                time_range=time_range,
-#                similar_url=similar_url)
-#        blog_titles.append(metaphor_extract_titles_or_text(response_articles, return_titles=True))
-#    except Exception as err:
-#        logger.error(f"Failed to do Metaphor search: {err}")
-#    print(blog_titles)
+    try:
+        # FIXME: Include the follow-up questions as blog FAQs.
+        logger.info(f"Doing Tavily AI search for: {search_keywords}")
+        tavily_result = get_tavilyai_results(search_keywords, include_domains)
+        blog_titles.append(tavily_extract_information(tavily_result, "titles"))
+    except Exception as err:
+        logger.error(f"Failed to do Tavily AI Search: {err}")
+
+    try:
+        logger.info(f"Start Semantic/Neural web search with Metahpor: {search_keywords}")
+        response_articles = metaphor_search_articles(
+                search_keywords, 
+                include_domains=include_domains, 
+                time_range=time_range,
+                similar_url=similar_url)
+        blog_titles.append(metaphor_extract_titles_or_text(response_articles, return_titles=True))
+    except Exception as err:
+        logger.error(f"Failed to do Metaphor search: {err}")
+    print(blog_titles)
 
     try:
         logger.info(f"Do Google Trends analysis for given keywords: {search_keywords}")
@@ -85,18 +85,7 @@ def gpt_web_researcher(search_keywords, time_range=None, include_domains=list(),
     # 1. Return a list of related keywords along with search volumes.
     # 2. New blog titles to write on(niche, top) and blog sections.
     # 3. Competitors list, similar urls if given.
-
-
-class Result(NamedTuple):
-    url: str
-    id: str
-    title: str
-    score: float
-    published_date: str
-    author: str
-    text: str
-    highlights: List[str]
-    highlight_scores: List[float]
+    print(f"\n\nReview the analysis in this file at: {os.environ.get('SEARCH_SAVE_FILE')}\n")
 
 
 def metaphor_extract_titles_or_text(json_data, return_titles=True):
@@ -110,12 +99,10 @@ def metaphor_extract_titles_or_text(json_data, return_titles=True):
     Returns:
         list: List of titles or text.
     """
-    result_list = [Result(**result) for result in json_data]
-
     if return_titles:
-        return [result.title for result in result_list]
+        return [(result.title) for result in json_data]
     else:
-        return [result.text for result in result_list]
+        return [result.text for result in json_data]
 
 
 def extract_info(json_data, info_type):

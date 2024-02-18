@@ -129,18 +129,18 @@ def print_result_table(output_data):
         logger.error(f"Failed to save search results: {save_results_err}")
     
     # Display the 'follow_up_questions' in a table
-    table_headers = [f"Search Engine follow up questions for query: {output_data.get('query')}"]
-    table_data = [[output_data.get("follow_up_questions")]]
-    table = tabulate(table_data, 
+    if output_data.get("follow_up_questions"):
+        table_headers = [f"Search Engine follow up questions for query: {output_data.get('query')}"]
+        table_data = [[output_data.get("follow_up_questions")]]
+        table = tabulate(table_data, 
             headers=table_headers, 
             tablefmt="fancy_grid",
             maxcolwidths=[80])
-    print(table)
-    # Save the combined table to a file
-    try:
-        save_in_file(table)
-    except Exception as save_results_err:
-        logger.error(f"Failed to save search results: {save_results_err}")
+        print(table)
+        try:
+            save_in_file(table)
+        except Exception as save_results_err:
+            logger.error(f"Failed to save search results: {save_results_err}")
 
 
 def save_in_file(table_content):

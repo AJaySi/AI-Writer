@@ -142,10 +142,11 @@ def metaphor_search_articles(query,
             logger.error(f"Failed in metaphor.search_and_contents: {err}")
         
         # From each webpage, get a summary of the web page.
+        print(search_response)
         contents_response = search_response.results
-        for content in tqdm(contents_response, desc="Reading Web URL content:", unit="content"):
-            summarized_content = summarize_web_content(content.text, "gemini")
-            content.text = summarized_content
+#        for content in tqdm(contents_response, desc="Reading Web URL content:", unit="content"):
+#            summarized_content = summarize_web_content(content.text, "gemini")
+#            content.text = summarized_content
         
         print_search_result(contents_response)
 

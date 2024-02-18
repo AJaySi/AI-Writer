@@ -7,7 +7,7 @@ Features:
 - Visualizes Google Trends data, including interest over time and interest by region.
 - Retrieves related queries and topics for a set of search keywords.
 - Utilizes visualization libraries such as Matplotlib, Plotly, and Rich for displaying results.
-- Incorporates logging for error handling and informative messages.
+- Incorporates logger.for error handling and informative messages.
 
 Usage:
 - Provide a search term or a list of search terms for analysis.
@@ -22,6 +22,7 @@ Modifications:
 Note: Ensure that the required libraries are installed using 'pip install pytrends requests_html tqdm tabulate plotly rich'.
 """
 
+import os
 import requests
 import numpy as np
 import sys
@@ -37,14 +38,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.io as pio
-import logging
 from requests_html import HTML, HTMLSession
 from urllib.parse import quote_plus
 from tqdm import tqdm
 from tabulate import tabulate
 from pytrends.request import TrendReq
-import wordcloud
-logging.basicConfig(level=logging.INFO)
+from wordcloud import WordCloud
 from loguru import logger
 
 # Configure logger
@@ -75,7 +74,7 @@ def fetch_google_trends_interest_overtime(keyword):
 
         return data
     except Exception as e:
-        logging.error(f"Error in fetch_google_trends_data: {e}")
+        logger.error(f"Error in fetch_google_trends_data: {e}")
         return pd.DataFrame()
 
 
@@ -151,10 +150,11 @@ def get_related_queries_and_save_csv(keywords, hl='en-US', tz=360, cat=0, timefr
         print("\n\033[1m🔝 Top\033[0m: The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often, and a value of 0 is a query searched for less than 1% as often as the most popular query.\n")
         print("\n\033[1m🚀 Rising\033[0m: Queries with the biggest increase in search frequency since the last time period. Results marked 'Breakout' had a tremendous increase, probably because these queries are new and had few (if any) prior searches.\n")
         # Display the DataFrame using tabulate
-        print(tabulate(all_queries_df, headers='keys', tablefmt='fancy_grid'))
+        table = tabulate(all_queries_df, headers='keys', tablefmt='fancy_grid')
+        print(table)
         # Save the combined table to a file
         try:
-            save_in_file(all_queries_df)
+            save_in_file(table)
         except Exception as save_results_err:
             logger.error(f"Failed to save search results: {save_results_err}")
         return top_rising_queries
@@ -178,6 +178,7 @@ def get_related_topics_and_save_csv(search_keywords):
         pytrends = TrendReq(hl='en-US', tz=360)
         
         # Build payload
+        # FIXME: Remove hardcoding.
         pytrends.build_payload(search_keywords, cat=0, timeframe='today 12-m')
 
         # Get related topics
@@ -198,10 +199,7 @@ def get_related_topics_and_save_csv(search_keywords):
         # Rename columns to avoid duplicates and provide meaningful names
         df_top_topics.columns = ['Top- ' + col if col != 'topic_title' else col for col in df_top_topics.columns]
         df_rising_topics.columns = ['Rising- ' + col if col != 'topic_title' else col for col in df_rising_topics.columns]
-
-        # Save to CSV
         all_topics_df = pd.concat([df_top_topics, df_rising_topics], axis=1)
-        #all_topics_df.to_csv('related_topics.csv', index=False)
 
         print(f"\n\n 📢❗🚨 Rising and Trending Keywords for {search_keywords}\n")
         print("\033[1m🔝 Top\033[0m: The most popular search topics.")
@@ -209,11 +207,15 @@ def get_related_topics_and_save_csv(search_keywords):
         # Display the DataFrame using tabulate
         pd.set_option('display.max_rows', all_topics_df.shape[0]+1)
         print(all_topics_df.head(10))
-        #print(tabulate(all_topics_df, headers='keys', tablefmt='fancy_grid'))
+        table = tabulate(all_topics_df, headers='keys', tablefmt='fancy_grid')
+        try:
+            save_in_file(table)
+        except Exception as save_results_err:
+            logger.error(f"Failed to save search results: {save_results_err}")
         return all_topics_df
 
     except Exception as e:
-        print(f"ERROR: An error occurred: {e}")
+        print(f"ERROR: An error occurred in related topics: {e}")
         return pd.DataFrame()
 
 
@@ -224,7 +226,7 @@ def get_source(url):
         response.raise_for_status()  # Raise an HTTPError for bad responses
         return response
     except requests.exceptions.RequestException as e:
-        logging.error(f"Error during HTTP request: {e}")
+        logger.error(f"Error during HTTP request: {e}")
         return None
 
 
@@ -240,10 +242,10 @@ def get_results(query):
         else:
             return None
     except json.JSONDecodeError as e:
-        logging.error(f"Error decoding JSON response: {e}")
+        logger.error(f"Error decoding JSON response: {e}")
         return None
     except requests.exceptions.RequestException as e:
-        logging.error(f"Error during HTTP request: {e}")
+        logger.error(f"Error during HTTP request: {e}")
         return None
 
 
@@ -256,7 +258,7 @@ def format_results(results):
             suggestions.append(suggestion)
         return suggestions
     except (KeyError, IndexError) as e:
-        logging.error(f"Error parsing search results: {e}")
+        logger.error(f"Error parsing search results: {e}")
         return []
 
 
@@ -288,7 +290,7 @@ def get_expanded_terms(query):
 
         return terms
     except Exception as e:
-        logging.error(f"Error in get_expanded_terms: {e}")
+        logger.error(f"Error in get_expanded_terms: {e}")
         return []
 
 
@@ -307,7 +309,7 @@ def get_expanded_suggestions(query):
 
         return all_results
     except Exception as e:
-        logging.error(f"Error in get_expanded_suggestions: {e}")
+        logger.error(f"Error in get_expanded_suggestions: {e}")
         return []
 
 
@@ -321,10 +323,14 @@ def get_suggestions_for_keyword(search_term):
         #expanded_results_df.to_csv('results.csv', index=False)
         pd.set_option('display.max_rows', expanded_results_df.shape[0]+1)
         expanded_results_df.drop_duplicates('Keywords', inplace=True)
-
+        table = tabulate(expanded_results_df, headers=['Keywords', 'Relevance'], tablefmt='fancy_grid')
+        try:
+            save_in_file(table)
+        except Exception as save_results_err:
+            logger.error(f"Failed to save search results: {save_results_err}")
         return expanded_results_df
     except Exception as e:
-        logging.error(f"get_suggestions_for_keyword: Error in main: {e}")
+        logger.error(f"get_suggestions_for_keyword: Error in main: {e}")
 
 
 
@@ -355,7 +361,7 @@ def perform_keyword_clustering(expanded_results_df, num_clusters=5):
 
         return expanded_results_df
     except Exception as e:
-        logging.error(f"Error in perform_keyword_clustering: {e}")
+        logger.error(f"Error in perform_keyword_clustering: {e}")
         return pd.DataFrame()
 
 
@@ -404,7 +410,7 @@ def visualize_silhouette(X, labels):
 
         plt.show()
     except Exception as e:
-        logging.error(f"Error in visualize_silhouette: {e}")
+        logger.error(f"Error in visualize_silhouette: {e}")
 
 
 
@@ -435,9 +441,9 @@ def print_and_return_top_keywords(expanded_results_df, num_clusters=5):
     table = tabulate(top_keywords_df, headers='keys', tablefmt='fancy_grid')
     # Save the combined table to a file
     try:
-        save_in_file(top_keywords_df)
+        save_in_file(table)
     except Exception as save_results_err:
-        logger.error(f"Failed to save search results: {save_results_err}")
+        logger.error(f"🚨 Failed to save search results: {save_results_err}")
     print(table)
     return top_keywords_df
 
@@ -484,11 +490,15 @@ def do_google_trends_analysis(search_term):
         for asearch_term in search_term:
             #FIXME: Lets work with a single root keyword.
             suggestions_df = get_suggestions_for_keyword(asearch_term)
+            if len(suggestions_df['Keywords']) > 10:
+                result_df = perform_keyword_clustering(suggestions_df)
+                # Display top keywords in each cluster
+                top_keywords = print_and_return_top_keywords(result_df)
+                all_the_keywords.append(top_keywords['Keywords'].tolist())
+            else:
+                all_the_keywords.append(suggestions_df['Keywords'].tolist())
+            all_the_keywords = ','.join([', '.join(filter(None, map(str, sublist))) for sublist in all_the_keywords])
 
-            result_df = perform_keyword_clustering(suggestions_df)
-            # Display top keywords in each cluster
-            top_keywords = print_and_return_top_keywords(result_df)
-            all_the_keywords.append(top_keywords['Keywords'].tolist())
 #        
 #        # FIXME: Get result from vision GPT. Fetch and visualize Google Trends data
 #        #trends_data = fetch_google_trends_interest_overtime("llamaindex")
@@ -496,23 +506,17 @@ def do_google_trends_analysis(search_term):
 #        # FIXME: Plot Interest Over time.
 #        result_df = plot_interest_by_region(search_term)
 #        
-#        # Display additional information
+        # Display additional information
         result_df = get_related_topics_and_save_csv(search_term)
         # Extract 'Top' topic_title
         top_topic_title = result_df['topic_title'].values.tolist()
-
         # Join each sublist into one string separated by comma
         #top_topic_title = [','.join(filter(None, map(str, sublist))) for sublist in top_topic_title]
         top_topic_title = ','.join([', '.join(filter(None, map(str, sublist))) for sublist in top_topic_title])
 
-        print(f"\nRising and Top keywords: {top_topic_title}")
-        # Print or use the extracted topic titles
-        all_the_keywords = ','.join([', '.join(filter(None, map(str, sublist))) for sublist in all_the_keywords])
-        print(f"\n\n📢❗🚨 Important keywords to target: {all_the_keywords}\n\n")
-        all_the_keywords += top_topic_title
-        print(all_the_keywords)
+        # TBD: Not getting great results OR unable to understand them.
+        #all_the_keywords += top_topic_title
         all_the_keywords = all_the_keywords.split(',')
-        
         # Split the list into chunks of 5 keywords
         chunk_size = 4
         chunks = [all_the_keywords[i:i + chunk_size] for i in range(0, len(all_the_keywords), chunk_size)]
@@ -520,11 +524,15 @@ def do_google_trends_analysis(search_term):
         combined_df = pd.DataFrame(chunks, columns=[f'K📢eyword Col{i + 1}' for i in range(chunk_size)])
         
         # Print the table
-        print(tabulate(combined_df, headers='keys', tablefmt='fancy_grid'))
-        #combined_df = pd.DataFrame({'📢❗🚨 Important keywords to target': chunks})
+        table = tabulate(combined_df, headers='keys', tablefmt='fancy_grid')
+        # Save the combined table to a file
+        try:
+            save_in_file(table)
+        except Exception as save_results_err:                 
+            logger.error(f"Failed to save search results: {save_results_err}")
+        print(table)
         
-        print(all_the_keywords)
-        generate_wordcloud(all_the_keywords.split(','))
+        #generate_wordcloud(all_the_keywords)
         return(all_the_keywords)
     except Exception as e:
-        logging.error(f"Error in main: {e}")
+        logger.error(f"Error in Google Trends Analysis: {e}")

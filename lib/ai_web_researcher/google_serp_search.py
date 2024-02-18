@@ -213,7 +213,6 @@ def process_search_results(search_results):
     data = []
     logger.info(f"Google Search Parameters: {search_results.get('searchParameters', {})}")
     organic_results = search_results.get("organic", [])
-    print(search_results)
 
     # Displaying Organic Results
     organic_data = []

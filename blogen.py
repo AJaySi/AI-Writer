@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+import requests
 import typer
 from PyInquirer import prompt
 from rich import print
@@ -23,7 +24,7 @@ def prompt_for_time_range():
             'type': 'list',
             'name': 'time_range',
             'message': '👋 Select Search result time range:',
-            'choices': ["past day", "past week", "past month", "past year", "anytime"],
+            'choices': ["anytime", "past year", "past month", "past week", "past day"],
         }
     ]
     answers = prompt(questions)
@@ -86,7 +87,7 @@ def start_interactive_mode():
                 3. Get from NewsApi
                 4. Get YOU.com News.""")
     elif mode == 'Quit':
-        typer.echo("Exiting, Fuck Off!")
+        typer.echo("Exiting, F*** Off!")
         raise typer.Exit()
 
 
@@ -176,7 +177,8 @@ def do_web_research():
         while True:
             print("________________________________________________________________")
             search_keywords = typer.prompt("👋 Enter keywords for web research:")
-            if search_keywords and len(search_keywords.split()) >= 3:
+            # Giving a single keywords, yields bad results.
+            if search_keywords and len(search_keywords.split()) >= 2:
                 break
             else:
                 print("🚫 Search keywords should be at least three words long. Please try again.")
@@ -225,5 +227,25 @@ def do_web_research():
             print(f"\n💥🤯 [bold red]ERROR 🤯 : Failed to do web research: {err}\n")
 
 
+def check_internet():
+    try:
+        # Attempt to send a GET request to a well-known website
+        response = requests.get("http://www.google.com", timeout=20)
+        if not response.status_code == 200:
+            print("💥🤯 WTFish, Internet is NOT available. Enjoy the wilderness..")
+            exit(1)
+        else:
+            return
+    except requests.ConnectionError:
+        print("💥🤯 WTFish: Internet is NOT available. Enjoy the wilderness..")
+        exit(1)
+    except requests.Timeout:
+        print("Request timed out. Internet might be slow.")
+        exit(1)
+    except Exception as e:
+        print("Internet: An error occurred:", e)
+        exit(1)
+
 if __name__ == "__main__":
+    check_internet()
     app()
