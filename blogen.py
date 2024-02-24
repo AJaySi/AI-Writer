@@ -13,7 +13,8 @@ load_dotenv(Path('.env'))
 app = typer.Typer()
 
 from lib.ai_web_researcher.gpt_online_researcher import gpt_web_researcher
-
+from lib.ai_web_researcher.metaphor_basic_neural_web_search import metaphor_find_similar
+from lib.ai_writers.keywords_to_blog import write_blog_from_keywords
 
 
 def prompt_for_time_range():
@@ -36,7 +37,8 @@ def write_blog_options():
             'type': 'list',
             'name': 'blog_type',
             'message': '📝 Choose a blog type:',
-            'choices': ['Keywords', 'Audio YouTube', 'GitHub', 'Scholar', 'Quit'],
+            'choices': ['Keywords', 'Audio YouTube', 'Programming', 
+                'Scholar', 'News/TBD','Finance/TBD', 'Quit'],
         }
     ]
     answers = prompt(questions)
@@ -55,6 +57,7 @@ def start_interactive_mode():
     text.append("\n⚠️    Alert!   💥❓💥\n", style="bold red") 
     text.append("If you know what to write, choose 'Write Blog'\n", style="bold blue")
     text.append("If unsure, lets 'do web research' to write on\n", style="bold red")
+    text.append("If Testing-it-out/getting-started, choose 'Blog Tools\n", style="bold green")
     text.append("_______________________________________________________________________\n")
 
     print(text)
@@ -64,28 +67,29 @@ def start_interactive_mode():
             'type': 'list',
             'name': 'mode',
             'message': 'Choose an option:',
-            'choices': ['Write Blog', 'Do Web Research', 'Competitor Analysis', 'FAQ Generator', 'Quit'],
+            'choices': ['Write Blog', 'Do keyword Research', 'Create Blog Images',
+                'Competitor Analysis', 'Blog Tools', 'Quit'],
         }
     ]   
     answers = prompt(questions)
     mode = answers['mode']
     if mode == 'Write Blog':
         write_blog()
-    elif mode == 'Do Web Research':
+    elif mode == 'Do keyword Research':
         do_web_research()
-    elif mode == 'FAQ Generator':
+    elif mode == 'Create Blog Images':
         faq_generator()
     elif mode == 'Competitor Analysis':
-        # https://github.com/com-puter-tips/SEO-Analysis
-        # https://github.com/sundios/SEO-Lighthouse-Multiple-URLs
-        # https://github.com/Gingerbreadfork/Cutlery
         # Metaphor similar search
         competitor_analysis()
-    elif mode == 'News Analysis':
+    elif mode == 'Recent News Summarizer':
         print("""1. Get tavily News.
                 2. Get metaphor news.
                 3. Get from NewsApi
                 4. Get YOU.com News.""")
+        recent_news_summarizer()
+    elif mode == 'Blog Tools':
+        blog_tools()
     elif mode == 'Quit':
         typer.echo("Exiting, F*** Off!")
         raise typer.Exit()
@@ -130,7 +134,7 @@ def check_environment_variables():
 
     if missing_keys:
         print("\nMost are Free APIs and really worth your while signing up for them.")
-        print(":pile_of_poo::pile_of_poo::pile_of_poo: GO GET THEM, on above urls. [bold red]")
+        print(":pile_of_poo: :pile_of_poo: GO GET THEM, on above urls. [bold red]")
         print("Note: They offer free/limited api calls, so we use most of them to have a lot of free api calls.")
         print("\n[bold red]TBD: Provide option to use user defined search engines.\n")
         for key, description in missing_keys:
@@ -138,11 +142,84 @@ def check_environment_variables():
     else:
         return True
 
+
+def check_llm_environs():
+    """ Function to check which LLM api is given. """
+    gpt_provider = os.getenv("GPT_PROVIDER")
+    
+    if gpt_provider == "google":
+        api_key_var = "GEMINI_API_KEY"
+        missing_api_msg = f"To get your {api_key_var}, please visit: https://aistudio.google.com/app/apikey"
+    elif gpt_provider == "openai":
+        api_key_var = "OPENAI_API_KEY"
+        missing_api_msg = "To get your OpenAI API key, please visit: https://openai.com/blog/openai-api"
+    else:
+        typer.echo("Unsupported GPT provider specified in GPT_PROVIDER environment variable.")
+        return
+
+    if os.getenv(api_key_var) is None:
+        typer.echo(f"The {api_key_var} environment variable is missing.")
+        typer.echo(missing_api_msg)
+        api_key = typer.prompt(f"Please enter your {api_key_var} API Key:")
+        # Update .env file
+        with open(".env", "a") as env_file:
+            env_file.write(f"{api_key_var}={api_key}\n")
+        typer.echo(f"{api_key_var} API Key added to .env file.")
+        return
+
+    if gpt_provider == "openai" and os.getenv("OPENAI_API_KEY") is None:
+        typer.echo("To get your OpenAI API key, please visit: https://openai.com/blog/openai-api") 
+
+
 def faq_generator():
     return
 
 
+def blog_tools():
+    """ Blogging Aid Tools """
+    os.system("clear" if os.name == "posix" else "cls")
+    text = Text()
+    text.append("_______________________________________________________________________")
+    text.append("\n⚠️    Alert!   💥❓💥\n", style="bold red")
+    text.append("Collection of Helpful Blogging Tools, powered by LLMs.\n", style="bold green")
+    text.append("_______________________________________________________________________\n")
+
+    print(text)
+
+    # https://developers.google.com/speed/docs/insights/v5/get-started
+    questions = [
+        {
+            'type': 'list',
+            'name': 'mode',
+            'message': 'Choose a Blogging Tool:',
+            'choices': ['Write Blog Title', 'Write Blog Meta Description', 'Write Blog Introduction',
+                'Write Blog conclusion', 'Write Blog Outline', 'Generate Blog FAQs', 'Research blog referances',
+                'Convert Blog To HTML', 'Convert Blog To Markdown', 'Blog Proof Reader',
+                'Get Blog Tags', 'Get blog categories', 'Get Blog Code Examples', 'Quit',
+                'Check WebPage Performance',],
+        }
+    ]
+    answers = prompt(questions)
+    mode = answers['mode']
+    if mode == 'Write Blog Title':
+        return
+
+    
 def competitor_analysis():
+    """ Do metaphor similar search """
+    text = Text()
+    text.append("_______________________________________________________________________")
+    text.append("\n⚠️    Alert!   💥❓💥\n", style="bold red")
+    text.append("Provide competitor's URL, get details of similar/alternative companies.\n", style="bold red")
+    text.append("Usecases: Know similar companies and alternatives, to given URL\n", style="bold blue")
+    text.append("_______________________________________________________________________\n")
+    print(text)
+    similar_url = typer.prompt(f"Enter Valid URL to get web analysis")
+
+    try:
+        metaphor_find_similar(similar_url)
+    except Exception as err:
+        print(f"[bold red]✖ 🚫 Failed to do similar search.\nError:{err}[/bold red]")
     return
 
 
@@ -153,8 +230,7 @@ def write_blog():
     blog_type = write_blog_options()
 
     if blog_type == 'Keywords':
-        keywords = typer.prompt("Enter keywords for blog generation:")
-        print(f"Write blog based on keywords: {keywords}")
+        blog_from_keyword()
     elif blog_type == 'Audio YouTube':
         audio_youtube = typer.prompt("Enter YouTube URL for audio blog generation:")
         print(f"Write audio blog based on YouTube URL: {audio_youtube}")
@@ -165,8 +241,16 @@ def write_blog():
         scholar = typer.prompt("Enter research papers keywords:")
         print(f"Write blog based on scholar: {scholar}")
     elif blog_type == 'Quit':
-        typer.echo("Exiting, Fuck Off!")
+        typer.echo("Exiting, F*** Off!")
         raise typer.Exit()
+
+
+def blog_from_keyword():
+    """ Write blog from given keyword. """
+    print("Write blog based on keywords.")
+    check_llm_environs()
+    keywords = typer.prompt("Enter 'keywords/Blog Title' for blog generation:")
+    final_blog = write_blog_from_keywords(keywords)
 
 
 def do_web_research():

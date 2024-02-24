@@ -70,7 +70,10 @@ def metaphor_find_similar(similar_url):
         raise
 
     competitors = search_response.results
-    for acompetitor in tqdm(competitors, desc="Processing Competitors", unit="competitor"):
+    urls = {}
+    for c in competitors:
+        print(c.title + ':' + c.url)
+    for acompetitor in tqdm(competitors, desc="Processing URL content", unit="competitor"):
         all_contents = ""
         try:
             search_response = metaphor.search_and_contents(
@@ -82,16 +85,15 @@ def metaphor_find_similar(similar_url):
             logger.error(f"Failed to do metaphor keyword/url research: {err}")
     
         research_response = search_response.results
-    
         # Add a progress bar for the inner loop
         for r in tqdm(research_response, desc=f"{acompetitor.url}", unit="research"):
             all_contents += r.text
-        try:
-            acompetitor.text = summarize_competitor_content(all_contents, "gemini")
-        except Exception as err:
-            logger.error(f"Failed to summarize_web_content: {err}")
+            try:
+                acompetitor.text = summarize_competitor_content(all_contents, "gemini")
+            except Exception as err:
+                logger.error(f"Failed to summarize_web_content: {err}")
     
-    # Convert the data into a list of lists
+    print(competitors)
     print_search_result(competitors)
     return search_response
 
@@ -142,7 +144,6 @@ def metaphor_search_articles(query,
             logger.error(f"Failed in metaphor.search_and_contents: {err}")
         
         # From each webpage, get a summary of the web page.
-        print(search_response)
         contents_response = search_response.results
 #        for content in tqdm(contents_response, desc="Reading Web URL content:", unit="content"):
 #            summarized_content = summarize_web_content(content.text, "gemini")
@@ -160,18 +161,37 @@ def metaphor_search_articles(query,
         raise
 
 
+
+def metaphor_news_summarizer(news_keywords):
+    """ build a LLM-based news summarizer app with the Exa API to keep us up-to-date 
+    with the latest news on a given topic.
+    """
+    # FIXME: Needs to be user defined.
+    one_week_ago = (datetime.now() - timedelta(days=7))
+    date_cutoff = one_week_ago.strftime("%Y-%m-%d")
+
+    search_response = exa.search_and_contents(
+        news_keywords, use_autoprompt=True, start_published_date=date_cutoff
+    )
+
+    urls = [result.url for result in search_response.results]
+    print("URLs:")
+    for url in urls:
+        print(url)
+
+
 def print_search_result(contents_response):
     # Define the Result namedtuple
-    Result = namedtuple("Result", ["url", "title", "published_date", "text"])
+    Result = namedtuple("Result", ["url", "title", "text"])
     # Tabulate the data
-    table_headers = ["URL", "Title", "Published Date", "Summary"]
-    table_data = [(result.url, result.title, result.published_date, result.text) for result in contents_response]
+    table_headers = ["URL", "Title", "Summary"]
+    table_data = [(result.url, result.title, result.text) for result in contents_response]
 
     table = tabulate(table_data,
         headers=table_headers,
         tablefmt="fancy_grid",
-        colalign=["left", "left", "left", "left"],
-        maxcolwidths=[20, 20, 10, 60])
+        colalign=["left", "left", "left"],
+        maxcolwidths=[20, 20, 70])
     print(table)
     # Save the combined table to a file
     try:

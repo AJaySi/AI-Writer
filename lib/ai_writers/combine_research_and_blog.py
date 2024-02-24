@@ -1,7 +1,12 @@
+import os
 import sys
 
-from .gpt_providers.openai_chat_completion import openai_chatgpt
-from .gpt_providers.gemini_pro_text import gemini_text_response
+from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv(Path('../.env'))
+
+from ..gpt_providers.openai_chat_completion import openai_chatgpt
+from ..gpt_providers.gemini_pro_text import gemini_text_response
 
 from loguru import logger
 logger.remove()
@@ -11,9 +16,9 @@ logger.add(sys.stdout,
     )
 
 
-def blog_with_research(report, blog, gpt_providers="openai"):
+def blog_with_research(report, blog):
     """Combine the given online research and gpt blog content"""
-
+    gpt_providers = os.environ["GPT_PROVIDER"]
     prompt = f"""
         You are an expert copywriter specializing in content optimization for SEO.
         I will provide you with a 'research report' and a 'blog content' on the same topic.
@@ -25,9 +30,8 @@ def blog_with_research(report, blog, gpt_providers="openai"):
         2. Sentence Structure: Rephrase while preserving logical flow and coherence.
         3. Identify Main Keywords: Determine the primary topic and combine the articles on the main topic.
         4. REMEMBER: From the research report, include links and cititations to make your article more authoratative.
-        5. Write Code snippets: Check if given report is on programming, then write code snippets where applicable.
-        6. Optimize for SEO: Generate high quality informative content.
-        Implement SEO best practises with appropriate keyword density.
+        5. Optimize for SEO: Generate high quality informative content.
+        6. Implement SEO best practises with appropriate keyword density.
         7. Craft Engaging and Informative Article: Provide value and insight to readers.
         8. Proofread: Important to Check for grammar, spelling, and punctuation errors.
         9. Use Creative and Human-like Style: Incorporate contractions, idioms, transitional phrases,
@@ -47,15 +51,15 @@ def blog_with_research(report, blog, gpt_providers="openai"):
         Blog content: {blog}
         """
 
-    if 'gemini' in gpt_providers:
+    if 'google' in gpt_providers:
         prompt = f"""You are an expert copywriter specializing in content optimization for SEO. 
-        You are world famous writer, known for your originality and engaging content.  
-        I will provide you with a 'research report' and a 'blog content' on the same topic.
+        I will provide you with my 'research report' and 'blog content' on the same topic.
         Your task is to transform and combine the given research and blog content into a blog article.
-        Your blog should be highly detailed and well formatted. 
-        Include a section in your blog on the highlights section of blog content. 
-        Do not miss out any details from provided content. Always, include figures, data, results from given content.
-        It is important that your blog is original and unique. It should be highly readable and SEO optimized.
+        Your blog should be highly detailed, original and well formatted.
+        Do not miss out any details from provided content. 
+        Always, enhance the blog FAQs section with more information from given research.
+        It is important that your blog provides detailed insights and engaging to readers.
+        It should be highly readable and SEO optimized.
 
         Research report: '{report}'
         Blog content: '{blog}'

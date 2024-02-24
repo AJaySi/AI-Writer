@@ -14,10 +14,12 @@ from datetime import datetime
 
 from ..gpt_providers.gemini_pro_text import gemini_text_response
 from .tavily_ai_search import get_tavilyai_results
-from .metaphor_basic_neural_web_search import metaphor_find_similar, metaphor_search_articles
-from .google_serp_search import google_search
+from .metaphor_basic_neural_web_search import metaphor_news_summarizer
+from .google_serp_search import google_news
 from .google_trends_researcher import do_google_trends_analysis
+from .gpt_blog_sections import get_blog_sections_from_websearch
 from .web_research_report import write_web_research_report
+
 
 # Configure logger
 logger.remove()
@@ -27,66 +29,63 @@ logger.add(sys.stdout,
            )
 
 
-def gpt_web_researcher(search_keywords, time_range=None, include_domains=list(), similar_url=None):
+def web_news_researcher(search_keywords, time_range=None, include_domains=list(), similar_url=None):
     """ """
     print(f"Web Research:Time Range - {time_range},Search Keywords - {search_keywords},Include URLs - {include_domains}")
-    # TBD: Keeping the results directory as fixed, for now.
-    os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "workspace", "web_research_reports",                                                 search_keywords.replace(" ", "_") + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
     if not include_domains:
         include_domains = list()
+    # TBD: Keeping the results directory as fixed, for now.
+    os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "workspace", "web_research_reports", 
+        search_keywords.replace(" ", "_") + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
     
-    google_search_result = do_google_serp_search(search_keywords)
-    tavily_search_result = do_tavily_ai_search(search_keywords, include_domains)
-    metaphor_search_result = do_metaphor_ai_research(search_keywords, include_domains, time_range, similar_url)
-    gtrends_search_result = do_google_pytrends_analysis(search_keywords)
-    # get_rag_results(search_query)
-    print(f"\n\nReview the analysis in this file at: {os.environ.get('SEARCH_SAVE_FILE')}\n")
-
-
-def do_google_serp_search(search_keywords):
-    """ """
+    # Collect all blog titles featuring in search results. This *may help in generating blog titles
+    # closest to competing ones. All search blog titles, given keyword and keywords from analysis, give
+    # llm a good context for the task of generating blog titles.
+    blog_titles = []
+    # Get a list of FAQs from search results.
+    blog_faqs = None
+    google_result = None
+    tavily_result = None
+    report = None
     try:
         logger.info(f"Doing Google search for: {search_keywords}\n")
-        return(google_search(search_keywords))
+        google_result = google_search(search_keywords)
+        blog_titles.append(extract_info(google_result, "titles"))
     except Exception as err:
         logger.error(f"Failed to do Google Serpapi research: {err}")
         # Not failing, as tavily would do same and then GPT-V to search.
 
-
-def do_tavily_ai_search(search_keywords, include_domains=None):
-    """ """
     try:
         # FIXME: Include the follow-up questions as blog FAQs.
         logger.info(f"Doing Tavily AI search for: {search_keywords}")
-        return(get_tavilyai_results(search_keywords, include_domains))
+        tavily_result = get_tavilyai_results(search_keywords, include_domains)
+        blog_titles.append(tavily_extract_information(tavily_result, "titles"))
     except Exception as err:
         logger.error(f"Failed to do Tavily AI Search: {err}")
 
-
-def do_metaphor_ai_research(search_keywords,
-        include_domains=None,
-        time_range=None,
-        similar_url=None):
-    """ """
     try:
         logger.info(f"Start Semantic/Neural web search with Metahpor: {search_keywords}")
         response_articles = metaphor_search_articles(
-                search_keywords,
-                include_domains=include_domains,
+                search_keywords, 
+                include_domains=include_domains, 
                 time_range=time_range,
                 similar_url=similar_url)
-        return response_articles
+        blog_titles.append(metaphor_extract_titles_or_text(response_articles, return_titles=True))
     except Exception as err:
         logger.error(f"Failed to do Metaphor search: {err}")
+    print(blog_titles)
 
-
-def do_google_pytrends_analysis(search_keywords):
-    """ """
     try:
         logger.info(f"Do Google Trends analysis for given keywords: {search_keywords}")
-        return(do_google_trends_analysis(search_keywords))
+        important_keywords = do_google_trends_analysis(search_keywords)
     except Exception as err:
         logger.error(f"Failed to do google trends analysis: {err}")
+    print(important_keywords)
+    # Now that we have search results from given keywords. Generate blog title and subtopics suggestions.
+    # 1. Return a list of related keywords along with search volumes.
+    # 2. New blog titles to write on(niche, top) and blog sections.
+    # 3. Competitors list, similar urls if given.
+    print(f"\n\nReview the analysis in this file at: {os.environ.get('SEARCH_SAVE_FILE')}\n")
 
 
 def metaphor_extract_titles_or_text(json_data, return_titles=True):

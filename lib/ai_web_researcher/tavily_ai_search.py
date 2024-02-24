@@ -46,7 +46,6 @@ logger.add(sys.stdout,
            )
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
-from .gpt_titles_faq import gpt_titles_faqs_google_search
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
 def get_tavilyai_results(keywords, include_urls, search_depth="advanced"):

@@ -37,7 +37,7 @@ from clint.textui import progress
 #from serpapi import GoogleSearch
 from loguru import logger
 from tabulate import tabulate
-
+from GoogleNews import GoogleNews
 # Configure logger
 logger.remove()
 from dotenv import load_dotenv
@@ -49,7 +49,6 @@ logger.add(
     format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
            )
 
-from .gpt_titles_faq import gpt_titles_faqs_google_search
 
 #from tenacity import retry, stop_after_attempt, wait_random_exponential
 #@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
@@ -198,6 +197,15 @@ def perform_browserless_google_search():
 def perform_dataforseo_google_search():
     return
 
+
+def google_news(search_keywords, news_period="7d", region="IN"):
+    """ Get news articles from google_news"""
+    googlenews = GoogleNews()
+    googlenews.enableException(True)
+    googlenews = GoogleNews(lang='en', region=region)
+    googlenews = GoogleNews(period=news_period)
+    print(googlenews.get_news('APPLE'))
+    print(googlenews.search('APPLE'))
 
 
 def process_search_results(search_results):
