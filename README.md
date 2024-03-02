@@ -3,6 +3,16 @@
 ## Introduction
 This toolkit automates and enhances the process of blog creation, optimization, and management. Leveraging AI technologies, it assists content creators and digital marketers in generating, formatting, and uploading blog content efficiently. The toolkit integrates advanced AI models for text generation, image creation, and data analysis, streamlining the content creation pipeline.
 
+## Getting Started
+
+To use this tool, follow these steps:
+
+1. Clone this repository to your local machine.
+2. Install the required dependencies using `pip install -r requirements.txt`.
+3. Run the script by executing `python alwrity.py`.
+4. Once the tools is running it will guide/ask for your APIs. It will provide you with links to sign for APIs.
+
+
 ## Features
 
 - **Online Research Integration**: Enhances blog content by integrating insights and information gathered from online research, ensuring the content is informative and up-to-date. This gives context for generating content. Tavily AI, Google search, serp and Vision AI is used to scrape web data for context augumentation. TBD: Include CrewAI for web research agents.
@@ -70,14 +80,6 @@ This toolkit automates and enhances the process of blog creation, optimization, 
   - Gemini API: Another LLM provider for natural language processing tasks.
   - Ollama API (Work In Progress): An upcoming LLM provider for additional research and content generation capabilities.
 
-## Getting Started
-
-To use this tool, follow these steps:
-
-1. Clone this repository to your local machine.
-2. Install the required dependencies using `pip install -r requirements.txt`.
-3. Run the script by executing `python blogen.py`.
-4. Set up the necessary API keys by following the instructions provided in the script and adding them to the `.env` file.
 ---
 
 Notes:

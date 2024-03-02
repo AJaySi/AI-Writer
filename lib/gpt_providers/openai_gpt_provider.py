@@ -25,7 +25,6 @@ import requests
 from moviepy.editor import AudioFileClip
 from concurrent.futures import ThreadPoolExecutor
 
-from ..gpt_online_researcher import do_online_research
 
 from loguru import logger
 logger.remove()

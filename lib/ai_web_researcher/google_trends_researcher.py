@@ -182,7 +182,10 @@ def get_related_topics_and_save_csv(search_keywords):
         pytrends.build_payload(search_keywords, cat=0, timeframe='today 12-m')
 
         # Get related topics
-        data = pytrends.related_topics()
+        try:
+            data = pytrends.related_topics()
+        except Exception as err:
+            logger.error(f"Failed to get pytrends realted topics: {err}")
         # Extract data from the result
         top_topics = list(data.values())[0]['top']
         rising_topics = list(data.values())[0]['rising']
@@ -215,7 +218,7 @@ def get_related_topics_and_save_csv(search_keywords):
         return all_topics_df
 
     except Exception as e:
-        print(f"ERROR: An error occurred in related topics: {e}")
+        logger.error(f"ERROR: An error occurred in related topics: {e}")
         return pd.DataFrame()
 
 

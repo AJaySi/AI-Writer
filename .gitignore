@@ -19,3 +19,4 @@ blogs/
 .env
 papers_already_written_on.txt
 lib/papers_to_write_on
+workspace/

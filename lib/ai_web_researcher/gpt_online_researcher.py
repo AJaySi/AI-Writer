@@ -47,7 +47,9 @@ def do_google_serp_search(search_keywords):
     """ """
     try:
         logger.info(f"Doing Google search for: {search_keywords}\n")
-        return(google_search(search_keywords))
+        g_results = google_search(search_keywords)
+        g_titles = extract_info(g_results, 'titles')
+        return(g_results, g_titles)
     except Exception as err:
         logger.error(f"Failed to do Google Serpapi research: {err}")
         # Not failing, as tavily would do same and then GPT-V to search.
@@ -58,7 +60,9 @@ def do_tavily_ai_search(search_keywords, include_domains=None):
     try:
         # FIXME: Include the follow-up questions as blog FAQs.
         logger.info(f"Doing Tavily AI search for: {search_keywords}")
-        return(get_tavilyai_results(search_keywords, include_domains))
+        t_results = get_tavilyai_results(search_keywords, include_domains)
+        t_titles = tavily_extract_information(t_results, 'titles')
+        return(t_results, t_titles)
     except Exception as err:
         logger.error(f"Failed to do Tavily AI Search: {err}")
 
@@ -75,7 +79,8 @@ def do_metaphor_ai_research(search_keywords,
                 include_domains=include_domains,
                 time_range=time_range,
                 similar_url=similar_url)
-        return response_articles
+        m_titles = metaphor_extract_titles_or_text(response_articles, return_titles=True)
+        return(response_articles, m_titles)
     except Exception as err:
         logger.error(f"Failed to do Metaphor search: {err}")
 
@@ -139,7 +144,7 @@ def tavily_extract_information(json_data, keyword):
     Returns:
         list or str: The extracted information based on the keyword.
     """
-    if keyword == 'title':
+    if keyword == 'titles':
         return [result['title'] for result in json_data['results']]
     elif keyword == 'content':
         return [result['content'] for result in json_data['results']]

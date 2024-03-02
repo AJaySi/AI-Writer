@@ -13,14 +13,14 @@ logger.add(sys.stdout,
     )
 
 
-def blog_metadata(blog_content, gpt_providers="openai"):
+def blog_metadata(blog_content, search_keywords, blog_titles):
     """ Common function to get blog metadata """
-    blog_title = generate_blog_title(blog_content, gpt_providers)
-    blog_meta_desc = generate_blog_description(blog_content, gpt_providers)
+    blog_title = generate_blog_title(blog_content, search_keywords, blog_titles)
+    blog_meta_desc = generate_blog_description(blog_content)
     logger.info(f"The blog meta description is: {blog_meta_desc}\n")
-    blog_tags = get_blog_tags(blog_content, gpt_providers)
+    blog_tags = get_blog_tags(blog_content)
     logger.info(f"Blog tags for generated content: {blog_tags}")
-    blog_categories = get_blog_categories(blog_content, gpt_providers)
+    blog_categories = get_blog_categories(blog_content)
     logger.info(f"Generated blog categories: {blog_categories}\n")
 
     return(blog_title, blog_meta_desc, blog_tags, blog_categories)

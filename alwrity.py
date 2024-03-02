@@ -26,6 +26,7 @@ def prompt_for_time_range():
             'name': 'time_range',
             'message': '👋 Select Search result time range:',
             'choices': ["anytime", "past year", "past month", "past week", "past day"],
+            'default': 'anytime'
         }
     ]
     answers = prompt(questions)
@@ -68,7 +69,7 @@ def start_interactive_mode():
             'name': 'mode',
             'message': 'Choose an option:',
             'choices': ['Write Blog', 'Do keyword Research', 'Create Blog Images',
-                'Competitor Analysis', 'Blog Tools', 'Quit'],
+                'Competitor Analysis', 'Blog Tools', 'Social Media', 'Quit'],
         }
     ]   
     answers = prompt(questions)
@@ -83,13 +84,22 @@ def start_interactive_mode():
         # Metaphor similar search
         competitor_analysis()
     elif mode == 'Recent News Summarizer':
-        print("""1. Get tavily News.
+        print("""TBD: 1. Get tavily News.
                 2. Get metaphor news.
                 3. Get from NewsApi
                 4. Get YOU.com News.""")
         recent_news_summarizer()
     elif mode == 'Blog Tools':
         blog_tools()
+    elif mode == 'Social Media':
+        print("""
+        #whatsapp
+        #instagram
+        #youtube
+        #twitter/X
+        #Linked-in posts
+        """)
+        raise typer.Exit()
     elif mode == 'Quit':
         typer.echo("Exiting, F*** Off!")
         raise typer.Exit()
@@ -110,7 +120,7 @@ def get_api_key(api_key: str, api_description: str):
 
 
 
-def check_environment_variables():
+def check_search_apis():
     """
     Check if necessary environment variables are present.
     Display messages with links on how to get them if not present.
@@ -195,8 +205,8 @@ def blog_tools():
             'choices': ['Write Blog Title', 'Write Blog Meta Description', 'Write Blog Introduction',
                 'Write Blog conclusion', 'Write Blog Outline', 'Generate Blog FAQs', 'Research blog referances',
                 'Convert Blog To HTML', 'Convert Blog To Markdown', 'Blog Proof Reader',
-                'Get Blog Tags', 'Get blog categories', 'Get Blog Code Examples', 'Quit',
-                'Check WebPage Performance',],
+                'Get Blog Tags', 'Get blog categories', 'Get Blog Code Examples', 'Check WebPage Performance',
+                'Quit/Exit',],
         }
     ]
     answers = prompt(questions)
@@ -257,7 +267,7 @@ def do_web_research():
     """
     Do Web Research option with time_range, search_keywords, and include_urls sub-options.
     """
-    if check_environment_variables():
+    if check_search_apis():
         while True:
             print("________________________________________________________________")
             search_keywords = typer.prompt("👋 Enter keywords for web research:")
@@ -332,4 +342,6 @@ def check_internet():
 
 if __name__ == "__main__":
     check_internet()
+    check_search_apis()
+    check_llm_environs()
     app()

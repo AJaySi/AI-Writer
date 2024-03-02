@@ -1,11 +1,6 @@
 import sys
 import os
 from pathlib import Path
-
-from .gpt_providers.openai_chat_completion import openai_chatgpt
-from .gpt_providers.gemini_pro_text import gemini_text_response
-import google.generativeai as genai
-
 from dotenv import load_dotenv
 load_dotenv(Path('../.env'))
 
@@ -16,11 +11,15 @@ logger.add(sys.stdout,
         format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
     )
 
+from ..gpt_providers.openai_chat_completion import openai_chatgpt
+from ..gpt_providers.gemini_pro_text import gemini_text_response
 
-def generate_blog_description(blog_content, gpt_providers):
+
+def generate_blog_description(blog_content):
     """
         Prompt designed to give SEO optimized blog descripton
     """
+    gpt_providers = os.environ["GPT_PROVIDER"]
     logger.info("Generating Blog Meta Description for the given blog.")
     prompt = f"""As an expert SEO and blog writer, Compose a compelling meta description for the given blog content, 
         adhering to SEO best practices. Keep it between 150-160 characters. 
@@ -28,7 +27,7 @@ def generate_blog_description(blog_content, gpt_providers):
         Respond with only one of your best effort and do not include your explanations. 
         Blog Content: '{blog_content}'"""
 
-    if 'gemini' in gpt_providers:
+    if 'google' in gpt_providers:
         try:
             response = gemini_text_response(prompt)
             return response
