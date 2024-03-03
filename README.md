@@ -7,8 +7,13 @@ This toolkit automates and enhances the process of blog creation, optimization, 
 
 To use this tool, follow these steps:
 
-1. Clone this repository to your local machine.
-2. Install the required dependencies using `pip install -r requirements.txt`.
+1. Clone this repository to your local machine (Take google's help, if this sentence makes less sense).
+
+2. Install the required dependencies using.
+On your local machine's command prompt, navigate to the folder where you completed Step 1.
+Now Run the below command:
+`pip install -r requirements.txt`
+
 3. Run the script by executing `python alwrity.py`.
 4. Once the tools is running it will guide/ask for your APIs. It will provide you with links to sign for APIs.
 
