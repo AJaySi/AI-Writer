@@ -5,29 +5,39 @@ This toolkit automates and enhances the process of blog creation, optimization, 
 
 ## Getting Started
 
-To use this tool, follow these steps:
+To use this tool, follow one of the Options below:
 
+---
 ### Option 1: Local laptop Install: (I know what I am doing..)
 
-Step 1. Clone this repository to your local machine (Take google's help, if this sentence makes less sense).
+Step 1. Clone this repository to your local machine.
 
 Step 2. Install the required dependencies using:<br>
 On your local machine's command prompt, navigate to the folder where you completed Step 1.
 Now Run the below command:<br>
 `pip install -r requirements.txt`
 
-Step 3. Run the script by executing `python alwrity.py`.
+Step 3. Run the script by executing:<br> 
+`python alwrity.py`.
+
 Step 4. Once the tools is running it will guide/ask for your APIs. It will provide you with links to sign for APIs.
 
 ---
+
 ### Option 2: Cloud install: (I just want to write blogs..)
 
-Step 1). Make efforts to fork this present repo into your own accounts.
+Step 1). Make efforts to fork this present repo into your own account.
 
 Step 2). Follow this guide: <br>
 https://docs.replit.com/programming-ide/using-git-on-replit/running-github-repositories-replit
 
+
+### Option 3: Web URL: (Clickty Clickty Website, Free..)
+
+Step 1). Error 404: Page not found.
+
 ---
+
 ## Features
 
 - **Online Research Integration**: Enhances blog content by integrating insights and information gathered from online research, ensuring the content is informative and up-to-date. This gives context for generating content. Tavily AI, Google search, serp and Vision AI is used to scrape web data for context augumentation. TBD: Include CrewAI for web research agents.
