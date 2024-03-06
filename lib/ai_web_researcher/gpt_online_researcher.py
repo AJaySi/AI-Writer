@@ -9,7 +9,6 @@ import json
 from pathlib import Path
 import sys
 from typing import List, NamedTuple
-from loguru import logger
 from datetime import datetime
 
 from ..gpt_providers.gemini_pro_text import gemini_text_response
@@ -17,8 +16,9 @@ from .tavily_ai_search import get_tavilyai_results
 from .metaphor_basic_neural_web_search import metaphor_find_similar, metaphor_search_articles
 from .google_serp_search import google_search
 from .google_trends_researcher import do_google_trends_analysis
-from .web_research_report import write_web_research_report
+#from .web_research_report import write_web_research_report
 
+from loguru import logger
 # Configure logger
 logger.remove()
 logger.add(sys.stdout,

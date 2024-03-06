@@ -1,4 +1,5 @@
 import sys
+import os
 import json
 
 from ..gpt_providers.openai_chat_completion import openai_chatgpt
@@ -13,9 +14,9 @@ logger.add(sys.stdout,
 
 
 # FIXME: Provide num_blogs, num_faqs as inputs.
-def get_blog_sections_from_websearch(search_keyword, search_results, gpt_providers="gemini"):
+def get_blog_sections_from_websearch(search_keyword, search_results):
     """Combine the given online research and gpt blog content"""
-
+    gpt_providers = os.environ["GPT_PROVIDER"]
     prompt = f"""
         As a SEO expert and content writer, I will provide you with a search keyword and its google search result.
         Your task is to write a blog title and 5 blog sub titles, from the given google search result.

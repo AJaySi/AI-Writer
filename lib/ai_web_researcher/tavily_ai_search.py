@@ -66,7 +66,7 @@ def get_tavilyai_results(keywords, include_urls, search_depth="advanced"):
     # Retrieve API keys
     api_key = os.getenv('TAVILY_API_KEY')
     if not api_key:
-        raise ValueError("API keys for Tavily or OpenAI are not set.")
+        raise ValueError("API keys for Tavily is Not set.")
 
     # Initialize Tavily client
     try:

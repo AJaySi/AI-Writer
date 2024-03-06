@@ -23,6 +23,8 @@ Note: Ensure that the required libraries are installed using 'pip install pytren
 """
 
 import os
+import time # I wish
+import random
 import requests
 import numpy as np
 import sys
@@ -186,6 +188,7 @@ def get_related_topics_and_save_csv(search_keywords):
             data = pytrends.related_topics()
         except Exception as err:
             logger.error(f"Failed to get pytrends realted topics: {err}")
+            return
         # Extract data from the result
         top_topics = list(data.values())[0]['top']
         rising_topics = list(data.values())[0]['rising']
@@ -238,6 +241,8 @@ def get_results(query):
     try:
         query = urllib.parse.quote_plus(query)
         response = get_source(f"https://suggestqueries.google.com/complete/search?output=chrome&hl=en&q={query}")
+        time.sleep(random.uniform(0.1, 0.6))
+
         if response:
             response.raise_for_status()
             results = json.loads(response.text)
@@ -501,6 +506,8 @@ def do_google_trends_analysis(search_term):
             else:
                 all_the_keywords.append(suggestions_df['Keywords'].tolist())
             all_the_keywords = ','.join([', '.join(filter(None, map(str, sublist))) for sublist in all_the_keywords])
+            # Generate a random sleep time between 2 and 3 seconds 
+            time.sleep(random.uniform(2, 3))
 
 #        
 #        # FIXME: Get result from vision GPT. Fetch and visualize Google Trends data
@@ -510,12 +517,16 @@ def do_google_trends_analysis(search_term):
 #        result_df = plot_interest_by_region(search_term)
 #        
         # Display additional information
-        result_df = get_related_topics_and_save_csv(search_term)
-        # Extract 'Top' topic_title
-        top_topic_title = result_df['topic_title'].values.tolist()
-        # Join each sublist into one string separated by comma
-        #top_topic_title = [','.join(filter(None, map(str, sublist))) for sublist in top_topic_title]
-        top_topic_title = ','.join([', '.join(filter(None, map(str, sublist))) for sublist in top_topic_title])
+        try:
+            result_df = get_related_topics_and_save_csv(search_term)
+            # Extract 'Top' topic_title
+            if result_df:
+                top_topic_title = result_df['topic_title'].values.tolist()
+                # Join each sublist into one string separated by comma
+                #top_topic_title = [','.join(filter(None, map(str, sublist))) for sublist in top_topic_title]
+                top_topic_title = ','.join([', '.join(filter(None, map(str, sublist))) for sublist in top_topic_title])
+        except Exception as err:
+            logger.error(f"Failed to get results from google trends related topics: {err}")
 
         # TBD: Not getting great results OR unable to understand them.
         #all_the_keywords += top_topic_title

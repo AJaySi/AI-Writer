@@ -42,13 +42,22 @@ def generate_blog_title(blog_article, keywords=None, example_titles=None, num_ti
             Blog Keywords: '{keywords}'
             Example Titles: '{example_titles}'
         """
-    if 'google' in gpt_providers:
+    elif not example_titles:
+        prompt = prompt = f"""As a SEO expert, I will provide you with my blog article.
+            Your task is to write {num_titles} blog title.
+            Follow SEO best practises to suggest the blog title.
+            Please keep the titles concise, not exceeding 60 words.
+            Respond with only {num_titles} title and no explanations.
+            Negative Keywords: Unvieling, unleash, power of. Dont use such words in your title.
+            Blog Article: '{keywords}'
+        """
+    if 'google' in gpt_providers.lower():
         try:
             response = gemini_text_response(prompt)
             return response
         except Exception as err:
             logger.error(f"Failed to get response from gemini: {err}") 
-    elif 'openai' in gpt_providers:
+    elif 'openai' in gpt_providers.lower():
         try:
             logger.info("Calling OpenAI LLM.")
             response = openai_chatgpt(prompt)

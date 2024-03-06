@@ -6,9 +6,19 @@ This toolkit automates and enhances the process of blog creation, optimization, 
 ## Getting Started
 
 To use this tool, follow one of the Options below:
+---
+
+### Option 1: Cloud install: (I just want to write blogs..)
+
+Step 1). Make efforts to fork this present repo into your own account.
+
+Step 2). Follow this guide: <br>
+https://docs.replit.com/programming-ide/using-git-on-replit/running-github-repositories-replit
+
 
 ---
-### Option 1: Local laptop Install: (I know what I am doing..)
+
+### Option 2: Local laptop Install: (I know what I am doing..)
 
 Step 1. Clone this repository to your local machine.
 
@@ -23,14 +33,6 @@ Step 3. Run the script by executing:<br>
 Step 4. Once the tools is running it will guide/ask for your APIs. It will provide you with links to sign for APIs.
 
 ---
-
-### Option 2: Cloud install: (I just want to write blogs..)
-
-Step 1). Make efforts to fork this present repo into your own account.
-
-Step 2). Follow this guide: <br>
-https://docs.replit.com/programming-ide/using-git-on-replit/running-github-repositories-replit
-
 
 ### Option 3: Web URL: (Clickty Clickty Website, Free..)
 

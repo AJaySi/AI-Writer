@@ -25,13 +25,13 @@ def get_blog_tags(blog_article):
          for the given blog content. Only reply with comma separated values. 
          Blog content:  {blog_article}."""
     logger.info("Generating Blog tags for the given blog post.")
-    if 'google' in gpt_providers:
+    if 'google' in gpt_providers.lower():
         try:
             response = gemini_text_response(prompt)
             return response
         except Exception as err:
             logger.error("Failed to get response from gemini.")
-    elif 'openai' in gpt_providers:
+    elif 'openai' in gpt_providers.lower():
         try:
             response = openai_chatgpt(prompt)
             return response

@@ -1,11 +1,10 @@
-from langchain.adapters.openai import convert_openai_messages
-from langchain.chat_models import ChatOpenAI
-
+import os
 from ..gpt_providers.gemini_pro_text import gemini_text_response
 
 
-def write_web_research_report(web_research, faq_questions, gpt_provider="gemini"):
+def write_web_research_report(web_research, faq_questions):
     """ """
+    gpt_provider = os.environ["GPT_PROVIDER"]
     if "gemini" in gpt_provider:
             prompt = ["You are an SEO and marketing expert, who writes unique, factual and comprehensive research reports."
                     "I will provide you web research report as json data and a list of related FAQ questions."

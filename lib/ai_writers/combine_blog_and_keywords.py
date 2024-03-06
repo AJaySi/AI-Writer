@@ -30,7 +30,7 @@ def blog_with_keywords(blog, keywords):
         list of keywords: '{keywords}'
         """
 
-    if 'google' in gpt_providers:
+    if 'google' in gpt_providers.lower():
         prompt = f"""You are an expert copywriter specializing in content optimization for SEO. 
         I will provide you with my 'blog content' and 'list of keywords' on the same topic.
         Your task is to write an original blog, using the given keywords and blog content.
@@ -38,7 +38,6 @@ def blog_with_keywords(blog, keywords):
         Do not miss out any details from provided blog content. 
         Always, include figures, data, results from given content.
         It is important that your blog is original and unique. It should be highly readable and SEO optimized.
-
 
         Blog content: '{blog}'
         list of keywords: '{keywords}'
@@ -49,7 +48,7 @@ def blog_with_keywords(blog, keywords):
         except Exception as err:
             logger.error(f"Failed to get response from gemini: {err}")
             raise err
-    elif 'openai' in gpt_providers:
+    elif 'openai' in gpt_providers.lower():
         try:
             logger.info("Calling OpenAI LLM.")
             response = openai_chatgpt(prompt)

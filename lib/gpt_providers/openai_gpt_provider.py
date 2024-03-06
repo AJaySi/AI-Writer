@@ -17,14 +17,8 @@ import openai
 from openai import OpenAI
 from pytube import YouTube
 import tempfile
-from html2image import Html2Image
 import datetime
 from PIL import Image
-import moviepy.editor as mp
-import requests
-from moviepy.editor import AudioFileClip
-from concurrent.futures import ThreadPoolExecutor
-
 
 from loguru import logger
 logger.remove()

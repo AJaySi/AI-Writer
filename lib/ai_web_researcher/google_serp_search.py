@@ -66,23 +66,23 @@ def google_search(query):
     Returns:
         list: List of search results based on the specified flag.
     """
-    try:
-        perform_serpapi_google_search(query)
-        logger.info(f"FIXME: Google serapi: {query}")
-        #return process_search_results(search_result)
-    except Exception as err:
-        logger.error(f"ERROR: Check Here: https://serpapi.com/. Your requests may be over. {err}")
+    #try:
+    #    perform_serpapi_google_search(query)
+    #    logger.info(f"FIXME: Google serapi: {query}")
+    #    #return process_search_results(search_result)
+    #except Exception as err:
+    #    logger.error(f"ERROR: Check Here: https://serpapi.com/. Your requests may be over. {err}")
 
     # Retry with serper.dev
     try:
         logger.info("Trying Google search with Serper.dev: https://serper.dev/api-key")
         search_result = perform_serperdev_google_search(query)
         process_search_results(search_result)
+        return(search_result)
     except Exception as err:
         logger.error(f"Failed to do Google search with serper.dev: {err}")
 
-    return(search_result)
-    
+ 
 #    # Retry with BROWSERLESS API
 #    try:
 #        search_result = perform_browserless_google_search(query)
@@ -118,7 +118,10 @@ def perform_serpapi_google_search(query, location="in"):
     try:
         # Check if API key is provided
         if not os.getenv("SERPAPI_KEY"):
-            raise ValueError("SERPAPI_KEY key is required for SerpApi")
+            #raise ValueError("SERPAPI_KEY key is required for SerpApi")
+            logger.error("SERPAPI_KEY key is required for SerpApi")
+            return
+            
 
         # Create a GoogleSearch instance
         search = GoogleSearch({
@@ -164,7 +167,7 @@ def perform_serperdev_google_search(query):
         "q": query,
         "gl": "in",
         "hl": "en",
-        "num": 5,
+        "num": 10,
         "autocorrect": True,
         "page": 1,
         "type": "search",

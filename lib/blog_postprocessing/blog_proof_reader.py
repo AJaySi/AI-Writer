@@ -26,19 +26,19 @@ def blog_proof_editor(blog_content, blog_keywords):
         4). Tone and Brand Alignment: Adjust the tone, voice, personality of given content to make it unique.
         5). Optimize Content Structure: Reorganize the content for a more impactful presentation, 
         including better paragraphing and transitions.
-        6). Simplify given content: Simplify concepts and replace overly complex jargons and words.
+        6). Simplify content: Simplify concepts and replace overly complex words. Use simple english words.
         7). Refine Overall Structure: Make structural changes to improve the overall impact of the content.
 
         \n\nMain keywords: '{blog_keywords}'
         My Blog: '{blog_content}'. """
 
-    if 'openai' in gpt_provider:
+    if 'openai' in gpt_provider.lower():
         try:
             response = openai_chatgpt(prompt)
             return response
         except Exception as err:
             SystemError(f"Openai Error Blog Proof Reading: {err}")
-    elif 'google' in gpt_provider:
+    elif 'google' in gpt_provider.lower():
         try:
             response = gemini_text_response(prompt)
             return response

@@ -34,14 +34,14 @@ def write_blog_google_serp(search_keyword, search_results):
         Google search Result: "{search_results}"
         """
     logger.info("Generating blog and FAQs from web search result.")
-    if 'google' in gpt_providers:
+    if 'google' in gpt_providers.lower():
         try:
             response = gemini_text_response(prompt)
             return response
         except Exception as err:
             logger.error(f"Failed to get response from gemini: {err}")
             raise err
-    elif 'openai' in gpt_providers:
+    elif 'openai' in gpt_providers.lower():
         try:
             logger.info("Calling OpenAI LLM.")
             response = openai_chatgpt(prompt)

@@ -20,10 +20,10 @@ def blog_with_research(report, blog):
     """Combine the given online research and gpt blog content"""
     gpt_providers = os.environ["GPT_PROVIDER"]
     prompt = f"""
-        You are an expert copywriter specializing in content optimization for SEO.
+        You are an expert copywriter specializing in SEO content optimization for blogs.
         I will provide you with a 'research report' and a 'blog content' on the same topic.
-        Your task is to transform and combine the given research and blog content into a well-structured markdown, unique
-        and engaging blog article.
+        Your task is to transform and combine the given 'research report' and 'blog content' into a well-structured, unique
+        and original blog article.
 
         Your objectives include:
         1. Master the report and blog content: Understand main ideas, key points, and the core message.
@@ -47,11 +47,11 @@ def blog_with_research(report, blog):
         that will rank well in search engine results and engage readers effectively.
 
         Create a blog post, in markdown, from the given research report and blog content below.
-        Research report: {report}
-        Blog content: {blog}
+        Research report: '{report}'
+        Blog content: '{blog}'
         """
 
-    if 'google' in gpt_providers:
+    if 'google' in gpt_providers.lower():
         prompt = f"""You are an expert copywriter specializing in content optimization for SEO. 
         I will provide you with my 'research report' and 'blog content' on the same topic.
         Your task is to transform and combine the given research and blog content into a blog article.
@@ -70,7 +70,7 @@ def blog_with_research(report, blog):
         except Exception as err:
             logger.error(f"Failed to get response from gemini: {err}")
             raise err
-    elif 'openai' in gpt_providers:
+    elif 'openai' in gpt_providers.lower():
         try:
             logger.info("Calling OpenAI LLM.")
             response = openai_chatgpt(prompt)
@@ -78,3 +78,6 @@ def blog_with_research(report, blog):
         except Exception as err:
             logger.error(f"failed to get response from Openai: {err}")
             raise err
+    else:
+        logger.error(f"Unrecognised/Un-Supoorted GPT_PROVIDER: {gpt_providers}\n")
+        return

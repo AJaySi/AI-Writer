@@ -1,13 +1,18 @@
 import os
 from pathlib import Path
 
-import requests
 import typer
-from PyInquirer import prompt
+from prompt_toolkit.shortcuts import checkboxlist_dialog, message_dialog, input_dialog
+from prompt_toolkit import prompt
+from prompt_toolkit.styles import Style
+from prompt_toolkit.shortcuts import radiolist_dialog
+from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
+from dotenv import load_dotenv
+import requests
 from rich import print
+from rich.console import Console
 from rich.text import Text
 
-from dotenv import load_dotenv
 load_dotenv(Path('.env'))
 
 app = typer.Typer()
@@ -19,105 +24,71 @@ from lib.ai_writers.keywords_to_blog import write_blog_from_keywords
 
 def prompt_for_time_range():
     os.system("clear" if os.name == "posix" else "cls")
-    print("\n🙋 If you researching keywords that are recent than use accordingly, Default is Anytime.\n")
-    questions = [
-        {
-            'type': 'list',
-            'name': 'time_range',
-            'message': '👋 Select Search result time range:',
-            'choices': ["anytime", "past year", "past month", "past week", "past day"],
-            'default': 'anytime'
-        }
-    ]
-    answers = prompt(questions)
-    return answers['time_range']
+    print("\n🙋 If you're researching keywords that are recent, use accordingly. Default is Anytime.\n")
+    choices = [("anytime", "Anytime"), ("past year", "Past Year"), ("past month", "Past Month"), 
+               ("past week", "Past Week"), ("past day", "Past Day")]
+    selected_time_range = radiolist_dialog(title="Select Search result time range:", values=choices).run()
+    return selected_time_range[0] if selected_time_range else None
+
 
 def write_blog_options():
-    questions = [
-        {
-            'type': 'list',
-            'name': 'blog_type',
-            'message': '📝 Choose a blog type:',
-            'choices': ['Keywords', 'Audio YouTube', 'Programming', 
-                'Scholar', 'News/TBD','Finance/TBD', 'Quit'],
-        }
+    choices = [
+        ("Keywords", "Keywords"),
+        ("Audio YouTube", "Audio YouTube"),
+        ("Programming", "Programming"),
+        ("Scholar", "Scholar"),
+        ("News/TBD", "News/TBD"),
+        ("Finance/TBD", "Finance/TBD"),
+        ("Quit", "Quit")
     ]
-    answers = prompt(questions)
-    return answers['blog_type']
+    selected_blog_type = radiolist_dialog(title="Choose a blog type:", values=choices).run()
+    return selected_blog_type if selected_blog_type else None
 
 
 @app.command()
 def start_interactive_mode():
-    """
-    This function is executed when no command is provided.
-    It prompts the user to choose between "Write Blog" and "Do Web Research."
-    """
     os.system("clear" if os.name == "posix" else "cls")
-    text = Text()
-    text.append("_______________________________________________________________________")
-    text.append("\n⚠️    Alert!   💥❓💥\n", style="bold red") 
-    text.append("If you know what to write, choose 'Write Blog'\n", style="bold blue")
-    text.append("If unsure, lets 'do web research' to write on\n", style="bold red")
-    text.append("If Testing-it-out/getting-started, choose 'Blog Tools\n", style="bold green")
-    text.append("_______________________________________________________________________\n")
-
+    text = "_______________________________________________________________________\n"
+    text += "\n⚠️    Alert!   💥❓💥\n"
+    text += "If you know what to write, choose 'Write Blog'\n"
+    text += "If unsure, let's 'do web research' to write on\n"
+    text += "If Testing-it-out/getting-started, choose 'Blog Tools\n"
+    text += "_______________________________________________________________________\n"
     print(text)
     
-    questions = [
-        {
-            'type': 'list',
-            'name': 'mode',
-            'message': 'Choose an option:',
-            'choices': ['Write Blog', 'Do keyword Research', 'Create Blog Images',
-                'Competitor Analysis', 'Blog Tools', 'Social Media', 'Quit'],
-        }
-    ]   
-    answers = prompt(questions)
-    mode = answers['mode']
-    if mode == 'Write Blog':
-        write_blog()
-    elif mode == 'Do keyword Research':
-        do_web_research()
-    elif mode == 'Create Blog Images':
-        faq_generator()
-    elif mode == 'Competitor Analysis':
-        # Metaphor similar search
-        competitor_analysis()
-    elif mode == 'Recent News Summarizer':
-        print("""TBD: 1. Get tavily News.
-                2. Get metaphor news.
-                3. Get from NewsApi
-                4. Get YOU.com News.""")
-        recent_news_summarizer()
-    elif mode == 'Blog Tools':
-        blog_tools()
-    elif mode == 'Social Media':
-        print("""
-        #whatsapp
-        #instagram
-        #youtube
-        #twitter/X
-        #Linked-in posts
-        """)
-        raise typer.Exit()
-    elif mode == 'Quit':
-        typer.echo("Exiting, F*** Off!")
-        raise typer.Exit()
-
-
-def get_api_key(api_key: str, api_description: str):
-    """
-    Ask the user to input the missing API key and add it to the .env file.
-
-    Args:
-        api_key (str): The name of the API key variable.
-        api_description (str): The description of the API key.
-    """
-    user_input = typer.prompt(f"{api_description} is missing. Please enter {api_key} API Key:")
-    with open(".env", "a") as env_file:
-        env_file.write(f"{api_key}={user_input}\n")
-    print(f"✅ {api_description} API Key added to .env file.")
-
+    choices = [
+        ("Write Blog", "Write Blog"),
+        ("Do keyword Research", "Do keyword Research"),
+        ("Create Blog Images", "Create Blog Images"),
+        ("Competitor Analysis", "Competitor Analysis"),
+        ("Blog Tools", "Blog Tools"),
+        ("Social Media", "Social Media"),
+        ("Quit", "Quit")
+    ]
+    mode = radiolist_dialog(title="Choose an option:", values=choices).run()
+    if mode:
+        if mode == 'Write Blog':
+            write_blog()
+        elif mode == 'Do keyword Research':
+            do_web_research()
+        elif mode == 'Create Blog Images':
+            faq_generator()
+        elif mode == 'Competitor Analysis':
+            competitor_analysis()
+        elif mode == 'Blog Tools':
+            blog_tools()
+        elif mode == 'Social Media':
+            print("""
+            #whatsapp
+            #instagram
+            #youtube
+            #twitter/X
+            #Linked-in posts
+            """)
+            raise typer.Exit()
+        elif mode == 'Quit':
+            typer.echo("Exiting, Getting Lost!")
+            raise typer.Exit()
 
 
 def check_search_apis():
@@ -125,6 +96,10 @@ def check_search_apis():
     Check if necessary environment variables are present.
     Display messages with links on how to get them if not present.
     """
+    # Create a Rich console
+    console = Console()
+
+    # Use rich.print for styling and hyperlinking
     print("\n\n🙋♂️  🙋♂️   Before doing web research, ensure the following API keys are available:")
     print("Blogen uses Basic, Semantic, Neural web search using above APIs for contextual blog generation.\n")
 
@@ -139,46 +114,33 @@ def check_search_apis():
     with typer.progressbar(api_keys.items(), label="Checking API keys", length=len(api_keys)) as progress:
         for key, description in progress:
             if os.getenv(key) is None:
-                print(f"[bold red]✖ 🚫 {key} is missing:[/bold red] [link={key}]Get {key} API Key[/link]")
+                # Use rich.print for styling and hyperlinking
+                print(f"[bold red]✖ 🚫 {key} is missing:[/bold red] [blue underline]Get {key} API Key[/blue underline]")
+                typer.echo(f"[bold red]✖ 🚫 {key} is missing:[/bold red] [link={key}]Get {key} API Key[/link]")
                 missing_keys.append((key, description))
 
     if missing_keys:
         print("\nMost are Free APIs and really worth your while signing up for them.")
-        print(":pile_of_poo: :pile_of_poo: GO GET THEM, on above urls. [bold red]")
-        print("Note: They offer free/limited api calls, so we use most of them to have a lot of free api calls.")
-        print("\n[bold red]TBD: Provide option to use user defined search engines.\n")
+        print("💩💩💩: GO GET THEM, on above urls. [bold red]")
+        #print("Note: They offer free/limited api calls, so we use most of them to have a lot of free api calls.")
         for key, description in missing_keys:
             get_api_key(key, description)
     else:
         return True
 
 
-def check_llm_environs():
-    """ Function to check which LLM api is given. """
-    gpt_provider = os.getenv("GPT_PROVIDER")
-    
-    if gpt_provider == "google":
-        api_key_var = "GEMINI_API_KEY"
-        missing_api_msg = f"To get your {api_key_var}, please visit: https://aistudio.google.com/app/apikey"
-    elif gpt_provider == "openai":
-        api_key_var = "OPENAI_API_KEY"
-        missing_api_msg = "To get your OpenAI API key, please visit: https://openai.com/blog/openai-api"
-    else:
-        typer.echo("Unsupported GPT provider specified in GPT_PROVIDER environment variable.")
-        return
+def get_api_key(api_key: str, api_description: str):
+    """
+    Ask the user to input the missing API key and add it to the .env file.
 
-    if os.getenv(api_key_var) is None:
-        typer.echo(f"The {api_key_var} environment variable is missing.")
-        typer.echo(missing_api_msg)
-        api_key = typer.prompt(f"Please enter your {api_key_var} API Key:")
-        # Update .env file
-        with open(".env", "a") as env_file:
-            env_file.write(f"{api_key_var}={api_key}\n")
-        typer.echo(f"{api_key_var} API Key added to .env file.")
-        return
-
-    if gpt_provider == "openai" and os.getenv("OPENAI_API_KEY") is None:
-        typer.echo("To get your OpenAI API key, please visit: https://openai.com/blog/openai-api") 
+    Args:
+        api_key (str): The name of the API key variable.
+        api_description (str): The description of the API key.
+    """
+    user_input = typer.prompt(f"\n🙆🙆Please enter {api_key} API Key:")
+    with open(".env", "a") as env_file:
+        env_file.write(f"{api_key}={user_input}\n")
+    print(f"✅ {api_description} API Key added to .env file.")
 
 
 def faq_generator():
@@ -186,46 +148,45 @@ def faq_generator():
 
 
 def blog_tools():
-    """ Blogging Aid Tools """
     os.system("clear" if os.name == "posix" else "cls")
-    text = Text()
-    text.append("_______________________________________________________________________")
-    text.append("\n⚠️    Alert!   💥❓💥\n", style="bold red")
-    text.append("Collection of Helpful Blogging Tools, powered by LLMs.\n", style="bold green")
-    text.append("_______________________________________________________________________\n")
-
+    text = "_______________________________________________________________________\n"
+    text += "\n⚠️    Alert!   💥❓💥\n"
+    text += "Collection of Helpful Blogging Tools, powered by LLMs.\n"
+    text += "_______________________________________________________________________\n"
     print(text)
 
-    # https://developers.google.com/speed/docs/insights/v5/get-started
-    questions = [
-        {
-            'type': 'list',
-            'name': 'mode',
-            'message': 'Choose a Blogging Tool:',
-            'choices': ['Write Blog Title', 'Write Blog Meta Description', 'Write Blog Introduction',
-                'Write Blog conclusion', 'Write Blog Outline', 'Generate Blog FAQs', 'Research blog referances',
-                'Convert Blog To HTML', 'Convert Blog To Markdown', 'Blog Proof Reader',
-                'Get Blog Tags', 'Get blog categories', 'Get Blog Code Examples', 'Check WebPage Performance',
-                'Quit/Exit',],
-        }
+    choices = [
+        ("Write Blog Title", "Write Blog Title"),
+        ("Write Blog Meta Description", "Write Blog Meta Description"),
+        ("Write Blog Introduction", "Write Blog Introduction"),
+        ("Write Blog conclusion", "Write Blog conclusion"),
+        ("Write Blog Outline", "Write Blog Outline"),
+        ("Generate Blog FAQs", "Generate Blog FAQs"),
+        ("Research blog references", "Research blog references"),
+        ("Convert Blog To HTML", "Convert Blog To HTML"),
+        ("Convert Blog To Markdown", "Convert Blog To Markdown"),
+        ("Blog Proof Reader", "Blog Proof Reader"),
+        ("Get Blog Tags", "Get Blog Tags"),
+        ("Get blog categories", "Get blog categories"),
+        ("Get Blog Code Examples", "Get Blog Code Examples"),
+        ("Check WebPage Performance", "Check WebPage Performance"),
+        ("Quit/Exit", "Quit/Exit")
     ]
-    answers = prompt(questions)
-    mode = answers['mode']
-    if mode == 'Write Blog Title':
-        return
+    selected_tool = radiolist_dialog(title="Choose a Blogging Tool:", values=choices).run()
+    if selected_tool:
+        tool = selected_tool[0]
+        if tool == 'Write Blog Title':
+            return
 
-    
+
 def competitor_analysis():
-    """ Do metaphor similar search """
-    text = Text()
-    text.append("_______________________________________________________________________")
-    text.append("\n⚠️    Alert!   💥❓💥\n", style="bold red")
-    text.append("Provide competitor's URL, get details of similar/alternative companies.\n", style="bold red")
-    text.append("Usecases: Know similar companies and alternatives, to given URL\n", style="bold blue")
-    text.append("_______________________________________________________________________\n")
+    text = "_______________________________________________________________________\n"
+    text += "\n⚠️    Alert!   💥❓💥\n"
+    text += "Provide competitor's URL, get details of similar/alternative companies.\n"
+    text += "Usecases: Know similar companies and alternatives, to given URL\n"
+    text += "_______________________________________________________________________\n"
     print(text)
-    similar_url = typer.prompt(f"Enter Valid URL to get web analysis")
-
+    similar_url = prompt("Enter Valid URL to get web analysis")
     try:
         metaphor_find_similar(similar_url)
     except Exception as err:
@@ -234,96 +195,148 @@ def competitor_analysis():
 
 
 def write_blog():
-    """
-    Write Blog option with sub-options like Keywords, Audio YouTube, GitHub, and Scholar.
-    """
     blog_type = write_blog_options()
-
-    if blog_type == 'Keywords':
-        blog_from_keyword()
-    elif blog_type == 'Audio YouTube':
-        audio_youtube = typer.prompt("Enter YouTube URL for audio blog generation:")
-        print(f"Write audio blog based on YouTube URL: {audio_youtube}")
-    elif blog_type == 'GitHub':
-        github = typer.prompt("Enter GitHub URL, CSV file, or topic:")
-        print(f"Write blog based on GitHub: {github}")
-    elif blog_type == 'Scholar':
-        scholar = typer.prompt("Enter research papers keywords:")
-        print(f"Write blog based on scholar: {scholar}")
-    elif blog_type == 'Quit':
-        typer.echo("Exiting, F*** Off!")
-        raise typer.Exit()
+    if blog_type:
+        if blog_type == 'Keywords':
+            blog_from_keyword()
+        elif blog_type == 'Audio YouTube':
+            audio_youtube = prompt("Enter YouTube URL for audio blog generation:")
+            print(f"Write audio blog based on YouTube URL: {audio_youtube}")
+        elif blog_type == 'GitHub':
+            github = prompt("Enter GitHub URL, CSV file, or topic:")
+            print(f"Write blog based on GitHub: {github}")
+        elif blog_type == 'Scholar':
+            scholar = prompt("Enter research papers keywords:")
+            print(f"Write blog based on scholar: {scholar}")
+        elif blog_type == 'Quit':
+            typer.echo("Exiting, Getting Lost..")
+            raise typer.Exit()
 
 
 def blog_from_keyword():
-    """ Write blog from given keyword. """
-    print("Write blog based on keywords.")
-    check_llm_environs()
-    keywords = typer.prompt("Enter 'keywords/Blog Title' for blog generation:")
-    final_blog = write_blog_from_keywords(keywords)
+    """ Input blog keywords, research and write a factual blog."""
+    while True:
+            print("________________________________________________________________")
+            blog_keywords = input_dialog(
+                    title='Enter Keywords/Blog Title',
+                    text='Shit in, Shit Out; Better keywords, better research, hence better content.\n👋 Enter keywords/Blog Title for blog generation:',
+                ).run()
+
+            # If the user cancels, exit the loop
+            if blog_keywords is None:
+                break
+            if blog_keywords and len(blog_keywords.split()) >= 2:
+                break
+            else:
+                message_dialog(
+                    title='Warning',
+                    text='🚫 Blog keywords should be at least two words long. Please try again.'
+                ).run()
+    if blog_keywords:
+        try:
+            write_blog_from_keywords(blog_keywords)
+        except Exception as err:
+            print(f"Failed to write blog on {blog_keywords}, Error: {err}\n")
+            exit(1)
 
 
 def do_web_research():
-    """
-    Do Web Research option with time_range, search_keywords, and include_urls sub-options.
-    """
+    """ Input keywords and do web research and present a report."""
     if check_search_apis():
         while True:
             print("________________________________________________________________")
-            search_keywords = typer.prompt("👋 Enter keywords for web research:")
-            # Giving a single keywords, yields bad results.
+            search_keywords = input_dialog(
+                    title='Enter Search Keywords below:',
+                    text='👋 Enter keywords for web research (Or keywords from your blog):',
+                ).run()
             if search_keywords and len(search_keywords.split()) >= 2:
                 break
             else:
-                print("🚫 Search keywords should be at least three words long. Please try again.")
+                message_dialog(
+                    title='Warning',
+                    text='🚫 Search keywords should be at least three words long. Please try again.'
+                ).run()
+    selected_time_range = prompt_for_time_range()
 
-            # Display available choices
-#            print("Choose from the following options:")
-#            search_keyword_choices = ["choice1", "choice2", "choice3"]
-#            for i, choice in enumerate(search_keyword_choices, start=1):
-#                print(f"{i}. '{choice}'")
-#
-#            choice_index = typer.prompt("Enter the NUMBER to choose which keywords to use:")
-#
-#            try:
-#                choice_index = int(choice_index)
-#                if 1 <= choice_index <= len(search_keyword_choices):
-#                    search_keywords = search_keyword_choices[choice_index - 1]
-#                    break
-#                else:
-#                    print("🚫 Invalid choice. Please try again.")
-#            except ValueError:
-#                print("🚫 Invalid input. Please enter a valid number.")
+    # Display input dialog for similar search URL (optional)
+    similar_url = input_dialog(
+        title="Enter a similar search URL",
+        text="👋 Enter a similar search URL (Optional: Enter to skip):\n🙋Usecases: Competitor Analysis Tool. 📡Discover similar companies, startups and technologies.",
+        default="",
+    ).run()
 
-        
-        print("________________________________________________________________")
-        time_range = prompt_for_time_range()
+    # Display input dialog for included URLs (optional)
+    include_urls = input_dialog(
+        title="Enter URLs to include in the web search:",
+        text="👋 Enter comma-separated URLs to include in web research (press Enter to skip):\n🙋 If you wish to [bold]confine search[/bold] to certain domains like wikipedia etc.",
+        default="",
+    ).run()
 
-        os.system("clear" if os.name == "posix" else "cls")
-        print("\n________________________________________________________________")
-        print("\n🙋 Include a [green]URL[/green] to get [bold]similar/semantic[/bold]. For example, competitor's url.")
-        print("📡 Usecases: Competitor Analysis Tool. Discover similar companies, startups and technologies.\n")
-        similar_url = typer.prompt("👋 Enter a similar search URL (press Enter to continue):", default="")
 
-        os.system("clear" if os.name == "posix" else "cls")
-        print("\n________________________________________________________________")
-        print("\n🙋 If you wish to [bold]confine search[/bold] to certain domains like wikipedia etc.\n")
-        include_urls = typer.prompt("👋 Enter comma-separated URLs to include in web research (press Enter if none):", default="")
-    
-        try:
-            print(f"🚀🚀 [bold green]Starting web research on given keywords: {search_keywords}..")
-            #print(f"Web Research: Time Range - {time_range}, Search Keywords - {search_keywords}, Include URLs - {include_urls}")
-            web_research_result = gpt_web_researcher(search_keywords,
-                    time_range=time_range,
-                    include_domains=include_urls,
-                    similar_url=similar_url)
-        except Exception as err:
-            print(f"\n💥🤯 [bold red]ERROR 🤯 : Failed to do web research: {err}\n")
+    try:
+        print(f"🚀🎬🚀 [bold green]Starting web research on given keywords: {search_keywords}..")
+        #print(f"Web Research: Time Range - {time_range}, Search Keywords - {search_keywords}, Include URLs - {include_urls}")
+        web_research_result = gpt_web_researcher(search_keywords,
+                time_range=selected_time_range,
+                include_domains=include_urls,
+                similar_url=similar_url)
+    except Exception as err:
+        print(f"\n💥🤯 [bold red]ERROR 🤯 : Failed to do web research: {err}\n")
+
+
+def check_llm_environs():
+    """ Function to check which LLM api is given. """
+    # Check if GPT_PROVIDER is defined in .env file
+    gpt_provider = os.getenv("GPT_PROVIDER")
+
+    # Load .env file
+    load_dotenv()
+
+    # Disable unsupported GPT providers
+    supported_providers = ['google', 'openai', 'mistralai']
+    if gpt_provider is None or gpt_provider.lower() not in supported_providers:
+        #message_dialog(
+        #    title="Unsupported GPT Provider",
+        #    text="GPT_PROVIDER is not set or has an unsupported value."
+        #).run()
+
+        # Prompt user to select a provider
+        selected_provider = radiolist_dialog(
+            title='Select your preferred GPT provider:',
+            text="Please choose GPT provider Below:\n👺Google Gemini recommended, its 🆓.",
+            values=[
+                ("Google", "google"),
+                ("Openai", "openai"),
+                ("MistralAI/WIP", "mistralai/WIP"),
+                ("Ollama", "Ollama (TBD)")
+            ]
+        ).run()
+        if selected_provider:
+            gpt_provider = selected_provider
+
+    if gpt_provider.lower() == "google":
+        api_key_var = "GEMINI_API_KEY"
+        missing_api_msg = f"To get your {api_key_var}, please visit: https://aistudio.google.com/app/apikey"
+    elif gpt_provider.lower() == "openai":
+        api_key_var = "OPENAI_API_KEY"
+        missing_api_msg = "To get your OpenAI API key, please visit: https://openai.com/blog/openai-api"
+    elif gpt_provider.lower() == "mistralai":
+        api_key_var = "MISTRAL_API_KEY"
+        missing_api_msg = "To get your MistralAI API key, please visit: https://mistralai.com/api"
+
+    if os.getenv(api_key_var) is None:
+        # Ask for the API key
+        print(f"🚫The {api_key_var} is missing. {missing_api_msg}")
+        api_key = typer.prompt(f"\n🙆🙆Please enter {api_key_var} API Key:")
+
+        # Update .env file
+        with open(".env", "a") as env_file:
+            env_file.write(f"GPT_PROVIDER={gpt_provider.lower()}\n")
+            env_file.write(f"{api_key_var}={api_key}\n")
 
 
 def check_internet():
     try:
-        # Attempt to send a GET request to a well-known website
         response = requests.get("http://www.google.com", timeout=20)
         if not response.status_code == 200:
             print("💥🤯 WTFish, Internet is NOT available. Enjoy the wilderness..")
@@ -340,8 +353,25 @@ def check_internet():
         print("Internet: An error occurred:", e)
         exit(1)
 
+
+def create_env_file():
+    env_file = Path('.env')
+    if not env_file.is_file():
+        try:
+            with open('.env', 'w') as f:
+                f.write('# Alwrity will add your environment variables here\n')
+        except Exception as e:
+            print(f"💥🤯Error occurred while creating .env file: {e}")
+
+
 if __name__ == "__main__":
+    print("Checking Internet, lets get the basics right.")
     check_internet()
+    print("Create .env file, if not Present working directory")
+    create_env_file()
+    print("Check Metaphor, Tavily, YOU.com Search API keys.")
     check_search_apis()
+    print("Check LLM details & AI Model to use.")
     check_llm_environs()
+    load_dotenv(Path('.env'))
     app()

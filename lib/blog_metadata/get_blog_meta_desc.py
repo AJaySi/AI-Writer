@@ -27,13 +27,13 @@ def generate_blog_description(blog_content):
         Respond with only one of your best effort and do not include your explanations. 
         Blog Content: '{blog_content}'"""
 
-    if 'google' in gpt_providers:
+    if 'google' in gpt_providers.lower():
         try:
             response = gemini_text_response(prompt)
             return response
         except Exception as err:
             logger.error("Failed to get response from gemini.")
-    elif 'openai' in gpt_providers:
+    elif 'openai' in gpt_providers.lower():
         try:
             response = openai_chatgpt(prompt)
             return response

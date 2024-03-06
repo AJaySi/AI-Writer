@@ -57,13 +57,13 @@ def convert_tomarkdown_format(blog_content, gpt_provider="openai"):
     
     Blog Post: '{blog_content}'"""
     
-    if 'openai' in gpt_provider:
+    if 'openai' in gpt_provider.lower():
         try:
             response = openai_chatgpt(prompt)
             return response
         except Exception as err:
             SystemError(f"Openai Error in converting to Markdown format.")
-    elif 'gemini' in gpt_provider:
+    elif 'gemini' in gpt_provider.lower():
 
         prompt = f""" Convert the given blog post into well structured MARKDOWN content. 
         Do not alter the given blog post.

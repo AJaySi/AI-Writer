@@ -1,6 +1,6 @@
 *.pyc
 __pycache__
-pseo-experiemnts/
+pseo-experiments/
 *.swp
 venv/
 *.pyc
@@ -19,4 +19,6 @@ blogs/
 .env
 papers_already_written_on.txt
 lib/papers_to_write_on
-workspace/
+workspace/web_research_reports/
+workspace/logs/
+workspace/personal/

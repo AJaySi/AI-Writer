@@ -27,13 +27,13 @@ def get_blog_categories(blog_article):
             The blog content is: '{blog_article}'"
     """
     logger.info("Generating blog categories for the given blog.")
-    if 'google' in gpt_providers:
+    if 'google' in gpt_providers.lower():
         try:
             response = gemini_text_response(prompt)
             return response
         except Exception as err:
             logger.error(f"Failed to get response from gemini: {err}")
-    elif 'openai' in gpt_providers:
+    elif 'openai' in gpt_providers.lower():
         try:
             response = openai_chatgpt(prompt)
             return response
