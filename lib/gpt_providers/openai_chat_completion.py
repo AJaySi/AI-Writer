@@ -15,7 +15,7 @@ from tenacity import (
  
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-def openai_chatgpt(prompt, model="gpt-4-1106-preview", temperature=0.2, max_tokens=4096, top_p=0.9, n=1):
+def openai_chatgpt(prompt, model="gpt-3.5-turbo-0125", temperature=0.2, max_tokens=4096, top_p=0.9, n=1):
     """
     Wrapper function for OpenAI's ChatGPT completion.
 

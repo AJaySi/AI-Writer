@@ -9,7 +9,6 @@ from prompt_toolkit.shortcuts import radiolist_dialog
 from dotenv import load_dotenv
 import requests
 from rich import print
-from rich.console import Console
 from rich.text import Text
 
 load_dotenv(Path('.env'))
@@ -95,8 +94,6 @@ def check_search_apis():
     Check if necessary environment variables are present.
     Display messages with links on how to get them if not present.
     """
-    # Create a Rich console
-    console = Console()
 
     # Use rich.print for styling and hyperlinking
     print("\n\n🙋♂️  🙋♂️   Before doing web research, ensure the following API keys are available:")
