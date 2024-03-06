@@ -6,7 +6,6 @@ from prompt_toolkit.shortcuts import checkboxlist_dialog, message_dialog, input_
 from prompt_toolkit import prompt
 from prompt_toolkit.styles import Style
 from prompt_toolkit.shortcuts import radiolist_dialog
-from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 from dotenv import load_dotenv
 import requests
 from rich import print
