@@ -1,4 +1,5 @@
 # AI Blog Creation and Management Toolkit
+![](https://github.com/AJaySi/AI-Blog-Writer/blob/main/workspace/keyword_blog.gif)
 
 ## Introduction
 This toolkit automates and enhances the process of blog creation, optimization, and management. Leveraging AI technologies, it assists content creators and digital marketers in generating, formatting, and uploading blog content efficiently. The toolkit integrates advanced AI models for text generation, image creation, and data analysis, streamlining the content creation pipeline.
