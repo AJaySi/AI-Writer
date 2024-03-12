@@ -1,5 +1,5 @@
----
-# AI Blog Writer and Management Toolkit
+# AI Blog Creation and Management Toolkit
+![](https://github.com/AJaySi/AI-Blog-Writer/blob/main/workspace/keyword_blog.gif)
 
 ## Introduction
 
