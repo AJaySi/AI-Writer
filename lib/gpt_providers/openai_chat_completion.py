@@ -23,7 +23,7 @@ def openai_chatgpt(prompt, model="gpt-3.5-turbo-0125", temperature=0.2, max_toke
         prompt (str): The input text to generate completion for.
         model (str, optional): Model to be used for the completion. Defaults to "gpt-4-1106-preview".
         temperature (float, optional): Controls randomness. Lower values make responses more deterministic. Defaults to 0.2.
-        max_tokens (int, optional): Maximum number of tokens to generate. Defaults to 8192.
+        max_tokens (int, optional): Maximum number of tokens to generate. Defaults to 4096
         top_p (float, optional): Controls diversity. Defaults to 0.9.
         n (int, optional): Number of completions to generate. Defaults to 1.
 
@@ -34,7 +34,7 @@ def openai_chatgpt(prompt, model="gpt-3.5-turbo-0125", temperature=0.2, max_toke
         SystemExit: If an API error, connection error, or rate limit error occurs.
     """
     # Wait for 10 seconds to comply with rate limits
-    for _ in range(10):
+    for _ in range(5):
         time.sleep(1)
 
     try:

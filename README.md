@@ -13,17 +13,17 @@ Leveraging AI technologies, it assists content creators and digital marketers in
 To start using this tool, simply follow one of the options below:
 ---
 
-### Option 1: Local Laptop Install 💻  (Recommended)
+### Option 1: 𝗙𝗼𝗹𝗹𝗼𝘄 𝗺𝗲 Local Laptop Install 💻  (Recommended)
 
 **Step 0**️⃣: **Pre-requisites:** Git, Python3
 
-**Installing Python on Windows:**
+**Installing Python on Windows:🐍🪟**
 - Open PowerShell as admin: Press `Windows Key + X`, then select "Windows PowerShell (Admin)".
 
 - Type `python`. If Python is not installed, Windows will prompt you to 'Get Python'.
 - If Python is installed, you should see '>>>>>'.
 
-**Installing Git on Windows:**
+**Installing Git on Windows:🛺**
 - Open PowerShell or Windows Terminal: Press `Windows Key + X`, then select "Windows Terminal".
 
 - Paste or type and press enter:⏎.⏎.<br> 

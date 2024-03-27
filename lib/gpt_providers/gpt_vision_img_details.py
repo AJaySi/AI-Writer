@@ -92,15 +92,3 @@ def analyze_and_extract_details_from_image(image_path):
     except Exception as e:
         logger.error(f"Unexpected error occurred during image analysis: {e}")
         sys.exit(f"Exiting due to an unexpected error: {e}")
-
-# Example usage
-if __name__ == "__main__":
-    image_path = "path/to/your/image.jpg"
-    try:
-        details = analyze_and_extract_details_from_image(image_path)
-        if details:
-            print(f"Extracted image details: {details}")
-        else:
-            print("No details extracted from the image.")
-    except SystemExit as e:
-        print(f"Terminated: {e}")

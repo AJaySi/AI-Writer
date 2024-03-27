@@ -225,7 +225,7 @@ def blog_from_keyword():
                 break
             else:
                 message_dialog(
-                    title='Warning',
+                    title='Error',
                     text='🚫 Blog keywords should be at least two words long. Please try again.'
                 ).run()
     if blog_keywords:
