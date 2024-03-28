@@ -81,7 +81,6 @@ def get_tavilyai_results(keywords, include_urls, search_depth="advanced"):
             tavily_search_result = client.search(keywords, search_depth, include_answer=True)
         print_result_table(tavily_search_result)
         return(tavily_search_result)
-
     except Exception as err:
         logger.error(f"Failed to do Tavily Research: {err}")
 
@@ -147,7 +146,7 @@ def save_in_file(table_content):
     file_path = os.environ.get('SEARCH_SAVE_FILE')
     try:
         # Save the content to the file
-        with open(file_path, "a+") as file:
+        with open(file_path, "a") as file:
             file.write(table_content)
             file.write("\n" * 3)  # Add three newlines at the end
         logger.info(f"Search content saved to {file_path}")

@@ -11,7 +11,7 @@ logger.add(sys.stdout,
         format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
     )
 
-from ..gpt_providers.openai_gpt_provider import openai_chatgpt
+from ..gpt_providers.openai_text_gen import openai_chatgpt
 from ..gpt_providers.gemini_pro_text import gemini_text_response
 
 

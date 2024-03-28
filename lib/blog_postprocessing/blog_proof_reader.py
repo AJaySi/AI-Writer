@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv(Path('../../.env'))
 
 from ..gpt_providers.gemini_pro_text import gemini_text_response
-from ..gpt_providers.openai_chat_completion import openai_chatgpt
+from ..gpt_providers.openai_text_gen import openai_chatgpt
 
 
 def blog_proof_editor(blog_content, blog_keywords):

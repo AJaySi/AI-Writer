@@ -5,7 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv(Path('../.env'))
 
-from ..gpt_providers.openai_chat_completion import openai_chatgpt
+from ..gpt_providers.openai_text_gen import openai_chatgpt
 from ..gpt_providers.gemini_pro_text import gemini_text_response
 
 from loguru import logger

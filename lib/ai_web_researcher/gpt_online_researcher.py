@@ -56,7 +56,7 @@ def do_google_serp_search(search_keywords):
 
 
 def do_tavily_ai_search(search_keywords, include_domains=None):
-    """ """
+    """ Common function to do Tavily AI web research."""
     try:
         # FIXME: Include the follow-up questions as blog FAQs.
         logger.info(f"Doing Tavily AI search for: {search_keywords}")

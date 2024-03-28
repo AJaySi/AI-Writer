@@ -46,11 +46,13 @@ def write_blog_from_keywords(search_keywords, url=None):
     logger.info(f"######### Blog content Google SERP research: ###########\n\n{blog_markdown_str}\n\n")
 
     # Do Tavily AI research to augument the above blog.
-    tavily_search_result, t_titles = do_tavily_ai_search(search_keywords)
-    example_blog_titles.append(t_titles)
-    if tavily_search_result:
+    try:
+        tavily_search_result, t_titles = do_tavily_ai_search(search_keywords)
+        example_blog_titles.append(t_titles)
         blog_markdown_str = blog_with_research(blog_markdown_str, tavily_search_result)
         logger.info(f"######### Blog content after Tavily AI research: ######### \n\n{blog_markdown_str}\n\n")
+    except Exception as err:
+        logger.error(f"Failed to do Tavily AI research: {err}")
 
     try:
         # Do Metaphor/Exa AI search.
