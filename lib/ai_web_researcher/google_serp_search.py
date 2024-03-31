@@ -50,11 +50,8 @@ logger.add(
            )
 
 
-#from tenacity import retry, stop_after_attempt, wait_random_exponential
-#@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-
-
-#FIXME: Accept language, country and time frame to search for.
+from tenacity import retry, stop_after_attempt, wait_random_exponential
+@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
 def google_search(query):
     """
     Perform a Google search for the given query.

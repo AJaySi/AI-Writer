@@ -39,9 +39,12 @@ def write_blog_from_keywords(search_keywords, url=None):
     
     logger.info(f"Researching and Writing Blog on keywords: {search_keywords}")
     # Call on the got-researcher, tavily apis for this. Do google search for organic competition.
-    google_search_result, g_titles = do_google_serp_search(search_keywords)
-    example_blog_titles.append(g_titles)
-    blog_markdown_str = write_blog_google_serp(search_keywords, google_search_result)
+    try:
+        google_search_result, g_titles = do_google_serp_search(search_keywords)
+        example_blog_titles.append(g_titles)
+        blog_markdown_str = write_blog_google_serp(search_keywords, google_search_result)
+    except Exception as err:
+        logger.error(f"Failed in Google web research: {err}")
     # logger.info/check the final blog content.
     logger.info(f"######### Blog content Google SERP research: ###########\n\n{blog_markdown_str}\n\n")
 
