@@ -1,7 +1,8 @@
-import time
+import os
+import time #IWish
 import logging
 import openai
-import os
+import configparser
 
 # Configure standard logging
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s-%(levelname)s-%(module)s-%(lineno)d]- %(message)s')
@@ -15,7 +16,7 @@ from tenacity import (
  
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-def openai_chatgpt(prompt, model="gpt-3.5-turbo-0125", temperature=0.7, max_tokens=4096, top_p=0.5, n=1):
+def openai_chatgpt(prompt):
     """
     Wrapper function for OpenAI's ChatGPT completion.
 
@@ -33,6 +34,20 @@ def openai_chatgpt(prompt, model="gpt-3.5-turbo-0125", temperature=0.7, max_toke
     Raises:
         SystemExit: If an API error, connection error, or rate limit error occurs.
     """
+    try:
+        config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'main_config'))
+
+        config = configparser.ConfigParser()
+        config.read(config_path)
+
+        model = config.get('model')
+        temperature = config.getfloat('temperature')
+        max_tokens = config.getint('max_tokens')
+        top_p = config.getfloat('top_p')
+        n = config.getint('n')
+    except Exception as err:
+        logger.error(f"Unable to read Openai parameters from config file:{err}")
+    
     # Wait for 10 seconds to comply with rate limits
     for _ in range(5):
         time.sleep(1)

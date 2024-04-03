@@ -6,6 +6,8 @@
 #
 ###################################################
 
+[blog_characteristics]
+
 # Length of blogs Or word count. Note: It wont be exact and depends on GPT providers and Max token count.
 blog_length = 2000
 
@@ -19,7 +21,7 @@ blog_demographic = "All"
 blog_type = "Informational"
 
 # German, Chinese, Arabic, Nepali, Hindi, Hindustani etc
-blog_language = "English"
+blog_language = "Spanish"
 
 # Specify the output format of the blog as: HTML, markdown, plaintext. Defaults to markdown.
 blog_output_format = "markdown"
