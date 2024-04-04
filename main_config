@@ -20,8 +20,8 @@ blog_demographic = "All"
 # informational, commercial, company, news, finance, competitor, programming, scholar etc
 blog_type = "Informational"
 
-# German, Chinese, Arabic, Nepali, Hindi, Hindustani etc
-blog_language = "Spanish"
+# Spanish, German, Chinese, Arabic, Nepali, Hindi, Hindustani etc
+blog_language = "English"
 
 # Specify the output format of the blog as: HTML, markdown, plaintext. Defaults to markdown.
 blog_output_format = "markdown"

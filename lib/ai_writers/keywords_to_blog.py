@@ -22,7 +22,7 @@ from ..ai_web_researcher.you_web_reseacher import get_rag_results, search_ydc_in
 from ..blog_metadata.get_blog_metadata import blog_metadata
 from ..blog_postprocessing.save_blog_to_file import save_blog_to_file
 from ..blog_postprocessing.blog_proof_reader import blog_proof_editor
-
+from ..blog_postprocessing.humanize_blog import blog_humanize
 
 
 def write_blog_from_keywords(search_keywords, url=None):
@@ -48,32 +48,32 @@ def write_blog_from_keywords(search_keywords, url=None):
     # logger.info/check the final blog content.
     logger.info(f"######### Blog content Google SERP research: ###########\n\n{blog_markdown_str}\n\n")
 
-#    # Do Tavily AI research to augument the above blog.
-#    try:
-#        tavily_search_result, t_titles = do_tavily_ai_search(search_keywords)
-#        example_blog_titles.append(t_titles)
-#        blog_markdown_str = blog_with_research(blog_markdown_str, tavily_search_result)
-#        logger.info(f"######### Blog content after Tavily AI research: ######### \n\n{blog_markdown_str}\n\n")
-#    except Exception as err:
-#        logger.error(f"Failed to do Tavily AI research: {err}")
-#
-#    try:
-#        # Do Metaphor/Exa AI search.
-#        metaphor_search_result, m_titles = do_metaphor_ai_research(search_keywords)
-#        example_blog_titles.append(m_titles)
-#        blog_markdown_str = blog_with_research(blog_markdown_str, metaphor_search_result)
-#        logger.info(f"######## Blog content after EXA AI research: ########## \n\n{blog_markdown_str}\n\n")
-#    except Exception as err:
-#        logger.error(f"Failed to do Metaphor AI search: {err}")
-#
-#    # Do Google trends analysis and combine with latest blog.
-#    try:
-#        pytrends_search_result = do_google_pytrends_analysis(search_keywords)
-#        logger.info(f"Google Trends keywords to use in the blog: {pytrends_search_result}\n")
-#        blog_markdown_str = blog_with_keywords(blog_markdown_str, pytrends_search_result)
-#    except Exception as err:
-#        logger.error(f"Failed to do Google Trends Analysis:{err}")
-#    logger.info(f"########### Blog Content After Google Trends Analysis:######### \n {blog_markdown_str}\n\n")
+    # Do Tavily AI research to augument the above blog.
+    try:
+        tavily_search_result, t_titles = do_tavily_ai_search(search_keywords)
+        example_blog_titles.append(t_titles)
+        blog_markdown_str = blog_with_research(blog_markdown_str, tavily_search_result)
+        logger.info(f"######### Blog content after Tavily AI research: ######### \n\n{blog_markdown_str}\n\n")
+    except Exception as err:
+        logger.error(f"Failed to do Tavily AI research: {err}")
+
+    try:
+        # Do Metaphor/Exa AI search.
+        metaphor_search_result, m_titles = do_metaphor_ai_research(search_keywords)
+        example_blog_titles.append(m_titles)
+        blog_markdown_str = blog_with_research(blog_markdown_str, metaphor_search_result)
+        logger.info(f"######## Blog content after EXA AI research: ########## \n\n{blog_markdown_str}\n\n")
+    except Exception as err:
+        logger.error(f"Failed to do Metaphor AI search: {err}")
+
+    # Do Google trends analysis and combine with latest blog.
+    try:
+        pytrends_search_result = do_google_pytrends_analysis(search_keywords)
+        logger.info(f"Google Trends keywords to use in the blog: {pytrends_search_result}\n")
+        blog_markdown_str = blog_with_keywords(blog_markdown_str, pytrends_search_result)
+    except Exception as err:
+        logger.error(f"Failed to do Google Trends Analysis:{err}")
+    logger.info(f"########### Blog Content After Google Trends Analysis:######### \n {blog_markdown_str}\n\n")
 
     # Combine YOU.com RAG search with the latest blog content.
     #you_rag_result = get_rag_results(search_keywords)
@@ -81,6 +81,9 @@ def write_blog_from_keywords(search_keywords, url=None):
     #blog_markdown_str = blog_with_research(blog_markdown_str, you_search_result)
     #logger.info(f"Final blog content: {blog_markdown_str}")
 
+    # Pass the content to remove obivious words used by AI.
+    blog_markdown_str = blog_humanize(blog_markdown_str)
+    # Pass the final content for proofreading.
     blog_markdown_str = blog_proof_editor(blog_markdown_str)
 
     blog_title, blog_meta_desc, blog_tags, blog_categories = blog_metadata(blog_markdown_str, 
