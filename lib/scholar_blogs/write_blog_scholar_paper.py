@@ -11,7 +11,7 @@ logger.add(sys.stdout,
     )
 
 
-def write_blog_from_paper(paper_content, gpt_providers="openai"):
+def write_blog_from_paper(paper_content):
     """ Write blog from given paper url. """
     prompt = f"""As an expert in NLP and AI, I will provide you with a content of a research paper. 
     Your task is to write a highly detailed blog(at least 2000 words), breaking down complex concepts for beginners.

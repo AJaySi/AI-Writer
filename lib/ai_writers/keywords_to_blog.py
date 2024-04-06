@@ -81,10 +81,13 @@ def write_blog_from_keywords(search_keywords, url=None):
     #blog_markdown_str = blog_with_research(blog_markdown_str, you_search_result)
     #logger.info(f"Final blog content: {blog_markdown_str}")
 
-    # Pass the content to remove obivious words used by AI.
-    blog_markdown_str = blog_humanize(blog_markdown_str)
+    logger.info("Pass Final blog for blog-proof reading and *improvements.")
     # Pass the final content for proofreading.
     blog_markdown_str = blog_proof_editor(blog_markdown_str)
+
+    # Pass the content to remove obivious words used by AI.
+    logger.info("Pass Final blog for Humanizing it further, Doesn't matter, Really?")
+    blog_markdown_str = blog_humanize(blog_markdown_str)
 
     blog_title, blog_meta_desc, blog_tags, blog_categories = blog_metadata(blog_markdown_str, 
             search_keywords, example_blog_titles)

@@ -12,7 +12,7 @@ logger.add(sys.stdout,
 
 
 
-def github_readme_blog(readme_content, gpt_providers="openai"):
+def github_readme_blog(readme_content):
     """ """
     prompt = f"""As an expert programmer and teacher, Write an original, detailed and step-by-step guide, from the provided Text below.
     Your guide should be original, engaging and help beginners get started easily.

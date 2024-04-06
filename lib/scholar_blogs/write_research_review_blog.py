@@ -12,7 +12,7 @@ logger.add(sys.stdout,
     )
 
 
-def review_research_paper(research_blog, gpt_providers="openai"):
+def review_research_paper(research_blog):
     """ """
     prompt = f"""As world's top researcher and academician, I will provide you with research paper.
     Your task is to write a highly detailed review report. 

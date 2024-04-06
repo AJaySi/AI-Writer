@@ -155,7 +155,7 @@ def blog_postprocessing(arxiv_id, research_review):
         raise err
 
     try:
-        blog_title, blog_meta_desc, blog_tags, blog_categories = blog_metadata(research_review, "gemini")
+        blog_title, blog_meta_desc, blog_tags, blog_categories = blog_metadata(research_review)
     except Exception as err:
         logger.error(f"Failed to get blog metadata: {err}")
         raise err

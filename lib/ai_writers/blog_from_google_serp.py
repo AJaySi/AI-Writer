@@ -21,19 +21,23 @@ def write_blog_google_serp(search_keyword, search_results):
     """Combine the given online research and gpt blog content"""
     gpt_providers = os.environ["GPT_PROVIDER"]
     prompt = f"""
-        As a SEO expert and content writer, I will provide you with my web research keyword and its google search result in json format.
-        Your task is to write a SEO optimized, unique blog and 5 FAQs.
+        As a SEO expert and content writer, I will provide you with my 'web research keywords' and its 'google search result'.
+        Your task is to write an original, conversational, SEO optimized blog and also 5 FAQs.
         
-        1). Your blog content should compete against all, in the provided search results. Follow best SEO practises.
-        2). Your FAQ should be based on 'People also ask' and 'Related Queries' from given result. 
+        Follow below guidelines:
+        1). Your blog content should compete against all blogs from search results.
+        2). Your FAQ should be based on 'People also ask' and 'Related Queries' from given search result. 
         Always include answers for each FAQ, use your knowledge and confirm with snippets given in search result.
-        3). Your blog should be detailed, unique and written in markdown language.
-        4). Do not explain, describe your response.
+        3). Your blog should be highly detailed, unique and written in human-like personality & tone.
+        4). Act as subject matter expert for given research keywords and include statistics and facts.
+        5). Do not explain, describe your response.
+        6). Important: Please read the entire prompt before writing anything, and do not do anything extra. 
+        Follow the prompt exactly as I instructed.
 
-        Web Research Keyword: "{search_keyword}"
+        \n\nWeb Research Keyword: "{search_keyword}"
         Google search Result: "{search_results}"
         """
-    logger.info("Generating blog and FAQs from web search result.")
+    logger.info("Generating blog and FAQs from Google web search results.")
     if 'google' in gpt_providers.lower():
         try:
             response = gemini_text_response(prompt)

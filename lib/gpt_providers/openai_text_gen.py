@@ -40,11 +40,12 @@ def openai_chatgpt(prompt):
         config = configparser.ConfigParser()
         config.read(config_path)
 
-        model = config.get('model')
-        temperature = config.getfloat('temperature')
-        max_tokens = config.getint('max_tokens')
-        top_p = config.getfloat('top_p')
-        n = config.getint('n')
+        model = config.get('llm_options', 'model')
+        temperature = config.getfloat('llm_options', 'temperature')
+        max_tokens = config.getint('llm_options', 'max_tokens')
+        top_p = config.getfloat('llm_options', 'top_p')
+        n = config.getint('llm_options', 'n')
+        fp = config.getfloat('llm_options', 'frequency_penalty')
     except Exception as err:
         logger.error(f"Unable to read Openai parameters from config file:{err}")
     
@@ -59,10 +60,25 @@ def openai_chatgpt(prompt):
             messages=[{"role": "user", "content": prompt}],
             max_tokens=max_tokens,
             n=n,
-            top_p=top_p
+            top_p=top_p,
+            stream=True,
+            frequency_penalty=fp
             # Additional parameters can be included here
         )
-        return response.choices[0].message.content
+        # create variables to collect the stream of chunks
+        collected_chunks = []
+        collected_messages = []
+        # iterate through the stream of events
+        for chunk in response:
+            collected_chunks.append(chunk)  # save the event response
+            chunk_message = chunk.choices[0].delta.content  # extract the message
+            collected_messages.append(chunk_message)  # save the message
+            print(chunk.choices[0].delta.content, end = "", flush = True)
+        
+        # clean None in collected_messages
+        collected_messages = [m for m in collected_messages if m is not None]
+        full_reply_content = ''.join([m for m in collected_messages])
+        return full_reply_content
 
     except openai.APIError as e:
         logger.error(f"OpenAI API Error: {e}")
