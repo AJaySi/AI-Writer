@@ -1,17 +1,18 @@
 import os
 import sys
 
-from pathlib import Path
-from dotenv import load_dotenv
-load_dotenv(Path('../../.env'))
+from loguru import logger
+logger.remove()
+logger.add(sys.stdout,
+        colorize=True,
+        format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
+    )
 
-from ..gpt_providers.gemini_pro_text import gemini_text_response
-from ..gpt_providers.openai_text_gen import openai_chatgpt
+from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
 def blog_humanize(blog_content):
     """ Helper for blog proof reading. """
-    gpt_provider = os.environ["GPT_PROVIDER"]
 
     prompt = f"""The following is what I will refer to as an 'Exception-list'. 
     Do Not include any of the words or phrases on this list in your future responses to this chat thread. 
@@ -25,15 +26,9 @@ def blog_humanize(blog_content):
         
         \n\nBlog Content: '{blog_content}'
         """
-    if 'openai' in gpt_provider.lower():
-        try:
-            response = openai_chatgpt(prompt)
-            return response
-        except Exception as err:
-            SystemError(f"Openai Error Blog Proof Reading: {err}")
-    elif 'google' in gpt_provider.lower():
-        try:
-            response = gemini_text_response(prompt)
-            return response
-        except Exception as err:
-            SystemError(f"Gemini Error Blog Proof Reading: {err}")
+    try:
+        response = llm_text_gen(prompt)
+        return response
+    except Exception as err:
+        logger.error(f"Openai Error Blog Proof Reading: {err}")
+        raise err

@@ -1,19 +1,13 @@
 import os
 import sys
-
-from pathlib import Path
-from dotenv import load_dotenv
-load_dotenv(Path('../../.env'))
 import configparser
 
-from ..gpt_providers.gemini_pro_text import gemini_text_response
-from ..gpt_providers.openai_text_gen import openai_chatgpt
+from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
 def blog_proof_editor(blog_content):
     """ Helper for blog proof reading. """
 
-    gpt_provider = os.environ["GPT_PROVIDER"]
     try:
         config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'main_config'))
         config = configparser.ConfigParser()
@@ -38,15 +32,8 @@ def blog_proof_editor(blog_content):
 
         \n\nMy Blog: '{blog_content}'. """
 
-    if 'openai' in gpt_provider.lower():
-        try:
-            response = openai_chatgpt(prompt)
-            return response
-        except Exception as err:
-            SystemError(f"Openai Error Blog Proof Reading: {err}")
-    elif 'google' in gpt_provider.lower():
-        try:
-            response = gemini_text_response(prompt)
-            return response
-        except Exception as err:
-            SystemError(f"Gemini Error Blog Proof Reading: {err}")
+    try:
+        response = llm_text_gen(prompt)
+        return response
+    except Exception as err:
+        logger.error(f"Error Blog Proof Reading: {err}")

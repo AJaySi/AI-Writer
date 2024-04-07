@@ -46,7 +46,7 @@ def write_blog_from_keywords(search_keywords, url=None):
     except Exception as err:
         logger.error(f"Failed in Google web research: {err}")
     # logger.info/check the final blog content.
-    logger.info(f"######### Blog content Google SERP research: ###########\n\n{blog_markdown_str}\n\n")
+    logger.info("\n######### Draft1: Finished Blog from Google web search: ###########\n\n")
 
     # Do Tavily AI research to augument the above blog.
     try:
@@ -56,15 +56,16 @@ def write_blog_from_keywords(search_keywords, url=None):
         logger.info(f"######### Blog content after Tavily AI research: ######### \n\n{blog_markdown_str}\n\n")
     except Exception as err:
         logger.error(f"Failed to do Tavily AI research: {err}")
+    logger.info("######### Draft2: Blog content after Tavily AI research: #########\n\n")
 
     try:
         # Do Metaphor/Exa AI search.
         metaphor_search_result, m_titles = do_metaphor_ai_research(search_keywords)
         example_blog_titles.append(m_titles)
         blog_markdown_str = blog_with_research(blog_markdown_str, metaphor_search_result)
-        logger.info(f"######## Blog content after EXA AI research: ########## \n\n{blog_markdown_str}\n\n")
     except Exception as err:
         logger.error(f"Failed to do Metaphor AI search: {err}")
+    logger.info("######### Draft3: Blog content after Tavily AI research: ######### \n\n")
 
     # Do Google trends analysis and combine with latest blog.
     try:
@@ -74,7 +75,7 @@ def write_blog_from_keywords(search_keywords, url=None):
     except Exception as err:
         logger.error(f"Failed to do Google Trends Analysis:{err}")
     logger.info(f"########### Blog Content After Google Trends Analysis:######### \n {blog_markdown_str}\n\n")
-
+    
     # Combine YOU.com RAG search with the latest blog content.
     #you_rag_result = get_rag_results(search_keywords)
     #you_search_result = search_ydc_index(search_keywords)

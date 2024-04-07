@@ -1,12 +1,6 @@
 import os
 import sys
 
-from pathlib import Path
-from dotenv import load_dotenv
-load_dotenv(Path('../.env'))
-
-from ..gpt_providers.openai_text_gen import openai_chatgpt
-from ..gpt_providers.gemini_pro_text import gemini_text_response
 
 from loguru import logger
 logger.remove()
@@ -15,10 +9,11 @@ logger.add(sys.stdout,
         format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
     )
 
+from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
+
 
 def blog_with_keywords(blog, keywords):
     """Combine the given online research and gpt blog content"""
-    gpt_providers = os.environ["GPT_PROVIDER"]
     prompt = f"""
         As an expert digital content writer, specializing in content optimization and SEO. 
         I will provide you with my 'blog content' and 'list of keywords' on the same topic.
@@ -28,19 +23,9 @@ def blog_with_keywords(blog, keywords):
         Blog content: '{blog}'
         list of keywords: '{keywords}'
         """
-
-    if 'google' in gpt_providers.lower():
-        try:
-            response = gemini_text_response(prompt)
-            return response
-        except Exception as err:
-            logger.error(f"Failed to get response from gemini: {err}")
-            raise err
-    elif 'openai' in gpt_providers.lower():
-        try:
-            logger.info("Calling OpenAI LLM.")
-            response = openai_chatgpt(prompt)
-            return response
-        except Exception as err:
-            logger.error(f"failed to get response from Openai: {err}")
-            raise err
+    try:
+        response = llm_text_gen(prompt)
+        return response
+    except Exception as err:
+        logger.error(f"blog_with_keywords: Failed to get response from LLM: {err}")
+        raise err

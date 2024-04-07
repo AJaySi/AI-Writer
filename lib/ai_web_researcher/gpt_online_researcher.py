@@ -11,7 +11,6 @@ import sys
 from typing import List, NamedTuple
 from datetime import datetime
 
-from ..gpt_providers.gemini_pro_text import gemini_text_response
 from .tavily_ai_search import get_tavilyai_results
 from .metaphor_basic_neural_web_search import metaphor_find_similar, metaphor_search_articles
 from .google_serp_search import google_search
@@ -154,25 +153,3 @@ def tavily_extract_information(json_data, keyword):
         return json_data['follow_up_questions']
     else:
         return f"Invalid keyword: {keyword}"
-
-
-def compete_organic_results(query, report, organic_results):
-    """ Given a blog content and google search organinc results, create a new blog to compete against them."""
-    prompt = f""" As an SEO expert and copywriter, I will provide you with my blog content on topic '{query}', and
-        Top google search results. 
-        Your task is to rewrite the given blog to make it compete against top position results. 
-        Make sure, the new blog has high probability of ranking highest against given organic search result competitors.
-        Modify the given blog content following best SEO practises.
-        Make sure the blog is original, unique and highly readable.
-        Remember, Maintain and adopt the formatting, structure, style and tone of the provided blog content.
-        Include relevant emojis in your final blog for visual appeal. Use it sparingly.
-        Your response should be well-structured, objective, and critically acclaimed blog article based on provided texts. 
-
-        Remember, your goal is to create a detailed blog article that will compete against given organic result competitors.
-        Do not provide explanations, suggestions for your response, reply only with your final response.
-        Take your time in crafting your content, do not rush to give the response.
-        Blog Content: '{report}'\n
-        Organic Search result: '{organic_results}'
-        """
-    report = gemini_text_response(prompt)
-    return report

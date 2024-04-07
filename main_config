@@ -9,7 +9,7 @@
 [blog_characteristics]
 
 # Length of blogs Or word count. Note: It wont be exact and depends on GPT providers and Max token count.
-blog_length = 2000
+blog_length = 3000
 
 # professional, how-to, begginer, research, programming, casual, etc
 blog_tone = "professional"
@@ -55,8 +55,9 @@ num_images = 1
 ###########################################################
 
 [llm_options]
+
 # Choose one of following: Openai, Google, Minstral
-gpt_provider = "google"
+gpt_provider = google
 
 # Mention which model of the above provider to use.
 model = gpt-3.5-turbo-0125
