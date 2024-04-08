@@ -16,17 +16,15 @@ logger.add(sys.stdout,
         format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
     )
 
-from .gpt_providers.stt_audio_blog import speech_to_text
-from .gpt_providers.openai_chat_completion import openai_chatgpt
+
+from ...gpt_providers.audio_to_text_generation.stt_audio_blog import speech_to_text
+from ...gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
 def youtube_to_blog(video_url):
     """Function to transcribe a given youtube url """
     # fixme: Doesnt work all types of yt urls.
     vid_id = video_url.split("=")[1]
-    #hti = Html2Image(output_path="../blog_images")
-    #hti.screenshot(url=video_url, save_as=f"yt-img-{vid_id}.png")
-    #yt_img_path = os.path.join("../blog_images", f"yt-img-{vid_id}.png")
 
     try:
         # Starting the speech-to-text process
@@ -44,7 +42,6 @@ def youtube_to_blog(video_url):
     except Exception as e:
         logger.error(f"Error in summarize_youtube_video: {e}")
         sys.exit(1)  # Exit the program due to error in summarize_youtube_video
-    return audio_blog_content
 
 
 def summarize_youtube_video(user_content, gpt_providers):
@@ -77,21 +74,9 @@ def summarize_youtube_video(user_content, gpt_providers):
         that will rank well in search engine results and engage readers effectively.
         Follow above guidelines to craft a blog content from the following transcript:\n{user_content}
         """
-    if 'gemini' in gpt_providers:
-        try:
-            genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-        except Exception as err:
-            logger.error("Failed in getting GEMINI_API_KEY")
-        # Use gemini-pro model for text and image.
-        model = genai.GenerativeModel('gemini-pro')
-        try:
-            response = model.generate_content(prompt)
-            return response.text
-        except Exception as err:
-            logger.error("Failed to get response from gemini.")
-    elif 'openai' in gpt_providers:
-        try:
-            response = openai_chatgpt(prompt)
-            return response
-        except Exception as err:
-            SystemError(f"Error in generating blog summary: {err}")
+    try:
+        response = llm_text_gen(prompt)
+        return response
+    except Exception as err:
+        logger.error(f"Failed to summarize_youtube_video: {err}")
+        exit(1)

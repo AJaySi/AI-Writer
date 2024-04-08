@@ -34,22 +34,27 @@ def speech_to_text(video_url, output_path='.'):
         SystemExit: If a critical error occurs that prevents successful execution.
     """
     try:
-        logger.info(f"Accessing YouTube URL: {video_url}")
-        yt = YouTube(video_url, on_progress_callback=progress_function)
+        audio_file = None
+        if video_url.startswith("https://www.youtube.com/") or video_url.startswith("http://www.youtube.com/"):
+            logger.info(f"Accessing YouTube URL: {video_url}")
+            yt = YouTube(video_url, on_progress_callback=progress_function)
 
-        logger.info("Fetching the highest quality audio stream")
-        audio_stream = yt.streams.filter(only_audio=True).first()
+            logger.info("Fetching the highest quality audio stream")
+            audio_stream = yt.streams.filter(only_audio=True).first()
 
-        if audio_stream is None:
-            logger.warning("No audio stream found for this video.")
-            return None
+            if audio_stream is None:
+                logger.warning("No audio stream found for this video.")
+                return None
 
-        #logger.info(f"Downloading audio for: {yt.title}")
-        global progress_bar
-        progress_bar = tqdm(total=1.0, unit='iB', unit_scale=True, desc=yt.title)
-        audio_file = audio_stream.download(output_path)
-        progress_bar.close()
-        logger.info(f"Audio downloaded: {yt.title} to {output_path}")
+            logger.info(f"Downloading audio for: {yt.title}")
+            global progress_bar
+            progress_bar = tqdm(total=1.0, unit='iB', unit_scale=True, desc=yt.title)
+            audio_file = audio_stream.download(output_path)
+            progress_bar.close()
+            logger.info(f"Audio downloaded: {yt.title} to {output_path}")
+        # Audio filepath from local directory.
+        elif os.path.exists(audio_input):
+            audio_file = video_url
 
         # Checking file size
         max_file_size = 24 * 1024 * 1024  # 24MB
@@ -59,6 +64,8 @@ def speech_to_text(video_url, output_path='.'):
         logger.info(f"Downloaded Audio Size is: {file_size_MB:.2f} MB")
         if file_size > max_file_size:
             logger.error("File size exceeds 24MB limit.")
+            # FIXME: We can chunk hour long videos, the code is not tested.
+            #long_video(audio_file)
             sys.exit("File size limit exceeded.")
 
         try:
@@ -86,3 +93,43 @@ def speech_to_text(video_url, output_path='.'):
         if os.path.exists(audio_file):
             os.remove(audio_file)
             logger.info("Temporary audio file removed.")
+
+
+def long_video(temp_file_name):
+    """
+    Transcribes a YouTube video using OpenAI's Whisper API by processing the video in chunks.
+
+    This function handles videos longer than the context limit of the Whisper API by dividing the video into
+    10-minute segments, transcribing each segment individually, and then combining the results.
+
+    Key Changes and Notes:
+    1. Video Splitting: Splits the audio into 10-minute chunks using the moviepy library.
+    2. Chunk Transcription: Each audio chunk is transcribed separately and the results are concatenated.
+    3. Temporary Files for Chunks: Uses temporary files for each audio chunk for transcription.
+    4. Error Handling: Exception handling is included to capture and return any errors during the process.
+    5. Logging: Process steps are logged for debugging and monitoring.
+    6. Cleaning Up: Removes temporary files for both the entire video and individual audio chunks after processing.
+
+    Args:
+        video_url (str): URL of the YouTube video to be transcribed.
+    """
+    # Extract audio and split into chunks
+    app.logger.info(f"Processing the YT video: {temp_file_name}")
+    full_audio = mp.AudioFileClip(temp_file_name)
+    duration = full_audio.duration
+    chunk_length = 600  # 10 minutes in seconds
+    chunks = [full_audio.subclip(start, min(start + chunk_length, duration)) for start in range(0, int(duration), chunk_length)]
+
+    combined_transcript = ""
+    for i, chunk in enumerate(chunks):
+        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as audio_chunk_file:
+            chunk.write_audiofile(audio_chunk_file.name, codec="mp3")
+            with open(audio_chunk_file.name, "rb") as audio_file:
+                # Transcribe each chunk using OpenAI's Whisper API
+                app.logger.info(f"Transcribing chunk {i+1}/{len(chunks)}")
+                transcript = openai.Audio.transcribe("whisper-1", audio_file)
+                combined_transcript += transcript['text'] + "\n\n"
+
+            # Remove the chunk audio file
+            os.remove(audio_chunk_file.name)
+

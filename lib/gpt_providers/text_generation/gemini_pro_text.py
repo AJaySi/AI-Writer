@@ -35,7 +35,7 @@ def gemini_text_response(prompt, temperature, top_p, n, max_tokens):
         "top_k": n,
         "max_output_tokens": max_tokens
     }
-    model = genai.GenerativeModel(model_name="gemini-pro", generation_config=generation_config)
+    model = genai.GenerativeModel(model_name="gemini-1.0-pro", generation_config=generation_config)
     try:
         response = model.generate_content(prompt, stream=True)
         for chunk in response:

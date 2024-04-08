@@ -13,7 +13,7 @@ logger.add(sys.stdout,
     )
 
 
-def blog_metadata(blog_content, search_keywords, blog_titles):
+def blog_metadata(blog_content, search_keywords=None, blog_titles=None):
     """ Common function to get blog metadata """
     blog_title = generate_blog_title(blog_content, search_keywords, blog_titles)
     blog_meta_desc = generate_blog_description(blog_content)

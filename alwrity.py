@@ -18,6 +18,7 @@ app = typer.Typer()
 from lib.ai_web_researcher.gpt_online_researcher import gpt_web_researcher
 from lib.ai_web_researcher.metaphor_basic_neural_web_search import metaphor_find_similar
 from lib.ai_writers.keywords_to_blog import write_blog_from_keywords
+from lib.ai_writers.speech_to_blog.main_audio_to_blog import generate_audio_blog
 
 
 def prompt_for_time_range():
@@ -32,7 +33,7 @@ def prompt_for_time_range():
 def write_blog_options():
     choices = [
         ("Keywords", "Keywords"),
-        ("Audio YouTube", "Audio YouTube"),
+        ("Audio To Blog", "Audio To Blog"),
         ("Programming", "Programming"),
         ("Scholar", "Scholar"),
         ("News/TBD", "News/TBD"),
@@ -195,9 +196,10 @@ def write_blog():
     if blog_type:
         if blog_type == 'Keywords':
             blog_from_keyword()
-        elif blog_type == 'Audio YouTube':
-            audio_youtube = prompt("Enter YouTube URL for audio blog generation:")
-            print(f"Write audio blog based on YouTube URL: {audio_youtube}")
+
+        elif blog_type == 'Audio To Blog':
+            blog_from_audio()
+
         elif blog_type == 'GitHub':
             github = prompt("Enter GitHub URL, CSV file, or topic:")
             print(f"Write blog based on GitHub: {github}")
@@ -207,6 +209,30 @@ def write_blog():
         elif blog_type == 'Quit':
             typer.echo("Exiting, Getting Lost..")
             raise typer.Exit()
+
+
+def blog_from_audio():
+    """
+    Prompt the user to input either a YouTube URL, a file location, or keywords to search on YouTube.
+    Validate the input and take appropriate actions based on the input type.
+    """
+
+    while True:
+        print("https://github.com/AJaySi/AI-Blog-Writer/wiki/Audio-to-blog-AI-article-writer-%E2%80%90-Alwrity-Speech-To-Text-Feature")
+        audio_input = prompt("""Enter Youtube video URL OR provide Full-Path to audio file.\n👋 : """)
+        # If the user cancels, exit the loop and the application
+        if audio_input is None:
+            break
+
+        # If the user presses OK without providing any input, prompt again
+        if not audio_input.strip():
+            continue
+
+        # Check if the input is a valid YouTube URL
+        if audio_input.startswith("https://www.youtube.com/") or audio_input.startswith("http://www.youtube.com/") or os.path.exists(audio_input):
+            # Validate YouTube URL, Process YouTube URL
+            generate_audio_blog(audio_input)
+            break
 
 
 def blog_from_keyword():
