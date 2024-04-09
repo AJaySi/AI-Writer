@@ -27,7 +27,7 @@ To start using this tool, simply follow one of the options below:
 - Open PowerShell or Windows Terminal: Press `Windows Key + X`, then select "Windows Terminal".
 
 - Paste or type and press enter:⏎.⏎.<br> 
-`winget install --id Git.Git -e --source winget`
+winget install --id Git.Git -e --source winget
 - Wait for download bars to finish
 
 *Note for Linux Users:* If you're on Linux and can't install these, get lost 🧙♂️
@@ -43,11 +43,11 @@ To clone the repository to your local machine, perform the following steps:
 2. **Navigate to the Desired Directory:** Use the `cd` command to move to the directory where you want to clone the repository. 
 
 3. **Clone the Repository:** Run the following command in PowerShell to clone the repository:
-`git clone https://github.com/AJaySi/AI-Blog-Writer.git`
+git clone https://github.com/AJaySi/AI-Blog-Writer.git
 This command will download all the files from the repository to your local machine.
 
 4. **Verify the Clone:** After the cloning process is complete, navigate into the newly created directory using: 
-`cd AI-Blog-Writer`
+cd AI-Blog-Writer
 
 ```
 Once you've cloned the repository, you can proceed with the next steps for installation and setup.

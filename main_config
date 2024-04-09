@@ -33,6 +33,7 @@ blog_output_folder = ""
 blog_image_output_folder = ""
 
 
+
 ############################################################
 #
 # Blog Images details.
@@ -41,11 +42,13 @@ blog_image_output_folder = ""
 #
 ############################################################
 
+[img_details]
 # Options are dalle2, dalle3, stable-diffusion.
 image_gen_model = "stable-diffusion"
 
 # Number of blog images to include.
 num_images = 1
+
 
 
 ###########################################################
@@ -93,3 +96,39 @@ frequency_penalty = 1
 # "Try using different words instead of repeating the same ones."
 # from -2 (more flexible while generating text) to 2 (strong discouragement in repetition).
 presence_penalty = 1
+
+
+######################################################
+#
+# Search Engine Paramters.
+# Alwrity does comprehensive web research for given content topic.
+# Choose search engine parameters below, this finetunes search results
+# and makes the generated content more accurate.
+#
+######################################################
+
+# Visit https://serper.dev/playground and provide values from there.
+# https://api.serper.dev/locations
+[web_research]
+
+# Geographic location(gl): This values restricts the web search to given country.
+# Examples are us for United States, in for India, fr for france, cn for china etc
+geo_location = us
+
+# Locale:hl:language : Define the language you want to search results in.
+# Example: en for english, zn-cn for chinese, de for german, hi for hindi etc
+search_language: en
+
+# num_results: Default 10 - Number of google search results to fetch.
+num_results = 10
+
+# time_range: Acceptable values, past day, past week, past month, past year
+# This limits the search results for given time duration, from today.
+time_range = anytime
+
+# include_domains (Give Full URLs, separate by comma): A list of domains to specifically include in the search results. 
+# Default is None, which includes all domains. Example: Wikipedia.com, stackoverflow.com, google schalor, reddit etc
+include_domains =
+
+# similar_url : A single URL, this will instruct search engines to give results similar to the given URL.
+similar_url = 

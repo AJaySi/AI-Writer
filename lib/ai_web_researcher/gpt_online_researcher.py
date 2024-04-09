@@ -1,6 +1,22 @@
 ################################################################
-#
 # 
+# ## Features
+#
+# - **Web Research**: Alwrity enables users to conduct web research efficiently. 
+# By providing keywords or topics of interest, users can initiate searches across multiple platforms simultaneously.
+#
+# - **Google SERP Search**: The tool integrates with Google Search Engine Results Pages (SERP) 
+# to retrieve relevant information based on user queries. It offers insights into organic search results, 
+# People Also Ask, and related searches.
+#
+# - **Tavily AI Integration**: Alwrity leverages Tavily AI's capabilities to enhance web research. 
+# It utilizes advanced algorithms to search for information and extract relevant data from various sources.
+#
+# - **Metaphor AI Semantic Search**: Alwrity employs Metaphor AI's semantic search technology to find related articles and content. 
+# By analyzing context and meaning, it delivers precise and accurate results.
+#
+# - **Google Trends Analysis**: The tool provides Google Trends analysis for user-defined keywords. 
+# It helps users understand the popularity and trends associated with specific topics over time.
 # 
 ##############################################################
 
@@ -26,8 +42,9 @@ logger.add(sys.stdout,
            )
 
 
-def gpt_web_researcher(search_keywords, time_range=None, include_domains=list(), similar_url=None):
-    """ """
+def gpt_web_researcher(search_keywords):
+    """ Keyword based web researcher, basic, neural and Semantic search."""
+    
     print(f"Web Research:Time Range - {time_range},Search Keywords - {search_keywords},Include URLs - {include_domains}")
     # TBD: Keeping the results directory as fixed, for now.
     os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "workspace", "web_research_reports",                                                 search_keywords.replace(" ", "_") + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
@@ -35,8 +52,8 @@ def gpt_web_researcher(search_keywords, time_range=None, include_domains=list(),
         include_domains = list()
     
     google_search_result = do_google_serp_search(search_keywords)
-    tavily_search_result = do_tavily_ai_search(search_keywords, include_domains)
-    metaphor_search_result = do_metaphor_ai_research(search_keywords, include_domains, time_range, similar_url)
+    tavily_search_result = do_tavily_ai_search(search_keywords)
+    metaphor_search_result = do_metaphor_ai_research(search_keywords)
     gtrends_search_result = do_google_pytrends_analysis(search_keywords)
     # get_rag_results(search_query)
     print(f"\n\nReview the analysis in this file at: {os.environ.get('SEARCH_SAVE_FILE')}\n")
@@ -54,30 +71,23 @@ def do_google_serp_search(search_keywords):
         # Not failing, as tavily would do same and then GPT-V to search.
 
 
-def do_tavily_ai_search(search_keywords, include_domains=None):
+def do_tavily_ai_search(search_keywords):
     """ Common function to do Tavily AI web research."""
     try:
         # FIXME: Include the follow-up questions as blog FAQs.
         logger.info(f"Doing Tavily AI search for: {search_keywords}")
-        t_results = get_tavilyai_results(search_keywords, include_domains)
+        t_results = get_tavilyai_results(search_keywords)
         t_titles = tavily_extract_information(t_results, 'titles')
         return(t_results, t_titles)
     except Exception as err:
         logger.error(f"Failed to do Tavily AI Search: {err}")
 
 
-def do_metaphor_ai_research(search_keywords,
-        include_domains=None,
-        time_range=None,
-        similar_url=None):
+def do_metaphor_ai_research(search_keywords):
     """ """
     try:
         logger.info(f"Start Semantic/Neural web search with Metahpor: {search_keywords}")
-        response_articles = metaphor_search_articles(
-                search_keywords,
-                include_domains=include_domains,
-                time_range=time_range,
-                similar_url=similar_url)
+        response_articles = metaphor_search_articles(search_keywords)
         m_titles = metaphor_extract_titles_or_text(response_articles, return_titles=True)
         return(response_articles, m_titles)
     except Exception as err:

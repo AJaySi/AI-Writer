@@ -20,20 +20,18 @@ Modifications:
 - Customize the search parameters, such as location and language, in the functions as needed.
 - Adjust logging configurations, table formatting, and other aspects based on preferences.
 
-To-Do (TBD):
-- Consider adding further enhancements or customization based on specific use cases.
-
-Note: This script depends on external libraries such as SerpApi, Loguru, Rich, and Tabulate. Install them using 'pip install serpapi loguru rich tabulate' if not already installed.
 """
 
 import os
 from pathlib import Path
 import sys
-
+import configparser
+from pathlib import Path
 import pandas as pd
 import json
 import requests
 from clint.textui import progress
+
 #from serpapi import GoogleSearch
 from loguru import logger
 from tabulate import tabulate
@@ -48,6 +46,8 @@ logger.add(
     colorize=True,
     format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
            )
+
+from .common_utils import save_in_file, cfg_search_param
 
 
 from tenacity import retry, stop_after_attempt, wait_random_exponential
@@ -87,17 +87,7 @@ def google_search(query):
 #    except Exception as err:
 #        logger.error("FIXME: Failed to do Google search with BROWSERLESS API.")
 #        logger.debug("FIXME: Trying with dataforSEO API.")
-#                
-#    # Retry with dataforSEO API
-#    try:
-#        logger.info("Perform SERP with Data for SEO.")
-#        #search_result = perform_dataforseo_google_search(query)
-#        #return process_search_results(search_result, flag)
-#    except Exception as err:
-#        logger.error("FIXME: Failed to do Google search with dataforSEO API.")
-#        logger.debug("All retries failed. Giving up.")
-#        raise
- 
+
 
 
 def perform_serpapi_google_search(query, location="in"):
@@ -159,12 +149,17 @@ def perform_serperdev_google_search(query):
     # Serper API endpoint URL
     url = "https://google.serper.dev/search"
 
+    try:
+        geo_loc, lang, num_results = cfg_search_param('serperdev') 
+    except Exception as err:
+        logger.error(f"Failed to read config {err}")
+
     # FIXME: Expose options to end user. Request payload
     payload = json.dumps({
         "q": query,
-        "gl": "in",
-        "hl": "en",
-        "num": 10,
+        "gl": geo_loc,
+        "hl": lang,
+        "num": num_results,
         "autocorrect": True,
         "page": 1,
         "type": "search",
@@ -294,16 +289,3 @@ def process_search_results(search_results):
     except Exception as save_results_err:
         logger.error(f"Failed to save search results: {save_results_err}")
     return search_results
-
-
-def save_in_file(table_content):
-    """ Helper function to save search analysis in a file. """
-    file_path = os.environ.get('SEARCH_SAVE_FILE')
-    try:
-        # Save the content to the file
-        with open(file_path, "a+") as file:
-            file.write(table_content)
-            file.write("\n" * 3)  # Add three newlines at the end
-        logger.info(f"Search content saved to {file_path}")
-    except Exception as e:
-        logger.error(f"Error occurred while writing to the file: {e}")

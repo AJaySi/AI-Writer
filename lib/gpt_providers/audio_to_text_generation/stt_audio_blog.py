@@ -96,10 +96,10 @@ def speech_to_text(video_url, output_path='.'):
     finally:
         try:
             if os.path.exists(audio_file):
-            os.remove(audio_file)
-            logger.info("Temporary audio file removed.")
+                os.remove(audio_file)
+                logger.info("Temporary audio file removed.")
         except PermissionError:
-            logger.error(f"Permission error: Cannot remove '{audio_file}'. Please make sure you have the necessary permissions.")
+            logger.error(f"Permission error: Cannot remove '{audio_file}'. Please make sure of necessary permissions.")
         except Exception as e:
             logger.error(f"An error occurred removing audio file: {e}")
 

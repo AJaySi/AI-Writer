@@ -37,26 +37,26 @@ def write_blog_from_keywords(search_keywords, url=None):
     blog_markdown_str = ""
     example_blog_titles = []
     
-    logger.info(f"Researching and Writing Blog on keywords: {search_keywords}")
-    # Call on the got-researcher, tavily apis for this. Do google search for organic competition.
-    try:
-        google_search_result, g_titles = do_google_serp_search(search_keywords)
-        example_blog_titles.append(g_titles)
-        blog_markdown_str = write_blog_google_serp(search_keywords, google_search_result)
-    except Exception as err:
-        logger.error(f"Failed in Google web research: {err}")
-    # logger.info/check the final blog content.
-    logger.info("\n######### Draft1: Finished Blog from Google web search: ###########\n\n")
+#    logger.info(f"Researching and Writing Blog on keywords: {search_keywords}")
+#    # Call on the got-researcher, tavily apis for this. Do google search for organic competition.
+#    try:
+#        google_search_result, g_titles = do_google_serp_search(search_keywords)
+#        example_blog_titles.append(g_titles)
+#        blog_markdown_str = write_blog_google_serp(search_keywords, google_search_result)
+#    except Exception as err:
+#        logger.error(f"Failed in Google web research: {err}")
+#    # logger.info/check the final blog content.
+#    logger.info("\n######### Draft1: Finished Blog from Google web search: ###########\n\n")
 
-    # Do Tavily AI research to augument the above blog.
-    try:
-        tavily_search_result, t_titles = do_tavily_ai_search(search_keywords)
-        example_blog_titles.append(t_titles)
-        blog_markdown_str = blog_with_research(blog_markdown_str, tavily_search_result)
-        logger.info(f"######### Blog content after Tavily AI research: ######### \n\n{blog_markdown_str}\n\n")
-    except Exception as err:
-        logger.error(f"Failed to do Tavily AI research: {err}")
-    logger.info("######### Draft2: Blog content after Tavily AI research: #########\n\n")
+#    # Do Tavily AI research to augument the above blog.
+#    try:
+#        tavily_search_result, t_titles = do_tavily_ai_search(search_keywords)
+#        example_blog_titles.append(t_titles)
+#        blog_markdown_str = blog_with_research(blog_markdown_str, tavily_search_result)
+#        logger.info(f"######### Blog content after Tavily AI research: ######### \n\n{blog_markdown_str}\n\n")
+#    except Exception as err:
+#        logger.error(f"Failed to do Tavily AI research: {err}")
+#    logger.info("######### Draft2: Blog content after Tavily AI research: #########\n\n")
 
     try:
         # Do Metaphor/Exa AI search.

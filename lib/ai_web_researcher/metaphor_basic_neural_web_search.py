@@ -26,6 +26,7 @@ from exa_py import Exa
 from tenacity import (retry, stop_after_attempt, wait_random_exponential,)# for exponential backoff
 from .gpt_summarize_web_content import summarize_web_content
 from .gpt_competitor_analysis import summarize_competitor_content
+from .common_utils import save_in_file, cfg_search_param
 
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
@@ -99,12 +100,7 @@ def metaphor_find_similar(similar_url):
 
 
 
-def metaphor_search_articles(query, 
-        num_results=5,
-        use_autoprompt=True,
-        include_domains=[],
-        time_range=None,
-        similar_url=None):
+def metaphor_search_articles(query):
     """
     Search for articles using the Metaphor API.
 
@@ -120,16 +116,7 @@ def metaphor_search_articles(query,
     """
     metaphor = get_metaphor_client()
     try:
-        if time_range == "past day":
-            start_published_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-        elif time_range == "past week":
-            start_published_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
-        elif time_range == "past month":
-            start_published_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
-        elif time_range == "past year":
-            start_published_date = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
-        else:
-            start_published_date = None
+        include_domains, start_published_date, num_results, similar_url = cfg_search_param('exa')
         
         logger.info(f"Metaphor web search with Date: {start_published_date} and Query: {query}")
         try:
@@ -145,6 +132,7 @@ def metaphor_search_articles(query,
         
         # From each webpage, get a summary of the web page.
         contents_response = search_response.results
+        # FIXME: Need to summarize for smaller input context window.
 #        for content in tqdm(contents_response, desc="Reading Web URL content:", unit="content"):
 #            summarized_content = summarize_web_content(content.text, "gemini")
 #            content.text = summarized_content
@@ -198,19 +186,6 @@ def print_search_result(contents_response):
         save_in_file(table)
     except Exception as save_results_err:
         logger.error(f"Failed to save search results: {save_results_err}")
-
-
-def save_in_file(table_content):
-    """ Helper function to save search analysis in a file. """
-    file_path = os.environ.get('SEARCH_SAVE_FILE')
-    try:
-        # Save the content to the file
-        with open(file_path, "a+") as file:
-            file.write(table_content)
-            file.write("\n" * 3)  # Add three newlines at the end
-        logger.info(f"Search content saved to {file_path}")
-    except Exception as e:
-        logger.error(f"Error occurred while writing to the file: {e}")
 
 
 def metaphor_scholar_search(query, include_domains=None, time_range="anytime"):

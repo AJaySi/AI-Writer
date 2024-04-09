@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import configparser
 
 import typer
 from prompt_toolkit.shortcuts import checkboxlist_dialog, message_dialog, input_dialog
@@ -268,7 +269,7 @@ def do_web_research():
         while True:
             print("________________________________________________________________")
             search_keywords = input_dialog(
-                    title='Enter Search Keywords below:',
+                    title='Enter Search Keywords below: More Options in main_config.',
                     text='👋 Enter keywords for web research (Or keywords from your blog):',
                 ).run()
             if search_keywords and len(search_keywords.split()) >= 2:
@@ -278,32 +279,13 @@ def do_web_research():
                     title='Warning',
                     text='🚫 Search keywords should be at least three words long. Please try again.'
                 ).run()
-    selected_time_range = prompt_for_time_range()
-
-    # Display input dialog for similar search URL (optional)
-    similar_url = input_dialog(
-        title="Enter a similar search URL",
-        text="👋 Enter a similar search URL (Optional: Enter to skip):\n🙋Usecases: Competitor Analysis Tool. 📡Discover similar companies, startups and technologies.",
-        default="",
-    ).run()
-
-    # Display input dialog for included URLs (optional)
-    include_urls = input_dialog(
-        title="Enter URLs to include in the web search:",
-        text="👋 Enter comma-separated URLs to include in web research (press Enter to skip):\n🙋 If you wish to [bold]confine search[/bold] to certain domains like wikipedia etc.",
-        default="",
-    ).run()
-
 
     try:
         print(f"🚀🎬🚀 [bold green]Starting web research on given keywords: {search_keywords}..")
-        #print(f"Web Research: Time Range - {time_range}, Search Keywords - {search_keywords}, Include URLs - {include_urls}")
-        web_research_result = gpt_web_researcher(search_keywords,
-                time_range=selected_time_range,
-                include_domains=include_urls,
-                similar_url=similar_url)
+        web_research_result = gpt_web_researcher(search_keywords)
     except Exception as err:
         print(f"\n💥🤯 [bold red]ERROR 🤯 : Failed to do web research: {err}\n")
+
 
 
 def check_llm_environs():

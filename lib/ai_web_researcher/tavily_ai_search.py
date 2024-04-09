@@ -22,7 +22,6 @@ Modifications:
 To-Do (TBD):
 - Consider adding further enhancements or customization based on specific use cases.
 
-Note: This script depends on external libraries such as Tavily, Rich, Tabulate, Loguru, and Tenacity. Install them using 'pip install tavily rich tabulate loguru tenacity' if not already installed.
 """
 
 
@@ -44,11 +43,14 @@ logger.add(sys.stdout,
            colorize=True,
            format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
            )
+
+from .common_utils import save_in_file, cfg_search_param
+
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-def get_tavilyai_results(keywords, include_urls, search_depth="advanced"):
+def get_tavilyai_results(keywords):
     """
     Get Tavily AI search results based on specified keywords and options.
 
@@ -74,11 +76,23 @@ def get_tavilyai_results(keywords, include_urls, search_depth="advanced"):
     except Exception as err:
         logger.error(f"Failed to create Tavily client. Check TAVILY_API_KEY: {err}")
     
+    # Read search config params from the file.
+    try:
+        include_urls = cfg_search_param('tavily')
+    except Exception as err:
+        logger.error(f"Failed to read search params from main_config: {err}")
+
     try:
         if include_urls:
-            tavily_search_result = client.search(keywords, search_depth, include_answer=True, include_domains=include_urls)
+            tavily_search_result = client.search(keywords, 
+                    search_depth="advanced", 
+                    include_answer=True, 
+                    include_domains=include_urls)
         else:
-            tavily_search_result = client.search(keywords, search_depth, include_answer=True)
+            tavily_search_result = client.search(keywords, 
+                    search_depth = "advanced", 
+                    include_answer=True)
+
         print_result_table(tavily_search_result)
         return(tavily_search_result)
     except Exception as err:
