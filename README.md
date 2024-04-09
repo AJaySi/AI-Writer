@@ -1,4 +1,4 @@
-# AI Blog Creation and Management Toolkit
+# AI Blog Content Generation Toolkit - Alwrity
 ![](https://github.com/AJaySi/AI-Blog-Writer/blob/main/workspace/keyword_blog.gif)
 
 ## Introduction

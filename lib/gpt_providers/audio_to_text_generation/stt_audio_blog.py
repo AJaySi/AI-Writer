@@ -49,7 +49,11 @@ def speech_to_text(video_url, output_path='.'):
             logger.info(f"Downloading audio for: {yt.title}")
             global progress_bar
             progress_bar = tqdm(total=1.0, unit='iB', unit_scale=True, desc=yt.title)
-            audio_file = audio_stream.download(output_path)
+            try:
+                audio_file = audio_stream.download(output_path)
+            except Exception as err:
+                logger.error(f"Failed to download audio file: {audio_file}")
+
             progress_bar.close()
             logger.info(f"Audio downloaded: {yt.title} to {output_path}")
         # Audio filepath from local directory.
@@ -78,7 +82,7 @@ def speech_to_text(video_url, output_path='.'):
                 file=open(audio_file, "rb"),
                 response_format="text"
             )
-            logger.info(f"\nYouTube video transcription:\n\n{transcript}\n")
+            logger.info(f"\nYouTube video transcription:\n{yt.title}\n{transcript}\n")
             return transcript, yt.title
 
         except Exception as e:
@@ -90,9 +94,14 @@ def speech_to_text(video_url, output_path='.'):
         sys.exit("Video processing failure.")
 
     finally:
-        if os.path.exists(audio_file):
+        try:
+            if os.path.exists(audio_file):
             os.remove(audio_file)
             logger.info("Temporary audio file removed.")
+        except PermissionError:
+            logger.error(f"Permission error: Cannot remove '{audio_file}'. Please make sure you have the necessary permissions.")
+        except Exception as e:
+            logger.error(f"An error occurred removing audio file: {e}")
 
 
 def long_video(temp_file_name):
