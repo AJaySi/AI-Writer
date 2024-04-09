@@ -45,18 +45,18 @@ logger.add(sys.stdout,
 def gpt_web_researcher(search_keywords):
     """ Keyword based web researcher, basic, neural and Semantic search."""
     
-    print(f"Web Research:Time Range - {time_range},Search Keywords - {search_keywords},Include URLs - {include_domains}")
     # TBD: Keeping the results directory as fixed, for now.
     os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "workspace", "web_research_reports",                                                 search_keywords.replace(" ", "_") + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
-    if not include_domains:
-        include_domains = list()
-    
-    google_search_result = do_google_serp_search(search_keywords)
-    tavily_search_result = do_tavily_ai_search(search_keywords)
-    metaphor_search_result = do_metaphor_ai_research(search_keywords)
-    gtrends_search_result = do_google_pytrends_analysis(search_keywords)
-    # get_rag_results(search_query)
-    print(f"\n\nReview the analysis in this file at: {os.environ.get('SEARCH_SAVE_FILE')}\n")
+
+    try:
+        google_search_result = do_google_serp_search(search_keywords)
+        tavily_search_result = do_tavily_ai_search(search_keywords)
+        metaphor_search_result = do_metaphor_ai_research(search_keywords)
+        gtrends_search_result = do_google_pytrends_analysis(search_keywords)
+        # get_rag_results(search_query)
+        print(f"\n\nReview the analysis in this file at: {os.environ.get('SEARCH_SAVE_FILE')}\n")
+    except Exception as err:
+        logger.error(f"Failed in gpt_web_researcher: {err}")
 
 
 def do_google_serp_search(search_keywords):
