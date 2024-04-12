@@ -69,17 +69,11 @@ def check_gpt_provider(gpt_provider):
         ValueError: If both the specified GPT provider and environment variable GPT_PROVIDER are missing.
     """
     env_gpt_provider = os.getenv('GPT_PROVIDER')
-
-    if gpt_provider:
-        os.environ['GPT_PROVIDER'] = gpt_provider
-    elif env_gpt_provider:
-        gpt_provider = env_gpt_provider
-    else:
-        raise ValueError("Both specified GPT provider and environment variable 'GPT_PROVIDER' are missing.")
-
-    if gpt_provider != env_gpt_provider:
+    if gpt_provider and if gpt_provider != env_gpt_provider:
         logger.warning(f"Config: '{gpt_provider}' different to environment variable 'GPT_PROVIDER' '{env_gpt_provider}'")
-    logger.info(f"Using GPT provider: {gpt_provider}")
+        logger.info(f"Using Environment GPT provider: {env_gpt_provider}")
+        gpt_provider = env_gpt_provider
+
     return gpt_provider
 
 

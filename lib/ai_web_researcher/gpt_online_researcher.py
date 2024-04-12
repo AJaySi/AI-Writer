@@ -46,7 +46,8 @@ def gpt_web_researcher(search_keywords):
     """ Keyword based web researcher, basic, neural and Semantic search."""
     
     # TBD: Keeping the results directory as fixed, for now.
-    os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "workspace", "web_research_reports",                                                 search_keywords.replace(" ", "_") + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+    os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "workspace",
+            search_keywords.replace(" ", "_") + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
 
     try:
         google_search_result = do_google_serp_search(search_keywords)
