@@ -334,7 +334,7 @@ def check_llm_environs():
         api_key = typer.prompt(f"\n🙆🙆Please enter {api_key_var} API Key:")
 
         # Update .env file
-        with open(".env", "a") as env_file:
+        with open(".env", "a", encoding="utf-8") as env_file:
             env_file.write(f"GPT_PROVIDER={gpt_provider.lower()}\n")
             env_file.write(f"{api_key_var}={api_key}\n")
 

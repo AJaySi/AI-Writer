@@ -12,7 +12,7 @@ def blog_proof_editor(blog_content):
         config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'main_config'))
         config = configparser.ConfigParser()
         #config = configparser.RawConfigParser()
-        config.read(config_path, encoding='utf-8-sig')
+        config.read(config_path, encoding='utf-8')
     except Exception as err:
         print(f"ProofReader: Failed to read values from config: {err}")
 

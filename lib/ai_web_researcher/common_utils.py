@@ -30,7 +30,7 @@ def cfg_search_param(flag):
         file_path = Path(__file__).resolve().parents[2] / "main_config"
         logger.info(f"Reading search config params from {file_path}")
         config = configparser.ConfigParser()
-        config.read(file_path)
+        config.read(file_path, encoding="utf-8")
         web_research_section = config["web_research"]
 
         if 'serperdev' in flag:

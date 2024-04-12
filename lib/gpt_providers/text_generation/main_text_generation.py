@@ -128,7 +128,7 @@ def read_llm_parameters(config_path: str) -> tuple:
     """
     try:
         config = configparser.ConfigParser()
-        config.read(config_path)
+        config.read(config_path, encoding="utf-8")
 
         gpt_provider = config.get('llm_options', 'gpt_provider')
         model = config.get('llm_options', 'model')
