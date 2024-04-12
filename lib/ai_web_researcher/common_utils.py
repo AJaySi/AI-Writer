@@ -93,7 +93,7 @@ def save_in_file(table_content):
     file_path = os.environ.get('SEARCH_SAVE_FILE')
     try:
         # Save the content to the file
-        with open(file_path, "a+") as file:
+        with open(file_path, "a+", encoding="utf-8") as file:
             file.write(table_content)
             file.write("\n" * 3)  # Add three newlines at the end
         logger.info(f"Search content saved to {file_path}")

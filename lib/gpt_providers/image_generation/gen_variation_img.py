@@ -35,7 +35,7 @@ def gen_new_from_given_img(img_path, image_dir, num_img=1, img_size="1024x1024",
 
         client = OpenAI()
         variation_response = client.images.create_variation(
-            image=open(img_path, "rb"),
+            image=open(img_path, "rb", encoding="utf-8"),
             n=num_img,
             size=img_size,
             response_format=response_format

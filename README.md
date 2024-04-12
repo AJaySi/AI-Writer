@@ -1,9 +1,9 @@
-# AI Blog Content Generation Toolkit - Alwrity
+# AI Content Generation Toolkit - Alwrity
 ![](https://github.com/AJaySi/AI-Blog-Writer/blob/main/workspace/keyword_blog.gif)
 
 ## Introduction
 
-This toolkit automates and enhances the process of blog creation, optimization, and management. 
+Alwrity automates and enhances the process of blog creation, optimization, and management. 
 Leveraging AI technologies, it assists content creators and digital marketers in generating, formatting, and uploading blog content efficiently. The toolkit integrates advanced AI models for text generation, image creation, and data analysis, streamlining the content creation pipeline.
 
 ---
@@ -11,11 +11,12 @@ Leveraging AI technologies, it assists content creators and digital marketers in
 ## Getting Started 🚀 🤞🤞🤞
 
 To start using this tool, simply follow one of the options below:
+
 ---
+### Option 1: FOLLOW-ME Local Laptop Install 💻  **(WINDOWS)**
 
-### Option 1: 𝗙𝗼𝗹𝗹𝗼𝘄 𝗺𝗲 Local Laptop Install 💻  (Recommended)
-
-**Step 0**️⃣: **Pre-requisites:** Git, Python3
+#### Step 0 **Pre-requisites:** Git, Python3
+---
 
 **Installing Python on Windows:🐍🪟**
 - Open PowerShell as admin: Press `Windows Key + X`, then select "Windows PowerShell (Admin)".
@@ -23,6 +24,7 @@ To start using this tool, simply follow one of the options below:
 - Type `python`. If Python is not installed, Windows will prompt you to 'Get Python'.
 - If Python is installed, you should see '>>>>>'.
 
+---
 **Installing Git on Windows:🛺**
 - Open PowerShell or Windows Terminal: Press `Windows Key + X`, then select "Windows Terminal".
 
@@ -30,54 +32,52 @@ To start using this tool, simply follow one of the options below:
 winget install --id Git.Git -e --source winget
 - Wait for download bars to finish
 
-*Note for Linux Users:* If you're on Linux and can't install these, get lost 🧙♂️
+---
 
+### Step 1: Clone this repository to your local machine.
 
-**Step 1**️⃣: Clone this repository to your local machine.
-
-```
 To clone the repository to your local machine, perform the following steps:
 
-1. **Open Windows PowerShell as Administrator:** Press `Windows Key + X` and select "Windows PowerShell (Admin)" from the menu.
+1. **Open Windows PowerShell as Administrator:** Open "Windows PowerShell (Admin)" from start menu.
 
-2. **Navigate to the Desired Directory:** Use the `cd` command to move to the directory where you want to clone the repository. 
+2. **Navigate to the Desired Directory:** Use the 'cd' command to move to the directory where you want to clone the repository. 
 
 3. **Clone the Repository:** Run the following command in PowerShell to clone the repository:
-git clone https://github.com/AJaySi/AI-Blog-Writer.git
+`git clone https://github.com/AJaySi/AI-Blog-Writer.git`
 This command will download all the files from the repository to your local machine.
 
 4. **Verify the Clone:** After the cloning process is complete, navigate into the newly created directory using: 
-cd AI-Blog-Writer
+`cd AI-Writer`
 
-```
-Once you've cloned the repository, you can proceed with the next steps for installation and setup.
-
-
-**Step 2**️⃣: Install required dependencies:
-- Open command prompt on your local machine: Press `Windows Key + R`, type `cmd`, then press Enter.
-- Navigate to the folder from Step 1
-- Run: `python -m pip install -r requirements.txt`
-
-**Step 3**️⃣: Run the script:
-- Execute: `python alwrity.py`
-
-**Step 4**️⃣: The tool will guide you through setting up your APIs.
+Congratulations: Once you've cloned the repository, you can proceed with the next steps for installation and setup.
 
 ---
 
-### Option 2: Replit: Cloud Install  ☁️☁️☁️  ☁️    ☁️       ....☁️
+### Step 2: Install required dependencies:
 
-**Step 1**️⃣: Fork this repository to your own GitHub account.
-
-**Step 2**️⃣: Follow this guide: [Running GitHub Repositories on Replit](https://docs.replit.com/programming-ide/using-git-on-replit/running-github-repositories-replit) 📖
+- Open command prompt on your local machine.
+- Navigate to the folder from Step 1 (AI-Writer)
+- Run in powershell: 
+`python -m pip install -r requirements.txt`
 
 ---
+
+### Step 3: Run the script:
+
+- Run in powershell: 
+`python alwrity.py`
+
+---
+
+### Step 4: The tool will guide you through setting up your APIs.
+---
+
+
 ### Option 3: Web URL 🌐 *(For easy access)*
 
-**Step 1**️⃣: Error 404: Page not found. 😅
-
-
+Coming Soon....
 ---
+
 
 ## Features
 

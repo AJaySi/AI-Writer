@@ -112,7 +112,7 @@ def get_arxiv_main_content(url):
             pdf_text = ''
 
             # Read the downloaded PDF
-            with open(pdf_filename, 'rb') as f:
+            with open(pdf_filename, 'rb', encoding="utf-8") as f:
                 pdf_reader = PyPDF2.PdfReader(f)
 
                 for page in pdf_reader.pages:
@@ -168,7 +168,7 @@ def download_image(image_url, base_url, folder="images"):
         response.raise_for_status()
 
         image_name = image_url.split("/")[-1]
-        with open(os.path.join(folder, image_name), 'wb') as file:
+        with open(os.path.join(folder, image_name), 'wb', encoding="utf-8") as file:
             file.write(response.content)
         return True
 
@@ -297,7 +297,7 @@ def read_written_ids(file_path):
     """
     written_ids = set()
     try:
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding="utf-8") as file:
             for line in file:
                 written_ids.add(line.strip())
     except FileNotFoundError:
@@ -320,12 +320,12 @@ def append_id_to_file(arxiv_id, output_file_path):
         if not os.path.exists(output_file_path):
             logger.info(f"File does not exist. Creating new file: {output_file_path}")
             # Create a new file and append the ID
-            with open(output_file_path, 'a') as outfile:
+            with open(output_file_path, 'a', encoding="utf-8") as outfile:
                 outfile.write(arxiv_id + '\n')
         else:
             logger.info(f"Appending to existing file: {output_file_path}")
             # File exists, append the ID
-            with open(output_file_path, 'a') as outfile:
+            with open(output_file_path, 'a', encoding="utf-8") as outfile:
                 outfile.write(arxiv_id + '\n')
 
     except Exception as e:

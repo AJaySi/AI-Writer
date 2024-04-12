@@ -78,7 +78,7 @@ def blog_arxiv_url_list(file_path):
     """ Write blogs on all the arxiv links given in a file. """
     extracted_ids = []
     try:
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding="utf-8") as file:
             for line in file:
                 arxiv_id = extract_arxiv_ids_from_line(line)
                 if arxiv_id:

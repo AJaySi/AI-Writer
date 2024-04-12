@@ -19,7 +19,7 @@ def save_generated_image(img_generation_response, image_dir):
     try:
         response = requests.get(generated_image_url, stream=True)
         response.raise_for_status()
-        with open(generated_image_filepath, "wb") as image_file:
+        with open(generated_image_filepath, "wb", encoding="utf-8") as image_file:
             image_file.write(response.content)
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to get generated image content: {e}")

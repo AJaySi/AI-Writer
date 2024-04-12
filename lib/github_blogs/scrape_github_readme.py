@@ -276,7 +276,7 @@ def check_if_already_written(github_url, file_path='papers_already_written_on.tx
         bool: True if an exact match is found, False otherwise.
     """
     try:
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding="utf-8") as file:
             # Read each line in the file
             for line in file:
                 # Check for an exact match

@@ -249,7 +249,7 @@ def upload_media(url, username, password, media_path, alt_text, description, tit
         'Content-Disposition': 'attachment; filename={}'.format(os.path.basename(media_path))
     }
 
-    with open(media_path, 'rb') as media:
+    with open(media_path, 'rb', encoding="utf-8") as media:
         media_name = os.path.basename(media_path)
         files = {'file': (media_name, media, mime_type)}
 

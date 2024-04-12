@@ -34,7 +34,7 @@ def blog_from_github(github_opts, flag):
     elif 'csv' in flag:
         try:
             gh_urls = []
-            with open(github_opts, 'r') as file:
+            with open(github_opts, 'r', encoding="utf-8") as file:
                 # Read each line in the file
                 for gh_url in file:
                     gh_urls.append(gh_url.strip())

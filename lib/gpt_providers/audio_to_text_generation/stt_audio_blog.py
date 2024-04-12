@@ -79,7 +79,7 @@ def speech_to_text(video_url, output_path='.'):
             logger.info("Transcribing using OpenAI's Whisper model.")
             transcript = client.audio.transcriptions.create(
                 model="whisper-1",
-                file=open(audio_file, "rb"),
+                file=open(audio_file, "rb", encoding="utf-8"),
                 response_format="text"
             )
             logger.info(f"\nYouTube video transcription:\n{yt.title}\n{transcript}\n")
@@ -133,7 +133,7 @@ def long_video(temp_file_name):
     for i, chunk in enumerate(chunks):
         with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as audio_chunk_file:
             chunk.write_audiofile(audio_chunk_file.name, codec="mp3")
-            with open(audio_chunk_file.name, "rb") as audio_file:
+            with open(audio_chunk_file.name, "rb", encoding="utf-8") as audio_file:
                 # Transcribe each chunk using OpenAI's Whisper API
                 app.logger.info(f"Transcribing chunk {i+1}/{len(chunks)}")
                 transcript = openai.Audio.transcribe("whisper-1", audio_file)

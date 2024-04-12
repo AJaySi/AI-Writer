@@ -32,7 +32,7 @@ def analyze_and_extract_details_from_image(image_path):
 
         def encode_image(path):
             """ Encodes an image to a base64 string. """
-            with open(path, "rb") as image_file:
+            with open(path, "rb", encoding="utf-8") as image_file:
                 return base64.b64encode(image_file.read()).decode('utf-8')
 
         base64_image = encode_image(image_path)

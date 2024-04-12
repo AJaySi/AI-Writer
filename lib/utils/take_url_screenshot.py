@@ -47,7 +47,7 @@ def screenshot_api(url, generated_image_filepath):
         image = client.take(options)
 
         # store the screenshot the example.png file
-        with open(generated_image_filepath, 'wb') as result_file:
+        with open(generated_image_filepath, 'wb', encoding="utf-8") as result_file:
             shutil.copyfileobj(image, result_file)
 
         # Display the screenshot using Image.show
@@ -89,7 +89,7 @@ def take_screenshot(url, generated_image_filepath):
         screenshot = driver.get_screenshot_as_png()
 
         # Save the screenshot to a file
-        with open(generated_image_filepath, "wb") as f:
+        with open(generated_image_filepath, "wb", encoding="utf-8") as f:
             f.write(screenshot)
 
         # Display the screenshot using Image.show

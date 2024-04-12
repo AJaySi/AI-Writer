@@ -109,7 +109,7 @@ def save_blog_to_file(blog_content, blog_title, blog_meta_desc, blog_tags, blog_
 
         # Write to the file
         try:
-            with open(blog_output_path, "w") as f:
+            with open(blog_output_path, "w", encoding="utf-8") as f:
                 f.write(blog_frontmatter)
                 f.write(blog_content)
         except Exception as e:
