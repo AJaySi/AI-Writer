@@ -47,7 +47,6 @@ def write_blog_from_keywords(search_keywords, url=None):
         logger.error(f"Failed in Google web research: {err}")
     # logger.info/check the final blog content.
     logger.info("\n######### Draft1: Finished Blog from Google web search: ###########\n\n")
-    exit(1)
 
 
     # Do Tavily AI research to augument the above blog.
