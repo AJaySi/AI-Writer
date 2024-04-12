@@ -57,27 +57,30 @@ def start_interactive_mode():
     print(text)
     
     choices = [
-        ("Write Blog", "Write Blog"),
+        ("AI Blog Writer", "AI Blog Writer"),
+        ("AI Story Writer", "AI Story Writer"),
         ("Do keyword Research", "Do keyword Research"),
-        ("Create Blog Images", "Create Blog Images"),
+        ("Create Blog Images(TBD)", "Create Blog Images(TBD)"),
         ("Competitor Analysis", "Competitor Analysis"),
-        ("Blog Tools", "Blog Tools"),
-        ("Social Media", "Social Media"),
+        ("Online Blog Tools/Apps", "Online Blog Tools/Apps"),
+        ("AI Social Media(TBD)", "AI Social Media(TBD)"),
         ("Quit", "Quit")
     ]
     mode = radiolist_dialog(title="Choose an option:", values=choices).run()
     if mode:
-        if mode == 'Write Blog':
+        if mode == 'AI Blog Writer':
             write_blog()
+        elif mode == 'AI Story Writer'
+            write_story()
         elif mode == 'Do keyword Research':
             do_web_research()
-        elif mode == 'Create Blog Images':
+        elif mode == 'Create Blog Images(TBD)':
             faq_generator()
         elif mode == 'Competitor Analysis':
             competitor_analysis()
-        elif mode == 'Blog Tools':
+        elif mode == 'Online Blog Tools/Apps':
             blog_tools()
-        elif mode == 'Social Media':
+        elif mode == 'AI Social Media(TBD)':
             print("""
             #whatsapp
             #instagram
@@ -143,6 +146,8 @@ def get_api_key(api_key: str, api_description: str):
 
 def faq_generator():
     return
+
+
 
 
 def blog_tools():
