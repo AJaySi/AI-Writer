@@ -7,6 +7,10 @@ from prompt_toolkit.shortcuts import checkboxlist_dialog, message_dialog, input_
 from prompt_toolkit import prompt
 from prompt_toolkit.styles import Style
 from prompt_toolkit.shortcuts import radiolist_dialog
+from prompt_toolkit.formatted_text import HTML
+from prompt_toolkit.layout.containers import HSplit, Window
+from prompt_toolkit.layout.controls import BufferControl
+
 from dotenv import load_dotenv
 import requests
 from rich import print
@@ -21,6 +25,7 @@ from lib.ai_web_researcher.metaphor_basic_neural_web_search import metaphor_find
 from lib.ai_writers.keywords_to_blog import write_blog_from_keywords
 from lib.ai_writers.speech_to_blog.main_audio_to_blog import generate_audio_blog
 from lib.gpt_providers.text_generation.ai_story_writer import ai_story_generator
+from lib.gpt_providers.text_generation.ai_essay_writer import ai_essay_generator
 
 
 def prompt_for_time_range():
@@ -60,6 +65,7 @@ def start_interactive_mode():
     choices = [
         ("AI Blog Writer", "AI Blog Writer"),
         ("AI Story Writer", "AI Story Writer"),
+        ("AI Essay Writer", "AI Essay Writer"),
         ("Do keyword Research", "Do keyword Research"),
         ("Create Blog Images(TBD)", "Create Blog Images(TBD)"),
         ("Competitor Analysis", "Competitor Analysis"),
@@ -73,6 +79,8 @@ def start_interactive_mode():
             write_blog()
         elif mode == 'AI Story Writer':
             write_story()
+        elif mode == 'AI Essay Writer':
+            essay_writer()
         elif mode == 'Do keyword Research':
             do_web_research()
         elif mode == 'Create Blog Images(TBD)':
@@ -139,7 +147,7 @@ def get_api_key(api_key: str, api_description: str):
         api_key (str): The name of the API key variable.
         api_description (str): The description of the API key.
     """
-    user_input = typer.prompt(f"\n🙆🙆Please enter {api_key} API Key:")
+    user_input = typer.prompt(f"\n\n🙆💩💩🙆 - Please enter {api_key} API Key:")
     with open(".env", "a") as env_file:
         env_file.write(f"{api_key}={user_input}\n")
     print(f"✅ {api_description} API Key added to .env file.")
@@ -202,6 +210,51 @@ def write_story():
     else:
         print(f"ERROR: Provide Google Gemini API keys. Openai, mistral, ollama coming up.")
         exit(1)
+
+
+
+def essay_writer():
+    # Define essay types and education levels
+    essay_types = [
+        ("Argumentative", "Argumentative - Forming an opinion via research. Building an evidence-based argument."),
+        ("Expository", "Expository - Knowledge of a topic. Communicating information clearly."),
+        ("Narrative", "Narrative - Creative language use. Presenting a compelling narrative."),
+        ("Descriptive", "Descriptive - Creative language use. Describing sensory details.")
+    ]
+
+    education_levels = [
+        ("Primary School", "Primary School"),
+        ("High School", "High School"),
+        ("College", "College"),
+        ("Graduate School", "Graduate School")
+    ]
+
+    # Define the options for number of pages
+    num_pages_options = [
+        ("Short Form (1-2 pages)", "Short Form"),
+        ("Medium Form (3-5 pages)", "Medium Form"),
+        ("Long Form (6+ pages)", "Long Form")
+    ]
+
+    # Ask the user for the title of the essay
+    essay_title = input_dialog(title="Essay Title", text="Enter the title of your essay:").run()
+    while not essay_title.strip():
+        print("Please enter a valid title for your essay.")
+        essay_title = input_dialog(title="Essay Title", text="Enter the title of your essay:").run()
+
+    # Ask the user for type of essay, level of education, and number of pages
+    selected_essay_type = radiolist_dialog(title="Type of Essay", text="Choose the type of essay you want to write:",
+                                           values=essay_types).run()
+
+    selected_education_level = radiolist_dialog(title="Level of Education", text="Choose your level of education:",
+                                               values=education_levels).run()
+
+    # Prompt the user to select the length of the essay
+    num_pages_prompt = "Select the length of your essay:"
+    selected_num_pages = radiolist_dialog(title="Number of Pages", text=num_pages_prompt, values=num_pages_options).run()
+
+    ai_essay_generator(essay_title, selected_essay_type, selected_education_level, selected_num_pages)
+
 
 
 def blog_tools():

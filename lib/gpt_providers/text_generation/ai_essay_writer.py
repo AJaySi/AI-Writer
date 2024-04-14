@@ -1,6 +1,6 @@
 #####################################################
 #
-# google-gemini-cookbook - Story_Writing_with_Prompt_Chaining
+# Alwrity, AI essay writer - Essay_Writing_with_Prompt_Chaining
 #
 #####################################################
 
@@ -30,101 +30,98 @@ def generate_with_retry(model, prompt):
         print(f"Error generating content: {e}")
         return ""
 
-def ai_story_generator(persona, story_genre, characters):
+
+def ai_essay_generator(essay_title, selected_essay_type, selected_education_level, selected_num_pages):
     """
-    Write a story using prompt chaining and iterative generation.
+    Write an Essay using prompt chaining and iterative generation.
 
     Parameters:
         persona (str): The persona statement for the author.
         story_genre (str): The genre of the story.
         characters (str): The characters in the story.
     """
-    print(f"Starting to write {story_genre} story based on characters: {characters}..")
+    print(f"Starting to write Essay on {essay_title}..")
     try:
         # Define persona and writing guidelines
         guidelines = f'''\
         Writing Guidelines
 
-        Delve deeper. Lose yourself in the world you're building. Unleash vivid
-        descriptions to paint the scenes in your reader's mind.
-        Develop your characters—let their motivations, fears, and complexities unfold naturally.
-        Weave in the threads of your outline, but don't feel constrained by it.
-        Allow your story to surprise you as you write. Use rich imagery, sensory details, and
-        evocative language to bring the setting, characters, and events to life.
-        Introduce elements subtly that can blossom into complex subplots, relationships,
-        or worldbuilding details later in the story.
-        Keep things intriguing but not fully resolved.
-        Avoid boxing the story into a corner too early.
-        Plant the seeds of subplots or potential character arc shifts that can be expanded later.
+        As an expert Essay writer and academic researcher, demostrate your world class essay writing skills.
+        
+        Follow the below writing guidelines for writing your essay:
+        1). You specialize in {selected_essay_type} essay writing.
+        2). Your target audiences include readers from {selected_education_level} level.
+        3). The title of the essay is {essay_title}.
+        4). I will provide you with web research for essay title.
+        5). The final essay should of {selected_num_pages} words/pages.
+        3). Plant the seeds of subplots or potential character arc shifts that can be expanded later.
 
         Remember, your main goal is to write as much as you can. If you get through
         the story too fast, that is bad. Expand, never summarize.
         '''
-
         # Generate prompts
         premise_prompt = f'''\
-        {persona}
+        As an expert essay writer, specilizing in {selected_essay_type} essay writing.
 
-        Write a single sentence premise for a {story_genre} story featuring {characters}.
+        Write an Essay title for given keywords {essay_title}. 
+        The title should appeal to audience level of {selected_education_level}.
         '''
 
         outline_prompt = f'''\
-        {persona}
+        As an expert essay writer, specilizing in {selected_essay_type} essay writing.
 
-        You have a gripping premise in mind:
+        Your Essay title is:
 
         {{premise}}
 
-        Write an outline for the plot of your story.
+        Write an outline for the essay.
         '''
 
         starting_prompt = f'''\
-        {persona}
+        As an expert essay writer, specilizing in {selected_essay_type} essay writing.
 
-        You have a gripping premise in mind:
+        Your essay title is:
 
         {{premise}}
 
-        Your imagination has crafted a rich narrative outline:
+        The outline of the Essay is:
 
         {{outline}}
 
-        First, silently review the outline and the premise. Consider how to start the
-        story.
-
-        Start to write the very beginning of the story. You are not expected to finish
-        the whole story now. Your writing should be detailed enough that you are only
+        First, silently review the outline and the essay title. Consider how to start the Essay.
+        Start to write the very beginning of the Essay. You are not expected to finish
+        the whole Essay now. Your writing should be detailed enough that you are only
         scratching the surface of the first bullet of your outline. Try to write AT
-        MINIMUM 5000 WORDS.
+        MINIMUM 1000 WORDS.
 
         {guidelines}
         '''
 
         continuation_prompt = f'''\
-        {persona}
+        As an expert essay writer, specilizing in {selected_essay_type} essay writing.
 
-        You have a gripping premise in mind:
+        Your essay title is:
 
         {{premise}}
 
-        Your imagination has crafted a rich narrative outline:
+        The outline of the Essay is:
 
         {{outline}}
 
-        You've begun to immerse yourself in this world, and the words are flowing.
+        You've begun to write the essay and continue to do so.
         Here's what you've written so far:
 
         {{story_text}}
 
         =====
 
-        First, silently review the outline and story so far. Identify what the single
-        next part of your outline you should write.
+        First, silently review the outline and essay so far. 
+        Identify what the single next part of your outline you should write.
 
-        Your task is to continue where you left off and write the next part of the story.
-        You are not expected to finish the whole story now. Your writing should be
+        Your task is to continue where you left off and write the next part of the Essay.
+        You are not expected to finish the whole essay now. Your writing should be
         detailed enough that you are only scratching the surface of the next part of
-        your outline. Try to write AT MINIMUM 2000 WORDS. However, only once the story
+        your outline. Try to write AT MINIMUM 1000 WORDS. However, only once the essay
         is COMPLETELY finished, write IAMDONE. Remember, do NOT write a whole chapter
         right now.
 
@@ -140,24 +137,23 @@ def ai_story_generator(persona, story_genre, characters):
         # Generate prompts
         try:
             premise = generate_with_retry(model, premise_prompt).text
-            print(f"The premise of the story is: {premise}")
+            print(f"The title of the Essay is: {premise}")
         except Exception as err:
-            print(f"Premise Generation Error: {err}")
+            print(f"Essay title Generation Error: {err}")
             return
 
         outline = generate_with_retry(model, outline_prompt.format(premise=premise)).text
-        print(f"The Outline of the story is: {outline}\n\n")
+        print(f"The Outline of the essay is: {outline}\n\n")
         if not outline:
-            print("Failed to generate outline. Exiting...")
+            print("Failed to generate Essay outline. Exiting...")
             return
 
-        # Generate starting draft
         try:
             starting_draft = generate_with_retry(model, 
                     starting_prompt.format(premise=premise, outline=outline)).text
             pprint(starting_draft)
         except Exception as err:
-            print(f"Failed to Generate Story draft: {err}")
+            print(f"Failed to Generate Essay draft: {err}")
             return
 
         try:
@@ -179,7 +175,7 @@ def ai_story_generator(persona, story_genre, characters):
                         continuation_prompt.format(premise=premise, outline=outline, story_text=draft)).text
                 draft += '\n\n' + continuation
             except Exception as err:
-                print(f"Failed to continually write the story: {err}")
+                print(f"Failed to continually write the Essay: {err}")
                 return
 
         # Remove 'IAMDONE' and print the final story
@@ -187,4 +183,4 @@ def ai_story_generator(persona, story_genre, characters):
         pprint(final)
 
     except Exception as e:
-        print(f"Main Story writing: An error occurred: {e}")
+        print(f"Main Essay writing: An error occurred: {e}")
