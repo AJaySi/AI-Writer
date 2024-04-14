@@ -200,7 +200,7 @@ def write_story():
     if os.getenv('GEMINI_API_KEY'):
         ai_story_generator(selected_persona_name, selected_persona_name, character_input)
     else:
-        print(f"Provide Google Gemini API keys. Openai, mistral, ollama coming up.")
+        print(f"ERROR: Provide Google Gemini API keys. Openai, mistral, ollama coming up.")
         exit(1)
 
 
@@ -212,28 +212,59 @@ def blog_tools():
     text += "_______________________________________________________________________\n"
     print(text)
 
-    choices = [
+    personas = [
         ("Write Blog Title", "Write Blog Title"),
         ("Write Blog Meta Description", "Write Blog Meta Description"),
-        ("Write Blog Introduction", "Write Blog Introduction"),
-        ("Write Blog conclusion", "Write Blog conclusion"),
-        ("Write Blog Outline", "Write Blog Outline"),
+#        ("Write Blog Introduction", "Write Blog Introduction"),
+#        ("Write Blog conclusion", "Write Blog conclusion"),
+#        ("Write Blog Outline", "Write Blog Outline"),
         ("Generate Blog FAQs", "Generate Blog FAQs"),
-        ("Research blog references", "Research blog references"),
-        ("Convert Blog To HTML", "Convert Blog To HTML"),
-        ("Convert Blog To Markdown", "Convert Blog To Markdown"),
-        ("Blog Proof Reader", "Blog Proof Reader"),
-        ("Get Blog Tags", "Get Blog Tags"),
-        ("Get blog categories", "Get blog categories"),
-        ("Get Blog Code Examples", "Get Blog Code Examples"),
-        ("Check WebPage Performance", "Check WebPage Performance"),
+        ("AI Linkedin Post", "AI Linkedin Post"),
+#        ("Research blog references", "Research blog references"),
+#        ("Convert Blog To HTML", "Convert Blog To HTML"),
+#        ("Convert Blog To Markdown", "Convert Blog To Markdown"),
+#        ("Blog Proof Reader", "Blog Proof Reader"),
+#        ("Get Blog Tags", "Get Blog Tags"),
+#        ("Get blog categories", "Get blog categories"),
+#        ("Get Blog Code Examples", "Get Blog Code Examples"),
+#        ("Check WebPage Performance", "Check WebPage Performance"),
         ("Quit/Exit", "Quit/Exit")
     ]
-    selected_tool = radiolist_dialog(title="Choose a Blogging Tool:", values=choices).run()
-    if selected_tool:
-        tool = selected_tool[0]
-        if tool == 'Write Blog Title':
-            return
+    dialog = radiolist_dialog(
+        title = "Select Your AI content tool.",
+        text = "Choose a tool to use and visit provided online link to try them out.",
+        values = personas
+    )
+
+    selected_persona_name = dialog.run()
+
+    persona_descriptions = {
+        "Write Blog Title": "Write Blog Title - VISIT: https://alwrity-title.streamlit.app/",
+        "Write Blog Meta Description": "Write Blog Meta Description - VISIT: https://alwrity-metadesc.streamlit.app/",
+#        "Write Blog Introduction": "Write Blog Introduction - To Be Done (TBD)",
+#        "Write Blog conclusion": "Write Blog conclusion - ",
+#        "Write Blog Outline": "Write Blog Outline - ",
+        "Generate Blog FAQs": "Generate Blog FAQs - VISIT: https://alwrity-faq.streamlit.app/",
+        "AI Linkedin Post": "AI Linkedin Post writer - VISIT: https://alwrity-linkedin.streamlit.app/",
+#        "Research blog references": "Research blog references - Example: https://example.com/research-blog-references",
+#        "Convert Blog To HTML": "Convert Blog To HTML - Example: https://example.com/convert-blog-to-html",
+#        "Convert Blog To Markdown": "Convert Blog To Markdown - Example: https://example.com/convert-blog-to-markdown",
+#        "Blog Proof Reader": "Blog Proof Reader - Example: https://example.com/blog-proof-reader",
+#        "Get Blog Tags": "Get Blog Tags - Example: https://example.com/get-blog-tags",
+#        "Get blog categories": "Get blog categories - Example: https://example.com/get-blog-categories",
+#        "Get Blog Code Examples": "Get Blog Code Examples - Example: https://example.com/get-blog-code-examples",
+#        "SEO Checks": "SEO checks - TBD",
+        "Quit/Exit": "Quit/Exit - Example: Quit/Exit"
+    }
+
+    if selected_persona_name:
+        selected_persona = next((persona for persona in personas if persona[0] == selected_persona_name), None)
+        if selected_persona:
+            character_input = message_dialog(
+                    title=f"To Try {selected_persona_name}, Visit below URL:",
+                    text=persona_descriptions[selected_persona_name]
+            ).run()
+
 
 
 def competitor_analysis():

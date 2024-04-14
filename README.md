@@ -98,7 +98,7 @@ Coming Soon....
 - **Analyzing and Extracting Image Details**: Uses OpenAI's Vision API, Google Gemini vision to analyze images and extract details such as alt text, descriptions, titles, and captions, enhancing the SEO of image content.
 
 ---
-**Note**: This toolkit is designed for automated blog management and requires appropriate API keys and access credentials for full functionality.
+### **Note**: This toolkit is designed for automated blog management and requires appropriate API keys and access credentials for full functionality.
 ---
 
 ### Web Research
@@ -131,13 +131,7 @@ Coming Soon....
 
 ## Packages, Tools, and APIs Used
 
-- **Libraries**:
-  - PyInquirer: For creating interactive command-line interfaces.
-  - Typer: For building CLI applications with ease.
-  - Tabulate: For formatting data in tabular form.
-  - Requests: For making HTTP requests to web APIs.
-  - python-dotenv: For loading environment variables from a .env file.
-
+### Standing on the shoulders of Giants:
 - **APIs**:
   - Metaphor API: Provides semantic search capabilities for finding similar topics and technologies.
   - Tavily API: Offers AI-powered web search functionality for conducting in-depth keyword research.

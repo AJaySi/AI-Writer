@@ -127,7 +127,7 @@ num_results = 10
 time_range = anytime
 
 # include_domains (Give Full URLs, separate by comma): A list of domains to specifically include in the search results. 
-# Default is None, which includes all domains. Example: Wikipedia.com, stackoverflow.com, google schalor, reddit etc
+# Default is None, which includes all domains. Example: https://wikipedia.com,https://stackoverflow.com,google schalor,reddit etc
 include_domains =
 
 # similar_url : A single URL, this will instruct search engines to give results similar to the given URL.
