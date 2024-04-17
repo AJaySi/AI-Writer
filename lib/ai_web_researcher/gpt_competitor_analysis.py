@@ -10,7 +10,7 @@ logger.add(sys.stdout,
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
-def summarize_competitor_content(research_content, gpt_providers="openai"):
+def summarize_competitor_content(research_content):
     """Combine the given online research and gpt blog content"""
 
     prompt = f"""You are a helpful assistant writing a research report about a company. I will provide you with company details. 
@@ -23,7 +23,7 @@ def summarize_competitor_content(research_content, gpt_providers="openai"):
         Company details: '{research_content}'"""
     
     try:
-        response = gemini_text_response(prompt)
+        response = llm_text_gen(prompt)
         return response
     except Exception as err:
         logger.error(f"Failed to get response from LLM: {err}")

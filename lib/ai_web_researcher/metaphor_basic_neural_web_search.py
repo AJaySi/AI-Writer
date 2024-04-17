@@ -80,7 +80,7 @@ def metaphor_find_similar(similar_url):
             search_response = metaphor.search_and_contents(
                 acompetitor.url,
                 type="keyword",
-                num_results=5
+                num_results=3
             )
         except Exception as err:
             logger.error(f"Failed to do metaphor keyword/url research: {err}")
@@ -90,11 +90,10 @@ def metaphor_find_similar(similar_url):
         for r in tqdm(research_response, desc=f"{acompetitor.url}", unit="research"):
             all_contents += r.text
             try:
-                acompetitor.text = summarize_competitor_content(all_contents, "gemini")
+                acompetitor.text = summarize_competitor_content(all_contents)
             except Exception as err:
                 logger.error(f"Failed to summarize_web_content: {err}")
     
-    print(competitors)
     print_search_result(competitors)
     return search_response
 
