@@ -14,7 +14,7 @@ To start using this tool, simply follow one of the options below:
 
 ---
 ### Option 1: FOLLOW-ME Local Laptop Install 💻  **(WINDOWS)**
-
+    
 #### Step 0 **Pre-requisites:** Git, Python3
 ---
 
@@ -43,7 +43,7 @@ To clone the repository to your local machine, perform the following steps:
 2. **Navigate to the Desired Directory:** Use the 'cd' command to move to the directory where you want to clone the repository. 
 
 3. **Clone the Repository:** Run the following command in PowerShell to clone the repository:
-`git clone https://github.com/AJaySi/AI-Blog-Writer.git`
+`git clone https://github.com/AJaySi/AI-Writer.git`
 This command will download all the files from the repository to your local machine.
 
 4. **Verify the Clone:** After the cloning process is complete, navigate into the newly created directory using: 

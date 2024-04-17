@@ -30,9 +30,6 @@ def write_blog_from_keywords(search_keywords, url=None):
     This function will take a blog Topic to first generate sections for it
     and then generate content for each section.
     """
-    # TBD: Keeping the results directory as fixed, for now.
-    os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "workspace", "web_research_reports",
-            search_keywords.replace(" ", "_") + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
     # Use to store the blog in a string, to save in a *.md file.
     blog_markdown_str = ""
     example_blog_titles = []
@@ -47,7 +44,6 @@ def write_blog_from_keywords(search_keywords, url=None):
         logger.error(f"Failed in Google web research: {err}")
     # logger.info/check the final blog content.
     logger.info("\n######### Draft1: Finished Blog from Google web search: ###########\n\n")
-
 
     # Do Tavily AI research to augument the above blog.
     try:

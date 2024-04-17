@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import configparser
+from datetime import datetime
 
 import typer
 from prompt_toolkit.shortcuts import checkboxlist_dialog, message_dialog, input_dialog
@@ -433,41 +434,35 @@ def do_web_research():
 
 def check_llm_environs():
     """ Function to check which LLM api is given. """
-    # Check if GPT_PROVIDER is defined in .env file
-    gpt_provider = os.getenv("GPT_PROVIDER")
-
     # Load .env file
     load_dotenv()
-
+    # Check if GPT_PROVIDER is defined in .env file
+    gpt_provider = os.getenv("GPT_PROVIDER")
+    
     # Disable unsupported GPT providers
     supported_providers = ['google', 'openai', 'mistralai']
-    if gpt_provider is None or gpt_provider.lower() not in supported_providers:
-        #message_dialog(
-        #    title="Unsupported GPT Provider",
-        #    text="GPT_PROVIDER is not set or has an unsupported value."
-        #).run()
-
+    if gpt_provider is None or gpt_provider not in supported_providers:
         # Prompt user to select a provider
         selected_provider = radiolist_dialog(
             title='Select your preferred GPT provider:',
             text="Please choose GPT provider Below:\n👺Google Gemini recommended, its 🆓.",
             values=[
-                ("Google", "google"),
-                ("Openai", "openai"),
+                ("Google", "Google"),
+                ("OpenAI", "OpenAI"),
                 ("MistralAI/WIP", "mistralai/WIP"),
                 ("Ollama", "Ollama (TBD)")
             ]
         ).run()
-        if selected_provider:
-            gpt_provider = selected_provider
+        gpt_provider = selected_provider
+        os.environ["GPT_PROVIDER"] = gpt_provider
 
-    if gpt_provider.lower() == "google":
+    if gpt_provider == "Google":
         api_key_var = "GEMINI_API_KEY"
         missing_api_msg = f"To get your {api_key_var}, please visit: https://aistudio.google.com/app/apikey"
-    elif gpt_provider.lower() == "openai":
+    elif gpt_provider == "OpenAI":
         api_key_var = "OPENAI_API_KEY"
         missing_api_msg = "To get your OpenAI API key, please visit: https://openai.com/blog/openai-api"
-    elif gpt_provider.lower() == "mistralai":
+    elif gpt_provider == "mistralai":
         api_key_var = "MISTRAL_API_KEY"
         missing_api_msg = "To get your MistralAI API key, please visit: https://mistralai.com/api"
 
@@ -475,11 +470,12 @@ def check_llm_environs():
         # Ask for the API key
         print(f"🚫The {api_key_var} is missing. {missing_api_msg}")
         api_key = typer.prompt(f"\n🙆🙆Please enter {api_key_var} API Key:")
-
+        
         # Update .env file
         with open(".env", "a", encoding="utf-8") as env_file:
-            env_file.write(f"GPT_PROVIDER={gpt_provider.lower()}\n")
+            env_file.write(f"GPT_PROVIDER={gpt_provider}\n")
             env_file.write(f"{api_key_var}={api_key}\n")
+
 
 
 def check_internet():
@@ -520,5 +516,7 @@ if __name__ == "__main__":
     check_search_apis()
     print("Check LLM details & AI Model to use.")
     check_llm_environs()
+    os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "workspace",
+            "web_research_report" + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
     load_dotenv(Path('.env'))
     app()

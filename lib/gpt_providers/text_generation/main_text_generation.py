@@ -32,7 +32,6 @@ def llm_text_gen(prompt):
         # Check if API key is provided for the given gpt_provider
         get_api_key(gpt_provider)
 
-        logger.info(f"Temp: {temperature}, MaxTokens: {max_tokens}, TopP: {top_p}, N: {n}, FrequencyPenalty: {fp}")
         # Perform text generation using the specified LLM parameters and prompt
         if 'google' in gpt_provider.lower():
             try:
@@ -69,9 +68,8 @@ def check_gpt_provider(gpt_provider):
         ValueError: If both the specified GPT provider and environment variable GPT_PROVIDER are missing.
     """
     env_gpt_provider = os.getenv('GPT_PROVIDER')
-    if gpt_provider and gpt_provider != env_gpt_provider:
+    if gpt_provider and gpt_provider.lower() != env_gpt_provider.lower():
         logger.warning(f"Config: '{gpt_provider}' different to environment variable 'GPT_PROVIDER' '{env_gpt_provider}'")
-        logger.info(f"Using Environment GPT provider: {env_gpt_provider}")
         gpt_provider = env_gpt_provider
 
     return gpt_provider
