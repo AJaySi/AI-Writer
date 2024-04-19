@@ -174,45 +174,33 @@ def check_llm_environs():
     load_dotenv(Path('.env'))
     # Check if GPT_PROVIDER is defined in .env file
     gpt_provider = os.getenv("GPT_PROVIDER")
-    
+
     # Disable unsupported GPT providers
     supported_providers = ['google', 'openai', 'mistralai']
-    if gpt_provider is None or gpt_provider not in supported_providers:
+    if gpt_provider is None or gpt_provider.lower() not in map(str.lower, supported_providers):
         # Prompt user to select a provider
-        selected_provider = radiolist_dialog(
-            title='Select your preferred GPT provider:',
-            text="Please choose GPT provider Below:\n👺Google Gemini recommended, its 🆓.",
-            values=[
-                ("Google", "Google"),
-                ("OpenAI", "OpenAI"),
-                ("MistralAI/WIP", "mistralai/WIP"),
-                ("Ollama", "Ollama (TBD)")
-            ]
-        ).run()
+        selected_provider = radiolistbox(
+            msg='Select your preferred GPT provider:',
+            title='GPT Provider Selection',
+            choices=["Google", "OpenAI", "MistralAI/WIP", "Ollama (TBD)"],
+            default_choice="Google"
+        )
         gpt_provider = selected_provider
         # Update .env file
         os.environ["GPT_PROVIDER"] = gpt_provider
-    
-    if gpt_provider == "Google":
+
+    if gpt_provider.lower() == "google":
         api_key_var = "GEMINI_API_KEY"
         missing_api_msg = f"To get your {api_key_var}, please visit: https://aistudio.google.com/app/apikey"
-    elif gpt_provider == "OpenAI":
+    elif gpt_provider.lower() == "openai": 
         api_key_var = "OPENAI_API_KEY"
         missing_api_msg = "To get your OpenAI API key, please visit: https://openai.com/blog/openai-api"
-    elif gpt_provider == "mistralai":
+    elif gpt_provider.lower() == "mistralai":
         api_key_var = "MISTRAL_API_KEY"
         missing_api_msg = "To get your MistralAI API key, please visit: https://mistralai.com/api"
-
-    if os.getenv(api_key_var) is None:
-        # Ask for the API key
-        print(f"🚫The {api_key_var} is missing. {missing_api_msg}")
-        api_key = typer.prompt(f"\n🙆🙆Please enter {api_key_var} API Key:")
-        
-        # Update .env file
-        with open(".env", "a", encoding="utf-8") as env_file:
-            env_file.write(f"{api_key_var}={api_key}\n")
-            env_file.write(f"GPT_PROVIDER={gpt_provider}\n")
-
+    else:
+        print("Unrecognised/Unsupported GPT provider. Check your main_config and environs.")
+        exit(1)
 
 
 def check_internet():

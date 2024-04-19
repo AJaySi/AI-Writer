@@ -268,7 +268,7 @@ def competitor_analysis():
     text += "Read More Here: https://docs.exa.ai/reference/company-analyst \n"
     text += "_______________________________________________________________________\n"
     print(text)
-    similar_url = prompt("Enter Valid URL to get web analysis:: ")
+    similar_url = prompt("⚠️ 👋  Enter a single Valid URL for web analysis:: ")
     try:
         metaphor_find_similar(similar_url)
     except Exception as err:
