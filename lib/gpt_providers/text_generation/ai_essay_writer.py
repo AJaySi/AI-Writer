@@ -132,7 +132,7 @@ def ai_essay_generator(essay_title, selected_essay_type, selected_education_leve
         load_dotenv(Path('../.env'))
         genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
         # Initialize the generative model
-        model = genai.GenerativeModel('gemini-1.0-pro')
+        model = genai.GenerativeModel('gemini-pro')
 
         # Generate prompts
         try:

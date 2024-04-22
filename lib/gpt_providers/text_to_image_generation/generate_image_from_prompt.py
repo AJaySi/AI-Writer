@@ -20,11 +20,12 @@ logger.add(sys.stdout,
         format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
     )
 
-from .gpt_providers.openai_gpt_provider import generate_dalle2_images, generate_dalle3_images, openai_chatgpt
-from .stabl_diff_img2html import generate_stable_diffusion_image
+#from .gen_dali2_images
+from .gen_dali3_images import generate_dalle3_images
+from .gen_stabl_diff_img import generate_stable_diffusion_image
 
 
-def generate_image(user_prompt, image_dir, image_engine="dalle3"):
+def generate_image(user_prompt, image_engine="dalle3"):
     """
     The generation API endpoint creates an image based on a text prompt.
 
@@ -40,18 +41,14 @@ def generate_image(user_prompt, image_dir, image_engine="dalle3"):
     Must be one of "url" or "b64_json". Defaults to "url".
     --> user (str): A unique identifier representing your end-user, which will help OpenAI to monitor and detect abuse.
     """
-    logger.info(f"Generated blog images will be stored at: {image_dir=}")
-
     img_prompt = generate_img_prompt(user_prompt) 
     # call the OpenAI API to generate image from prompt.
-    logger.info(f"Calling openai.image.generate with prompt: {img_prompt}")
+    logger.info(f"Calling image.generate with prompt: {img_prompt}")
 
-    if 'dalle2' in image_engine:
-        image_stored_at = generate_dalle2_images(img_prompt, image_dir)
-    elif 'dalle3' in image_engine:
-        image_stored_at = generate_dalle3_images(img_prompt, image_dir)
-    elif 'stable_diffusion' in image_engine:
-        image_stored_at = generate_stable_diffusion_image(img_prompt, image_dir)
+    if 'Dalle3' in image_engine:
+        image_stored_at = generate_dalle3_images(img_prompt)
+    elif 'Stable Diffusion' in image_engine:
+        image_stored_at = generate_stable_diffusion_image(img_prompt)
 
     return image_stored_at
 
@@ -72,5 +69,5 @@ def generate_img_prompt(user_prompt):
             Advice for creating prompt for image from the given text(no more than 150 words).
             Reply with only one answer and no descrition. Generate image prompt for the below text.
             Text: {user_prompt}"""
-    response = openai_chatgpt(prompt)
+    response = (prompt)
     return response

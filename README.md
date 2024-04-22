@@ -1,10 +1,27 @@
-# AI Content Generation Toolkit - Alwrity
-![](https://github.com/AJaySi/AI-Blog-Writer/blob/main/workspace/keyword_blog.gif)
+# How to Use AI Content Generation Toolkit - Alwrity
+
+1). Visit alwrity.com, Under tools section, you will find some AI content writing tools, which are Free & No-Signup.
+**Note:** Although, this is limited, as is our wallet & Resources.
+
+2). For complete AI content toolkit, alwrity offers a commandline App. Its a BYOK model(Bring Your Own Key).
+**Note:** (🗯️ commandline, byok and shit) ... Now, before you run away 🏃💨   
+
+If you have 💻 Laptop + 🛜 Internet + 20 minutes, you will be generating blogs, articles etc with just few words.
+
+**[Getting Started for Absolute Begginers]**(https://www.alwrity.com/post/getting-started-with-alwrity-ai-writer)
+
+Getting started for pretentious Developers : Continue Reading.....
+
+**If you still Get stuck, Open a issue here & say pretty please** :: https://github.com/AJaySi/AI-Writer/issues
+
 
 ## Introduction
 
 Alwrity automates and enhances the process of blog creation, optimization, and management. 
 Leveraging AI technologies, it assists content creators and digital marketers in generating, formatting, and uploading blog content efficiently. The toolkit integrates advanced AI models for text generation, image creation, and data analysis, streamlining the content creation pipeline.
+
+# AI Content Generation Toolkit - Alwrity
+![](https://github.com/AJaySi/AI-Blog-Writer/blob/main/workspace/keyword_blog.gif)
 
 ---
 

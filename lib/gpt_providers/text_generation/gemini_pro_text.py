@@ -19,7 +19,7 @@ from tenacity import (
 )
 
 
-#@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
+@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
 def gemini_text_response(prompt, temperature, top_p, n, max_tokens):
     """ Common functiont to get response from gemini pro Text. """
     #FIXME: Include : https://github.com/google-gemini/cookbook/blob/main/quickstarts/rest/System_instructions_REST.ipynb

@@ -5,6 +5,8 @@ from datetime import datetime
 
 from prompt_toolkit.shortcuts import checkboxlist_dialog, message_dialog, input_dialog
 from prompt_toolkit import prompt
+from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.validation import Validator, ValidationError
 from prompt_toolkit.shortcuts import radiolist_dialog
 
 from lib.ai_web_researcher.gpt_online_researcher import gpt_web_researcher
@@ -13,6 +15,7 @@ from lib.ai_writers.keywords_to_blog import write_blog_from_keywords
 from lib.ai_writers.speech_to_blog.main_audio_to_blog import generate_audio_blog
 from lib.gpt_providers.text_generation.ai_story_writer import ai_story_generator
 from lib.gpt_providers.text_generation.ai_essay_writer import ai_essay_generator
+from lib.gpt_providers.text_to_image_generation.generate_image_from_prompt import generate_image
 
 
 def blog_from_audio():
@@ -257,6 +260,95 @@ def blog_tools():
                     text=persona_descriptions[selected_persona_name]
             ).run()
 
+
+def image_generator():
+    """ Generate image from given text """
+    print("Enter your long string below---")
+    img_prompt = prompt("Enter text to create image from:: ")
+
+    img_models = WordCompleter(['Stability-Stable-Diffusion', 'Dalle2', 'Dalle3'], ignore_case=True)
+    print("Choose between:: Stable-Diffusion, Dalle2, Dalle3")
+    img_model = prompt('Choose the image model to use for generation: ', completer=img_models, validator=ModelTypeValidator())
+
+    print(f"{img_prompt}----{img_model}")
+    try:
+        generate_image(img_prompt, img_model)
+    except Exception as err:
+        print(f"Failed to generate image: {err}")
+
+
+
+class ModelTypeValidator(Validator):
+    def validate(self, document):
+        if document.text.lower() not in ['stability-stable-diffusion', 'dalle2', 'dalle3']:
+            raise ValidationError(message='Please choose a valid Text to image model.')
+
+
+def image_to_text_writer():
+    """ IMage to Text Content Generation"""
+    os.system("clear" if os.name == "posix" else "cls")
+    text = "_______________________________________________________________________\n"
+    text += "\n⚠️    Alert!   💥❓💥\n"
+    text += "Provide Inputs Below to Continue..\n"
+    text += "_______________________________________________________________________\n\n"
+    print(text)
+
+    print("Make sure the file path is correct and the file is one of the following image types: PNG, JPEG, WEBP, HEIC, HEIF.\n")
+    
+    file_location = prompt('⚠️  Enter the image file location: ', validator=FileTypeValidator())
+    if file_location:
+        writing_completer = WordCompleter(['Blog', 'Food Recipe', 'Alt Text', 'Marketing Copy'], ignore_case=True)
+        print("Choose between 'Blog', 'Food Recipe', 'Alt Text', 'Marketing Copy'")
+        writing_type = prompt('Select the type of writing: ', completer=writing_completer, validator=WritingTypeValidator())
+    
+    prompt_gemini = None
+    if writing_type.lower() == 'blog':
+        prompt_gemini = "Given an image of a product and its target audience, write an engaging marketing description",
+    elif writing_type.lower() == 'food recipe':
+        prompt_gemini = """I have the ingredients above. Not sure what to cook for lunch.
+        Show me a list of foods with the recipes.
+        Accurately identify the baked good in the image and provide an appropriate and recipe consistent with your analysis.
+        Write a short, engaging blog post based on this picture.
+        It should include a description of the meal in the photo and talk about my journey meal prepping.
+        """
+    elif writing_type.lower() == 'alt text':
+        prompt_gemini = """Given an image from my blog, generate 3 different ALT texts.
+        The image alt text should be of maximum 2 lines. It should be descriptive and SEO optimised."""
+    elif writing_type.lower() == 'marketing copy':
+        prompt_gemini = "Given an image of a product and its target audience, write an engaging marketing description"
+
+    print("TBD/FIXME: Will be taken up soon..")
+
+
+class WritingTypeValidator(Validator):
+    def validate(self, document):
+        writing_type = document.text.strip().lower()
+        if writing_type not in ['blog', 'food recipe', 'alt text', 'marketing copy']:
+            raise ValidationError(message="Please select a valid writing type: Blog, Food Recipe, Alt Text, or Marketing Copy.")
+
+
+class FileTypeValidator(Validator):
+    def validate(self, document):
+        file_path = document.text.strip()
+        if not os.path.exists(file_path):
+            raise ValidationError(message="File does not exist.")
+        elif not self.is_valid_file_type(file_path):
+            raise ValidationError(message="Unsupported file type or MIME type. Please select an image file.")
+    
+    def is_valid_file_type(self, file_path):
+        # Define supported MIME types for image files
+        supported_types = ['image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif']
+        file_mime_type = self.get_file_mime_type(file_path)
+        return file_mime_type in supported_types
+    
+    def get_file_mime_type(self, file_path):
+        # Placeholder function to get the MIME type of the file
+        # You can use libraries like magic or mimetypes for this purpose
+        # Example:
+        # import magic
+        # mime = magic.Magic(mime=True)
+        # return mime.from_file(file_path)
+        return 'image/png'  # Placeholder value for demonstration
 
 
 def competitor_analysis():

@@ -5,6 +5,7 @@ from datetime import datetime
 
 import typer
 from prompt_toolkit.shortcuts import checkboxlist_dialog, message_dialog, input_dialog
+from prompt_toolkit.shortcuts import radiolist_dialog
 from prompt_toolkit import prompt
 from prompt_toolkit.styles import Style
 from prompt_toolkit.shortcuts import radiolist_dialog
@@ -20,7 +21,8 @@ load_dotenv(Path('.env'))
 
 app = typer.Typer()
 
-from lib.utils.alwrity_utils import blog_from_audio, blog_from_keyword, do_web_research, do_web_research, write_story, essay_writer, blog_tools, competitor_analysis
+from lib.utils.alwrity_utils import blog_from_audio, blog_from_keyword, do_web_research, do_web_research
+from lib.utils.alwrity_utils import write_story, essay_writer, blog_tools, competitor_analysis, image_to_text_writer, image_generator
 
 
 def prompt_for_time_range():
@@ -61,10 +63,11 @@ def start_interactive_mode():
         ("AI Blog Writer", "AI Blog Writer"),
         ("AI Story Writer", "AI Story Writer"),
         ("AI Essay Writer", "AI Essay Writer"),
+        ("AI Image to Text Writer", "AI Image to Text Writer"),
         ("Online Blog Tools/Apps", "Online Blog Tools/Apps"),
         ("Do keyword Research", "Do keyword Research"),
         ("Competitor Analysis", "Competitor Analysis"),
-        ("Create Blog Images(TBD)", "Create Blog Images(TBD)"),
+        ("Create Blog Images", "Create Blog Images"),
         ("AI Social Media(TBD)", "AI Social Media(TBD)"),
         ("Quit", "Quit")
     ]
@@ -76,10 +79,12 @@ def start_interactive_mode():
             write_story()
         elif mode == 'AI Essay Writer':
             essay_writer()
+        elif mode == 'AI Image to Text Writer':
+            image_to_text_writer()
         elif mode == 'Do keyword Research':
             do_web_research()
-        elif mode == 'Create Blog Images(TBD)':
-            faq_generator()
+        elif mode == 'Create Blog Images':
+            image_generator()
         elif mode == 'Competitor Analysis':
             competitor_analysis()
         elif mode == 'Online Blog Tools/Apps':
@@ -105,8 +110,7 @@ def check_search_apis():
     """
 
     # Use rich.print for styling and hyperlinking
-    print("\n\n🙋♂️  🙋♂️   Before doing web research, ensure the following API keys are available:")
-    print("Blogen uses Basic, Semantic, Neural web search using above APIs for contextual blog generation.\n")
+    print("Alwrity uses Basic, Semantic, Neural web search using above APIs for contextual blog generation.\n")
 
     api_keys = {
         "METAPHOR_API_KEY": "Metaphor AI Key (Get it here: [link=https://dashboard.exa.ai/login]Metaphor API[/link])",
@@ -121,7 +125,6 @@ def check_search_apis():
             if os.getenv(key) is None:
                 # Use rich.print for styling and hyperlinking
                 print(f"[bold red]✖ 🚫 {key} is missing:[/bold red] [blue underline]Get {key} API Key[/blue underline]")
-                typer.echo(f"[bold red]✖ 🚫 {key} is missing:[/bold red] [link={key}]Get {key} API Key[/link]")
                 missing_keys.append((key, description))
 
     if missing_keys:
@@ -142,10 +145,12 @@ def get_api_key(api_key: str, api_description: str):
         api_key (str): The name of the API key variable.
         api_description (str): The description of the API key.
     """
-    user_input = typer.prompt(f"\n\n🙆💩💩🙆 - Please enter {api_key} API Key:")
+    print("\n\n")
+    print(f"[bold green] 🙋 Attention Here: 🙋 -- {api_description}")
+    user_input = typer.prompt(f"💩 -**Please Enter(copy/paste) {api_key} API Key** - Here🙋:")
     with open(".env", "a") as env_file:
         env_file.write(f"{api_key}={user_input}\n")
-    print(f"✅ {api_description} API Key added to .env file.")
+        print(f"✅ API Key added to .env file.")
 
 
 def write_blog():
@@ -172,22 +177,20 @@ def check_llm_environs():
     """ Function to check which LLM api is given. """
     # Load .env file
     load_dotenv(Path('.env'))
-    # Check if GPT_PROVIDER is defined in .env file
     gpt_provider = os.getenv("GPT_PROVIDER")
 
     # Disable unsupported GPT providers
     supported_providers = ['google', 'openai', 'mistralai']
     if gpt_provider is None or gpt_provider.lower() not in map(str.lower, supported_providers):
         # Prompt user to select a provider
-        selected_provider = radiolistbox(
-            msg='Select your preferred GPT provider:',
-            title='GPT Provider Selection',
-            choices=["Google", "OpenAI", "MistralAI/WIP", "Ollama (TBD)"],
-            default_choice="Google"
-        )
-        gpt_provider = selected_provider
+        gpt_provider = radiolist_dialog(
+            title="Select your GPT Provider(llm) from 'google', 'openai', 'mistralai'",
+            values=[("google", "Google Gemini Pro"), ("openai", "OpenAI- ChatGPT"), ("mistralai", "MistralAI/WIP")]).run()
         # Update .env file
         os.environ["GPT_PROVIDER"] = gpt_provider
+        with open(".env", "a") as env_file:
+            env_file.write(f"GPT_PROVIDER=gpt_provider\n")
+            print(f"✅ API Key added to .env file.")
 
     if gpt_provider.lower() == "google":
         api_key_var = "GEMINI_API_KEY"
@@ -198,9 +201,9 @@ def check_llm_environs():
     elif gpt_provider.lower() == "mistralai":
         api_key_var = "MISTRAL_API_KEY"
         missing_api_msg = "To get your MistralAI API key, please visit: https://mistralai.com/api"
-    else:
-        print("Unrecognised/Unsupported GPT provider. Check your main_config and environs.")
-        exit(1)
+
+    if api_key_var not in os.environ:
+        get_api_key(api_key_var, missing_api_msg)
 
 
 def check_internet():
@@ -233,13 +236,10 @@ def create_env_file():
 
 
 if __name__ == "__main__":
-    print("Checking Internet, lets get the basics right.")
     check_internet()
-    print("Create .env file, if not Present working directory")
     create_env_file()
-    print("Check Metaphor, Tavily, YOU.com Search API keys.")
+    os.system("clear" if os.name == "posix" else "cls")
     check_search_apis()
-    print("Check LLM details & AI Model to use.")
     check_llm_environs()
     os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "workspace",
             "web_research_report" + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
