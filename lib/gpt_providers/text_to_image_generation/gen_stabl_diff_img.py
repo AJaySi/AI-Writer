@@ -1,41 +1,56 @@
-from PIL import Image
-import requests
-
 # Ensure you sign up for an account to obtain an API key:
 # https://platform.stability.ai/
 # Your API key can be found here after account creation:
 # https://platform.stability.ai/account/keys
 
+import base64
+import os
+import requests
+from PIL import Image
+from io import BytesIO
+
+from .save_image import save_generated_image
+
 
 def generate_stable_diffusion_image(prompt):
-    """
-    Generate images using Stable Diffusion API based on a given prompt.
-
-    Args:
-        prompt (str): The prompt to generate the image.
-        image_dir (str): The directory where the image will be saved.
-
-    Raises:
-        Warning: If the adult content classifier is triggered.
-        Exception: For any issues during image generation or saving.
-    """
-    api_key = os.getenv('STABILITY_API_KEY')
-
+    engine_id = "stable-diffusion-xl-1024-v1-0"
+    api_host = os.getenv('API_HOST', 'https://api.stability.ai')
+    api_key = os.getenv("STABILITY_API_KEY")
+    
+    if api_key is None:
+        raise Exception("Missing Stability API key.")
+    
     response = requests.post(
-        f"https://api.stability.ai/v2beta/stable-image/generate/sd3",
+        f"{api_host}/v1/generation/{engine_id}/text-to-image",
         headers={
-            "authorization": f"Bearer {api_key}",
-            "accept": "image/*"
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": f"Bearer {api_key}"
         },
-        files={"none": ''},
-        data={
-            "prompt": prompt,
-            "output_format": "webp",
+        json={
+            "text_prompts": [
+                {
+                    "text": prompt
+                }
+            ],
+            "cfg_scale": 7,
+            "height": 1024,
+            "width": 1024,
+            "samples": 1,
+            "steps": 30,
         },
     )
+    
+    if response.status_code != 200:
+        raise Exception("Non-200 response: " + str(response.text))
+    
+    data = response.json()
+    save_generated_image(data)
 
-    if response.status_code == 200:
-        with open("./dog-wearing-glasses.jpeg", 'wb') as file:
-            file.write(response.content)
-    else:
-        raise Exception(str(response.json()))
+    for i, image in enumerate(data["artifacts"]):
+        # Decode base64 image data
+        img_data = base64.b64decode(image["base64"])
+        # Open image using PIL
+        img = Image.open(BytesIO(img_data))
+        # Display the image
+        img.show()  

@@ -8,6 +8,8 @@ from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.validation import Validator, ValidationError
 from prompt_toolkit.shortcuts import radiolist_dialog
+import typer
+from rich import print
 
 from lib.ai_web_researcher.gpt_online_researcher import gpt_web_researcher
 from lib.ai_web_researcher.metaphor_basic_neural_web_search import metaphor_find_similar
@@ -15,7 +17,7 @@ from lib.ai_writers.keywords_to_blog import write_blog_from_keywords
 from lib.ai_writers.speech_to_blog.main_audio_to_blog import generate_audio_blog
 from lib.gpt_providers.text_generation.ai_story_writer import ai_story_generator
 from lib.gpt_providers.text_generation.ai_essay_writer import ai_essay_generator
-from lib.gpt_providers.text_to_image_generation.generate_image_from_prompt import generate_image
+from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 
 
 def blog_from_audio():
@@ -270,7 +272,21 @@ def image_generator():
     print("Choose between:: Stable-Diffusion, Dalle2, Dalle3")
     img_model = prompt('Choose the image model to use for generation: ', completer=img_models, validator=ModelTypeValidator())
 
-    print(f"{img_prompt}----{img_model}")
+    if 'Stability-Stable-Diffusion' in img_model:
+        api_key = 'STABILITY_API_KEY'
+    elif 'Dalle3' in img_model:
+        api_key = 'OPENAI_API_KEY'
+
+    if os.getenv(api_key) is None:
+        print(f"\n\n[bold green] 🙋 Get {api_key} Here:https://platform.stability.ai/docs/getting-started 🙋 -- \n")
+        user_input = typer.prompt(f"💩 -**Please Enter(copy/paste) {api_key} Key** - Here🙋:")
+        os.environ[api_key] = user_input
+        try:
+            with open(".env", "a") as env_file:
+                env_file.write(f"{api_key}={user_input}\n")
+                print(f"✅ API Key added to .env file.")
+        except Exception as err:
+            print(f"Error: {err}")
     try:
         generate_image(img_prompt, img_model)
     except Exception as err:

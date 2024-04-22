@@ -23,9 +23,10 @@ logger.add(sys.stdout,
 #from .gen_dali2_images
 from .gen_dali3_images import generate_dalle3_images
 from .gen_stabl_diff_img import generate_stable_diffusion_image
+from ..text_generation.main_text_generation import llm_text_gen
 
 
-def generate_image(user_prompt, image_engine="dalle3"):
+def generate_image(user_prompt, image_engine):
     """
     The generation API endpoint creates an image based on a text prompt.
 
@@ -41,15 +42,17 @@ def generate_image(user_prompt, image_engine="dalle3"):
     Must be one of "url" or "b64_json". Defaults to "url".
     --> user (str): A unique identifier representing your end-user, which will help OpenAI to monitor and detect abuse.
     """
-    img_prompt = generate_img_prompt(user_prompt) 
-    # call the OpenAI API to generate image from prompt.
-    logger.info(f"Calling image.generate with prompt: {img_prompt}")
-
-    if 'Dalle3' in image_engine:
-        image_stored_at = generate_dalle3_images(img_prompt)
-    elif 'Stable Diffusion' in image_engine:
-        image_stored_at = generate_stable_diffusion_image(img_prompt)
-
+    try:
+        img_prompt = generate_img_prompt(user_prompt)
+        if 'Dalle3' in image_engine:
+            logger.info(f"Calling Dalle3 text-to-image with prompt: {img_prompt}")
+            image_stored_at = generate_dalle3_images(img_prompt)
+        elif 'Stability-Stable-Diffusion' in image_engine:
+            logger.info(f"Calling Stable diffusion text-to-image with prompt: \n{img_prompt}")
+            print("\n\n")
+            image_stored_at = generate_stable_diffusion_image(img_prompt)
+    except Exception as err:
+        logger.error(f"Failed to generate Image: {err}")
     return image_stored_at
 
 
@@ -57,17 +60,16 @@ def generate_img_prompt(user_prompt):
     """
     Given prompt, this functions generated a prompt for image generation.
     """
-    # I want you to act as an artist advisor providing advice on various art styles such tips on utilizing 
-    # light & shadow effects effectively in painting, shading techniques while sculpting etc.
-    # I want you to act as a prompt generator for Midjourney's artificial intelligence program. 
-    # Your job is to provide detailed and creative descriptions that will inspire unique and interesting images from the AI. 
-    # Here is your first prompt: ""
-    logger.info(f"Generate image prompt for : {user_prompt}")
-    prompt = f"""As an educationist and expert infographic artist, your tasked to create prompts that will be used for image generation.
-            Craft prompt for Openai Dall-e image generation program. Clearly describe the given text to represent it as image.
-            Make sure to avoid common image generation mistakes. 
-            Advice for creating prompt for image from the given text(no more than 150 words).
-            Reply with only one answer and no descrition. Generate image prompt for the below text.
-            Text: {user_prompt}"""
-    response = (prompt)
+    prompt = f"""
+        As an expert prompt engineer and artist, I will provide you with 'text' for creating image.
+        I want you to act as a prompt generator for AI text to image models(no more than 150 words).
+        \n
+        Choose from various art styles, utilize light & shadow effects etc.
+        Make sure to avoid common image generation mistakes.
+        Reply with only one answer, no descrition and in plaintext.
+        Make sure your prompt is detailed and creative descriptions that will inspire unique and interesting images from the AI. 
+        
+        \n\ntext:{user_prompt} """
+
+    response = llm_text_gen(prompt)
     return response

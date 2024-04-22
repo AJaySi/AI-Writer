@@ -69,6 +69,7 @@ def start_interactive_mode():
         ("Competitor Analysis", "Competitor Analysis"),
         ("Create Blog Images", "Create Blog Images"),
         ("AI Social Media(TBD)", "AI Social Media(TBD)"),
+        ("AI Code Writer(TBD)", "AI Code Writer(TBD)"),
         ("Quit", "Quit")
     ]
     mode = radiolist_dialog(title="Choose an option:", values=choices).run()
@@ -97,6 +98,9 @@ def start_interactive_mode():
             #twitter/X
             #Linked-in posts
             """)
+            raise typer.Exit()
+        elif mode == 'AI Code Writer(TBD)':
+            print("Coming soon, TBD")
             raise typer.Exit()
         elif mode == 'Quit':
             typer.echo("Exiting, Getting Lost!")
@@ -178,7 +182,7 @@ def check_llm_environs():
     # Load .env file
     load_dotenv(Path('.env'))
     gpt_provider = os.getenv("GPT_PROVIDER")
-
+    
     # Disable unsupported GPT providers
     supported_providers = ['google', 'openai', 'mistralai']
     if gpt_provider is None or gpt_provider.lower() not in map(str.lower, supported_providers):
@@ -189,7 +193,7 @@ def check_llm_environs():
         # Update .env file
         os.environ["GPT_PROVIDER"] = gpt_provider
         with open(".env", "a") as env_file:
-            env_file.write(f"GPT_PROVIDER=gpt_provider\n")
+            env_file.write(f"GPT_PROVIDER={gpt_provider}\n")
             print(f"✅ API Key added to .env file.")
 
     if gpt_provider.lower() == "google":
@@ -241,7 +245,8 @@ if __name__ == "__main__":
     os.system("clear" if os.name == "posix" else "cls")
     check_search_apis()
     check_llm_environs()
-    os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "workspace",
-            "web_research_report" + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+    os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "lib", "workspace") + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    os.environ["IMG_SAVE_DIR"] = os.path.join(os.getcwd(), "lib", "workspace")
+
     load_dotenv(Path('.env'))
     app()
