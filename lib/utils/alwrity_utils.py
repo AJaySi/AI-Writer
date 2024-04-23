@@ -18,6 +18,8 @@ from lib.ai_writers.speech_to_blog.main_audio_to_blog import generate_audio_blog
 from lib.gpt_providers.text_generation.ai_story_writer import ai_story_generator
 from lib.gpt_providers.text_generation.ai_essay_writer import ai_essay_generator
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
+from lib.ai_writers.long_form_ai_writer import long_form_generator
+
 
 
 def blog_from_audio():
@@ -63,9 +65,24 @@ def blog_from_keyword():
                     title='Error',
                     text='🚫 Blog keywords should be at least two words long. Please try again.'
                 ).run()
-    if blog_keywords:
+    choice = radiolist_dialog(
+        title="Select content type:",
+        values=[
+            ("normal", "Normal-length content"),
+            ("long", "Long-form content")
+        ],
+        default="normal"
+    ).run()
+
+    if choice == "normal":
         try:
             write_blog_from_keywords(blog_keywords)
+        except Exception as err:
+            print(f"Failed to write blog on {blog_keywords}, Error: {err}\n")
+            exit(1)
+    elif choice == "long":
+        try:
+            long_form_generator(blog_keywords)
         except Exception as err:
             print(f"Failed to write blog on {blog_keywords}, Error: {err}\n")
             exit(1)

@@ -21,7 +21,7 @@ Alwrity automates and enhances the process of blog creation, optimization, and m
 Leveraging AI technologies, it assists content creators and digital marketers in generating, formatting, and uploading blog content efficiently. The toolkit integrates advanced AI models for text generation, image creation, and data analysis, streamlining the content creation pipeline.
 
 # AI Content Generation Toolkit - Alwrity
-![](https://github.com/AJaySi/AI-Blog-Writer/blob/main/workspace/keyword_blog.gif)
+![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
 
 ---
 
@@ -109,7 +109,7 @@ Coming Soon....
 
 ### AI-Driven Content Creation
 - **Text Generation**: Leverages OpenAI's ChatGPT, Google Gemini Pro for generating text for blogs.
-- **Customizable AI Parameters**: (FIXME) Offers flexibility in adjusting AI parameters like model selection, temperature, and token limits to suit different content needs.
+- [**Customizable AI Parameters**](https://github.com/AJaySi/AI-Writer/blob/main/main_config): Offers flexibility in adjusting AI parameters like model selection, temperature, and token limits to suit different content needs.
 
 ### Image Detail Extraction
 - **Analyzing and Extracting Image Details**: Uses OpenAI's Vision API, Google Gemini vision to analyze images and extract details such as alt text, descriptions, titles, and captions, enhancing the SEO of image content.
@@ -148,11 +148,13 @@ Coming Soon....
 
 ## Packages, Tools, and APIs Used
 
-### Standing on the shoulders of Giants:
+### Standing on the shoulders of Giants - Credits:
 - **APIs**:
   - Metaphor API: Provides semantic search capabilities for finding similar topics and technologies.
   - Tavily API: Offers AI-powered web search functionality for conducting in-depth keyword research.
   - SerperDev API: Enables access to search engine results and competitor analysis data.
+  - YOU.com: You.com enhances web search, writing, coding, digital art creation, and solving complex problems.
+  - Stability AI: Activating humanity's potential through generative AI. Open models in every modality, for everyone, everywhere.
   - OpenAI API: Powers the Large Language Models (LLMs) for generating blog content and conducting research.
   - Gemini API: Another LLM provider for natural language processing tasks.
   - Ollama API (Work In Progress): An upcoming LLM provider for additional research and content generation capabilities.

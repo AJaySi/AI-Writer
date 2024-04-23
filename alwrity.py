@@ -245,8 +245,12 @@ if __name__ == "__main__":
     os.system("clear" if os.name == "posix" else "cls")
     check_search_apis()
     check_llm_environs()
-    os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "lib", "workspace") + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    # Export the paths and file names. Dont want alwrity to be chatty and prompt for inputs.
+    os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "lib", "workspace",
+                                                  f"web_research_report_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}")
     os.environ["IMG_SAVE_DIR"] = os.path.join(os.getcwd(), "lib", "workspace")
+    os.environ["CONTENT_SAVE_DIR"] = os.path.join(os.getcwd(), "lib", "workspace")
 
     load_dotenv(Path('.env'))
     app()

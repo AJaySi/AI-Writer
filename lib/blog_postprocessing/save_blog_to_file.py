@@ -7,21 +7,12 @@ from dateutil.relativedelta import relativedelta
 from textwrap import dedent
 import logging
 from zoneinfo import ZoneInfo
-import nltk
-from nltk.corpus import stopwords
 from loguru import logger
 logger.remove()
 logger.add(sys.stdout,
         colorize=True,
         format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
     )
-
-# fixme: Remove the hardcoding, need add another option OR in config ?
-image_dir = "blog_images"
-image_dir = os.path.join(os.getcwd(), image_dir)
-# TBD: This can come from config file.
-output_path = "blogs"
-output_path = os.path.join(os.getcwd(), output_path)
 
 
 def random_date_last_three_months():
@@ -63,10 +54,11 @@ def save_blog_to_file(blog_content, blog_title, blog_meta_desc, blog_tags, blog_
     blog_title_md = re.sub('[^A-Za-z0-9-]', '', blog_title_md)
     # Replace multiple consecutive dashes with a single dash
     blog_title_md = re.sub('-+', '-', blog_title_md)
-    blog_title_md = remove_stop_words(blog_title_md)
+    #blog_title_md = remove_stop_words(blog_title_md)
     logger.debug(f"Blog Title is: {blog_title_md}")
 
     # Check if output path exists
+    output_path = os.getenv('CONTENT_SAVE_DIR')
     if not os.path.exists(output_path):
         logger.error(f"Error: Blog output directory is set to {output_path}, which does not exist.")
         raise FileNotFoundError(f"Output directory does not exist: {output_path}")
@@ -116,20 +108,3 @@ def save_blog_to_file(blog_content, blog_title, blog_meta_desc, blog_tags, blog_
             raise Exception(f"Failed to write blog content: {e}")
 
         logger.info(f"Successfully saved and posted blog at: {blog_output_path}")
-
-
-# Helper function
-def remove_stop_words(sentence):
-    """
-    Removes stop words from a given sentence.
-
-    Args:
-        sentence (str): The sentence from which to remove stop words.
-
-    Returns:
-        str: The sentence after removing stop words.
-    """
-    words = nltk.word_tokenize(sentence)
-    stop_words = set(stopwords.words('english'))
-    filtered_words = [word for word in words if word.lower() not in stop_words]
-    return ' '.join(filtered_words)

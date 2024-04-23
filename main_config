@@ -11,6 +11,8 @@
 # Length of blogs Or word count. Note: It wont be exact and depends on GPT providers and Max token count.
 blog_length = 3000
 
+# company/brand-name
+
 # professional, how-to, begginer, research, programming, casual, etc
 blog_tone = "professional"
 
@@ -25,12 +27,6 @@ blog_language = "English"
 
 # Specify the output format of the blog as: HTML, markdown, plaintext. Defaults to markdown.
 blog_output_format = "markdown"
-
-# Specify full path to folder where the final blog should be stored. ex: _posts
-blog_output_folder = ""
-
-# Specify full path to folder where blog images will be stored. ex: assets
-blog_image_output_folder = ""
 
 
 

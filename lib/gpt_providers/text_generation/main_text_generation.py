@@ -14,6 +14,7 @@ logger.add(sys.stdout,
 
 from .openai_text_gen import openai_chatgpt
 from .gemini_pro_text import gemini_text_response
+from ...utils.read_main_config_params import read_return_config_section
 
 
 def llm_text_gen(prompt):
@@ -25,10 +26,9 @@ def llm_text_gen(prompt):
         str: Generated text based on the prompt.
     """
     try:
-        config_path = Path(__file__).resolve().parents[3] / "main_config"
-        gpt_provider, model, temperature, max_tokens, top_p, n, fp = read_llm_parameters(config_path)
+        gpt_provider, model, temperature, max_tokens, top_p, n, fp = read_return_config_section('llm_config')
 
-        gpt_provider = check_gpt_provider(gpt_provider)
+        #gpt_provider = check_gpt_provider(gpt_provider)
         # Check if API key is provided for the given gpt_provider
         get_api_key(gpt_provider)
 
@@ -101,43 +101,3 @@ def get_api_key(gpt_provider):
 
     logger.info(f"Using API key for {gpt_provider}")
     return api_key
-
-
-
-def read_llm_parameters(config_path: str) -> tuple:
-    """
-    Read Language Model (LLM) parameters from the configuration file.
-
-    Args:
-        config_path (str): The path to the configuration file.
-
-    Returns:
-        tuple: A tuple containing the LLM parameters (gpt_provider, model, temperature, max_tokens, top_p, n, frequency_penalty).
-
-    Raises:
-        FileNotFoundError: If the configuration file is not found.
-        configparser.Error: If there is an error parsing the configuration file.
-    """
-    try:
-        config = configparser.ConfigParser()
-        config.read(config_path, encoding="utf-8")
-
-        gpt_provider = config.get('llm_options', 'gpt_provider')
-        model = config.get('llm_options', 'model')
-        temperature = config.getfloat('llm_options', 'temperature')
-        max_tokens = config.getint('llm_options', 'max_tokens')
-        top_p = config.getfloat('llm_options', 'top_p')
-        n = config.getint('llm_options', 'n')
-        frequency_penalty = config.getfloat('llm_options', 'frequency_penalty')
-
-        return gpt_provider, model, temperature, max_tokens, top_p, n, frequency_penalty
-
-    except FileNotFoundError:
-        logger.error(f"Configuration file not found: {config_path}")
-        raise
-    except configparser.Error as err:
-        logger.error(f"Error reading LLM parameters from config file: {err}")
-        raise
-    except Exception as err:
-        logger.error(f"An unexpected error occurred: {err}")
-        raise
