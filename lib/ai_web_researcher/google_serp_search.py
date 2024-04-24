@@ -90,7 +90,7 @@ def google_search(query):
 
 
 
-def perform_serpapi_google_search(query, location="in"):
+def perform_serpapi_google_search(query):
     """
     Perform a Google search using the SerpApi service.
 
@@ -102,6 +102,12 @@ def perform_serpapi_google_search(query, location="in"):
     Returns:
         dict: A dictionary containing the search results.
     """
+    try:
+        logger.info("Reading Web search config values from main_config")
+        geo_location, search_language, num_results, time_range, include_domains, similar_url = read_return_config_section('web_research')
+    except Exception as err:
+        logger.error(f"Failed to read web research params: {err}")
+        return
     try:
         # Check if API key is provided
         if not os.getenv("SERPAPI_KEY"):
@@ -158,10 +164,10 @@ def perform_serperdev_google_search(query):
     payload = json.dumps({
         "q": query,
         "gl": geo_loc,
+        "location": geo_loc,
         "hl": lang,
         "num": num_results,
         "autocorrect": True,
-        "page": 1,
         "type": "search",
         "engine": "google"
     })

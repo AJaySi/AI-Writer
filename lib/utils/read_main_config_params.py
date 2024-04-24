@@ -52,6 +52,17 @@ def read_return_config_section(config_section):
 
             return blog_tone, blog_demographic, blog_type, blog_language, blog_output_format
 
+        elif 'web_research' in config_section:
+            # Access the config file and return the specified values
+            geo_location = config.get('web_research', 'geo_location')
+            search_language = config.get('web_research', 'search_language')
+            num_results = config.getint('web_research', 'num_results')
+            time_range = config.get('web_research', 'time_range')
+            include_domains = config.get('web_research', 'include_domains')
+            similar_url = config.get('web_research', 'similar_url')
+
+            return geo_location, search_language, num_results, time_range, include_domains, similar_url
+
     except FileNotFoundError:
         logger.error(f"Configuration file not found: {config_path}")
         raise
