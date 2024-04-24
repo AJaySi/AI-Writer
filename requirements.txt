@@ -20,7 +20,6 @@ requests_html
 pytrends
 pytube
 wordcloud
-nltk
 prompt_toolkit
 ipython
 html2image

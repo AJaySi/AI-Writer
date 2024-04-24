@@ -160,16 +160,13 @@ def perform_serperdev_google_search(query):
     except Exception as err:
         logger.error(f"Failed to read config {err}")
 
-    # FIXME: Expose options to end user. Request payload
+    # Build payload as end user or main_config
     payload = json.dumps({
         "q": query,
         "gl": geo_loc,
-        "location": geo_loc,
         "hl": lang,
         "num": num_results,
         "autocorrect": True,
-        "type": "search",
-        "engine": "google"
     })
 
     # Request headers with API key
@@ -184,6 +181,44 @@ def perform_serperdev_google_search(query):
         # Check if the request was successful
         if response.status_code == 200:
             # Parse and return the JSON response
+            process_search_results(response)
+            return response.json()
+        else:
+            # Print an error message if the request fails
+            logger.error(f"Error: {response.status_code}, {response.text}")
+            return None
+
+
+def perform_serper_news_search(news_keywords, news_country, news_language):
+    """ Function for Serper.dev News google search """
+        # Get the Serper API key from environment variables
+    logger.info(f"Doing serper.dev google search. {news_keywords} - {news_country} - {news_language}")
+    serper_api_key = os.getenv('SERPER_API_KEY')
+
+    # Check if the API key is available
+    if not serper_api_key:
+        raise ValueError("SERPER_API_KEY is missing. Set it in the .env file.")
+
+    # Serper API endpoint URL
+    url = "https://google.serper.dev/news"
+    payload = json.dumps({
+        "q": news_keywords,
+        "gl": news_country,
+        "hl": news_language,
+    })
+    # Request headers with API key
+    headers = {
+        'X-API-KEY': serper_api_key,
+        'Content-Type': 'application/json'
+    }
+    # Send a POST request to the Serper API with progress bar
+    with progress.Bar(label="Searching News", expected_size=100) as bar:
+        response = requests.post(url, headers=headers, data=payload, stream=True)
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Parse and return the JSON response
+            #process_search_results(response, "news")
+            #google_news(news_keywords)
             return response.json()
         else:
             # Print an error message if the request fails
@@ -209,7 +244,7 @@ def google_news(search_keywords, news_period="7d", region="IN"):
     print(googlenews.search('APPLE'))
 
 
-def process_search_results(search_results):
+def process_search_results(search_results, search_type="general"):
     """
     Create a Pandas DataFrame from the search results.
 
@@ -220,8 +255,11 @@ def process_search_results(search_results):
         pd.DataFrame: Pandas DataFrame containing the search results.
     """
     data = []
-    logger.info(f"Google Search Parameters: {search_results.get('searchParameters', {})}")
-    organic_results = search_results.get("organic", [])
+    #logger.info(f"Google Search Parameters: {search_results.get('searchParameters', {})}")
+    if 'general' in search_type:
+        organic_results = search_results.get("organic", [])
+    if 'news' in search_type:
+        organic_results = search_results.get("news", [])
 
     # Displaying Organic Results
     organic_data = []

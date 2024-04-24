@@ -1,5 +1,5 @@
 from typing import List, Dict, Union
-from nltk import tokenize, stem, pos_tag
+#from nltk import tokenize, stem, pos_tag
 from textblob import TextBlob
 import enchant
 

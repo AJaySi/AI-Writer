@@ -15,11 +15,11 @@ from lib.ai_web_researcher.gpt_online_researcher import gpt_web_researcher
 from lib.ai_web_researcher.metaphor_basic_neural_web_search import metaphor_find_similar
 from lib.ai_writers.keywords_to_blog import write_blog_from_keywords
 from lib.ai_writers.speech_to_blog.main_audio_to_blog import generate_audio_blog
+from lib.ai_writers.long_form_ai_writer import long_form_generator
+from lib.ai_writers.ai_news_article_writer import ai_news_generation
 from lib.gpt_providers.text_generation.ai_story_writer import ai_story_generator
 from lib.gpt_providers.text_generation.ai_essay_writer import ai_essay_generator
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
-from lib.ai_writers.long_form_ai_writer import long_form_generator
-
 
 
 def blog_from_audio():
@@ -29,7 +29,6 @@ def blog_from_audio():
     """
 
     while True:
-        print("https://github.com/AJaySi/AI-Blog-Writer/wiki/Audio-to-blog-AI-article-writer-%E2%80%90-Alwrity-Speech-To-Text-Feature")
         audio_input = prompt("""Enter Youtube video URL OR provide Full-Path to audio file.\n👋 : """)
         # If the user cancels, exit the loop and the application
         if audio_input is None:
@@ -86,6 +85,56 @@ def blog_from_keyword():
         except Exception as err:
             print(f"Failed to write blog on {blog_keywords}, Error: {err}\n")
             exit(1)
+
+
+def ai_news_writer():
+    """ """
+    while True:
+        print("________________________________________________________________")
+        news_keywords = input_dialog(
+                title='Enter Keywords from News headlines:',
+                text='Describe the News article in 3-5 words.\n👋 Enter main keywords describing the News Event: ',
+            ).run()
+
+        # If the user cancels, exit the loop
+        if news_keywords is None:
+            break
+        if news_keywords and len(news_keywords.split()) >= 2:
+            break
+        else:
+            message_dialog(
+                title='Error',
+                text='🚫 News keywords should be at least two words long. Least, you can do..'
+            ).run()
+    news_country = radiolist_dialog(
+        title="Select origin country of the News event:",
+        values=[
+            ("es", "Spain"),
+            ("vn", "Vietnam"),
+            ("pk", "Pakistan"),
+            ("in", "India"),
+            ("de", "Germany"),
+            ("cn", "China")
+        ],
+        default="in"
+    ).run()
+    news_language = radiolist_dialog(
+        title="Select news article language to search for:",
+        values=[
+            ("en", "English"),
+            ("es", "Spanish"),
+            ("vi", "Vietnamese"),
+            ("ar", "Arabic"),
+            ("hi", "Hindi"),
+            ("de", "German"),
+            ("zh-cn", "Chinese")
+        ],
+        default="en"
+    ).run()
+    try:
+        ai_news_generation(news_keywords, news_country, news_language)
+    except Exception as err:
+        raise err
 
 
 def do_web_research():

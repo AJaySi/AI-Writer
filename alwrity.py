@@ -21,7 +21,7 @@ load_dotenv(Path('.env'))
 
 app = typer.Typer()
 
-from lib.utils.alwrity_utils import blog_from_audio, blog_from_keyword, do_web_research, do_web_research
+from lib.utils.alwrity_utils import blog_from_audio, blog_from_keyword, do_web_research, do_web_research, ai_news_writer
 from lib.utils.alwrity_utils import write_story, essay_writer, blog_tools, competitor_analysis, image_to_text_writer, image_generator
 
 
@@ -36,11 +36,11 @@ def prompt_for_time_range():
 
 def write_blog_options():
     choices = [
-        ("Keywords", "Keywords"),
-        ("Audio To Blog", "Audio To Blog"),
-        ("Programming", "Programming"),
-        ("Scholar", "Scholar"),
-        ("News/TBD", "News/TBD"),
+        ("Keywords", "Keywords - Provide main blog keywords Or Title"),
+        ("Audio To Blog", "Audio To Blog - Transcribe Audio files into blog content"),
+        ("Programming", "Programming - Write technical blogs on latest topics"),
+        ("Scholar", "Scholar - Research Reports from google scholar, arxiv articles."),
+        ("AI News Articles", "News - AI News article writer, factual trusted sources"),
         ("Finance/TBD", "Finance/TBD"),
         ("Quit", "Quit")
     ]
@@ -60,21 +60,21 @@ def start_interactive_mode():
     print(text)
     
     choices = [
-        ("AI Blog Writer", "AI Blog Writer"),
+        ("AI Writer", "AI Writer - Blog, YT2Blog, Research Report, News, Finance long-form articles"),
         ("AI Story Writer", "AI Story Writer"),
-        ("AI Essay Writer", "AI Essay Writer"),
+        ("AI Essay Writer", "AI Essay writer"),
         ("AI Image to Text Writer", "AI Image to Text Writer"),
-        ("Online Blog Tools/Apps", "Online Blog Tools/Apps"),
-        ("Do keyword Research", "Do keyword Research"),
+        ("Online Blog Tools/Apps", "Online AI Apps - Content & Digital marketing"),
+        ("Do keyword Research", "Keywords web research - Basic, AI and semantic web research"),
         ("Competitor Analysis", "Competitor Analysis"),
-        ("Create Blog Images", "Create Blog Images"),
+        ("Create Blog Images", "Create Images - Stability, Dalle3"),
         ("AI Social Media(TBD)", "AI Social Media(TBD)"),
         ("AI Code Writer(TBD)", "AI Code Writer(TBD)"),
         ("Quit", "Quit")
     ]
     mode = radiolist_dialog(title="Choose an option:", values=choices).run()
     if mode:
-        if mode == 'AI Blog Writer':
+        if mode == 'AI Writer':
             write_blog()
         elif mode == 'AI Story Writer':
             write_story()
@@ -166,6 +166,8 @@ def write_blog():
         elif blog_type == 'Audio To Blog':
             blog_from_audio()
 
+        elif blog_type == 'AI News Articles':
+            ai_news_writer()
         elif blog_type == 'GitHub':
             github = prompt("Enter GitHub URL, CSV file, or topic:")
             print(f"Write blog based on GitHub: {github}")
