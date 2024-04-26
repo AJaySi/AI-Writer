@@ -4,6 +4,7 @@ rich
 python-dotenv
 loguru
 openai
+crewai[tool]
 google.generativeai
 mistralai
 tenacity
@@ -12,6 +13,7 @@ tabulate
 metaphor_python
 exa_py
 GoogleNews
+langchain-google-genai
 clint
 scikit-learn
 matplotlib

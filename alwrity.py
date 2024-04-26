@@ -83,7 +83,8 @@ def start_interactive_mode():
         elif mode == 'AI Image to Text Writer':
             image_to_text_writer()
         elif mode == 'Do keyword Research':
-            do_web_research()
+            if check_search_apis():
+                do_web_research()
         elif mode == 'Create Blog Images':
             image_generator()
         elif mode == 'Competitor Analysis':

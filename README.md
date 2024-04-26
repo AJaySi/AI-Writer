@@ -90,11 +90,21 @@ Congratulations: Once you've cloned the repository, you can proceed with the nex
 ---
 
 
-### Option 3: Web URL 🌐 *(For easy access)*
+## Packages, Tools, and APIs Used
 
-Coming Soon....
+### Standing on the shoulders of Giants - Credits:
+- **APIs**:
+  - [Exa API](https://exa.ai/): Provides semantic search capabilities for finding similar topics and technologies.
+  - [Tavily API](https://tavily.com/): Offers AI-powered web search functionality for conducting in-depth keyword research.
+  - [SerperDev API](https://serper.dev/): Enables access to search engine results and competitor analysis data.
+  - [YOU.com](https://you.com/): You.com enhances web search, writing, coding, digital art creation, and solving complex problems.
+  - [Stability AI](https://stability.ai/): Activating humanity's potential through generative AI. 
+    Open models in every modality, for everyone, everywhere.
+  - [OpenAI API](https://openai.com/): Powers the Large Language Models (LLMs) for generating blog content and conducting research.
+  - [Gemini API](https://gemini.google.com/app): Google powered LLM for natural language processing tasks.
+  - [Ollama](https://ollama.com/) : Local, Privacy focused, LLM provider for research and content generation capabilities.
+  - [CrewAI](https://www.crewai.com/): Collaborative AI agents framework.
 ---
-
 
 ## Features
 

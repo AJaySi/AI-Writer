@@ -17,6 +17,7 @@ from lib.ai_writers.keywords_to_blog import write_blog_from_keywords
 from lib.ai_writers.speech_to_blog.main_audio_to_blog import generate_audio_blog
 from lib.ai_writers.long_form_ai_writer import long_form_generator
 from lib.ai_writers.ai_news_article_writer import ai_news_generation
+from lib.ai_writers.ai_agents_crew_writer import ai_agents_writers
 from lib.gpt_providers.text_generation.ai_story_writer import ai_story_generator
 from lib.gpt_providers.text_generation.ai_essay_writer import ai_essay_generator
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
@@ -49,15 +50,15 @@ def blog_from_keyword():
     """ Input blog keywords, research and write a factual blog."""
     while True:
             print("________________________________________________________________")
-            blog_keywords = input_dialog(
+            content_keywords = input_dialog(
                     title='Enter Keywords/Blog Title',
                     text='Shit in, Shit Out; Better keywords, better research, hence better content.\n👋 Enter keywords/Blog Title for blog generation:',
                 ).run()
 
             # If the user cancels, exit the loop
-            if blog_keywords is None:
+            if content_keywords is None:
                 break
-            if blog_keywords and len(blog_keywords.split()) >= 2:
+            if content_keywords and len(content_keywords.split()) >= 2:
                 break
             else:
                 message_dialog(
@@ -68,22 +69,29 @@ def blog_from_keyword():
         title="Select content type:",
         values=[
             ("normal", "Normal-length content"),
-            ("long", "Long-form content")
+            ("long", "Long-form content"),
+            ("Experimental", "Experimental - AI Agents team")
         ],
         default="normal"
     ).run()
 
     if choice == "normal":
         try:
-            write_blog_from_keywords(blog_keywords)
+            write_blog_from_keywords(content_keywords)
         except Exception as err:
-            print(f"Failed to write blog on {blog_keywords}, Error: {err}\n")
+            print(f"🚫 Failed to write blog on {blog_keywords}, Error: {err}\n")
             exit(1)
     elif choice == "long":
         try:
-            long_form_generator(blog_keywords)
+            long_form_generator(content_keywords)
         except Exception as err:
-            print(f"Failed to write blog on {blog_keywords}, Error: {err}\n")
+            print(f"🚫 Failed to write blog on {blog_keywords}, Error: {err}\n")
+            exit(1)
+    elif choice == "Experimental":
+        try:
+            ai_agents_writers(content_keywords)
+        except Exception as err:
+            print(f"🚫 Failed to Write content with AI agents: {err}\n")
             exit(1)
 
 
@@ -139,20 +147,19 @@ def ai_news_writer():
 
 def do_web_research():
     """ Input keywords and do web research and present a report."""
-    if check_search_apis():
-        while True:
-            print("________________________________________________________________")
-            search_keywords = input_dialog(
-                    title='Enter Search Keywords below: More Options in main_config.',
-                    text='👋 Enter keywords for web research (Or keywords from your blog):',
-                ).run()
-            if search_keywords and len(search_keywords.split()) >= 2:
-                break
-            else:
-                message_dialog(
-                    title='Warning',
-                    text='🚫 Search keywords should be at least three words long. Please try again.'
-                ).run()
+    while True:
+        print("________________________________________________________________")
+        search_keywords = input_dialog(
+                title='Enter Search Keywords below: More Options in main_config.',
+                text='👋 Enter keywords for web research (Or keywords from your blog):',
+            ).run()
+        if search_keywords and len(search_keywords.split()) >= 2:
+            break
+        else:
+            message_dialog(
+                title='Warning',
+                text='🚫 Search keywords should be at least three words long. Please try again.'
+            ).run()
 
     try:
         print(f"🚀🎬🚀 [bold green]Starting web research on given keywords: {search_keywords}..")
