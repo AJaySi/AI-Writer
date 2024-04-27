@@ -4,7 +4,7 @@ rich
 python-dotenv
 loguru
 openai
-crewai[tool]
+crewai[tools]
 google.generativeai
 mistralai
 tenacity
