@@ -181,7 +181,6 @@ def perform_serperdev_google_search(query):
         # Check if the request was successful
         if response.status_code == 200:
             # Parse and return the JSON response
-            process_search_results(response)
             return response.json()
         else:
             # Print an error message if the request fails
@@ -218,7 +217,6 @@ def perform_serper_news_search(news_keywords, news_country, news_language):
         if response.status_code == 200:
             # Parse and return the JSON response
             #process_search_results(response, "news")
-            #google_news(news_keywords)
             return response.json()
         else:
             # Print an error message if the request fails
@@ -255,7 +253,7 @@ def process_search_results(search_results, search_type="general"):
         pd.DataFrame: Pandas DataFrame containing the search results.
     """
     data = []
-    #logger.info(f"Google Search Parameters: {search_results.get('searchParameters', {})}")
+    logger.info(f"Google Search Parameters: {search_results.get('searchParameters', {})}")
     if 'general' in search_type:
         organic_results = search_results.get("organic", [])
     if 'news' in search_type:

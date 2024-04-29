@@ -1,19 +1,20 @@
 # How to Use AI Content Generation Toolkit - Alwrity
 
-1). Visit alwrity.com, Under tools section, you will find some AI content writing tools, which are Free & No-Signup.
+1). [Visit alwrity.com](https://www.alwrity.com/ai-writing-tools), You will find AI content writing tools, which are Free & No-Signup.
 **Note:** Although, this is limited, as is our wallet & Resources.
 
-2). For complete AI content toolkit, alwrity offers a commandline App. Its a BYOK model(Bring Your Own Key).
+2). **For complete AI content creation toolkit**, alwrity offers a commandline App. Its a BYOK model(Bring Your Own Key).
 **Note:** (🗯️ commandline, byok and shit) ... Now, before you run away 🏃💨   
 
 If you have 💻 Laptop + 🛜 Internet + 20 minutes, you will be generating blogs, articles etc with just few words.
 
-**[Getting Started for Absolute Begginers]**(https://www.alwrity.com/post/getting-started-with-alwrity-ai-writer)
+### [Step-By-Step: Getting Started for Absolute Begginers](https://www.alwrity.com/post/getting-started-with-alwrity-ai-writer)
 
-Getting started for pretentious Developers : Continue Reading.....
+### [Getting started for pretentious Developers](https://github.com/AJaySi/AI-Writer/wiki/Alwrity--%E2%80%90-Get-started)
 
 **If you still Get stuck, Open a issue here & say pretty please** :: https://github.com/AJaySi/AI-Writer/issues
 
+---
 
 ## Introduction
 
@@ -25,74 +26,9 @@ Leveraging AI technologies, it assists content creators and digital marketers in
 
 ---
 
-## Getting Started 🚀 🤞🤞🤞
+## Under the hood:
 
-To start using this tool, simply follow one of the options below:
-
----
-### Option 1: FOLLOW-ME Local Laptop Install 💻  **(WINDOWS)**
-    
-#### Step 0 **Pre-requisites:** Git, Python3
----
-
-**Installing Python on Windows:🐍🪟**
-- Open PowerShell as admin: Press `Windows Key + X`, then select "Windows PowerShell (Admin)".
-
-- Type `python`. If Python is not installed, Windows will prompt you to 'Get Python'.
-- If Python is installed, you should see '>>>>>'.
-
----
-**Installing Git on Windows:🛺**
-- Open PowerShell or Windows Terminal: Press `Windows Key + X`, then select "Windows Terminal".
-
-- Paste or type and press enter:⏎.⏎.<br> 
-winget install --id Git.Git -e --source winget
-- Wait for download bars to finish
-
----
-
-### Step 1: Clone this repository to your local machine.
-
-To clone the repository to your local machine, perform the following steps:
-
-1. **Open Windows PowerShell as Administrator:** Open "Windows PowerShell (Admin)" from start menu.
-
-2. **Navigate to the Desired Directory:** Use the 'cd' command to move to the directory where you want to clone the repository. 
-
-3. **Clone the Repository:** Run the following command in PowerShell to clone the repository:
-`git clone https://github.com/AJaySi/AI-Writer.git`
-This command will download all the files from the repository to your local machine.
-
-4. **Verify the Clone:** After the cloning process is complete, navigate into the newly created directory using: 
-`cd AI-Writer`
-
-Congratulations: Once you've cloned the repository, you can proceed with the next steps for installation and setup.
-
----
-
-### Step 2: Install required dependencies:
-
-- Open command prompt on your local machine.
-- Navigate to the folder from Step 1 (AI-Writer)
-- Run in powershell: 
-`python -m pip install -r requirements.txt`
-
----
-
-### Step 3: Run the script:
-
-- Run in powershell: 
-`python alwrity.py`
-
----
-
-### Step 4: The tool will guide you through setting up your APIs.
----
-
-
-## Packages, Tools, and APIs Used
-
-### Standing on the shoulders of Giants - Credits:
+### Tech-Stack on the shoulders of Giants - (Credits):
 - **APIs**:
   - [Exa API](https://exa.ai/): Provides semantic search capabilities for finding similar topics and technologies.
   - [Tavily API](https://tavily.com/): Offers AI-powered web search functionality for conducting in-depth keyword research.
@@ -108,7 +44,20 @@ Congratulations: Once you've cloned the repository, you can proceed with the nex
 
 ## Features
 
-- **Online Research Integration**: Enhances blog content by integrating insights and information gathered from online research, ensuring the content is informative and up-to-date. This gives context for generating content. Tavily AI, Google search, serp and Vision AI is used to scrape web data for context augumentation. TBD: Include CrewAI for web research agents.
+- **Online Research Integration**: Enhances blog content by integrating insights and information gathered from online research(SERP, Tavily, Metaphor), ensuring the content is informative and up-to-date. 
+This gives context for generating content. Tavily AI, Google search, serp and Vision AI is used to scrape web data for context augumentation. CrewAI for web research agents.
+
+- **Long Form Content Generation**: Write Essay, Story, Long form Blogs with web researched context.
+
+- **AI Content planning & Calender**: Writer's block, Alwrity will provide you with months worth of blog titles.
+
+- **Multilingual**: Write Content in your language, web research in your language and country(main_config).
+
+- **Prevents AI Hallucinations**: Web researched context generates factual content.
+
+- **Text-To-Text, Speech-To-Text, Text-To-Image, Image-To-Text**: Multimodal content generatiom suite.
+
+- **Agentic Content Team**: Crewai content team for you company. Define persona, roles, goals, task for your AI content team(Beta). 
 
 - **Image Generation and Processing**: Utilizes AI models like DALL-E 3, stable difffusion to create relevant images based on blog content. Offers features to process and optimize images for web usage. FIXME: Need more work with stable diffusion.
 
@@ -118,6 +67,7 @@ Congratulations: Once you've cloned the repository, you can proceed with the nex
 	
 
 ### AI-Driven Content Creation
+
 - **Text Generation**: Leverages OpenAI's ChatGPT, Google Gemini Pro for generating text for blogs.
 - [**Customizable AI Parameters**](https://github.com/AJaySi/AI-Writer/blob/main/main_config): Offers flexibility in adjusting AI parameters like model selection, temperature, and token limits to suit different content needs.
 
@@ -125,7 +75,7 @@ Congratulations: Once you've cloned the repository, you can proceed with the nex
 - **Analyzing and Extracting Image Details**: Uses OpenAI's Vision API, Google Gemini vision to analyze images and extract details such as alt text, descriptions, titles, and captions, enhancing the SEO of image content.
 
 ---
-### **Note**: This toolkit is designed for automated blog management and requires appropriate API keys and access credentials for full functionality.
+**Note**: This toolkit is designed for automated blog management and requires appropriate API keys and access credentials for full functionality.
 ---
 
 ### Web Research
@@ -156,22 +106,10 @@ Congratulations: Once you've cloned the repository, you can proceed with the nex
 - **Menu-Driven Interaction**: Choose between various options, tasks, and tools using intuitive menus and prompts.
 - **Task Guidance**: Receive guidance and instructions for each task, facilitating user interaction and decision-making.
 
-## Packages, Tools, and APIs Used
-
-### Standing on the shoulders of Giants - Credits:
-- **APIs**:
-  - Metaphor API: Provides semantic search capabilities for finding similar topics and technologies.
-  - Tavily API: Offers AI-powered web search functionality for conducting in-depth keyword research.
-  - SerperDev API: Enables access to search engine results and competitor analysis data.
-  - YOU.com: You.com enhances web search, writing, coding, digital art creation, and solving complex problems.
-  - Stability AI: Activating humanity's potential through generative AI. Open models in every modality, for everyone, everywhere.
-  - OpenAI API: Powers the Large Language Models (LLMs) for generating blog content and conducting research.
-  - Gemini API: Another LLM provider for natural language processing tasks.
-  - Ollama API (Work In Progress): An upcoming LLM provider for additional research and content generation capabilities.
 
 ---
 
-Notes:
+Notes from underground:
 
 1). Focus is on writing/generating highly unique, SEO optimized blog content.
 2). Models: Openai, gemini, ollama are interesting. Minstral API is also worth exploring. Cohere API is purpose made.

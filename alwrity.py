@@ -38,9 +38,11 @@ def write_blog_options():
     choices = [
         ("Keywords", "Keywords - Provide main blog keywords Or Title"),
         ("Audio To Blog", "Audio To Blog - Transcribe Audio files into blog content"),
+        ("AI Story Writer", "AI Story Writer"),
+        ("AI Essay Writer", "AI Essay writer"),
+        ("AI News Articles", "News - AI News article writer, factual trusted sources"),
         ("Programming", "Programming - Write technical blogs on latest topics"),
         ("Scholar", "Scholar - Research Reports from google scholar, arxiv articles."),
-        ("AI News Articles", "News - AI News article writer, factual trusted sources"),
         ("Finance/TBD", "Finance/TBD"),
         ("Quit", "Quit")
     ]
@@ -53,20 +55,15 @@ def start_interactive_mode():
     os.system("clear" if os.name == "posix" else "cls")
     text = "_______________________________________________________________________\n"
     text += "\n⚠️    Alert!   💥❓💥\n"
-    text += "If you know what to write, choose 'Write Blog'\n"
-    text += "If unsure, let's 'do web research' to write on\n"
-    text += "If Testing-it-out/getting-started, choose 'Blog Tools\n"
+    text += "Interactive tool, needs your attention/inputs, get off your mobile..'\n"
     text += "_______________________________________________________________________\n"
     print(text)
     
     choices = [
-        ("AI Writer", "AI Writer - Blog, YT2Blog, Research Report, News, Finance long-form articles"),
-        ("AI Story Writer", "AI Story Writer"),
-        ("AI Essay Writer", "AI Essay writer"),
+        ("AI Writers", "Choose AI Writers - (I Know What To Write)"),
+        ("Content Planning", "Content Planning Tools - (I Don't Know, What to write)"),
         ("AI Image to Text Writer", "AI Image to Text Writer"),
         ("Online Blog Tools/Apps", "Online AI Apps - Content & Digital marketing"),
-        ("Do keyword Research", "Keywords web research - Basic, AI and semantic web research"),
-        ("Competitor Analysis", "Competitor Analysis"),
         ("Create Blog Images", "Create Images - Stability, Dalle3"),
         ("AI Social Media(TBD)", "AI Social Media(TBD)"),
         ("AI Code Writer(TBD)", "AI Code Writer(TBD)"),
@@ -74,31 +71,18 @@ def start_interactive_mode():
     ]
     mode = radiolist_dialog(title="Choose an option:", values=choices).run()
     if mode:
-        if mode == 'AI Writer':
+        if mode == 'AI Writers':
             write_blog()
-        elif mode == 'AI Story Writer':
-            write_story()
-        elif mode == 'AI Essay Writer':
-            essay_writer()
         elif mode == 'AI Image to Text Writer':
             image_to_text_writer()
-        elif mode == 'Do keyword Research':
-            if check_search_apis():
-                do_web_research()
         elif mode == 'Create Blog Images':
             image_generator()
-        elif mode == 'Competitor Analysis':
-            competitor_analysis()
+        elif mode == 'Content Planning':
+            content_planning_tools()
         elif mode == 'Online Blog Tools/Apps':
             blog_tools()
         elif mode == 'AI Social Media(TBD)':
-            print("""
-            #whatsapp
-            #instagram
-            #youtube
-            #twitter/X
-            #Linked-in posts
-            """)
+            print("""  #whatsapp  #instagram  #youtube  #twitter/X  #Linked-in posts  """)
             raise typer.Exit()
         elif mode == 'AI Code Writer(TBD)':
             print("Coming soon, TBD")
@@ -106,6 +90,31 @@ def start_interactive_mode():
         elif mode == 'Quit':
             typer.echo("Exiting, Getting Lost!")
             raise typer.Exit()
+
+
+def content_planning_tools():
+    """ """
+    os.system("clear" if os.name == "posix" else "cls")
+    text = "_______________________________________________________________________\n"
+    text += "\n⚠️    Alert!   💥❓💥\n"
+    text += "作家的障碍 - Writer's block - Bloqueo de escritor - Schreibblockade\n"
+    text += "Use Google Keyword planner, google ads instead. Better tools than below.\n"
+    text += "Note: Who Cares, just give some titles, keywords to get started.. To Err is Human & AI..\n"
+    text += "_______________________________________________________________________\n"
+    print(text)
+
+    choices = [
+        ("Do keyword Research", "Keywords web research - 🤓 Will read & earn my bread.."),
+        ("Competitor Analysis", "Competitor Analysis - 🧐What's my neighbour doing.."),
+        ("Blog Titles", "🥹🥹 Just give me Topic titles")
+    ]
+    mode = radiolist_dialog(title="Choose an option:", values=choices).run()
+    
+    if mode == 'Do keyword Research':
+        if check_search_apis():
+            do_web_research()
+    elif mode == 'Competitor Analysis':
+        competitor_analysis()
 
 
 def check_search_apis():
@@ -163,10 +172,12 @@ def write_blog():
     if blog_type:
         if blog_type == 'Keywords':
             blog_from_keyword()
-
+        elif mode == 'AI Story Writer':
+            write_story()
+        elif mode == 'AI Essay Writer':
+            essay_writer()
         elif blog_type == 'Audio To Blog':
             blog_from_audio()
-
         elif blog_type == 'AI News Articles':
             ai_news_writer()
         elif blog_type == 'GitHub':
