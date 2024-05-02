@@ -48,23 +48,23 @@ def write_blog_from_keywords(search_keywords, url=None):
     # TBD: The 3 drafts are very similar, the intention was to fact check the AI content multiple times.
     # Commenting it out for blog writing, using Tavily for other forms of writing.
     # Do Tavily AI research to augument the above blog.
-    #try:
-    #    tavily_search_result, t_titles = do_tavily_ai_search(search_keywords)
-    #    example_blog_titles.append(t_titles)
-    #    blog_markdown_str = blog_with_research(blog_markdown_str, tavily_search_result)
-    #    logger.info(f"######### Blog content after Tavily AI research: ######### \n\n{blog_markdown_str}\n\n")
-    #except Exception as err:
-    #    logger.error(f"Failed to do Tavily AI research: {err}")
-    #logger.info("######### Draft2: Blog content after Tavily AI research: #########\n\n")
-
     try:
-        # Do Metaphor/Exa AI search.
-        metaphor_search_result, m_titles = do_metaphor_ai_research(search_keywords)
-        example_blog_titles.append(m_titles)
-        blog_markdown_str = blog_with_research(blog_markdown_str, metaphor_search_result)
+        tavily_search_result, t_titles = do_tavily_ai_search(search_keywords)
+        example_blog_titles.append(t_titles)
+        blog_markdown_str = blog_with_research(blog_markdown_str, tavily_search_result)
+        logger.info(f"######### Blog content after Tavily AI research: ######### \n\n{blog_markdown_str}\n\n")
     except Exception as err:
-        logger.error(f"Failed to do Metaphor AI search: {err}")
-    logger.info("######### Draft3: Blog content after Tavily AI research: ######### \n\n")
+        logger.error(f"Failed to do Tavily AI research: {err}")
+    logger.info("######### Draft2: Blog content after Tavily AI research: #########\n\n")
+
+#    try:
+#        # Do Metaphor/Exa AI search.
+#        metaphor_search_result, m_titles = do_metaphor_ai_research(search_keywords)
+#        example_blog_titles.append(m_titles)
+#        blog_markdown_str = blog_with_research(blog_markdown_str, metaphor_search_result)
+#    except Exception as err:
+#        logger.error(f"Failed to do Metaphor AI search: {err}")
+#    logger.info("######### Draft3: Blog content after Tavily AI research: ######### \n\n")
 
     # Do Google trends analysis and combine with latest blog.
     try:

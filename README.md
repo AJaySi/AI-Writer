@@ -10,19 +10,24 @@ If you have 💻 Laptop + 🛜 Internet + 20 minutes, you will be generating blo
 
 ### [Step-By-Step: Getting Started for Absolute Begginers](https://www.alwrity.com/post/getting-started-with-alwrity-ai-writer)
 
-### [Getting started for pretentious Developers](https://github.com/AJaySi/AI-Writer/wiki/Alwrity--%E2%80%90-Get-started)
+### [Getting started for Developers](https://github.com/AJaySi/AI-Writer/wiki/Alwrity--%E2%80%90-Get-started)
 
 **If you still Get stuck, Open a issue here & say pretty please** :: https://github.com/AJaySi/AI-Writer/issues
 
 ---
+# AI Content Generation Toolkit - Alwrity
+![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
 
 ## Introduction
 
-Alwrity automates and enhances the process of blog creation, optimization, and management. 
-Leveraging AI technologies, it assists content creators and digital marketers in generating, formatting, and uploading blog content efficiently. The toolkit integrates advanced AI models for text generation, image creation, and data analysis, streamlining the content creation pipeline.
+Alwrity automates and enhances the process of blog creation, optimization, and management(Really ?). 
+Leveraging AI technologies, it assists content creators and digital marketers in generating, formatting, 
+and uploading blog content efficiently(Hmmmm, OK...). 
+The toolkit integrates advanced AI models for text generation, image creation, 
+and data analysis, streamlining the content creation pipeline(Who reads introductions, right!).
 
-# AI Content Generation Toolkit - Alwrity
-![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
+## [Read Alwrity Configuration Options](https://www.alwrity.com/post/know-powerful-alwrity-ai-writer-configuration):
+Use the [main_config](https://github.com/AJaySi/AI-Writer/blob/main/main_config) file to modify Alwrity behavior for your content needs.
 
 ---
 

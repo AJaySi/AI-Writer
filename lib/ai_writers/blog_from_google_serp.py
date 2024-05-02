@@ -30,7 +30,8 @@ def write_blog_google_serp(search_keyword, search_results):
             Always include answers for each FAQ, use your knowledge and confirm with snippets given in search result.
         3). Act as subject matter expert for given research keywords: {search_keyword}.
         4). Your blog should be highly formatted in markdown style and highly readable.
-        5). Always write in the first person.
+        5). Always write in the first person. 
+        6). Inject Your Unique Voice and Style: Add personal insights, anecdotes, or experiences to infuse authenticity and humanize the content, making it engaging and authentic.
 
         \n\nWeb Research Keyword: "{search_keyword}"
         Google search Result: "{search_results}"
