@@ -5,16 +5,34 @@
 
 2). **For complete AI content creation toolkit**, alwrity offers a commandline App. Its a BYOK model(Bring Your Own Key).
 **Note:** (🗯️ commandline, byok and shit) ... Now, before you run away 🏃💨   
-
 If you have 💻 Laptop + 🛜 Internet + 20 minutes, you will be generating blogs, articles etc with just few words.
-
 ### [Step-By-Step: Getting Started for Absolute Begginers](https://www.alwrity.com/post/getting-started-with-alwrity-ai-writer)
 
 ### [Getting started for Developers](https://github.com/AJaySi/AI-Writer/wiki/Alwrity--%E2%80%90-Get-started)
 
-**If you still Get stuck, Open a issue here & say pretty please** :: https://github.com/AJaySi/AI-Writer/issues
+**Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Someone will bail you out.
 
 ---
+### AI Tools & Features of Alwrity:
+| No. | Alwrity Tool                       | Description                                                                   |
+|-----|------------------------------------|-------------------------------------------------------------------------------|
+| 1   | AI Blog Writer                     | Generates blog content based on the latest web research on given keywords.     |
+| 2   | AI YouTube to Content Writer       | Transforms content from provided YouTube URLs into written form.              |
+| 3   | AI Long Form Content               | Creates extensive and detailed articles.                                      |
+| 4   | AI Essay Writer                    | Produces lengthy essays on various topics, with room for improvement.          |
+| 5   | AI Story Writer                    | Constructs narratives and stories based on provided backstories and characters.|
+| 6   | AI Email Writer                    | Generates various types of professional letters.                              |
+| 7   | AI Letter Writer                   | Crafts business letters for formal communication.                             |
+| 8   | AI LinkedIn Blog Post Generator    | Develops blog posts optimized for sharing on LinkedIn.                         |
+| 9   | AI Instagram Caption Generation    | Creates engaging captions for Instagram posts.                                 |
+| 10  | AI Content Outline Generator       | Generates outlines based on keywords gathered from web research.               |
+| 11  | AI Web Researcher                  | Conducts comprehensive web research and analysis using various methods.        |
+| 12  | AI Content Planning & Calendar     | Assists in planning and organizing content with a comprehensive calendar.      |
+| 13  | Create Blog Images                 | Generates images to complement blog content using Stable Diffusion.            |
+| 14  | Agentic Content Creation           | Explores innovative content creation methods with CrewAI.                     |
+
+---
+
 # AI Content Generation Toolkit - Alwrity
 ![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
 
