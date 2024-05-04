@@ -128,3 +128,38 @@ include_domains =
 
 # similar_url : A single URL, this will instruct search engines to give results similar to the given URL.
 similar_url = 
+
+
+###########################################################
+#
+# Creating Your Virtual content writing Team.
+#
+# One can choose from the following roles and make a virtual team.
+#
+# Chief Editor - Oversees the research process and manages the team.
+# Researcher (gpt-researcher) - A specialized autonomous agent that conducts in depth research on a given topic.
+# Editor - Responsible for planning the research outline and structure.
+# Reviewer - Validates the correctness of the research results given a set of criteria.
+# Revisor - Revises the research results based on the feedback from the reviewer.
+# Writer - Responsible for compiling and writing the final report.
+# Publisher - Responsible for publishing the final report in various formats.
+#
+###########################################################
+
+# Choose multi-agent framework, for now its default to Crewai. More options for langgraph, agentgpt, autogpt etc.
+
+# Step1: Choose the team members from this list: chief_editor, researcher, editor, reviewer, writer, publisher
+# Only the mentioned team members/agents will be included in your dream team.
+your_content_team_members = chief_editor, researcher, editor, reviewer, writer
+
+# Step2: Edit team members for your need in workspace/my_content_team folder.
+# Personlization of AI team members for your needs/requirements. Imagine a real team and think along those lines.
+# To get you started, refer these files in workspace folder, these are template Agents, one can modify for their company's content needs.
+# Tip: Start small, define roles, goals and give backstory which makes Agents work for you.
+# Run the example and keep a quality control. Change Persona of the agent, tone of voice, personality etc.
+# Check if researcher is giving right results and check out of each Agent. Iterate and refine each agents, until they write to your
+# requirements. This will take time but you will end up with a AI Agents content writing team for your own needs(Free, Free, Free).
+# where_your_team_at = Provide the directory location where Team members are defined. 
+# Check with template files in workspace/my_content_team folder.
+# where_your_team_at =
+

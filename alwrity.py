@@ -254,10 +254,15 @@ def create_env_file():
 
 
 if __name__ == "__main__":
+    print("Checking Internet..")
     check_internet()
+    print("Creating .env file")
     create_env_file()
+    print("Clear, all this..")
     os.system("clear" if os.name == "posix" else "cls")
+    print("Checking Search APIs..")
     check_search_apis()
+    print("Checking LLM APIs..")
     check_llm_environs()
 
     # Export the paths and file names. Dont want alwrity to be chatty and prompt for inputs.

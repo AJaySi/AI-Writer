@@ -1,4 +1,6 @@
 import os
+import configparser
+
 from crewai import Agent, Task, Crew
 from crewai_tools import SerperDevTool
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -14,17 +16,14 @@ def create_agents(search_keywords):
 
     # Set gemini pro as llm
     llm = ChatGoogleGenerativeAI(
-        model="gemini-pro", verbose=True, temperature=0.9, google_api_key=google_api_key
+        model="gemini-pro", verbose=True, temperature=0.6, google_api_key=google_api_key
     )
 
+    role, goal, backstory = read_config("content_researcher")
     content_researcher = Agent(
-        role = 'Senior Research Analyst',
-        goal = f'Uncover content writing ideas for "{search_keywords}" keywords.',
-        backstory = f"""You work at a leading digital marketing firm.
-        Your expertise lies in identifying emerging trends, topic for content creation.
-        You are expert in researching latest information about various topics and {search_keywords}.
-        Your research and content suggestions are foundation for content writers.
-        Your detailed content research is pivotal to company's content strategy.""",
+        role = role,
+        goal = goal,
+        backstory = backstory,
         tools = [search_tool],
         memory = True,  # Enable memory
         verbose = True,
@@ -34,13 +33,11 @@ def create_agents(search_keywords):
         llm = llm
     )
 
+    role, goal, backstory = read_config("content_outliner")
     content_outliner = Agent(
-        role = 'Senior Content Strategist',
-        goal = f'Create a content outline for "{search_keywords}" keywords, from your insights & provided context.',
-        backstory = """You are an expert digital content writer and marketing expert.
-            The content researcher had identified ideas to write content on. 
-            Use this knowledge to write your content outline.
-            Take your time going over the research. Your content outline will be expanded upon after review.""",
+        role = role,
+        goal = goal,
+        backstory = backstory,
         memory = True,  # Enable memory
         verbose = True,
         max_rpm = 10,  # No limit on requests per minute
@@ -49,18 +46,11 @@ def create_agents(search_keywords):
         llm = llm
     )
 
+    role, goal, backsotry = read_config("content_writer")
     content_writer = Agent(
-        role = 'Content Strategist',
-        goal = f"""Craft compelling & SEO optimized content on {search_keywords}. 
-        Rank high on Google for popular long-tail keywords related to the short-tail keyword {search_keywords}""",
-        backstory = f"""You are a renowned Content Strategist, known for your insightful and engaging articles.
-        You transform complex concepts into compelling narratives. 
-        Limit them to 20 words or so, using language familiar to the majority. 
-        Example: Instead of "Utilize this methodology," say "Use this method."
-        Employ a clear and concise writing style.
-        Engage your audience with a compelling, fun, and informative tone,
-        that effectively conveys the technical aspects of the topic in simple terms.
-        """,
+        role = role,
+        goal = goal,
+        backstory = backstory,
         memory = True,  # Enable memory
         verbose = True,
         max_rpm = 10,  # No limit on requests per minute
@@ -69,19 +59,11 @@ def create_agents(search_keywords):
         llm = llm
     )
 
+    reviewer_config = read_config("content_reviewer")
     content_reviewer = Agent(
-	    role="Expert Writing Critic & content Editor.",
-        goal="Review the draft content and identfy potential issues.",
-        backstory="""You are expert reviewer with 10 years of exprience in reviewing digital content.
-        The make sure that article are interesting and correct information provided.
-        Simplicity will resonate with your readers.
-        Pay attention to grammar and punctuation.
-        Avoid AI sounding words and pass AI detection tools.
-        Engage with active voice. It’s as if you’re in conversation with the reader.
-        Example: Use "You will see benefits" instead of "One will see benefits."
-        Use headings, bullets, and formatting to break the monotony of the text. These elements add rhythm and can make a document more inviting.
-        A concise conclusion that resonates with the beginning can bring your piece full circle, satisfying your readers.
-        """,
+	    role=role,
+        goal=goal,
+        backstory=backstory,
         memory=True,  # Enable memory
         verbose=True,
         max_rpm=10,  # No limit on requests per minute
@@ -93,38 +75,33 @@ def create_agents(search_keywords):
     return [content_researcher, content_outliner, content_writer, content_reviewer]
 
 def create_tasks(agents, search_keywords):
+    task_description, expected_output = read_config("research_task")
+    print(task_description, expected_output)
     research_task = Task(
-            description=f"""Conduct a comprehensive topic analysis on the following: "{search_keywords}".
-        Identify keyword trends, SEO opportunities, and potential content ideas to write upon.
-        """,
-        expected_output="Provide Full analysis report in bullet points",
+            description=f"""The main focus keywords are: "{search_keywords}".\n{task_description}""",
+        expected_output = expected_output,
         agent=agents[0]  # Assign to the researcher agent
     )
 
+    task_description, expected_output = read_config("outline_task")
     outline_task = Task(
-        description="""Use the insights to produce a detailed content outline to expand upon later.""",
-        expected_output="A detailed and insightful content outline on {search_keywords}.",
+        description=f"{task_description}.\n The main focus keywords are {search_keywords}",
+        expected_output=f"{expected_output}",
         #human_input=True,
         agent=agents[1]  # Assign to the outliner agent
     )
 
+    task_description, expected_output = read_config("writer_task")
     writer_task = Task(
-        description="""Using the insights provided, develop an engaging content that highlights {search_keywords}.
-        Your post should be informative yet accessible, catering to a tech-savvy audience.
-        Avoid complex words so it doesn't sound like AI.""",
-        expected_output="A 2000 words content convering most sections of the provided outline.",
+        description=f"{task_description}\nThe main focus keywords are {search_keywords}\n.",
+        expected_output=expected_output,
         agent=agents[2]  # Assign to the writer agent
     )
 
+    task_description, expected_output = read_config("review_task")
     proofread_task = Task(
-        description=f"""Sharpen the focus of the draft content by identifying overly wordy sections and crafting concise alternatives.
-        Words with many syllables are barriers to simplicity. 
-        Choose simpler words, avoid sounding like AI.
-        Pay special attention to readiblity, formatting & styling of the content.
-        Make sure the draft content SEO optimised for keywords: {search_keywords}.
-        Make sure the final content is 2000 words long.
-        """,
-        expected_output="Final content with your review comments edited in the content draft.",
+        description=f"{task_description}.\nThe main focus keywords are: {search_keywords}.",
+        expected_output=expected_output,
         agent=agents[3]  # Assign to the reviewer agent
     )
 
@@ -141,6 +118,43 @@ def execute_tasks(agents, tasks, lang):
     )
     result = crew.kickoff()
     return result
+
+
+def read_config(which_member):
+    """
+    Reads the role, goal, and backstory from the config file. 
+    """
+    # Assign the specific config file for each agent.
+    # Base path to workspace/my_content_team
+    team_dir = os.path.join(os.getcwd(), "lib", "workspace", "my_content_team")
+    config_file = None
+    
+    if 'content_researcher' in which_member or 'research_task' in which_member:
+        config_file = os.path.join(team_dir, "content_researcher.txt")
+    elif 'content_writer' in which_member or 'writer_task' in which_member:
+        config_file = os.path.join(team_dir, "content_writer.txt")
+    elif 'content_reviewer' in which_member or 'review_task' in which_member:
+        config_file = os.path.join(team_dir, "content_reviewer.txt")
+    elif 'content_outliner' in which_member or 'outline_task' in which_member:
+        config_file = os.path.join(team_dir, "content_outliner.txt")
+    
+    config = {}
+    try:
+        config = configparser.ConfigParser()
+        config.read(config_file)
+        role = config.get('main', 'role')
+        goal = config.get('main', 'goal')
+        backstory = config.get('backstory', 'text')
+    except Exception as err:
+        print(f"Error reading agent config: {err}")
+
+    if not 'task' in which_member:
+        return role, goal, backstory
+    else:
+        task_description = config.get('task', 'task_description')
+        expected_output = config.get('task', 'task_expected_output')
+        return task_description, expected_output
+
 
 def ai_agents_writers(search_keywords, lang="en"):
     setup_environment()
