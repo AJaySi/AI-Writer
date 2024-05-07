@@ -24,14 +24,12 @@ import os
 import json
 from pathlib import Path
 import sys
-from typing import List, NamedTuple
 from datetime import datetime
 
 from .tavily_ai_search import get_tavilyai_results
 from .metaphor_basic_neural_web_search import metaphor_find_similar, metaphor_search_articles
 from .google_serp_search import google_search
 from .google_trends_researcher import do_google_trends_analysis
-#from .web_research_report import write_web_research_report
 
 from loguru import logger
 # Configure logger
@@ -40,6 +38,7 @@ logger.add(sys.stdout,
            colorize=True,
            format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
            )
+
 
 
 def gpt_web_researcher(search_keywords):

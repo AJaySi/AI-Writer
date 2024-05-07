@@ -8,9 +8,7 @@ from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.validation import Validator, ValidationError
 from prompt_toolkit.shortcuts import radiolist_dialog
-import typer
 from rich import print
-
 from lib.ai_web_researcher.gpt_online_researcher import gpt_web_researcher
 from lib.ai_web_researcher.metaphor_basic_neural_web_search import metaphor_find_similar
 from lib.ai_writers.keywords_to_blog import write_blog_from_keywords
@@ -352,7 +350,7 @@ def image_generator():
 
     if os.getenv(api_key) is None:
         print(f"\n\n[bold green] 🙋 Get {api_key} Here:https://platform.stability.ai/docs/getting-started 🙋 -- \n")
-        user_input = typer.prompt(f"💩 -**Please Enter(copy/paste) {api_key} Key** - Here🙋:")
+        user_input = prompt(f"💩 -**Please Enter(copy/paste) {api_key} Key** - Here🙋:")
         os.environ[api_key] = user_input
         try:
             with open(".env", "a") as env_file:

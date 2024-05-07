@@ -45,7 +45,6 @@ logger.add(sys.stdout,
            )
 
 from .common_utils import save_in_file, cfg_search_param
-
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 

@@ -1,24 +1,19 @@
+print("Welcome, Alwrity at your service..")
 import os
 from pathlib import Path
 import configparser
 from datetime import datetime
 
 import typer
-from prompt_toolkit.shortcuts import checkboxlist_dialog, message_dialog, input_dialog
-from prompt_toolkit.shortcuts import radiolist_dialog
 from prompt_toolkit import prompt
-from prompt_toolkit.styles import Style
 from prompt_toolkit.shortcuts import radiolist_dialog
-from prompt_toolkit.formatted_text import HTML
-from prompt_toolkit.layout.containers import HSplit, Window
-from prompt_toolkit.layout.controls import BufferControl
 
 from dotenv import load_dotenv
 import requests
 from rich import print
 from rich.text import Text
 load_dotenv(Path('.env'))
-
+print("Loading, required libraries..")
 app = typer.Typer()
 
 from lib.utils.alwrity_utils import blog_from_audio, blog_from_keyword, do_web_research, do_web_research, ai_news_writer
@@ -254,12 +249,11 @@ def create_env_file():
 
 
 if __name__ == "__main__":
+    
     print("Checking Internet..")
     check_internet()
     print("Creating .env file")
     create_env_file()
-    print("Clear, all this..")
-    os.system("clear" if os.name == "posix" else "cls")
     print("Checking Search APIs..")
     check_search_apis()
     print("Checking LLM APIs..")

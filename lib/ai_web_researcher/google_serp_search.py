@@ -35,7 +35,7 @@ from clint.textui import progress
 #from serpapi import GoogleSearch
 from loguru import logger
 from tabulate import tabulate
-from GoogleNews import GoogleNews
+#from GoogleNews import GoogleNews
 # Configure logger
 logger.remove()
 from dotenv import load_dotenv

@@ -78,7 +78,7 @@ def create_tasks(agents, search_keywords):
     task_description, expected_output = read_config("research_task")
     print(task_description, expected_output)
     research_task = Task(
-            description=f"""The main focus keywords are: "{search_keywords}".\n{task_description}""",
+        description=f"""The main focus keywords are: "{search_keywords}".\n{task_description}""",
         expected_output = expected_output,
         agent=agents[0]  # Assign to the researcher agent
     )
