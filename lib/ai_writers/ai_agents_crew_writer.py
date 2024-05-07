@@ -40,6 +40,7 @@ def create_agents(search_keywords):
         backstory = backstory,
         memory = True,  # Enable memory
         verbose = True,
+        tools = [search_tool],
         max_rpm = 10,  # No limit on requests per minute
         max_iter = 5,  # Default value for maximum iterations
         allow_delegation = False,
@@ -78,7 +79,8 @@ def create_tasks(agents, search_keywords):
     task_description, expected_output = read_config("research_task")
     print(task_description, expected_output)
     research_task = Task(
-        description=f"""The main focus keywords are: "{search_keywords}".\n{task_description}""",
+        description=f"""The main focus keywords are: "{search_keywords}".\n{task_description}.
+        Set the input parameter as : search_query""",
         expected_output = expected_output,
         agent=agents[0]  # Assign to the researcher agent
     )
