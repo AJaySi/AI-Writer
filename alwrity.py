@@ -167,9 +167,9 @@ def write_blog():
     if blog_type:
         if blog_type == 'Keywords':
             blog_from_keyword()
-        elif mode == 'AI Story Writer':
+        elif blog_type == 'AI Story Writer':
             write_story()
-        elif mode == 'AI Essay Writer':
+        elif blog_type == 'AI Essay Writer':
             essay_writer()
         elif blog_type == 'Audio To Blog':
             blog_from_audio()
@@ -179,7 +179,7 @@ def write_blog():
             github = prompt("Enter GitHub URL, CSV file, or topic:")
             print(f"Write blog based on GitHub: {github}")
         elif blog_type == 'Scholar':
-            scholar = prompt("Enter research papers keywords:")
+            scholar = prompt("Enter research papers keywords Or URL:")
             print(f"Write blog based on scholar: {scholar}")
         elif blog_type == 'Quit':
             typer.echo("Exiting, Getting Lost..")

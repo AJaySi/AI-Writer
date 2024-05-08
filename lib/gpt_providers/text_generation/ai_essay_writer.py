@@ -52,7 +52,6 @@ def ai_essay_generator(essay_title, selected_essay_type, selected_education_leve
         1). You specialize in {selected_essay_type} essay writing.
         2). Your target audiences include readers from {selected_education_level} level.
         3). The title of the essay is {essay_title}.
-        4). I will provide you with web research for essay title.
         5). The final essay should of {selected_num_pages} words/pages.
         3). Plant the seeds of subplots or potential character arc shifts that can be expanded later.
 

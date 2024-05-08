@@ -76,21 +76,12 @@ def long_form_generator(content_keywords):
     7). Use simple {content_language} words, to appeal to all readers.
     7). Your content must be well formatted using {output_format} language.
     8). Do not use words like: Unleash, ultimate, Uncover, Discover, Elevate, Revolutionizing, Unveiling, Harnessing, Dive, Delve into, Embrace.
+    9). Important: Ensure that content is not repeated, each section is unique and distinct.
 
     Remember, your main goal is to write as much as you can. If you get through the content too fast, that is bad. 
     Expand, never summarize.
     '''
 
-    remove_ai_words = f'''\
-	    As an expert content writer and editor, I will provide you with my 'blog content' and 'Exception-list'.
-        Your task is to replace all occurances of words from 'Exception-list' from given 'blog content'.
-        Before generating any text, examine the Exception-list and avoid all cases of these words and phrases.
-        These instructions are critical and require absolute adherence!
-	
-	    \n\nException-list: ["realm", "navigating", "beacon", "bustling", "treasure trove", "landscape", "tailored", "tailor", “roadmap” , "tailoring", "delving", “streamlining” "dynamic", "robust", "stay tuned", "in conclusion", "seamless", "bustling", “not just a”, “cornerstone”, “paramount” ,“diving into”, “delve into”, “pivotal”, “navigating”,“dive deep”, journey”, “maze”, “puzzle”, “overwhelmed” 'Tapestry', 'Bustling', 'In summary', 'In conclusion', 'Unleash', 'Unveiling', 'ever-evolving', 'Remember that', 'Take a dive into', 'Navigating', 'Navigating the landscape', 'Navigating the complexities of', 'Landscape', 'The landscape of', 'Testament', 'a testament to', 'In the world of', 'Realm', 'Embark', 'virtuoso', 'Let's explore', 'symphony', 'game changing', 'ever-changing', 'Embrace', 'Embracing', 'game-changing', 'ever-evolving']
-	
-        \n\nBlog Content: '{{blog_content}}'
-    '''
 
     # Generate prompts
     content_title = f'''\
@@ -121,7 +112,7 @@ def long_form_generator(content_keywords):
     
     {{web_research_result}}
 
-    Write an outline for the content title using web research results.
+    Write an outline of a content using above web research results.
 
     '''
 
@@ -140,7 +131,6 @@ def long_form_generator(content_keywords):
     Start to write the very beginning of the content. You are not expected to finish the whole content now. 
     Your writing should be detailed enough that you are only scratching the surface of the first bullet of your outline. 
     Try to write AT MINIMUM 600 WORDS.
-    Pay special attention to orignality, formatting and readibility of your content.
 
     {writing_guidelines}
     '''
@@ -162,20 +152,20 @@ def long_form_generator(content_keywords):
 
     ============\n
 
-    You've begun to write the essay and continue to do so.
+    You've begun to write the content and continue to do so.
     Here's what you've written so far:
 
     {{content_text}}
 
     =====
 
-    First, silently review the outline and essay so far. 
+    First, silently review the outline and content written so far. 
     Identify what the single next part of your outline you should write.
 
-    Your task is to continue where you left off and write the next part of the Essay.
-    You are not expected to finish the whole essay now. Your writing should be
+    Your task is to continue where you left off and write only the next parts of given outline.
+    You are not expected to finish the whole content now. Your writing should be
     detailed enough that you are only scratching the surface of the next part of
-    your outline. Try to write AT MINIMUM 600 WORDS. However, only once the essay
+    your outline. Try to write AT MINIMUM 600 WORDS. However, only once the content
     is COMPLETELY finished, write IAMDONE. Remember, do NOT write a whole chapter
     right now.
 
@@ -198,7 +188,7 @@ def long_form_generator(content_keywords):
     except Exception as err:
         logger.error(f"Content title Generation Error: {err}")
         return
-
+    
     try:
         content_outline = generate_with_retry(model, 
                         content_outline.format(content_title=content_title, web_research_result=web_research_result)).text
@@ -212,6 +202,8 @@ def long_form_generator(content_keywords):
     except Exception as err:
         logger.error(f"Failed to Generate Starting draft: {err}")
         return
+    
+    print(starting_draft)
 
     try:
         draft = starting_draft
@@ -221,11 +213,14 @@ def long_form_generator(content_keywords):
     except Exception as err:
         logger.error(f"Failed to write the initial draft: {err}")
 
+    print(continuation)
     # Add the continuation to the initial draft, keep building the story until we see 'IAMDONE'
     try:
         draft += '\n\n' + continuation
     except Exception as err:
         logger.error(f"Failed as: {err} and {continuation}")
+    
+    print(draft)
 
     try:
         # Do Metaphor/Exa AI search.
