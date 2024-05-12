@@ -17,7 +17,8 @@ print("Loading, required libraries..")
 app = typer.Typer()
 
 from lib.utils.alwrity_utils import blog_from_audio, blog_from_keyword, do_web_research, do_web_research, ai_news_writer
-from lib.utils.alwrity_utils import write_story, essay_writer, blog_tools, competitor_analysis, image_to_text_writer, image_generator
+from lib.utils.alwrity_utils import write_story, essay_writer, blog_tools
+from lib.utils.alwrity_utils import content_planning, competitor_analysis, image_to_text_writer, image_generator
 
 
 def prompt_for_time_range():
@@ -100,8 +101,8 @@ def content_planning_tools():
 
     choices = [
         ("Do keyword Research", "Keywords web research - 🤓 Will read & earn my bread.."),
-        ("Competitor Analysis", "Competitor Analysis - 🧐What's my neighbour doing.."),
-        ("Blog Titles", "🥹🥹 Just give me Topic titles")
+        ("Competitor Analysis", "Competitor Analysis - 🧐 What's my neighbour doing.."),
+        ("Content Calender", "🥹🥹 Just give me content calender 🥹🥹")
     ]
     mode = radiolist_dialog(title="Choose an option:", values=choices).run()
     
@@ -110,6 +111,8 @@ def content_planning_tools():
             do_web_research()
     elif mode == 'Competitor Analysis':
         competitor_analysis()
+    elif mode == 'Content Calender':
+        content_planning()
 
 
 def check_search_apis():

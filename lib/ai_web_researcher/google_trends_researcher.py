@@ -45,7 +45,6 @@ from urllib.parse import quote_plus
 from tqdm import tqdm
 from tabulate import tabulate
 from pytrends.request import TrendReq
-from wordcloud import WordCloud
 from loguru import logger
 
 # Configure logger

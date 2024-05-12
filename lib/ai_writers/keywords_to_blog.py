@@ -15,9 +15,7 @@ logger.add(sys.stdout,
 
 from ..ai_web_researcher.gpt_online_researcher import do_google_serp_search,\
         do_tavily_ai_search, do_metaphor_ai_research, do_google_pytrends_analysis
-from .blog_from_google_serp import write_blog_google_serp
-from .combine_research_and_blog import blog_with_research
-from .combine_blog_and_keywords import blog_with_keywords
+from .blog_from_google_serp import write_blog_google_serp, improve_blog_intro, blog_with_keywords, blog_with_research
 from ..ai_web_researcher.you_web_reseacher import get_rag_results, search_ydc_index
 from ..blog_metadata.get_blog_metadata import blog_metadata
 from ..blog_postprocessing.save_blog_to_file import save_blog_to_file
@@ -49,7 +47,8 @@ def write_blog_from_keywords(search_keywords, url=None):
     # Commenting it out for blog writing, using Tavily for other forms of writing.
     # Do Tavily AI research to augument the above blog.
     try:
-        tavily_search_result, t_titles = do_tavily_ai_search(search_keywords)
+        tavily_search_result, t_titles, t_answer = do_tavily_ai_search(search_keywords)
+        blog_markdown_str = improve_blog_intro(blog_markdown_str, t_answer)
         example_blog_titles.append(t_titles)
         blog_markdown_str = blog_with_research(blog_markdown_str, tavily_search_result)
         logger.info(f"######### Blog content after Tavily AI research: ######### \n\n{blog_markdown_str}\n\n")
@@ -71,6 +70,7 @@ def write_blog_from_keywords(search_keywords, url=None):
         pytrends_search_result = do_google_pytrends_analysis(search_keywords)
         logger.info(f"Google Trends keywords to use in the blog: {pytrends_search_result}\n")
         blog_markdown_str = blog_with_keywords(blog_markdown_str, pytrends_search_result)
+        blog_markdown_str = improve_blog_intro(blog_markdown_str, t_answer)
     except Exception as err:
         logger.error(f"Failed to do Google Trends Analysis:{err}")
     logger.info(f"########### Blog Content After Google Trends Analysis:######### \n {blog_markdown_str}\n\n")

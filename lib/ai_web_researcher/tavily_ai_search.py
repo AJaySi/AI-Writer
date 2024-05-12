@@ -99,7 +99,7 @@ def get_tavilyai_results(keywords):
 
 
 def print_result_table(output_data):
-    """ Pretty print the tavily AI serch result. """
+    """ Pretty print the tavily AI search result. """
     # Prepare data for tabulate
     table_data = []
     for item in output_data.get("results"):

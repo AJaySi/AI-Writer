@@ -1,0 +1,12 @@
+crewai[tools]
+langchain-google-genai 
+scikit-learn
+scipy
+matplotlib
+pandas
+plotly
+lxml_html_clean
+tabulate
+pytrends
+loguru
+requests_html

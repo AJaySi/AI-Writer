@@ -74,7 +74,8 @@ def do_tavily_ai_search(search_keywords):
         logger.info(f"Doing Tavily AI search for: {search_keywords}")
         t_results = get_tavilyai_results(search_keywords)
         t_titles = tavily_extract_information(t_results, 'titles')
-        return(t_results, t_titles)
+        t_answer = tavily_extract_information(t_results, 'answer')
+        return(t_results, t_titles, t_answer)
     except Exception as err:
         logger.error(f"Failed to do Tavily AI Search: {err}")
 

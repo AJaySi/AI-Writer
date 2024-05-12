@@ -19,6 +19,8 @@ from lib.ai_writers.ai_agents_crew_writer import ai_agents_writers
 from lib.gpt_providers.text_generation.ai_story_writer import ai_story_generator
 from lib.gpt_providers.text_generation.ai_essay_writer import ai_essay_generator
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
+from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_writers
+
 
 
 def blog_from_audio():
@@ -218,6 +220,30 @@ def write_story():
         print(f"ERROR: Provide Google Gemini API keys. Openai, mistral, ollama coming up.")
         exit(1)
 
+
+def content_planning():
+    """ Agents team to create a content calender """
+    while True:
+            print("________________________________________________________________")
+            content_keywords = input_dialog(
+                    title='Enter Main Domain Keywords of your business:',
+                    text='Better keywords will generate better blog titles, content calender, Play with keywords & combine into single calender:',
+                ).run()
+
+            # If the user cancels, exit the loop
+            if content_keywords is None:
+                break
+            if content_keywords and len(content_keywords.split()) >= 2:
+                break
+            else:
+                message_dialog(
+                    title='Error',
+                    text='🚫 Single keywords are just too vague. Try again.'
+                ).run() 
+    try:
+        ai_agents_writers(content_keywords)
+    except Exception as err:
+        print(f"Failed to genrate content calender: {err}")
 
 
 def essay_writer():

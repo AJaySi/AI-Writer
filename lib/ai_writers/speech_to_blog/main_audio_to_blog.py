@@ -15,7 +15,7 @@ logger.add(sys.stdout,
 
 from .write_blogs_from_youtube_videos import youtube_to_blog
 from ...ai_web_researcher.gpt_online_researcher import do_google_serp_search
-from ...ai_writers.combine_research_and_blog import blog_with_research
+from ..blog_from_google_serp import blog_with_research
 from ...blog_metadata.get_blog_metadata import blog_metadata
 from ...blog_postprocessing.save_blog_to_file import save_blog_to_file
 
