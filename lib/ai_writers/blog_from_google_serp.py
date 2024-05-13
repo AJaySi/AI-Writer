@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import configparser
 
 from loguru import logger
 logger.remove()
@@ -15,26 +16,29 @@ from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 # FIXME: Provide num_blogs, num_faqs as inputs.
 def write_blog_google_serp(search_keyword, search_results):
     """Combine the given online research and gpt blog content"""
-    prompt = f"""
-        As expert Creative Content writer, writing up fresh ideas with care and uniqueness.
-        I will provide you with my 'web research keywords' and its 'google search result'.
-        Your goal is to create detailed SEO-optimized content and also include 5 FAQs.
-        
-        Follow below guidelines:
-        1). Your blog content should compete against all blogs from search results.
-        2). Your FAQ should be based on 'People also ask' and 'Related Queries' from given search result. 
-            Always include answers for each FAQ, use your knowledge and confirm with snippets given in search result.
-        3). Act as subject matter expert for given research keywords: {search_keyword}.
-        4). Conversational tone:  Write like you're chatting with a friend, making the topic approachable and interesting.
-        5). Your blog should be highly formatted in markdown style and highly readable.
-        6). Friendly tone:  Write like you're talking to a friend, not giving a lecture.
-        7). Simple explanations:  No robotic jargon! Make AI writing easy to understand.
-        8). Personal touch:  Share your own experiences and opinions to make it relatable.
-        9). Examples and stories:  Bring the topic to life with real-world examples.
+    try:
+        config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'main_config'))
+        config = configparser.ConfigParser()
+        config.read(config_path, encoding='utf-8')
+    except Exception as err:
+        print(f"Error: Failed to read values from config: {err}")
+        exit(1)
 
-        \n\nWeb Research Keyword: "{search_keyword}"
-        Here are some Google search results to spark your creativity: "{search_results}". 
-        But don't just rehash them - use your own voice and insights!
+    prompt = f"""
+        As expert Creative Content writer,
+        I want you to write {config.get('blog_characteristics', 'blog_type')} blog post,
+        that explores {search_keyword} and also include 5 FAQs.
+        
+        Below are the guidelines to follow:
+        1). You must respond in {config.get('blog_characteristics', 'blog_language')} language.
+        2). Tone and Brand Alignment: Adjust your tone, voice, personality for {config.get('blog_characteristics', 'blog_tone')} audience.
+        3). Make sure your response content length is of {config.get('blog_characteristics', 'blog_length')} words.
+        4). Include FAQs from 'People also Ask' section of provided context 'google search result'.
+
+        I want the post to offer unique insights, relatable examples, and a fresh perspective on the topic.
+        Here are some Google search results to spark your creativity on {search_keyword}:
+        \n\n
+        \"\"\"{search_results}\"\"\"
         """
     logger.info("Generating blog and FAQs from Google web search results.")
     try:
@@ -48,14 +52,20 @@ def write_blog_google_serp(search_keyword, search_results):
 def improve_blog_intro(blog_content, blog_intro):
     """Combine the given online research and gpt blog content"""
     prompt = f"""
-        As an expert Content editor, I will provide you with my 'blog content' and its new 'blog introduction'.
-        Your goal is to replace the old introduction with the given new introduction. 
-        Do Not change any other section of the blog content.
-        You must respond with the complete blog content with replaced introduction.
-        Do not provide explanations for your response.
+        You are a skilled content editor, tasked with creating an engaging peek into the blog post provided. 
+        This peek should entice readers to delve into the full content. 
 
-        \n\nBlog Content: "{blog_content}"
-        Blog Introduction: "{blog_intro}".
+        Here's what you need to do:
+        1. **Replace the old blog introduction with the new one provided.**
+        2. **Craft a short and captivating summary of the key points and interesting takeaways from the blog.** 
+            - Highlight what makes the blog unique and worth reading.
+            - This peek should be placed directly before the new introduction.
+        3. **Include the complete blog content, with the new introduction and the added peek.**
+
+        Do not provide explanations for your actions, simply present the edited blog content.
+
+        Blog Content: \"\"\"{blog_content}\"\"\"
+        Blog Introduction: \"\"\"{blog_intro}\"\"\"
         """
     logger.info("Generating blog introduction from tavily answer.")
     try:
@@ -93,17 +103,21 @@ def blog_with_keywords(blog, keywords):
 def blog_with_research(report, blog):
     """Combine the given online research and gpt blog content"""
     prompt = f"""
-        You are Alwrity, the Creative Content writer, writing up fresh ideas and crafts them with care and uniqueness. 
-        She makes complex topics simple to understand and writes in a friendly, conversational tone that connects with everyone.
-        She excels at simplifying complex topics and writes in the first person, for her audience.
+        As expert Creative Content writer, Your task is to update a blog post using the latest research.
+        
+        Here's what you need to do:
 
-        I will provide you with a latest 'research report' and a outdated 'blog content' on the same topic.
-        Your task is to update the given blog content, using the new research report, as context.
+        1. **Read the outdated blog content and the new research report carefully.**  
+        2. **Identify key insights and updates from the research report that should be incorporated into the blog post.**
+        3. **Rewrite sections of the blog post to reflect the new information, ensuring a smooth and natural flow.** 
+        4. **Maintain the blog's original friendly and conversational tone throughout.**
 
-        \n\nResearch report: '{report}'
-        \n\nBlog content: '{blog}'
-        """
+        Remember, your goal is to seamlessly blend the new information into the existing blog post, making it accurate and engaging for readers. 
+        \n\n
+        Research Report: \"\"\"{report}\"\"\"
 
+        Blog Content: \"\"\"{blog}\"\"\"
+    """
     try:
         response = llm_text_gen(prompt)
         return response

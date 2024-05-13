@@ -19,8 +19,6 @@ from .blog_from_google_serp import write_blog_google_serp, improve_blog_intro, b
 from ..ai_web_researcher.you_web_reseacher import get_rag_results, search_ydc_index
 from ..blog_metadata.get_blog_metadata import blog_metadata
 from ..blog_postprocessing.save_blog_to_file import save_blog_to_file
-from ..blog_postprocessing.blog_proof_reader import blog_proof_editor
-from ..blog_postprocessing.humanize_blog import blog_humanize
 
 
 def write_blog_from_keywords(search_keywords, url=None):
@@ -38,18 +36,17 @@ def write_blog_from_keywords(search_keywords, url=None):
         google_search_result, g_titles = do_google_serp_search(search_keywords)
         example_blog_titles.append(g_titles)
         blog_markdown_str = write_blog_google_serp(search_keywords, google_search_result)
+        tavily_search_result, t_titles, t_answer = do_tavily_ai_search(search_keywords)
+        # Hate the robotic introductions.
+        blog_markdown_str = improve_blog_intro(blog_markdown_str, t_answer)
     except Exception as err:
         logger.error(f"Failed in Google web research: {err}")
     # logger.info/check the final blog content.
     logger.info("\n######### Draft1: Finished Blog from Google web search: ###########\n\n")
 
-    # TBD: The 3 drafts are very similar, the intention was to fact check the AI content multiple times.
-    # Commenting it out for blog writing, using Tavily for other forms of writing.
     # Do Tavily AI research to augument the above blog.
     try:
-        tavily_search_result, t_titles, t_answer = do_tavily_ai_search(search_keywords)
-        blog_markdown_str = improve_blog_intro(blog_markdown_str, t_answer)
-        example_blog_titles.append(t_titles)
+        #example_blog_titles.append(t_titles)
         blog_markdown_str = blog_with_research(blog_markdown_str, tavily_search_result)
         logger.info(f"######### Blog content after Tavily AI research: ######### \n\n{blog_markdown_str}\n\n")
     except Exception as err:
@@ -66,28 +63,14 @@ def write_blog_from_keywords(search_keywords, url=None):
 #    logger.info("######### Draft3: Blog content after Tavily AI research: ######### \n\n")
 
     # Do Google trends analysis and combine with latest blog.
-    try:
-        pytrends_search_result = do_google_pytrends_analysis(search_keywords)
-        logger.info(f"Google Trends keywords to use in the blog: {pytrends_search_result}\n")
-        blog_markdown_str = blog_with_keywords(blog_markdown_str, pytrends_search_result)
-        blog_markdown_str = improve_blog_intro(blog_markdown_str, t_answer)
-    except Exception as err:
-        logger.error(f"Failed to do Google Trends Analysis:{err}")
-    logger.info(f"########### Blog Content After Google Trends Analysis:######### \n {blog_markdown_str}\n\n")
-    
-    # Combine YOU.com RAG search with the latest blog content.
-    #you_rag_result = get_rag_results(search_keywords)
-    #you_search_result = search_ydc_index(search_keywords)
-    #blog_markdown_str = blog_with_research(blog_markdown_str, you_search_result)
-    #logger.info(f"Final blog content: {blog_markdown_str}")
-
-    #logger.info("Pass Final blog for blog-proof reading and *improvements.")
-    # Pass the final content for proofreading.
-    #blog_markdown_str = blog_proof_editor(blog_markdown_str)
-
-    # Pass the content to remove obivious words used by AI.
-    #logger.info("Pass Final blog for Humanizing it further, Doesn't matter, Really?")
-    #blog_markdown_str = blog_humanize(blog_markdown_str)
+#    try:
+#        pytrends_search_result = do_google_pytrends_analysis(search_keywords)
+#        logger.info(f"Google Trends keywords to use in the blog: {pytrends_search_result}\n")
+#        blog_markdown_str = blog_with_keywords(blog_markdown_str, pytrends_search_result)
+#    except Exception as err:
+#        logger.error(f"Failed to do Google Trends Analysis:{err}")
+#    logger.info(f"########### Blog Content After Google Trends Analysis:######### \n {blog_markdown_str}\n\n")
+#    
 
     blog_title, blog_meta_desc, blog_tags, blog_categories = blog_metadata(blog_markdown_str, 
             search_keywords, example_blog_titles)
