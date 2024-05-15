@@ -17,7 +17,7 @@ print("Loading, required libraries..")
 app = typer.Typer()
 
 from lib.utils.alwrity_utils import blog_from_audio, blog_from_keyword, do_web_research, do_web_research, ai_news_writer
-from lib.utils.alwrity_utils import write_story, essay_writer, blog_tools
+from lib.utils.alwrity_utils import write_story, essay_writer, blog_tools, ai_finance_ta_writer
 from lib.utils.alwrity_utils import content_planning, competitor_analysis, image_to_text_writer, image_generator
 
 
@@ -37,9 +37,9 @@ def write_blog_options():
         ("AI Story Writer", "AI Story Writer"),
         ("AI Essay Writer", "AI Essay writer"),
         ("AI News Articles", "News - AI News article writer, factual trusted sources"),
+        ("AI Finance TA report", "AI TA report - Write stocks Techincal Analysis report."),
         ("Programming", "Programming - Write technical blogs on latest topics"),
         ("Scholar", "Scholar - Research Reports from google scholar, arxiv articles."),
-        ("Finance/TBD", "Finance/TBD"),
         ("Quit", "Quit")
     ]
     selected_blog_type = radiolist_dialog(title="Choose a blog type:", values=choices).run()
@@ -62,7 +62,7 @@ def start_interactive_mode():
         ("Online Blog Tools/Apps", "Online AI Apps - Content & Digital marketing"),
         ("Create Blog Images", "Create Images - Stability, Dalle3"),
         ("AI Social Media(TBD)", "AI Social Media(TBD)"),
-        ("AI Code Writer(TBD)", "AI Code Writer(TBD)"),
+        ("AI CopyWriter(TBD)", "AI CopyWriter(TBD)"),
         ("Quit", "Quit")
     ]
     mode = radiolist_dialog(title="Choose an option:", values=choices).run()
@@ -178,6 +178,8 @@ def write_blog():
             blog_from_audio()
         elif blog_type == 'AI News Articles':
             ai_news_writer()
+        elif blog_type == 'AI Finance TA report':
+            ai_finance_ta_writer()
         elif blog_type == 'GitHub':
             github = prompt("Enter GitHub URL, CSV file, or topic:")
             print(f"Write blog based on GitHub: {github}")

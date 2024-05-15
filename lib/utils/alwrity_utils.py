@@ -16,6 +16,7 @@ from lib.ai_writers.speech_to_blog.main_audio_to_blog import generate_audio_blog
 from lib.ai_writers.long_form_ai_writer import long_form_generator
 from lib.ai_writers.ai_news_article_writer import ai_news_generation
 from lib.ai_writers.ai_agents_crew_writer import ai_agents_writers
+from lib.ai_writers.ai_financial_writer import write_basic_ta_report
 from lib.gpt_providers.text_generation.ai_story_writer import ai_story_generator
 from lib.gpt_providers.text_generation.ai_essay_writer import ai_essay_generator
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
@@ -44,6 +45,29 @@ def blog_from_audio():
             # Validate YouTube URL, Process YouTube URL
             generate_audio_blog(audio_input)
             break
+
+
+def ai_finance_ta_writer():
+    """ Call upon AI finance writer with user inputs. """
+    print("________________________________________________________________")
+    content_keywords = input_dialog(
+            title='Enter Ticker Symbol For TA.',
+            text='👋 Be sure of ticker symbol, Else no results:(Examples:IBM, BABA, HDFCBANK.NS, TATAMOTORS.NS etc)',
+            ).run()
+
+    # If the user cancels, exit the loop
+    if content_keywords.strip():
+        try:
+            write_basic_ta_report(content_keywords)
+        except Exception as err:
+            print(f"🚫 Check ticker symbol: Failed to write Financial Technical Analysis.")
+            exit(1)
+    else:
+        message_dialog(
+                title='Error',
+                text='🚫 Provide Symbol Ticker. Dont waste my time.'
+                ).run()
+        exit(1)
 
 
 def blog_from_keyword():
