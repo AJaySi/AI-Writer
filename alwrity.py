@@ -36,13 +36,13 @@ def write_blog_options():
         ("Audio To Blog", "Audio To Blog - Transcribe Audio files into blog content"),
         ("AI Story Writer", "AI Story Writer"),
         ("AI Essay Writer", "AI Essay writer"),
-        ("AI News Articles", "News - AI News article writer, factual trusted sources"),
-        ("AI Finance TA report", "AI TA report - Write stocks Techincal Analysis report."),
+        ("AI News Articles", "AI News Writer - AI News article writer, factual trusted sources"),
+        ("AI Finance Writer", "AI Finance Writer - Write stocks Techincal Analysis report."),
         ("Programming", "Programming - Write technical blogs on latest topics"),
         ("Scholar", "Scholar - Research Reports from google scholar, arxiv articles."),
         ("Quit", "Quit")
     ]
-    selected_blog_type = radiolist_dialog(title="Choose a blog type:", values=choices).run()
+    selected_blog_type = radiolist_dialog(title="Choose Content creation Type:", values=choices).run()
     return selected_blog_type if selected_blog_type else None
 
 
@@ -178,7 +178,7 @@ def write_blog():
             blog_from_audio()
         elif blog_type == 'AI News Articles':
             ai_news_writer()
-        elif blog_type == 'AI Finance TA report':
+        elif blog_type == 'AI Finance Writer':
             ai_finance_ta_writer()
         elif blog_type == 'GitHub':
             github = prompt("Enter GitHub URL, CSV file, or topic:")
