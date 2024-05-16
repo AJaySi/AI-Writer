@@ -36,7 +36,7 @@ def gemini_text_response(prompt, temperature, top_p, n, max_tokens):
         "max_output_tokens": max_tokens,
     }
     # FIXME: Expose model_name in main_config
-    model = genai.GenerativeModel(model_name="gemini-pro", generation_config=generation_config)
+    model = genai.GenerativeModel(model_name="gemini-1.5-pro-latest", generation_config=generation_config)
     try:
         # text_response = []
         response = model.generate_content(prompt, stream=True)
