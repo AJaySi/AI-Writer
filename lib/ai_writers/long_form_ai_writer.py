@@ -6,6 +6,7 @@
 #####################################################
 
 import os
+import time #iwish
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
@@ -23,7 +24,7 @@ logger.add(sys.stdout,
 
 from ..utils.read_main_config_params import read_return_config_section
 from ..ai_web_researcher.gpt_online_researcher import do_google_serp_search
-from ..ai_web_researcher.gpt_online_researcher import do_google_serp_search, do_metaphor_ai_research
+from ..ai_web_researcher.gpt_online_researcher import do_google_serp_search, do_tavily_ai_search
 from ..blog_metadata.get_blog_metadata import blog_metadata
 from ..blog_postprocessing.save_blog_to_file import save_blog_to_file
 
@@ -69,14 +70,12 @@ def long_form_generator(content_keywords):
     Follow the below writing guidelines for writing your content:
     1). You must write in {content_language} language.
     2). Your content must appeal to target audience of {target_audience}.
-    3). The tone of your content must be consistent for {content_tone}, type of content.
-    4). I will provide you with web research, make use of provided context.
-    5). Always use web research content for providing citations and referances, to demostrate trust. 
-    6). Always ensure orignality and human-like content. Use simple words and ensure high readibility.
-    7). Use simple {content_language} words, to appeal to all readers.
-    7). Your content must be well formatted using {output_format} language.
-    8). Do not use words like: Unleash, ultimate, Uncover, Discover, Elevate, Revolutionizing, Unveiling, Harnessing, Dive, Delve into, Embrace.
-    9). Important: Ensure that content is not repeated, each section is unique and distinct.
+    3). The tone of your content must be consistent for {content_tone}.
+    4). Always ensure orignality and human-like content.
+    5). Use simple {content_language} words, to appeal to all readers.
+    6). Your content must be well formatted using {output_format} language.
+    7). Do not use words like: Unleash, ultimate, Uncover, Discover, Elevate, Revolutionizing, Unveiling, Harnessing, Dive, Delve into, Embrace.
+    8). Important: Ensure the total content length is between 5000-7000 words.
 
     Remember, your main goal is to write as much as you can. If you get through the content too fast, that is bad. 
     Expand, never summarize.
@@ -85,54 +84,53 @@ def long_form_generator(content_keywords):
 
     # Generate prompts
     content_title = f'''\
-    As an expert {content_language} digital content writer, specilizing in SEO writing for {target_audience}.
-    Your task is to write a title following guidelines below:
+    As an expert {content_language} content writer, specilizing in SEO writing.
+    Your task is to write a blog title following guidelines below:
 
-    1). Write a digital content title for given keywords {content_keywords}. 
+    1). Write a blog title for given keywords {content_keywords}.
     2). The title should appeal to audience level of {target_audience}.
     3). Review the given web research result for {content_keywords}. Your title should compete against them.
     4). Do not use words like: Unleash, ultimate, Uncover, Discover, Elevate, Revolutionizing, Unveiling, Harnessing, Dive, Delve into, Embrace.
 
     Web research Result:
 
-    {{web_research_result}}
+    """{{web_research_result}}"""
 
     '''
 
     content_outline = f'''\
-    As an expert {content_language} content writer & web researcher, specilizing in writing SEO optimised content.
-    I will provide you with 'title' of my content and relevant web research results.
-    Your task is write a detailed content outline for the given 'Title', based on given web research.
+    As an expert {content_language} content outliner, specilizing in SEO optimised content.
+    The title of my content is {{content_title}}. I will provide you with its web research results, as context.
+    Your task is write a detailed content outline for the given 'Title', based on the given context.
 
-    Your Content Title is:
-
-    {{content_title}}
-
-    Web research Result is:
+    Instructions:
+    1). Make sure the outline includes most of the topics from the below given web research results, as context.
+    2). The outline should appeal to audience of {target_audience}.
+    3). Important: Ensure the total content length is between 5000-7000 words.
+    \n
+    web research results is:
     
-    {{web_research_result}}
-
-    Write an outline of a content using above web research results.
+    """{{web_research_result}}"""
 
     '''
 
     starting_prompt = f'''\
-    As an expert {content_language} content writer & web researcher, specilizing in writing SEO optimised content.
-
+    As an expert {content_language} content writer, specilizing in writing SEO optimised content.
+    
     Your Content title is:
 
-    {{content_title}}
+    """{{content_title}}"""
 
     The outline of the content is:
 
-    {{content_outline}}
+    """{{content_outline}}"""
 
-    First, silently review the outline and the content title. Consider how to start writing your content.
-    Start to write the very beginning of the content. You are not expected to finish the whole content now. 
+    First, silently review the given content outline and the title. Consider how to start writing your content.
+    Start to write the very beginning of the outline. You are not expected to finish the whole content now. 
     Your writing should be detailed enough that you are only scratching the surface of the first bullet of your outline. 
-    Try to write AT MINIMUM 600 WORDS.
+    Try to write AT MINIMUM 400 WORDS.
 
-    {writing_guidelines}
+    """{writing_guidelines}"""
     '''
 
     continuation_prompt = f'''\
@@ -140,35 +138,34 @@ def long_form_generator(content_keywords):
 
     Your Content title is:
 
-    {{content_title}}
+    """{{content_title}}"""
 
     The outline of the content is:
 
-    {{content_outline}}
+    """{{content_outline}}"""
 
     Relevant web research results:
 
-    {{web_research_result}}
+    """{{web_research_result}}"""
 
     ============\n
 
     You've begun to write the content and continue to do so.
     Here's what you've written so far:
 
-    {{content_text}}
+    """{{content_text}}"""
 
     =====
 
-    First, silently review the outline and content written so far. 
+    First, take your time and silently review the content outline and what you have written so far. 
     Identify what the single next part of your outline you should write.
 
     Your task is to continue where you left off and write only the next parts of given outline.
-    You are not expected to finish the whole content now. Your writing should be
-    detailed enough that you are only scratching the surface of the next part of
-    your outline. Try to write AT MINIMUM 600 WORDS. However, only once the content
-    is COMPLETELY finished, write IAMDONE. Remember, do NOT write a whole chapter
-    right now.
-
+    You are not expected to finish the whole content now. 
+    Try to write AT MINIMUM 400 WORDS. However, only once the content
+    is COMPLETELY finished, write IAMDONE. Remember, do NOT write a whole sections right now.
+    Important: Ensure the total content length is between 5000-7000 words.
+    \n
     {writing_guidelines}
     '''
 
@@ -177,35 +174,33 @@ def long_form_generator(content_keywords):
     genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
     # Initialize the generative model
     model = genai.GenerativeModel('gemini-pro')
-
+    model_pro = genai.GenerativeModel('gemini-1.5-flash-latest')
     # Do SERP web research for given keywords to generate title and outline.
     web_research_result, g_titles = do_google_serp_search(content_keywords)
-
     # Generate prompts
     try:
-        content_title = generate_with_retry(model, content_title.format(web_research_result=web_research_result)).text
+        content_title = generate_with_retry(model_pro, content_title.format(web_research_result=web_research_result)).text
         logger.info(f"The title of the content is: {content_title}")
     except Exception as err:
         logger.error(f"Content title Generation Error: {err}")
         return
     
     try:
-        content_outline = generate_with_retry(model, 
+        content_outline = generate_with_retry(model_pro, 
                         content_outline.format(content_title=content_title, web_research_result=web_research_result)).text
         logger.info(f"The content Outline is: {content_outline}\n\n")
     except Exception as err:
         logger.error(f"Failed to generate content outline: {err}")
 
     try:
-        starting_draft = generate_with_retry(model, 
+        starting_draft = generate_with_retry(model_pro, 
                 starting_prompt.format(content_title=content_title, content_outline=content_outline)).text
     except Exception as err:
         logger.error(f"Failed to Generate Starting draft: {err}")
         return
     
-    print(starting_draft)
-
     try:
+        logger.info(f"Starting to write on the outline introduction.")
         draft = starting_draft
         continuation = generate_with_retry(model, 
                 continuation_prompt.format(content_title=content_title, 
@@ -213,36 +208,39 @@ def long_form_generator(content_keywords):
     except Exception as err:
         logger.error(f"Failed to write the initial draft: {err}")
 
-    print(continuation)
     # Add the continuation to the initial draft, keep building the story until we see 'IAMDONE'
     try:
         draft += '\n\n' + continuation
     except Exception as err:
         logger.error(f"Failed as: {err} and {continuation}")
-    
-    print(draft)
-
     try:
+        logger.info("Do web research with Tavily to provide context for content creation.")
         # Do Metaphor/Exa AI search.
-        web_research_result, m_titles = do_metaphor_ai_research(content_keywords)
+        table_data = []
+        web_research_result, m_titles, t_titles = do_tavily_ai_search(content_keywords)
+        for item in web_research_result.get("results"):
+            title = item.get("title", "")
+            snippet = item.get("content", "")
+            table_data.append([title, snippet])
+        web_research_result = table_data 
     except Exception as err:
-        logger.error(f"Failed to do Metaphor AI search: {err}")
+        logger.error(f"Failed to do Tavily AI search: {err}")
         return
 
-    
+    logger.info(f"Writing in progress... Current draft length: {len(draft)} characters")
     while 'IAMDONE' not in continuation:
         try:
-            continuation = generate_with_retry(model, 
+            continuation = generate_with_retry(model,
                     continuation_prompt.format(content_title=content_title,
-                            content_outline=content_outline, content_text=draft, web_research_result=web_research_result)).text
+                    content_outline=content_outline, content_text=draft, web_research_result=web_research_result)).text
             draft += '\n\n' + continuation
+            logger.info(f"Writing in progress... Current draft length: {len(draft)} characters")
         except Exception as err:
-            print(f"Failed to continually write the Essay: {err}")
+            logger.error(f"Failed to continually write the Essay: {err}")
             return
-
+    
     # Remove 'IAMDONE' and print the final story
     final = draft.replace('IAMDONE', '').strip()
-    print(final)
 
     blog_title, blog_meta_desc, blog_tags, blog_categories = blog_metadata(final,
             content_keywords, m_titles)
@@ -251,12 +249,12 @@ def long_form_generator(content_keywords):
     # TBD: Save the blog content as a .md file. Markdown or HTML ?
     save_blog_to_file(final, blog_title, blog_meta_desc, blog_tags, blog_categories, generated_image_filepath)
 
-    blog_frontmatter = dedent(f"""\n\n\n\
-                ---
-                title: {blog_title}
-                categories: [{blog_categories}]
-                tags: [{blog_tags}]
-                Meta description: {blog_meta_desc.replace(":", "-")}
-                ---\n\n""")
+    blog_frontmatter = f"""
+    ---
+    title: {blog_title}
+    categories: [{blog_categories}]
+    tags: [{blog_tags}]
+    Meta description: {blog_meta_desc.replace(":", "-")}
+    ---"""
     logger.info(f"\n{blog_frontmatter}{final}\n\n")
     logger.info(f"\n\n ################ Finished writing Blog for : {content_keywords} #################### \n")

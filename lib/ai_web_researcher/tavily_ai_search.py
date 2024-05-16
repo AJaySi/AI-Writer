@@ -85,12 +85,14 @@ def get_tavilyai_results(keywords):
         if include_urls:
             tavily_search_result = client.search(keywords, 
                     search_depth="advanced", 
-                    include_answer=True, 
+                    include_answer=True,
+                    max_results=10,
                     include_domains=include_urls)
         else:
             tavily_search_result = client.search(keywords, 
                     search_depth = "advanced", 
-                    include_answer=True)
+                    include_answer=True,
+                    max_results=10)
 
         print_result_table(tavily_search_result)
         return(tavily_search_result)
