@@ -32,14 +32,14 @@ def prompt_for_time_range():
 
 def write_blog_options():
     choices = [
-        ("Keywords", "Keywords - Provide main blog keywords Or Title"),
-        ("Audio To Blog", "Audio To Blog - Transcribe Audio files into blog content"),
-        ("AI Story Writer", "AI Story Writer"),
-        ("AI Essay Writer", "AI Essay writer"),
-        ("AI News Articles", "AI News Writer - AI News article writer, factual trusted sources"),
-        ("AI Finance Writer", "AI Finance Writer - Write stocks Techincal Analysis report."),
-        ("Programming", "Programming - Write technical blogs on latest topics"),
-        ("Scholar", "Scholar - Research Reports from google scholar, arxiv articles."),
+        ("Keywords", "Write from few keywords"),
+        ("Audio To Blog", "Write from audio files"),
+        ("AI Story Writer", "Story Writer"),
+        ("AI Essay Writer", "Essay writer"),
+        ("AI News Articles", "Write News reports"),
+        ("AI Finance Writer", "Write Financial TA report"),
+        ("Social", "AI Social writer(instagram, tweets, linkedin, facebook post)"),
+        ("Copywriter", "AI Copywriter"),
         ("Quit", "Quit")
     ]
     selected_blog_type = radiolist_dialog(title="Choose Content creation Type:", values=choices).run()
@@ -56,32 +56,22 @@ def start_interactive_mode():
     print(text)
     
     choices = [
-        ("AI Writers", "Choose AI Writers - (I Know What To Write)"),
-        ("Content Planning", "Content Planning Tools - (I Don't Know, What to write)"),
-        ("AI Image to Text Writer", "AI Image to Text Writer"),
-        ("Online Blog Tools/Apps", "Online AI Apps - Content & Digital marketing"),
-        ("Create Blog Images", "Create Images - Stability, Dalle3"),
-        ("AI Social Media(TBD)", "AI Social Media(TBD)"),
-        ("AI CopyWriter(TBD)", "AI CopyWriter(TBD)"),
+        ("AI Writers", "Write with AI"),
+        ("Content Planning", "Plan Content with AI"),
+        ("Content Teams", "AI Content Agent Teams"),
         ("Quit", "Quit")
     ]
     mode = radiolist_dialog(title="Choose an option:", values=choices).run()
     if mode:
         if mode == 'AI Writers':
             write_blog()
-        elif mode == 'AI Image to Text Writer':
-            image_to_text_writer()
-        elif mode == 'Create Blog Images':
-            image_generator()
         elif mode == 'Content Planning':
             content_planning_tools()
-        elif mode == 'Online Blog Tools/Apps':
-            blog_tools()
-        elif mode == 'AI Social Media(TBD)':
+        elif mode == 'Content Teams':
+            print("AI Content teams")
+            #ai_content_team()
+        elif mode == 'Social Media':
             print("""  #whatsapp  #instagram  #youtube  #twitter/X  #Linked-in posts  """)
-            raise typer.Exit()
-        elif mode == 'AI Code Writer(TBD)':
-            print("Coming soon, TBD")
             raise typer.Exit()
         elif mode == 'Quit':
             typer.echo("Exiting, Getting Lost!")
@@ -180,12 +170,6 @@ def write_blog():
             ai_news_writer()
         elif blog_type == 'AI Finance Writer':
             ai_finance_ta_writer()
-        elif blog_type == 'GitHub':
-            github = prompt("Enter GitHub URL, CSV file, or topic:")
-            print(f"Write blog based on GitHub: {github}")
-        elif blog_type == 'Scholar':
-            scholar = prompt("Enter research papers keywords Or URL:")
-            print(f"Write blog based on scholar: {scholar}")
         elif blog_type == 'Quit':
             typer.echo("Exiting, Getting Lost..")
             raise typer.Exit()
