@@ -69,13 +69,12 @@ def long_form_generator(content_keywords):
     
     Follow the below writing guidelines for writing your content:
     1). You must write in {content_language} language.
-    2). Your content must appeal to target audience of {target_audience}.
-    3). The tone of your content must be consistent for {content_tone}.
+    2). Your content should appeal to target audience of {target_audience}.
+    3). The tone of your content should be consistent for {content_tone}.
     4). Always ensure orignality and human-like content.
     5). Use simple {content_language} words, to appeal to all readers.
     6). Your content must be well formatted using {output_format} language.
     7). Do not use words like: Unleash, ultimate, Uncover, Discover, Elevate, Revolutionizing, Unveiling, Harnessing, Dive, Delve into, Embrace.
-    8). Important: Ensure the total content length is between 5000-7000 words.
 
     Remember, your main goal is to write as much as you can. If you get through the content too fast, that is bad. 
     Expand, never summarize.
@@ -106,7 +105,6 @@ def long_form_generator(content_keywords):
     Instructions:
     1). Make sure the outline includes most of the topics from the below given web research results, as context.
     2). The outline should appeal to audience of {target_audience}.
-    3). Important: Ensure the total content length is between 5000-7000 words.
     \n
     web research results is:
     
@@ -128,7 +126,7 @@ def long_form_generator(content_keywords):
     First, silently review the given content outline and the title. Consider how to start writing your content.
     Start to write the very beginning of the outline. You are not expected to finish the whole content now. 
     Your writing should be detailed enough that you are only scratching the surface of the first bullet of your outline. 
-    Try to write AT MINIMUM 400 WORDS.
+    Try to write AT MINIMUM 600 WORDS.
 
     """{writing_guidelines}"""
     '''
@@ -162,10 +160,9 @@ def long_form_generator(content_keywords):
 
     Your task is to continue where you left off and write only the next parts of given outline.
     You are not expected to finish the whole content now. 
-    Try to write AT MINIMUM 400 WORDS. However, only once the content
+    Try to write AT MINIMUM 600 WORDS. However, only once the content
     is COMPLETELY finished, write IAMDONE. Remember, do NOT write a whole sections right now.
-    Important: Ensure the total content length is between 5000-7000 words.
-    \n
+    \n\n
     {writing_guidelines}
     '''
 
