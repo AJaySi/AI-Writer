@@ -103,13 +103,13 @@ def blog_from_keyword():
         try:
             write_blog_from_keywords(content_keywords)
         except Exception as err:
-            print(f"🚫 Failed to write blog on {blog_keywords}, Error: {err}\n")
+            print(f"🚫 Failed to write blog on {content_keywords}, Error: {err}\n")
             exit(1)
     elif choice == "long":
         try:
             long_form_generator(content_keywords)
         except Exception as err:
-            print(f"🚫 Failed to write blog on {blog_keywords}, Error: {err}\n")
+            print(f"🚫 Failed to write blog on {content_keywords}, Error: {err}\n")
             exit(1)
     elif choice == "Experimental":
         try:

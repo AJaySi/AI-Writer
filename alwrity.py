@@ -210,7 +210,7 @@ def check_llm_environs():
 
 def check_internet():
     try:
-        response = requests.get("http://www.google.com", timeout=20)
+        response = requests.get("http://www.google.com", timeout=5)
         if not response.status_code == 200:
             print("💥🤯 WTFish, Internet is NOT available. Enjoy the wilderness..")
             exit(1)
@@ -253,6 +253,7 @@ if __name__ == "__main__":
                                                   f"web_research_report_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}")
     os.environ["IMG_SAVE_DIR"] = os.path.join(os.getcwd(), "lib", "workspace")
     os.environ["CONTENT_SAVE_DIR"] = os.path.join(os.getcwd(), "lib", "workspace")
+    os.environ["PROMPTS_DIR"] = os.path.join(os.getcwd(), "lib", "workspace", "prompts")
 
     load_dotenv(Path('.env'))
     app()

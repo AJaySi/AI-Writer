@@ -1,0 +1,86 @@
+writing_guidelines: |
+  As an expert content writer and web researcher, demonstrate your world-class {content_type} content writing skills.
+  Follow these writing guidelines:
+  1. Write in {content_language} language.
+  2. Ensure your content appeals to the target audience of {target_audience}.
+  3. Maintain a consistent tone of {content_tone} throughout.
+  4. Ensure originality and human-like content.
+  5. Use simple {content_language} words to appeal to all readers.
+  6. Format your content using {output_format}.
+  7. Avoid words like: Unleash, ultimate, uncover, discover, elevate, revolutionizing, unveiling, harnessing, dive, delve into, embrace.
+  Remember, your main goal is to write as much as you can. Expanding content is good; summarizing is bad.
+  8). Always use the given web research results, in your writing.
+
+
+
+content_title: |
+  As an expert {content_language} content writer specializing in SEO writing, your task is to create a blog title following these guidelines:
+  1. Write a blog title for the given keywords: {content_keywords}.
+  2. Ensure the title appeals to the target audience of {target_audience}.
+  3. Review the provided web research results for {content_keywords}. Ensure your title competes effectively against them.
+  4. Avoid words like: Unleash, ultimate, uncover, discover, elevate, revolutionizing, unveiling, harnessing, dive, delve into, embrace.
+  Web research results:
+  """{{web_research_result}}"""
+
+
+
+content_outline: |
+  As an expert {content_language} content outliner specializing in SEO-optimized content, create a detailed content outline for the given title based on the provided context.
+  Title: {{content_title}}
+  Instructions:
+  1. Include most of the topics from the given web research results as context.
+  2. Ensure the outline appeals to the target audience of {target_audience}.
+  Web research results:
+  """{{web_research_result}}"""
+
+
+
+starting_prompt: |
+  As an expert {content_language} content writer specializing in SEO-optimized content, begin writing the content for the given title and outline.
+
+  Title:
+  """{{content_title}}"""
+
+  Outline:
+  """{{content_outline}}"""
+
+  Relevant web research results:
+  """{{web_research_result}}"""
+
+  ------------
+
+  First, silently review the content outline and title. Consider how to begin writing your content.
+  Start by writing the very beginning of the outline. You are not expected to finish the entire content now.
+  Your writing should be detailed, only scratching the surface of the first bullet point of your outline.
+  Write a minimum of 700 words.
+
+  """{{writing_guidelines}}"""
+
+
+
+continuation_prompt: |
+  As an expert {content_language} content writer and web researcher specializing in SEO-optimized content, continue writing the content for the given title and outline.
+
+  Title:
+  """{{content_title}}"""
+
+  Outline:
+  """{{content_outline}}"""
+
+  Relevant web research results:
+  """{{web_research_result}}"""
+
+  ===========
+
+  You've begun writing the content. Continue from where you left off.
+  Here's what you've written so far:
+  """{{content_text}}"""
+
+  =====
+  First, silently review the content outline and what you've written so far.
+  Identify the next part of your outline to write.
+  Continue from where you left off, focusing only on the next parts of the outline.
+  You are not expected to finish the entire content now.
+  Write a minimum of 700 words. Once the content is completely finished, write IAMDONE. Remember, do NOT write entire sections right now.
+
+  """{{writing_guidelines}}"""

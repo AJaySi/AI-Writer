@@ -8,8 +8,11 @@
 import os
 import time #iwish
 import sys
+import yaml
 from pathlib import Path
 from dotenv import load_dotenv
+from configparser import ConfigParser
+
 from google.api_core import retry
 import google.generativeai as genai
 from pprint import pprint
@@ -23,7 +26,7 @@ logger.add(sys.stdout,
     )
 
 from ..utils.read_main_config_params import read_return_config_section
-from ..ai_web_researcher.gpt_online_researcher import do_google_serp_search
+from ..ai_web_researcher.gpt_online_researcher import do_metaphor_ai_research
 from ..ai_web_researcher.gpt_online_researcher import do_google_serp_search, do_tavily_ai_search
 from ..blog_metadata.get_blog_metadata import blog_metadata
 from ..blog_postprocessing.save_blog_to_file import save_blog_to_file
@@ -62,109 +65,53 @@ def long_form_generator(content_keywords):
         logger.error(f"Failed to Read config params from main_config: {err}")
         return
 
-    writing_guidelines = f'''\
-    Writing Guidelines
+    try:
+        filepath = os.path.join(os.environ["PROMPTS_DIR"], "long_form_ai_writer.prompts")
+        # Check if file exists
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"File {filepath} does not exist")
+        with open(filepath, 'r') as file:
+            prompts = yaml.safe_load(file)
+    except Exception as err:
+        logger.error(f"Exit: Failed to read prompts from {filepath}: {err}")
+        exit(1)
 
-    As an expert Content writer and web researcher, demostrate your world class {content_type} content writing skills.
+    writing_guidelines = prompts.get('writing_guidelines').format(
+        content_language=content_language,
+        content_tone=content_tone,
+        content_type=content_type,
+        output_format=output_format,
+        content_keywords=content_keywords,
+        target_audience=target_audience
+    )
+
+    content_title = prompts.get('content_title').format(
+        content_language=content_language,
+        content_keywords=content_keywords,
+        target_audience=target_audience
+    )
     
-    Follow the below writing guidelines for writing your content:
-    1). You must write in {content_language} language.
-    2). Your content should appeal to target audience of {target_audience}.
-    3). The tone of your content should be consistent for {content_tone}.
-    4). Always ensure orignality and human-like content.
-    5). Use simple {content_language} words, to appeal to all readers.
-    6). Your content must be well formatted using {output_format} language.
-    7). Do not use words like: Unleash, ultimate, Uncover, Discover, Elevate, Revolutionizing, Unveiling, Harnessing, Dive, Delve into, Embrace.
-
-    Remember, your main goal is to write as much as you can. If you get through the content too fast, that is bad. 
-    Expand, never summarize.
-    '''
-
-
-    # Generate prompts
-    content_title = f'''\
-    As an expert {content_language} content writer, specilizing in SEO writing.
-    Your task is to write a blog title following guidelines below:
-
-    1). Write a blog title for given keywords {content_keywords}.
-    2). The title should appeal to audience level of {target_audience}.
-    3). Review the given web research result for {content_keywords}. Your title should compete against them.
-    4). Do not use words like: Unleash, ultimate, Uncover, Discover, Elevate, Revolutionizing, Unveiling, Harnessing, Dive, Delve into, Embrace.
-
-    Web research Result:
-
-    """{{web_research_result}}"""
-
-    '''
-
-    content_outline = f'''\
-    As an expert {content_language} content outliner, specilizing in SEO optimised content.
-    The title of my content is {{content_title}}. I will provide you with its web research results, as context.
-    Your task is write a detailed content outline for the given 'Title', based on the given context.
-
-    Instructions:
-    1). Make sure the outline includes most of the topics from the below given web research results, as context.
-    2). The outline should appeal to audience of {target_audience}.
-    \n
-    web research results is:
+    content_outline = prompts.get('content_outline').format(
+        content_language=content_language,
+        content_title='{content_title}',
+        target_audience=target_audience
+    )
     
-    """{{web_research_result}}"""
-
-    '''
-
-    starting_prompt = f'''\
-    As an expert {content_language} content writer, specilizing in writing SEO optimised content.
+    starting_prompt = prompts.get('starting_prompt').format(
+        content_language=content_language,
+        content_title='{content_title}',
+        content_outline='{content_outline}',
+        writing_guidelines=writing_guidelines
+    )
     
-    Your Content title is:
-
-    """{{content_title}}"""
-
-    The outline of the content is:
-
-    """{{content_outline}}"""
-
-    First, silently review the given content outline and the title. Consider how to start writing your content.
-    Start to write the very beginning of the outline. You are not expected to finish the whole content now. 
-    Your writing should be detailed enough that you are only scratching the surface of the first bullet of your outline. 
-    Try to write AT MINIMUM 600 WORDS.
-
-    """{writing_guidelines}"""
-    '''
-
-    continuation_prompt = f'''\
-    As an expert {content_language} content writer & web researcher, specilizing in writing SEO optimised content.
-
-    Your Content title is:
-
-    """{{content_title}}"""
-
-    The outline of the content is:
-
-    """{{content_outline}}"""
-
-    Relevant web research results:
-
-    """{{web_research_result}}"""
-
-    ============\n
-
-    You've begun to write the content and continue to do so.
-    Here's what you've written so far:
-
-    """{{content_text}}"""
-
-    =====
-
-    First, take your time and silently review the content outline and what you have written so far. 
-    Identify what the single next part of your outline you should write.
-
-    Your task is to continue where you left off and write only the next parts of given outline.
-    You are not expected to finish the whole content now. 
-    Try to write AT MINIMUM 600 WORDS. However, only once the content
-    is COMPLETELY finished, write IAMDONE. Remember, do NOT write a whole sections right now.
-    \n\n
-    {writing_guidelines}
-    '''
+    continuation_prompt = prompts.get('continuation_prompt').format(
+        content_language=content_language,
+        content_title='{content_title}',
+        content_outline='{content_outline}',
+        content_text='{content_text}',
+        web_research_result='{web_research_result}',
+        writing_guidelines=writing_guidelines
+    )
 
     # Configure generative AI
     load_dotenv(Path('../.env'))
@@ -172,8 +119,10 @@ def long_form_generator(content_keywords):
     # Initialize the generative model
     model = genai.GenerativeModel('gemini-pro')
     model_pro = genai.GenerativeModel('gemini-1.5-flash-latest')
+    
     # Do SERP web research for given keywords to generate title and outline.
     web_research_result, g_titles = do_google_serp_search(content_keywords)
+
     # Generate prompts
     try:
         content_title = generate_with_retry(model_pro, content_title.format(web_research_result=web_research_result)).text
@@ -190,8 +139,11 @@ def long_form_generator(content_keywords):
         logger.error(f"Failed to generate content outline: {err}")
 
     try:
-        starting_draft = generate_with_retry(model_pro, 
-                starting_prompt.format(content_title=content_title, content_outline=content_outline)).text
+        starting_draft = generate_with_retry(model_pro, starting_prompt.format(
+                content_title=content_title, 
+                content_outline=content_outline,
+                web_research_result=web_research_result,
+                writing_guidelines=writing_guidelines)).text
     except Exception as err:
         logger.error(f"Failed to Generate Starting draft: {err}")
         return
@@ -199,9 +151,12 @@ def long_form_generator(content_keywords):
     try:
         logger.info(f"Starting to write on the outline introduction.")
         draft = starting_draft
-        continuation = generate_with_retry(model, 
-                continuation_prompt.format(content_title=content_title, 
-                            content_outline=content_outline, content_text=draft, web_research_result=web_research_result)).text
+        continuation = generate_with_retry(model, continuation_prompt.format(
+                content_title=content_title, 
+                content_outline=content_outline, 
+                content_text=draft, 
+                web_research_result=web_research_result,
+                writing_guidelines=writing_guidelines)).text
     except Exception as err:
         logger.error(f"Failed to write the initial draft: {err}")
 
@@ -227,11 +182,22 @@ def long_form_generator(content_keywords):
     logger.info(f"Writing in progress... Current draft length: {len(draft)} characters")
     while 'IAMDONE' not in continuation:
         try:
-            continuation = generate_with_retry(model,
-                    continuation_prompt.format(content_title=content_title,
-                    content_outline=content_outline, content_text=draft, web_research_result=web_research_result)).text
+            web_research_result, m_titles = do_metaphor_ai_research(content_keywords)
+            continuation = generate_with_retry(model, continuation_prompt.format(
+                    content_title=content_title,
+                    content_outline=content_outline, 
+                    content_text=draft, 
+                    web_research_result=web_research_result,
+                    writing_guidelines=writing_guidelines)).text
+
             draft += '\n\n' + continuation
             logger.info(f"Writing in progress... Current draft length: {len(draft)} characters")
+
+            # At this point, the context is little stale. We should more web research on
+            # related queries as per the content outline, to augment the LLM context.
+            # web_research_result, m_titles = do_metaphor_ai_research(content_keywords)
+            #logger.info(f"Doing Tavily Search Again, Should mix with Exa.ai")
+            #web_research_result, m_titles, t_titles = do_tavily_ai_search(content_title)
         except Exception as err:
             logger.error(f"Failed to continually write the Essay: {err}")
             return
