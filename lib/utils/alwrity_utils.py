@@ -20,7 +20,7 @@ from lib.ai_writers.ai_financial_writer import write_basic_ta_report
 from lib.gpt_providers.text_generation.ai_story_writer import ai_story_generator
 from lib.gpt_providers.text_generation.ai_essay_writer import ai_essay_generator
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
-from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_writers
+from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_planner
 
 
 
@@ -191,6 +191,7 @@ def do_web_research():
     except Exception as err:
         print(f"\n💥🤯 [bold red]ERROR 🤯 : Failed to do web research: {err}\n")
 
+
 def write_story():
     """ Alwrity AI Story Writer """
     personas = [
@@ -245,7 +246,59 @@ def write_story():
         exit(1)
 
 
-def content_planning():
+def ai_content_team():
+    """ AI Content team for content planning and writing. """
+    # Define the options for the radio list
+    options = [
+        ('1', 'AI Content Ideation & Planning Team'),
+        ('2', 'AI Content Creation Team')
+    ]
+
+    # Create the radio list dialog
+    result = radiolist_dialog(
+        title='Select Purpose based AI Content Team',
+        text='Please choose one of the following AI Teams:',
+        values=options,
+        ok_text='Select',
+        cancel_text='Cancel'
+    ).run()
+
+    # Check the result and display a message
+    if result == '1':
+        content_planning_agents()
+    elif result == '2':
+        content_creation_agents()
+
+
+def content_creation_agents():
+    """Agents team to create a content calendar"""
+    while True:
+        print("________________________________________________________________")
+        content_keywords = input_dialog(
+            title='Enter Main Domain Keywords of your business:',
+            text='Better keywords will generate better blog titles, content calendar. Play with keywords & combine them into a single calendar:',
+        ).run()
+
+        # If the user cancels, exit the loop and the function
+        if content_keywords is None:
+            print("User cancelled the input. Exiting the content creation process.")
+            return
+
+        if content_keywords and len(content_keywords.split()) >= 2:
+            break
+        else:
+            message_dialog(
+                title='Error',
+                text='🚫 Single keywords are just too vague. Try again.'
+            ).run()
+
+    try:
+        ai_agents_writers(content_keywords)
+    except Exception as err:
+        print(f"Failed to generate content calendar: {err}")
+
+
+def content_planning_agents():
     """ Agents team to create a content calender """
     while True:
             print("________________________________________________________________")
@@ -256,7 +309,7 @@ def content_planning():
 
             # If the user cancels, exit the loop
             if content_keywords is None:
-                break
+                return
             if content_keywords and len(content_keywords.split()) >= 2:
                 break
             else:
@@ -265,7 +318,7 @@ def content_planning():
                     text='🚫 Single keywords are just too vague. Try again.'
                 ).run() 
     try:
-        ai_agents_writers(content_keywords)
+        ai_agents_planner(content_keywords)
     except Exception as err:
         print(f"Failed to genrate content calender: {err}")
 

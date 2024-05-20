@@ -6,6 +6,7 @@
 #####################################################
 
 import os
+import re
 import time #iwish
 import sys
 import yaml
@@ -94,6 +95,7 @@ def long_form_generator(content_keywords):
     content_outline = prompts.get('content_outline').format(
         content_language=content_language,
         content_title='{content_title}',
+        content_type=content_type,
         target_audience=target_audience
     )
     
@@ -115,10 +117,16 @@ def long_form_generator(content_keywords):
 
     # Configure generative AI
     load_dotenv(Path('../.env'))
+    generation_config = {
+       "temperature": 0.8,
+       "top_p": 0.95,
+       "max_output_tokens": 8192,
+    }
+    
     genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
     # Initialize the generative model
-    model = genai.GenerativeModel('gemini-pro')
-    model_pro = genai.GenerativeModel('gemini-1.5-flash-latest')
+    model = genai.GenerativeModel('gemini-pro', generation_config=generation_config)
+    model_pro = genai.GenerativeModel('gemini-1.5-flash-latest', generation_config=generation_config)
     
     # Do SERP web research for given keywords to generate title and outline.
     web_research_result, g_titles = do_google_serp_search(content_keywords)
@@ -132,11 +140,26 @@ def long_form_generator(content_keywords):
         return
     
     try:
-        content_outline = generate_with_retry(model_pro, 
-                        content_outline.format(content_title=content_title, web_research_result=web_research_result)).text
+        content_outline = generate_with_retry(model_pro, content_outline.format(
+            content_title=content_title, 
+            web_research_result=web_research_result)).text
         logger.info(f"The content Outline is: {content_outline}\n\n")
     except Exception as err:
         logger.error(f"Failed to generate content outline: {err}")
+
+    try:
+        logger.info("Do web research with Tavily to provide context for content creation.")
+        # Do Metaphor/Exa AI search.
+        table_data = []
+        web_research_result, m_titles, t_titles = do_tavily_ai_search(content_keywords, max_results=5)
+        for item in web_research_result.get("results"):
+            title = item.get("title", "")
+            snippet = item.get("content", "")
+            table_data.append([title, snippet])
+        web_research_result = table_data
+    except Exception as err:
+        logger.error(f"Failed to do Tavily AI search: {err}")
+        return
 
     try:
         starting_draft = generate_with_retry(model_pro, starting_prompt.format(
@@ -165,24 +188,27 @@ def long_form_generator(content_keywords):
         draft += '\n\n' + continuation
     except Exception as err:
         logger.error(f"Failed as: {err} and {continuation}")
-    try:
-        logger.info("Do web research with Tavily to provide context for content creation.")
-        # Do Metaphor/Exa AI search.
-        table_data = []
-        web_research_result, m_titles, t_titles = do_tavily_ai_search(content_keywords)
-        for item in web_research_result.get("results"):
-            title = item.get("title", "")
-            snippet = item.get("content", "")
-            table_data.append([title, snippet])
-        web_research_result = table_data 
-    except Exception as err:
-        logger.error(f"Failed to do Tavily AI search: {err}")
-        return
 
     logger.info(f"Writing in progress... Current draft length: {len(draft)} characters")
+    search_terms = f"""
+        I will provide you with blog outline, your task is to read the outline & return 3 google search keywords.
+        Your response will be used to do web research for writing on the given outline.
+        Do not explain your response, provide 3 google search sentences encompassing the given content outline.
+
+        Content Outline:\n\n
+        {content_outline}
+        """
+    search_words = generate_with_retry(model_pro, search_terms).text
+
     while 'IAMDONE' not in continuation:
         try:
-            web_research_result, m_titles = do_metaphor_ai_research(content_keywords)
+            #web_research_result, m_titles = do_metaphor_ai_research(content_keywords)
+            str_list = re.split(r',\s*', search_words)
+            # Strip quotes from each element
+            str_list = [s.strip('\'"') for s in str_list]
+            for search_term in str_list:
+                web_research_result, m_titles, t_titles = do_tavily_ai_search(search_term, max_results=5)
+
             continuation = generate_with_retry(model, continuation_prompt.format(
                     content_title=content_title,
                     content_outline=content_outline, 
@@ -195,9 +221,6 @@ def long_form_generator(content_keywords):
 
             # At this point, the context is little stale. We should more web research on
             # related queries as per the content outline, to augment the LLM context.
-            # web_research_result, m_titles = do_metaphor_ai_research(content_keywords)
-            #logger.info(f"Doing Tavily Search Again, Should mix with Exa.ai")
-            #web_research_result, m_titles, t_titles = do_tavily_ai_search(content_title)
         except Exception as err:
             logger.error(f"Failed to continually write the Essay: {err}")
             return

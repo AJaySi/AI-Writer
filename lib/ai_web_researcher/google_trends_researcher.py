@@ -331,10 +331,11 @@ def get_suggestions_for_keyword(search_term):
         pd.set_option('display.max_rows', expanded_results_df.shape[0]+1)
         expanded_results_df.drop_duplicates('Keywords', inplace=True)
         table = tabulate(expanded_results_df, headers=['Keywords', 'Relevance'], tablefmt='fancy_grid')
-        try:
-            save_in_file(table)
-        except Exception as save_results_err:
-            logger.error(f"Failed to save search results: {save_results_err}")
+        # FIXME: Too much data for LLM context window. We will need to embed it.
+        #try:
+        #    save_in_file(table)
+        #except Exception as save_results_err:
+        #    logger.error(f"Failed to save search results: {save_results_err}")
         return expanded_results_df
     except Exception as e:
         logger.error(f"get_suggestions_for_keyword: Error in main: {e}")

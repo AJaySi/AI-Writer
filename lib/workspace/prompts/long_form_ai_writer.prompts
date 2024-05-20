@@ -19,17 +19,19 @@ content_title: |
   2. Ensure the title appeals to the target audience of {target_audience}.
   3. Review the provided web research results for {content_keywords}. Ensure your title competes effectively against them.
   4. Avoid words like: Unleash, ultimate, uncover, discover, elevate, revolutionizing, unveiling, harnessing, dive, delve into, embrace.
+  5). Provide no explanations for your response and only respond with only one og your best blog title.
   Web research results:
   """{{web_research_result}}"""
 
 
 
 content_outline: |
-  As an expert {content_language} content outliner specializing in SEO-optimized content, create a detailed content outline for the given title based on the provided context.
+  As an expert {content_language} content outliner specializing in {content_type} content, create a highly detailed content outline for the given title based on the provided context.
   Title: {{content_title}}
   Instructions:
   1. Include most of the topics from the given web research results as context.
   2. Ensure the outline appeals to the target audience of {target_audience}.
+  3. Your response should only include the detailed outline, no explanations.
   Web research results:
   """{{web_research_result}}"""
 
@@ -49,7 +51,7 @@ starting_prompt: |
 
   ------------
 
-  First, silently review the content outline and title. Consider how to begin writing your content.
+  First, silently review the content outline and title. Consider how to begin writing your content. Take your time.
   Start by writing the very beginning of the outline. You are not expected to finish the entire content now.
   Your writing should be detailed, only scratching the surface of the first bullet point of your outline.
   Write a minimum of 700 words.

@@ -67,12 +67,12 @@ def do_google_serp_search(search_keywords):
         # Not failing, as tavily would do same and then GPT-V to search.
 
 
-def do_tavily_ai_search(search_keywords):
+def do_tavily_ai_search(search_keywords, max_results=10):
     """ Common function to do Tavily AI web research."""
     try:
         # FIXME: Include the follow-up questions as blog FAQs.
         logger.info(f"Doing Tavily AI search for: {search_keywords}")
-        t_results = get_tavilyai_results(search_keywords)
+        t_results = get_tavilyai_results(search_keywords, max_results)
         t_titles = tavily_extract_information(t_results, 'titles')
         t_answer = tavily_extract_information(t_results, 'answer')
         return(t_results, t_titles, t_answer)

@@ -17,8 +17,8 @@ print("Loading, required libraries..")
 app = typer.Typer()
 
 from lib.utils.alwrity_utils import blog_from_audio, blog_from_keyword, do_web_research, do_web_research, ai_news_writer
-from lib.utils.alwrity_utils import write_story, essay_writer, blog_tools, ai_finance_ta_writer
-from lib.utils.alwrity_utils import content_planning, competitor_analysis, image_to_text_writer, image_generator
+from lib.utils.alwrity_utils import write_story, essay_writer, blog_tools, ai_finance_ta_writer, ai_content_team
+from lib.utils.alwrity_utils import content_planning_agents, competitor_analysis, image_to_text_writer, image_generator
 
 
 def prompt_for_time_range():
@@ -69,7 +69,7 @@ def start_interactive_mode():
             content_planning_tools()
         elif mode == 'Content Teams':
             print("AI Content teams")
-            #ai_content_team()
+            ai_content_team()
         elif mode == 'Social Media':
             print("""  #whatsapp  #instagram  #youtube  #twitter/X  #Linked-in posts  """)
             raise typer.Exit()
@@ -102,7 +102,7 @@ def content_planning_tools():
     elif mode == 'Competitor Analysis':
         competitor_analysis()
     elif mode == 'Content Calender':
-        content_planning()
+        content_planning_agents()
 
 
 def check_search_apis():

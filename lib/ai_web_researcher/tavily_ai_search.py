@@ -49,7 +49,7 @@ from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-def get_tavilyai_results(keywords):
+def get_tavilyai_results(keywords, max_results=10):
     """
     Get Tavily AI search results based on specified keywords and options.
 
@@ -86,13 +86,13 @@ def get_tavilyai_results(keywords):
             tavily_search_result = client.search(keywords, 
                     search_depth="advanced", 
                     include_answer=True,
-                    max_results=10,
+                    max_results=max_results,
                     include_domains=include_urls)
         else:
             tavily_search_result = client.search(keywords, 
                     search_depth = "advanced", 
                     include_answer=True,
-                    max_results=10)
+                    max_results=max_results)
 
         print_result_table(tavily_search_result)
         return(tavily_search_result)

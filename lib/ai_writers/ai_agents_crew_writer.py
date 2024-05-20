@@ -16,7 +16,7 @@ def create_agents(search_keywords):
 
     # Set gemini pro as llm
     llm = ChatGoogleGenerativeAI(
-        model="gemini-pro", verbose=True, temperature=0.6, google_api_key=google_api_key
+        model="gemini-1.5-flash-latest", verbose=True, temperature=0.6, google_api_key=google_api_key
     )
 
     role, goal, backstory = read_config("content_researcher")
@@ -28,7 +28,7 @@ def create_agents(search_keywords):
         memory = True,  # Enable memory
         verbose = True,
         max_rpm = None,  # No limit on requests per minute
-        max_iter = 15,  # Default value for maximum iterations
+        max_iter = 10,  # Default value for maximum iterations
         allow_delegation = False,
         llm = llm
     )
@@ -42,7 +42,7 @@ def create_agents(search_keywords):
         verbose = True,
         tools = [search_tool],
         max_rpm = 10,  # No limit on requests per minute
-        max_iter = 5,  # Default value for maximum iterations
+        max_iter = 10,  # Default value for maximum iterations
         allow_delegation = False,
         llm = llm
     )
@@ -55,7 +55,7 @@ def create_agents(search_keywords):
         memory = True,  # Enable memory
         verbose = True,
         max_rpm = 10,  # No limit on requests per minute
-        max_iter = 5,  # Default value for maximum iterations
+        max_iter = 15,  # Default value for maximum iterations
         allow_delegation = False,
         llm = llm
     )
@@ -68,7 +68,7 @@ def create_agents(search_keywords):
         memory=True,  # Enable memory
         verbose=True,
         max_rpm=10,  # No limit on requests per minute
-        max_iter=5,  # Default value for maximum iterations
+        max_iter=10,  # Default value for maximum iterations
         allow_delegation=False,
         llm=llm
     )
