@@ -124,7 +124,7 @@ time_range = anytime
 
 # include_domains (Give Full URLs, separate by comma): A list of domains to specifically include in the search results. 
 # Default is None, which includes all domains. Example: https://wikipedia.com,https://stackoverflow.com,google schalor,reddit etc
-include_domains = https://alwrity.com
+include_domains =
 
 # similar_url : A single URL, this will instruct search engines to give results similar to the given URL.
 similar_url = 

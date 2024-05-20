@@ -42,11 +42,9 @@ def cfg_search_param(flag):
 
         elif 'tavily' in flag:
             include_urls = web_research_section.get("include_domains")
-            pattern = re.compile(r"^(https?://\w+)(,\s*https?://\w+)*$")
-            if pattern.match(include_urls) is not None:
-                include_urls = include_urls.split(',')
-            elif re.match(r"^http?://\w+$", include_urls) is not None:
-                include_urls = include_urls.split(" ")
+            pattern = re.compile(r"^(https?://[^\s,]+)(,\s*https?://[^\s,]+)*$")
+            if pattern.match(include_urls):
+                include_urls = [url.strip() for url in include_urls.split(',')]
             else:
                 include_urls = None
             return include_urls
