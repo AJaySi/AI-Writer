@@ -366,7 +366,7 @@ def content_planning_tools():
 
 
 def alwrity_brain():
-    st.title("🖕 Alwrity Brain, Better than yours!")
+    st.title("🧠 Alwrity Brain, Better than yours!")
     st.write("Choose a folder to write content on. Alwrity will do RAG on these documents. The documents can of any type, pdf, pptx, docs, txt, cs etc. Video files and Audio files are also permitted.")
 
     folder_path = st.text_input("**Enter folder path:**")
