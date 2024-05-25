@@ -92,7 +92,7 @@ def save_blog_to_file(blog_content, blog_title, blog_meta_desc, blog_tags, blog_
                 categories: [{blog_categories}]
                 tags: [{blog_tags}]
                 description: {blog_meta_desc.replace(":", "-")}
-                ---\n\n""")
+                ---\n\n""").strip()
 
         blog_output_path = os.path.join(
             output_path,
@@ -108,3 +108,4 @@ def save_blog_to_file(blog_content, blog_title, blog_meta_desc, blog_tags, blog_
             raise Exception(f"Failed to write blog content: {e}")
 
         logger.info(f"Successfully saved and posted blog at: {blog_output_path}")
+        return(blog_output_path)

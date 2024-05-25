@@ -31,6 +31,7 @@ import pandas as pd
 import json
 import requests
 from clint.textui import progress
+import streamlit as st
 
 #from serpapi import GoogleSearch
 from loguru import logger
@@ -326,6 +327,9 @@ def process_search_results(search_results, search_type="general"):
     print(combined_table)
     # Save the combined table to a file
     try:
+        # Display on Alwrity UI
+        st.write(organic_table)
+        st.write(combined_table)
         save_in_file(organic_table)
         save_in_file(combined_table)
     except Exception as save_results_err:

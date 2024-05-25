@@ -49,7 +49,7 @@ from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-def get_tavilyai_results(keywords, max_results=10):
+def get_tavilyai_results(keywords, max_results=5):
     """
     Get Tavily AI search results based on specified keywords and options.
 
@@ -154,16 +154,3 @@ def print_result_table(output_data):
             save_in_file(table)
         except Exception as save_results_err:
             logger.error(f"Failed to save search results: {save_results_err}")
-
-
-def save_in_file(table_content):
-    """ Helper function to save search analysis in a file. """
-    file_path = os.environ.get('SEARCH_SAVE_FILE')
-    try:
-        # Save the content to the file
-        with open(file_path, "a", encoding="utf-8") as file:
-            file.write(table_content)
-            file.write("\n" * 3)  # Add three newlines at the end
-        logger.info(f"Search content saved to {file_path}")
-    except Exception as e:
-        logger.error(f"Error occurred while writing to the file: {e}")

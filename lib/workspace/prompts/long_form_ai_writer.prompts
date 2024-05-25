@@ -9,7 +9,6 @@ writing_guidelines: |
   6. Format your content using {output_format}.
   7. Avoid words like: Unleash, ultimate, uncover, discover, elevate, revolutionizing, unveiling, harnessing, dive, delve into, embrace.
   Remember, your main goal is to write as much as you can. Expanding content is good; summarizing is bad.
-  8). Always use the given web research results, in your writing.
 
 
 
@@ -53,8 +52,8 @@ starting_prompt: |
 
   First, silently review the content outline and title. Consider how to begin writing your content. Take your time.
   Start by writing the very beginning of the outline. You are not expected to finish the entire content now.
-  Your writing should be detailed, only scratching the surface of the first bullet point of your outline.
-  Write a minimum of 700 words.
+  Your writing should be detailed, only scratching the surface of the first bullet point of given outline.
+
 
   """{{writing_guidelines}}"""
 
@@ -74,15 +73,18 @@ continuation_prompt: |
 
   ===========
 
-  You've begun writing the content. Continue from where you left off.
+  First, silently review the content outline and what you've written so far. Take your time.
+  Focus and Identify the next part of given outline to write on.
+  Important to Continue from where you left off.
   Here's what you've written so far:
   """{{content_text}}"""
 
-  =====
-  First, silently review the content outline and what you've written so far.
-  Identify the next part of your outline to write.
-  Continue from where you left off, focusing only on the next parts of the outline.
+  ===========
+
+  First, silently review the content outline and what you've written so far. Take your time.
+  Continue from where you've written so far. Do Not repeat the content.
   You are not expected to finish the entire content now.
-  Write a minimum of 700 words. Once the content is completely finished, write IAMDONE. Remember, do NOT write entire sections right now.
+  Once the content is completely finished, write IAMDONE. 
+  Remember, do NOT write entire sections right now.
 
   """{{writing_guidelines}}"""

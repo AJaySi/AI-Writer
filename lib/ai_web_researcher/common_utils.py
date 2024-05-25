@@ -3,6 +3,7 @@ import os
 import sys
 import re
 import configparser
+import streamlit as st
 from datetime import datetime, timedelta
 from pathlib import Path
 from loguru import logger
@@ -92,8 +93,10 @@ def save_in_file(table_content):
     try:
         # Save the content to the file
         with open(file_path, "a+", encoding="utf-8") as file:
+            st.write(table_content)
             file.write(table_content)
             file.write("\n" * 3)  # Add three newlines at the end
         logger.info(f"Search content saved to {file_path}")
+        return file_path
     except Exception as e:
         logger.error(f"Error occurred while writing to the file: {e}")
