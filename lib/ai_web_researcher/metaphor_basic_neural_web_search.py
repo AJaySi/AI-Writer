@@ -7,6 +7,7 @@ from pathlib import Path
 from metaphor_python import Metaphor
 from datetime import datetime, timedelta
 
+import streamlit as st 
 from loguru import logger
 from tqdm import tqdm
 from tabulate import tabulate
@@ -71,29 +72,46 @@ def metaphor_find_similar(similar_url):
         raise
 
     competitors = search_response.results
-    urls = {}
+    # Initialize lists to store titles and URLs
+    titles = []
+    urls = []
+
+    # Initialize lists to store titles, URLs, and contents
+    titles = []
+    urls = []
+    contents = []
+    
+    # Extract titles, URLs, and contents from the competitors
     for c in competitors:
-        print(c.title + ':' + c.url)
-    for acompetitor in tqdm(competitors, desc="Processing URL content", unit="competitor"):
+        titles.append(c.title)
+        urls.append(c.url)
+        # Simulate web content fetching and summarization (replace with actual logic)
         all_contents = ""
         try:
             search_response = metaphor.search_and_contents(
-                acompetitor.url,
+                c.url,
                 type="keyword",
-                num_results=3
+                num_results=1
             )
+            research_response = search_response.results
+            for r in research_response:
+                all_contents += r.text
+            c.text = summarize_competitor_content(all_contents)  # Replace with actual summarization function
         except Exception as err:
-            logger.error(f"Failed to do metaphor keyword/url research: {err}")
+            c.text = f"Failed to summarize content: {err}"
+        contents.append(c.text)
     
-        research_response = search_response.results
-        # Add a progress bar for the inner loop
-        for r in tqdm(research_response, desc=f"{acompetitor.url}", unit="research"):
-            all_contents += r.text
-            try:
-                acompetitor.text = summarize_competitor_content(all_contents)
-            except Exception as err:
-                logger.error(f"Failed to summarize_web_content: {err}")
-    
+    # Create a DataFrame from the titles, URLs, and contents
+    df = pd.DataFrame({
+        "Title": titles,
+        "URL": urls,
+        "Content Summary": contents
+    })
+    # Display the DataFrame as a table
+    if not df.empty:
+        st.write("### Competitor Analysis Results")
+        st.table(df)
+ 
     print_search_result(competitors)
     return search_response
 
@@ -179,6 +197,12 @@ def print_search_result(contents_response):
         tablefmt="fancy_grid",
         colalign=["left", "left", "left"],
         maxcolwidths=[20, 20, 70])
+
+    # Convert table_data to DataFrame
+    import pandas as pd
+    df = pd.DataFrame(table_data, columns=["URL", "Title", "Summary"])
+    import streamlit as st
+    st.table(df)
     print(table)
     # Save the combined table to a file
     try:

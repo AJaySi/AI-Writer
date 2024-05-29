@@ -1,4 +1,6 @@
 import os
+import streamlit as st
+
 from crewai import Agent, Task, Crew
 from crewai_tools import SerperDevTool
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -162,7 +164,7 @@ def create_agents(search_keywords, already_written_on):
 def create_tasks(agents, search_keywords, already_written_on):
     research_task = Task(
         description=f"""Conduct web analysis on "{search_keywords}",for content calender.
-            Set the input parameter as : search_query""",
+            Set the input parameter 'search_query' to query""",
         expected_output=f"""Provide comprehensive content calender ideas to Senior Content Strategist & planner - Ted XingPi""",
         agent=agents[0]  # Assign to the researcher agent
     )
@@ -170,7 +172,7 @@ def create_tasks(agents, search_keywords, already_written_on):
     google_trends_task = Task(
             description=f"""Conduct Google Trends analysis, on keywords: {search_keywords}, from the file({os.getenv('SEARCH_SAVE_FILE')}).
             Suggest blog titles for content calender. Recommend high-volume, low-competition keywords with strong user intent.
-            Set the input parameter as : file_path""",
+            Set the input parameter 'file_path' to {os.getenv('SEARCH_SAVE_FILE')}""",
         expected_output=f"Provide comprehensive content calender ideas to Senior Content Strategist & planner - Ted XingPi",
         agent=agents[1]  # Assign to the researcher agent
     )
@@ -189,7 +191,7 @@ def create_tasks(agents, search_keywords, already_written_on):
         description=f"""Make sure the content calender is optimised for keywords: '{search_keywords}'.
             Make sure the titles are unique, semantically unique and mitigate keyword cannabilization.
             Use context & insights from Aisha Sharma, Ted XingPi & Sarah Qureshi.
-            Set the input parameter file_path to {already_written_on}
+            Set the input parameter 'file_path' to {already_written_on}
         """,
         expected_output=f"""Final content calender for the next 2 months. Targeting 5 articles per week.
             Make sure to present the content calender in tabular format. Include details of how to use the content calender.
@@ -201,6 +203,8 @@ def create_tasks(agents, search_keywords, already_written_on):
 
 
 def execute_tasks(agents, tasks):
+    """ WIP """
+    result = None
     crew = Crew(
         agents=agents,
         tasks=tasks,
@@ -209,17 +213,23 @@ def execute_tasks(agents, tasks):
         #memory=True,
         language="en"
     )
-    result = crew.kickoff()
-    return result
+    try:
+        result = crew.kickoff()
+        return result
+    except Exception as err:
+        print(err)
 
 
 def ai_agents_planner(search_keywords):
     already_written_on = os.path.join(os.getcwd(), "lib", "content_planning_calender", "content_already_planned.txt")
     do_google_trends_analysis(search_keywords)
-
+    result = None
     #setup_environment()
-    agents = create_agents(search_keywords, already_written_on)
-    tasks = create_tasks(agents, search_keywords, already_written_on)
-    result = execute_tasks(agents, tasks)
-    print("########## Final Output Result ############")
-    print(result)
+    try:
+        agents = create_agents(search_keywords, already_written_on)
+        tasks = create_tasks(agents, search_keywords, already_written_on)
+        result = execute_tasks(agents, tasks)
+    except Exception as err:
+        print(err)
+    st.markdown("### Final Content Calender:")
+    st.markdown(result)

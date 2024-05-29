@@ -187,7 +187,8 @@ def get_related_topics_and_save_csv(search_keywords):
             data = pytrends.related_topics()
         except Exception as err:
             logger.error(f"Failed to get pytrends realted topics: {err}")
-            return
+            return None
+
         # Extract data from the result
         top_topics = list(data.values())[0]['top']
         rising_topics = list(data.values())[0]['rising']

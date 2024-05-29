@@ -6,11 +6,13 @@ import streamlit as st
 # Load .env file
 load_dotenv()
 
+from lib.chatbot_custom.chatbot_local_docqa import alwrity_chat_docqa
 from lib.utils.alwrity_streamlit_utils import (
         blog_from_keyword, ai_agents_team, 
         blog_from_audio, write_story,
         essay_writer, ai_news_writer,
-        ai_finance_ta_writer, ai_social_writer
+        ai_finance_ta_writer, ai_social_writer,
+        do_web_research, competitor_analysis,
         )
 
 # Custom CSS for styling
@@ -291,8 +293,10 @@ def main():
         alwrity_brain()
 
     with tab5:
-        st.title("🙎 Ask Alwrity 🤦")
-        st.write("Oh, you decided to talk to a chatbot? I guess even Netflix can't... Shall we get this over with?")
+        st.info("Chatbot")
+        st.markdown("Create a collection by uploading files (PDF, MD, CSV, etc), or crawl a data source (Websites, more sources coming soon.")
+        st.markdown("One can ask/chat, summarize and do semantic search over the uploaded data")
+        #alwrity_chat_docqa()
     
     # Sidebar for prompt modification
     st.sidebar.title("📝 Modify Prompts")
@@ -350,19 +354,17 @@ def content_planning_tools():
              Provide few keywords to get Google, Neural, pytrends analysis. Know keywords, blog titles to target.
              Generate months long content calender around given keywords.""")
     options = [
-        "Keywords web research🤓",
-        "Competitor Analysis🧐",
-        "Give me content calendar 🥹🥹"
+        "Keywords Researcher",
+        "Competitor Analysis"
     ]
     choice = st.selectbox("Select a content planning tool:", options, index=0, format_func=lambda x: f"🔍 {x}")
 
-    if st.button("Plan Content"):
-        if choice == "Keywords web research🤓":
-            do_web_research()
-        elif choice == "Competitor Analysis🧐":
-            competitor_analysis()
-        elif choice == "Give me content calendar 🥹🥹":
-            content_planning_agents()
+    if choice == "Keywords Researcher":
+        do_web_research()
+    elif choice == "Competitor Analysis":
+        competitor_analysis()
+    #elif choice == "Get Content Calender":
+    #    planning_agents()
 
 
 def alwrity_brain():

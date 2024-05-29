@@ -3,6 +3,7 @@ import streamlit as st
 from pathlib import Path
 import configparser
 from datetime import datetime
+import uuid
 
 from rich import print
 from lib.ai_web_researcher.gpt_online_researcher import gpt_web_researcher
@@ -29,43 +30,42 @@ def blog_from_keyword():
     """ Input blog keywords, research and write a factual blog."""
     st.markdown("<div class='sub-header'>Blog from Keywords</div>", unsafe_allow_html=True)
 
-    content_keywords = st.text_input('Enter Keywords/Blog Title',
+    blog_keywords = st.text_input('Enter Keywords/Blog Title',
             help='Check your keywords against Google search, if you get good search results, you will get good content with Alwrity.',
             placeholder='Shit in, Shit Out; Better keywords, better research, hence better content.\n👋 :')
 
-    if content_keywords and len(content_keywords.split()) < 2:
+    if blog_keywords and len(blog_keywords.split()) < 2:
         st.error('🚫 Blog keywords should be at least two words long. Please try again.')
 
     content_type = st.selectbox("Select content type:", ["Normal-length content", "Long-form content", "Experimental - AI Agents team"])
     if st.button("Write Blog"):
         # Clear the previous results from the screen
         st.empty()
-        if content_keywords and len(content_keywords.split()) >= 2:
+        if blog_keywords and len(blog_keywords.split()) >= 2:
             if content_type == "Normal-length content":
                 try:
-                    short_blog = write_blog_from_keywords(content_keywords)
+                    short_blog = write_blog_from_keywords(blog_keywords)
                     st.markdown(short_blog)
-                    st.success(f"Successfully wrote blog on: {content_keywords}")
                 except Exception as err:
-                    st.error(f"🚫 Failed to write blog on {content_keywords}, Error: {err}")
+                    st.error(f"🚫 Failed to write blog on {blog_keywords}, Error: {err}")
             elif content_type == "Long-form content":
                 try:
                     st.empty()
-                    long_form_generator(content_keywords)
-                    st.success(f"Successfully wrote long-form blog on: {content_keywords}")
+                    long_form_generator(blog_keywords)
+                    st.success(f"Successfully wrote long-form blog on: {blog_keywords}")
                 except Exception as err:
-                    st.error(f"🚫 Failed to write blog on {content_keywords}, Error: {err}")
+                    st.error(f"🚫 Failed to write blog on {blog_keywords}, Error: {err}")
             elif content_type == "Experimental - AI Agents team":
                 try:
-                    ai_agents_writers(content_keywords)
-                    st.success(f"Successfully wrote content with AI agents on: {content_keywords}")
+                    ai_agents_writers(blog_keywords)
+                    st.success(f"Successfully wrote content with AI agents on: {blog_keywords}")
                 except Exception as err:
                     st.error(f"🚫 Failed to Write content with AI agents: {err}")
 
 
 def ai_agents_team():
     # Define options for AI Content Teams
-    st.title("🧚🐲 AI Agents Content Teams")
+    st.title("🧚🐲 Your AI Agents Teams")
     st.markdown("""Alwrity offers AI agents team for content creators to easily modify them for their needs.
                 Abstracting tech & plumbing, easily define role, goal, task. Use different AI agents framework.""")
     options = [
@@ -77,16 +77,33 @@ def ai_agents_team():
     selected_team = st.selectbox("**Choose AI Agents Team:**", options)
 
     if selected_team == "AI Content Ideation & Planning Team":
-        content_planning_agents()
+        st.title("AI Agents for Content Ideation")
+        plan_keywords = st.text_input(
+            "Enter Keywords to get 2 months content calender:",
+            placeholder="Enter keywords to generate AI content calendar:",
+            help="Enter at least two words for better results."
+        )
+        if st.button("Get calender"):
+            if plan_keywords and len(plan_keywords.split()) >= 2:
+                with st.spinner("Get Content Plan..."):
+                    try:
+                        plan_content = ai_agents_planner(plan_keywords)
+                        st.success(f"Successfully generated content plan for: {plan_keywords}")
+                        st.markdown(plan_content)
+                    except Exception as err:
+                        st.error(f"Failed to generate content plan: {err}")
+            else:
+                st.error("🚫 Single keywords are just too vague. Try again.")
+
     elif selected_team == "AI Content Creation Team":
-        content_creation_agents()
+        content_agents()
 
 
-def content_creation_agents():
-    st.markdown("<div class='sub-header'>AI Agents Team for Content Creation</div>", unsafe_allow_html=True)
+def content_agents():
+    st.markdown("AI Agents Team for Content Writing")
     content_keywords = st.text_input(
         "Enter Main Domain Keywords of your business:",
-        placeholder="Better keywords, Better content calendar:",
+        placeholder="Better keywords, Better content. Get keywords from Google search",
         help="These keywords define your main business sector, blogging niche, Industry, domain etc"
     )
 
@@ -99,27 +116,6 @@ def content_creation_agents():
                     st.markdown(calendar_content)
                 except Exception as err:
                     st.error(f"Failed to generate content with AI Agents: {err}")
-        else:
-            st.error("🚫 Single keywords are just too vague. Try again.")
-
-
-def content_planning_agents():
-    st.markdown("<div class='sub-header'>AI Agents Team for Content Ideation</div>", unsafe_allow_html=True)
-    content_keywords = st.text_input(
-        "Enter Main Domain Keywords of your business:",
-        placeholder="Better keywords will generate better content calendar:",
-        help="Enter at least two words for better results."
-    )
-
-    if st.button("Generate Content Plan"):
-        if content_keywords and len(content_keywords.split()) >= 2:
-            with st.spinner("Generating Content Plan..."):
-                try:
-                    plan_content = ai_agents_planner(content_keywords)
-                    st.success(f"Successfully generated content plan for: {content_keywords}")
-                    st.markdown(plan_content)
-                except Exception as err:
-                    st.error(f"Failed to generate content plan: {err}")
         else:
             st.error("🚫 Single keywords are just too vague. Try again.")
 
@@ -370,6 +366,52 @@ def ai_news_writer():
                 st.markdown(news_report)
             except Exception as err:
                 st.error(f"Failed to generate news report: {err}")
+
+
+
+def competitor_analysis():
+    st.title("Competitor Analysis")
+    st.markdown("""**Use Cases:**
+        - Know similar companies and alternatives for the given URL.
+        - Write listicles, similar companies, Top tools, alternative-to, similar products, similar websites, etc.
+        [Read More Here](https://docs.exa.ai/reference/company-analyst)
+    """)
+
+    similar_url = st.text_input("👋 Enter a single valid URL for web analysis:",
+                placeholder="Provide a competitor's URL and get details of similar/alternative companies.")
+
+    if st.button("Analyze"):
+        if similar_url:
+            try:
+                st.info(f"Starting analysis for the URL: {similar_url}")
+                with st.spinner("Performing competitor analysis..."):
+                    result = metaphor_find_similar(similar_url)
+                st.success("Analysis completed successfully!")
+                st.write(result)
+            except Exception as err:
+                st.error(f"✖ 🚫 Failed to do similar search.\nError: {err}")
+        else:
+            st.error("Please enter a valid URL.")
+
+
+def do_web_research():
+    """ Input keywords and do web research and present a report."""
+    st.title("Web Research Assistant")
+    st.write("Enter keywords for web research. The keywords should be at least three words long.")
+    
+    search_keywords = st.text_input("Search Keywords", placeholder="Enter keywords for web research...")
+    if st.button("Start Web Research"):
+        if search_keywords and len(search_keywords.split()) >= 3:
+            try:
+                st.info(f"Starting web research on given keywords: {search_keywords}")
+                with st.spinner("Performing web research..."):
+                    web_research_result = gpt_web_researcher(search_keywords)
+                st.success("Web research completed successfully!")
+                st.write(web_research_result)
+            except Exception as err:
+                st.error(f"ERROR: Failed to do web research: {err}")
+        else:
+            st.warning("Search keywords should be at least three words long. Please try again.")
 
 
 def ai_finance_ta_writer():
