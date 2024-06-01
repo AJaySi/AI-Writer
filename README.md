@@ -1,16 +1,21 @@
 # How to Alwrity - Getting Started
 
-Alwrity assists content creators and digital marketers in generating, formatting, and uploading blog content with unprecedented efficiency.
-
+Alwrity assists content creators and digital marketers in keyword web research, AI content generation, AI social media.
 Our toolkit integrates advanced AI models for text generation, image creation, and data analysis, streamlining your content creation pipeline and ensuring high-quality output with minimal effort.
+
+Prompting is abstracted to get going sooner. Focus on your content quality, rather than AI tooling around it.
+Alwrity gives personalization, factual web researched & SEO optimized content and tools for automating content & digital marketing.
+
+AI will help achieve Content Hyper-Personalization.
 
 ---
 1). [Visit alwrity.com](https://www.alwrity.com/ai-writing-tools), You will find AI content writing tools, which are Free & No-Signup.
 **Note:** Although, this is limited, as is our wallet & Resources.
 
-2). **For complete AI content creation toolkit**, alwrity offers a commandline App. Its a BYOK model(Bring Your Own Key).
-**Note:** (🗯️ commandline, byok and shit) ... Now, before you run away 🏃💨   
-If you have 💻 Laptop + 🛜 Internet + 20 minutes, you will be generating blogs, articles etc with just few words.
+2). **For complete AI content creation toolkit**, alwrity offers a local streamlit UI App. Its a BYOK model(Bring Your Own Key).
+**Note:** 🗯️ Now, before you run away 🏃💨   
+If you have 💻 Laptop + 🛜 Internet + 10 minutes, you will be generating blogs, articles etc with just few words.
+
 ### [Step-By-Step: Getting Started for Absolute Begginers](https://www.alwrity.com/post/getting-started-with-alwrity-ai-writer)
 
 ### [Getting started for Developers](https://github.com/AJaySi/AI-Writer/wiki/Alwrity--%E2%80%90-Get-started)
@@ -18,6 +23,7 @@ If you have 💻 Laptop + 🛜 Internet + 20 minutes, you will be generating blo
 **Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Someone will bail you out.
 
 ---
+
 ### AI Tools & Features of Alwrity:
 | No. | Alwrity Tool                       | Description                                                                    |
 |-----|------------------------------------|--------------------------------------------------------------------------------|
@@ -36,6 +42,9 @@ If you have 💻 Laptop + 🛜 Internet + 20 minutes, you will be generating blo
 | 13  | Create Blog Images                 | Generates images to complement blog content using Stable Diffusion.            |
 | 14  | Agentic Content Creation           | Explores innovative content creation methods with CrewAI.                      |
 | 15  | AI Finance Writer                  | Uses ufinance & padnas_ta to write TA report for given stock symbol            |
+| 16  | AI Agents Team                     | Easily create AI Agents team for Content creation & Digital marketing          |
+| 17  | Talk to your Docs                  | Write content from your local documents of any type(multi-modal)               |
+| 18  | Wordpress API integration          | Programmatically upload blogs to wordpress website with API keys               |
 ---
 
 # AI Content Generation Toolkit - Alwrity
@@ -43,9 +52,9 @@ If you have 💻 Laptop + 🛜 Internet + 20 minutes, you will be generating blo
 
 ## Introduction
 
-Alwrity automates and enhances the process of blog creation, optimization, and management(Really ?). 
+Alwrity automates and enhances the process of content creation, optimization, and management(Really ?). 
 Leveraging AI technologies, it assists content creators and digital marketers in generating, formatting, 
-and uploading blog content efficiently(Hmmmm, OK...). 
+and uploading blog content efficiently(Hmmmm, OK...).
 The toolkit integrates advanced AI models for text generation, image creation, 
 and data analysis, streamlining the content creation pipeline(Who reads introductions, right!).
 
