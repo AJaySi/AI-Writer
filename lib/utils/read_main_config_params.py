@@ -1,73 +1,67 @@
-#
-# Common utils for lib
-#
 import os
-import sys
-import configparser
+import json
 from pathlib import Path
-from loguru import logger
-logger.remove()
-logger.add(sys.stdout,
-        colorize=True,
-        format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
-    )
-
 
 def read_return_config_section(config_section):
     """ read_return_config_section
-    Read Language Model (LLM) parameters from the configuration file.
+    Read configuration parameters from the JSON configuration file.
 
     Args:
-        config_path (str): The path to the configuration file.
+        config_section (str): The section of the configuration file to read.
 
     Returns:
-        tuple: A tuple containing the LLM parameters (gpt_provider, model, temperature, max_tokens, top_p, n, frequency_penalty).
+        tuple: A tuple containing the specified configuration parameters.
 
     Raises:
         FileNotFoundError: If the configuration file is not found.
-        configparser.Error: If there is an error parsing the configuration file.
+        json.JSONDecodeError: If there is an error parsing the JSON configuration file.
     """
     try:
-        config_path = Path(__file__).resolve().parents[2] / "main_config"
-        config = configparser.ConfigParser()
-        config.read(config_path, encoding="utf-8")
+        config_path = Path(os.environ["ALWRITY_CONFIG"])
         
-        if 'llm_config' in config_section:
-	        gpt_provider = config.get('llm_options', 'gpt_provider')
-	        model = config.get('llm_options', 'model')
-	        temperature = config.getfloat('llm_options', 'temperature')
-	        max_tokens = config.getint('llm_options', 'max_tokens')
-	        top_p = config.getfloat('llm_options', 'top_p')
-	        n = config.getint('llm_options', 'n')
-	        frequency_penalty = config.getfloat('llm_options', 'frequency_penalty')
-	
-	        return gpt_provider, model, temperature, max_tokens, top_p, n, frequency_penalty
-        elif 'blog_characteristics' in config_section:
-            # Access and return the specified config values
-            blog_tone = config.get('blog_characteristics', 'blog_tone')
-            blog_demographic = config.get('blog_characteristics', 'blog_demographic')
-            blog_type = config.get('blog_characteristics', 'blog_type')
-            blog_language = config.get('blog_characteristics', 'blog_language')
-            blog_output_format = config.get('blog_characteristics', 'blog_output_format')
+        with open(config_path, 'r', encoding="utf-8") as file:
+            config = json.load(file)
+        
+        if config_section == 'llm_config':
+            gpt_provider = config['LLM Options']['GPT Provider']
+            model = config['LLM Options']['Model']
+            temperature = config['LLM Options']['Temperature']
+            max_tokens = config['LLM Options']['Max Tokens']
+            top_p = config['LLM Options']['Top-p']
+            n = config['LLM Options']['N']
+            frequency_penalty = config['LLM Options']['Frequency Penalty']
+            presence_penalty = config['LLM Options']['Presence Penalty']
+            
+            return gpt_provider, model, temperature, max_tokens, top_p, n, frequency_penalty
 
-            return blog_tone, blog_demographic, blog_type, blog_language, blog_output_format
+        elif config_section == 'blog_characteristics':
+            blog_tone = config['Blog Content Characteristics']['Blog Tone']
+            blog_demographic = config['Blog Content Characteristics']['Blog Demographic']
+            blog_type = config['Blog Content Characteristics']['Blog Type']
+            blog_language = config['Blog Content Characteristics']['Blog Language']
+            blog_output_format = config['Blog Content Characteristics']['Blog Output Format']
+            blog_length = config['Blog Content Characteristics']['Blog Length']
 
-        elif 'web_research' in config_section:
-            # Access the config file and return the specified values
-            geo_location = config.get('web_research', 'geo_location')
-            search_language = config.get('web_research', 'search_language')
-            num_results = config.getint('web_research', 'num_results')
-            time_range = config.get('web_research', 'time_range')
-            include_domains = config.get('web_research', 'include_domains')
-            similar_url = config.get('web_research', 'similar_url')
+            return blog_tone, blog_demographic, blog_type, blog_language, blog_output_format, blog_length
+
+        elif config_section == 'web_research':
+            geo_location = config['Search Engine Parameters']['Geographic Location']
+            search_language = config['Search Engine Parameters']['Search Language']
+            num_results = config['Search Engine Parameters']['Number of Results']
+            time_range = config['Search Engine Parameters']['Time Range']
+            include_domains = config['Search Engine Parameters']['Include Domains']
+            similar_url = config['Search Engine Parameters']['Similar URL']
 
             return geo_location, search_language, num_results, time_range, include_domains, similar_url
 
     except FileNotFoundError:
         logger.error(f"Configuration file not found: {config_path}")
         raise
-    except configparser.Error as err:
-        logger.error(f"Error reading LLM parameters from config file: {err}")
+    except json.JSONDecodeError as err:
+        logger.error(f"Error reading parameters from config file: {err}")
+        raise
+    except KeyError as err:
+        logger.error(f"Missing key in the configuration file: {err}")
         raise
     except Exception as err:
         logger.error(f"An unexpected error occurred: {err}")

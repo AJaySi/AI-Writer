@@ -1,7 +1,7 @@
 import os
 import sys
 import json
-import configparser
+from pathlib import Path
 
 from loguru import logger
 logger.remove()
@@ -13,26 +13,27 @@ logger.add(sys.stdout,
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
-# FIXME: Provide num_blogs, num_faqs as inputs.
 def write_blog_google_serp(search_keyword, search_results):
-    """Combine the given online research and gpt blog content"""
+    """Combine the given online research and GPT blog content"""
     try:
-        config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'main_config'))
-        config = configparser.ConfigParser()
-        config.read(config_path, encoding='utf-8')
+        config_path = Path(os.environ["ALWRITY_CONFIG"])
+        with open(config_path, 'r', encoding='utf-8') as file:
+            config = json.load(file)
     except Exception as err:
-        print(f"Error: Failed to read values from config: {err}")
+        logger.error(f"Error: Failed to read values from config: {err}")
         exit(1)
 
+    blog_characteristics = config['Blog Content Characteristics']
+    
     prompt = f"""
         As expert Creative Content writer,
-        I want you to write {config.get('blog_characteristics', 'blog_type')} blog post,
+        I want you to write {blog_characteristics['Blog Type']} blog post,
         that explores {search_keyword} and also include 5 FAQs.
         
         Below are the guidelines to follow:
-        1). You must respond in {config.get('blog_characteristics', 'blog_language')} language.
-        2). Tone and Brand Alignment: Adjust your tone, voice, personality for {config.get('blog_characteristics', 'blog_tone')} audience.
-        3). Make sure your response content length is of {config.get('blog_characteristics', 'blog_length')} words.
+        1). You must respond in {blog_characteristics['Blog Language']} language.
+        2). Tone and Brand Alignment: Adjust your tone, voice, personality for {blog_characteristics['Blog Tone']} audience.
+        3). Make sure your response content length is of {blog_characteristics['Blog Length']} words.
         4). Include FAQs from 'People also Ask' section of provided context 'google search result'.
 
         I want the post to offer unique insights, relatable examples, and a fresh perspective on the topic.
@@ -40,14 +41,15 @@ def write_blog_google_serp(search_keyword, search_results):
         \n\n
         \"\"\"{search_results}\"\"\"
         """
+    
     logger.info("Generating blog and FAQs from Google web search results.")
+    
     try:
         response = llm_text_gen(prompt)
         return response
     except Exception as err:
         logger.error(f"Exit: Failed to get response from LLM: {err}")
         exit(1)
-
 
 def improve_blog_intro(blog_content, blog_intro):
     """Combine the given online research and gpt blog content"""

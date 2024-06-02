@@ -2,7 +2,8 @@
 import os
 import sys
 import re
-import configparser
+import json
+from pathlib import Path
 import streamlit as st
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -16,33 +17,33 @@ logger.add(sys.stdout,
 
 def cfg_search_param(flag):
     """
-    Read values from the main_config file and return them as variables and a dictionary.
+    Read values from the main_config.json file and return them as variables and a dictionary.
 
     Args:
-        file_path (str): The path to the main_config file.
+        flag (str): A flag to determine which configuration values to return.
 
     Returns:
-        dict: A dictionary containing the values read from the config file.
-        str: The geographic location value.
-        str: The search language value.
-        int: The number of search results to fetch.
+        various: The values read from the config file based on the flag.
     """
     try:
-        file_path = Path(__file__).resolve().parents[2] / "main_config"
+        file_path = Path(os.environ.get("ALWRITY_CONFIG", ""))
+        if not file_path.is_file():
+            raise FileNotFoundError(f"Configuration file not found: {file_path}")
         logger.info(f"Reading search config params from {file_path}")
-        config = configparser.ConfigParser()
-        config.read(file_path, encoding="utf-8")
-        web_research_section = config["web_research"]
+        
+        with open(file_path, 'r', encoding='utf-8') as file:
+            config = json.load(file)
+        web_research_section = config["Search Engine Parameters"]
 
         if 'serperdev' in flag:
             # Get values as variables
-            geo_location = web_research_section.get("geo_location")
-            search_language = web_research_section.get("search_language")
-            num_results = web_research_section.getint("num_results")
+            geo_location = web_research_section.get("Geographic Location")
+            search_language = web_research_section.get("Search Language")
+            num_results = web_research_section.get("Number of Results")
             return geo_location, search_language, num_results
 
         elif 'tavily' in flag:
-            include_urls = web_research_section.get("include_domains")
+            include_urls = web_research_section.get("Include Domains")
             pattern = re.compile(r"^(https?://[^\s,]+)(,\s*https?://[^\s,]+)*$")
             if pattern.match(include_urls):
                 include_urls = [url.strip() for url in include_urls.split(',')]
@@ -51,7 +52,7 @@ def cfg_search_param(flag):
             return include_urls
 
         elif 'exa' in flag:
-            include_urls = web_research_section.get("include_domains")
+            include_urls = web_research_section.get("Include Domains")
             pattern = re.compile(r"^(https?://\w+)(,\s*https?://\w+)*$")
             if pattern.match(include_urls) is not None:
                 include_urls = include_urls.split(',')
@@ -60,9 +61,9 @@ def cfg_search_param(flag):
             else:
                 include_urls = None
 
-            num_results = web_research_section.getint("num_results")
-            similar_url = web_research_section.get("similar_url")
-            time_range = web_research_section.get("time_range")
+            num_results = web_research_section.get("Number of Results")
+            similar_url = web_research_section.get("Similar URL")
+            time_range = web_research_section.get("Time Range")
             if time_range == "past day":
                 start_published_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
             elif time_range == "past week":
@@ -85,7 +86,6 @@ def cfg_search_param(flag):
     except ValueError as e:
         logger.error(f"Error: Invalid value in config file: {e}")
         return {}, None, None, None
-
 
 def save_in_file(table_content):
     """ Helper function to save search analysis in a file. """

@@ -44,9 +44,11 @@ def write_blog_from_keywords(search_keywords, url=None):
 
             status.update(label=f"🛀 Starting Tavily AI research: {search_keywords}")
             tavily_search_result, t_titles, t_answer = do_tavily_ai_search(search_keywords)
-            status.update(label=f"🙆 Finished Google Search & Tavily AI Search on: {search_keywords}", expanded=False)
+            status.update(label=f"🙆 Finished Google Search & Tavily AI Search on: {search_keywords}", 
+                    state="complete", expanded=False)
 
         except Exception as err:
+            st.error(f"Failed in web research: {err}")
             logger.error(f"Failed in web research: {err}")
 
     with st.status("Started Writing blog from google search..", expanded=True) as status:
@@ -56,12 +58,9 @@ def write_blog_from_keywords(search_keywords, url=None):
             status.update(label=f"🛀 Writing blog from Google Search on: {search_keywords}")
             blog_markdown_str = write_blog_google_serp(search_keywords, google_search_result)
             st.markdown(blog_markdown_str)
-
-            # Hate the robotic introductions.
-            #blog_markdown_str = improve_blog_intro(blog_markdown_str, t_answer)
-            #st.markdown(blog_markdown_str)
-            status.update(label="🙎 Draft 1: Your Content from Google search result.", expanded=False)
+            status.update(label="🙎 Draft 1: Your Content from Google search result.", state="complete", expanded=False)
         except Exception as err:
+            st.error(f"Failed in Google web research: {err}")
             logger.error(f"Failed in Google web research: {err}")
 
     # logger.info/check the final blog content.

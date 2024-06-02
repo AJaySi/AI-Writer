@@ -1,12 +1,10 @@
 import os
 import time #IWish
-import logging
 import openai
-import configparser
 
 # Configure standard logging
+import logging
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s-%(levelname)s-%(module)s-%(lineno)d]- %(message)s')
-
 logger = logging.getLogger(__name__)
 from tenacity import (
     retry,

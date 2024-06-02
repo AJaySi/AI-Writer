@@ -60,22 +60,26 @@ def long_form_generator(content_keywords):
     """
     with st.status("Start Writing Long Form Article, Hold my Beer..", expanded=True) as status:
         # Read the main_config to define tone, character, personality of the content to be generated.
-        try:    
+        try:
+            status.update(label=f"Starting to write content on {content_keywords}.")
             logger.info(f"Starting to write content on {content_keywords}.")
             # Define persona and writing guidelines
-            content_tone, target_audience, content_type, content_language, output_format = read_return_config_section('blog_characteristics')
+            content_tone, target_audience, content_type, content_language, output_format, content_length = read_return_config_section('blog_characteristics')
         except Exception as err:
             logger.error(f"Failed to Read config params from main_config: {err}")
-            return
+            st.error(f"Failed to Read config params from main_config: {err}")
+            return False
     
         try:
             filepath = os.path.join(os.environ["PROMPTS_DIR"], "long_form_ai_writer.prompts")
+            status.update(label=f"Reading Prompts from {filepath}.")
             # Check if file exists
             if not os.path.exists(filepath):
                 raise FileNotFoundError(f"File {filepath} does not exist")
             with open(filepath, 'r') as file:
                 prompts = yaml.safe_load(file)
         except Exception as err:
+            st.error(f"Exit: Failed to read prompts from {filepath}: {err}")
             logger.error(f"Exit: Failed to read prompts from {filepath}: {err}")
             exit(1)
     
@@ -147,11 +151,12 @@ def long_form_generator(content_keywords):
                 content_title=content_title, 
                 web_research_result=web_research_result)).text
             logger.info(f"The content Outline is: {content_outline}\n\n")
-            status.update(label="Generated the content outline.")
+            status.update(label=f"Completed with Content Outline.")
         except Exception as err:
             logger.error(f"Failed to generate content outline: {err}")
     
         try:
+            status.update(label=f"Do web research with Tavily to provide context for content creation.")
             logger.info("Do web research with Tavily to provide context for content creation.")
             # Do Metaphor/Exa AI search.
             table_data = []
@@ -163,6 +168,7 @@ def long_form_generator(content_keywords):
             web_research_result = table_data
         except Exception as err:
             logger.error(f"Failed to do Tavily AI search: {err}")
+            st.error(f"Failed to do Tavily AI search: {err}")
             return
     
         try:
@@ -172,6 +178,7 @@ def long_form_generator(content_keywords):
                     web_research_result=web_research_result,
                     writing_guidelines=writing_guidelines)).text
         except Exception as err:
+            st.error(f"Failed to Generate Starting draft: {err}")
             logger.error(f"Failed to Generate Starting draft: {err}")
             return
         
@@ -194,10 +201,11 @@ def long_form_generator(content_keywords):
             logger.error(f"Failed as: {err} and {continuation}")
     
         logger.info(f"Writing in progress... Current draft length: {len(draft)} characters")
+        status.update(label=f"Writing in progress... Current draft length: {len(draft)} characters")
         search_terms = f"""
             I will provide you with blog outline, your task is to read the outline & return 3 google search keywords.
             Your response will be used to do web research for writing on the given outline.
-            Do not explain your response, provide 3 google search sentences encompassing the given content outline.
+            Do not explain your response, provide 8 google search sentences encompassing the given content outline.
             Provide the search term results as comma separated values.\n\n
             Content Outline:\n
             '{content_outline}'
@@ -227,26 +235,36 @@ def long_form_generator(content_keywords):
                 # At this point, the context is little stale. We should more web research on
                 # related queries as per the content outline, to augment the LLM context.
             except Exception as err:
+                st.error(f"Failed to continually write the Essay: {err}")
                 logger.error(f"Failed to continually write the Essay: {err}")
                 return
         
         # Remove 'IAMDONE' and print the final story
         final = draft.replace('IAMDONE', '').strip()
-    
-        blog_title, blog_meta_desc, blog_tags, blog_categories = blog_metadata(final,
-                content_keywords, m_titles)
-    
-        generated_image_filepath = None
-        # TBD: Save the blog content as a .md file. Markdown or HTML ?
-        save_blog_to_file(final, blog_title, blog_meta_desc, blog_tags, blog_categories, generated_image_filepath)
-    
-        blog_frontmatter = f"""
-        ---
-        title: {blog_title}
-        categories: [{blog_categories}]
-        tags: [{blog_tags}]
-        Meta description: {blog_meta_desc.replace(":", "-")}
-        ---"""
-        logger.info(f"\n{blog_frontmatter}{final}\n\n")
-        st.write(f"\n{blog_frontmatter}{final}\n\n")
+        status.update(label="Success: Finished writing Long form content.")
+
+        # FIXME: The current implementation is suited for normal length content.
+        # In long content sending the whole content for each content metadata is expensive.
+#        blog_title, blog_meta_desc, blog_tags, blog_categories = blog_metadata(final,
+#                content_keywords, m_titles)
+#        status.update(label="Success: Finished with Title, Meta Description, Tags, categories")
+#        generated_image_filepath = None
+#        # TBD: Save the blog content as a .md file. Markdown or HTML ?
+#        save_blog_to_file(final, blog_title, blog_meta_desc, blog_tags, blog_categories, generated_image_filepath)
+#    
+#        blog_frontmatter = dedent(f"""
+#        \n---------------------------------------------------------------------
+#        title: {blog_title.strip()}\n
+#        categories: [{blog_categories.strip()}]\n
+#        tags: [{blog_tags.strip()}]\n
+#        Meta description: {blog_meta_desc.replace(":", "-").strip()}\n
+#        ---------------------------------------------------------------------\n
+#        """)
+#
+#        logger.info(f"\n{blog_frontmatter}{final}\n\n")
+#        st.markdown(f"\n{blog_frontmatter}{final}\n\n")
+        logger.info(f"\n{final}\n\n")
+
         logger.info(f"\n\n ################ Finished writing Blog for : {content_keywords} #################### \n")
+    with st.expander("**Click to View the final content draft:**"):
+        st.markdown(f"\n{final}\n\n")

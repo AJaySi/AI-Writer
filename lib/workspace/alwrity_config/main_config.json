@@ -1,0 +1,32 @@
+{
+    "Blog Content Characteristics": {
+        "Blog Length": "2000",
+        "Blog Tone": "Beginner",
+        "Blog Demographic": "Tech-savvy",
+        "Blog Type": "Informational",
+        "Blog Language": "English",
+        "Blog Output Format": "markdown"
+    },
+    "Blog Images Details": {
+        "Image Generation Model": "stable-diffusion",
+        "Number of Blog Images": 1
+    },
+    "LLM Options": {
+        "GPT Provider": "google",
+        "Model": "gemini-1.5-flash-latest",
+        "Temperature": 0.7,
+        "Top-p": 0.9,
+        "Max Tokens": 4000,
+        "N": 1,
+        "Frequency Penalty": 1.0,
+        "Presence Penalty": 1.0
+    },
+    "Search Engine Parameters": {
+        "Geographic Location": "us",
+        "Search Language": "en",
+        "Number of Results": 10,
+        "Time Range": "anytime",
+        "Include Domains": "",
+        "Similar URL": ""
+    }
+}

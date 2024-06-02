@@ -20,6 +20,12 @@ If you have 💻 Laptop + 🛜 Internet + 10 minutes, you will be generating blo
 
 ### [Getting started for Developers](https://github.com/AJaySi/AI-Writer/wiki/Alwrity--%E2%80%90-Get-started)
 
+### Updating to latest Code: (Existing users)
+`
+1). Git pull
+2). streamlit run alwrity.py
+`
+
 **Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Someone will bail you out.
 
 ---
@@ -146,7 +152,7 @@ This gives context for generating content. Tavily AI, Google search, serp and Vi
 
 ---
 
-Notes from underground:
+#### Notes from underground:
 
 1). Focus is on writing/generating highly unique, SEO optimized blog content.
 2). Models: Openai, gemini, ollama are interesting. Minstral API is also worth exploring. Cohere API is purpose made.
@@ -156,3 +162,10 @@ Pydantically speakng, Due to experimental nature of prompting, its getting expen
 4).Getting AI agents to 'brainstrom' blog ideas seems more pressing. CrewAI seems more straightforward than autogen.
 5). Too Many APIs floating around: The implementation is using tools that dont depend on API keys and rather scrape them.
 Duh, scraping wont scale, that is GPT vision based scraping will come in handy.
+6). firecrawl is interesting, gpt-researcher is providing local docsqa.
+7). Had to provide streamlit UI as Alwrity's audience arent comfortable with commandline.
+8). Local folder RAG and Chat with your content, website is on the cards.
+9). AI models are better, not sure until when 'Free' APIs will be "Free".
+10). The code is always a mess, lot of changes happening.. 
+11). Focus is to stop making any more AI content tools, but rather revisit & improve user experience & content quality.
+12). To Err is Human & AI....
