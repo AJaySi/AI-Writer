@@ -103,7 +103,7 @@ def write_blog_from_keywords(search_keywords, url=None):
         ---------------------------------------------------------------------\n
         """)
         logger.info(f"\n\n --------- Finished writing Blog for : {search_keywords} -------------- \n")
-        st.markdown(f"{blog_frontmatter"}
+        st.markdown(f"{blog_frontmatter}")
         st.image(generated_image_filepath)
         st.markdown(f"{blog_markdown_str}")
         status.update(label=f"Finished, Review & Use your Original Content Below: {saved_blog_to_file}")
