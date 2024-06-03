@@ -26,7 +26,7 @@ from .gen_stabl_diff_img import generate_stable_diffusion_image
 from ..text_generation.main_text_generation import llm_text_gen
 
 
-def generate_image(user_prompt, image_engine):
+def generate_image(user_prompt):
     """
     The generation API endpoint creates an image based on a text prompt.
 
@@ -42,12 +42,15 @@ def generate_image(user_prompt, image_engine):
     Must be one of "url" or "b64_json". Defaults to "url".
     --> user (str): A unique identifier representing your end-user, which will help OpenAI to monitor and detect abuse.
     """
+    # FIXME: Need to remove default value to match sidebar input.
+    image_engine = 'Stability-AI'
+
     try:
         img_prompt = generate_img_prompt(user_prompt)
         if 'Dalle3' in image_engine:
             logger.info(f"Calling Dalle3 text-to-image with prompt: {img_prompt}")
             image_stored_at = generate_dalle3_images(img_prompt)
-        elif 'Stability-Stable-Diffusion' in image_engine:
+        elif 'Stability-AI' in image_engine:
             logger.info(f"Calling Stable diffusion text-to-image with prompt: \n{img_prompt}")
             print("\n\n")
             image_stored_at = generate_stable_diffusion_image(img_prompt)

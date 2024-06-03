@@ -20,6 +20,7 @@ from .blog_from_google_serp import write_blog_google_serp, blog_with_research
 from ..ai_web_researcher.you_web_reseacher import get_rag_results, search_ydc_index
 from ..blog_metadata.get_blog_metadata import blog_metadata
 from ..blog_postprocessing.save_blog_to_file import save_blog_to_file
+from ..gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 
 
 def write_blog_from_keywords(search_keywords, url=None):
@@ -80,22 +81,29 @@ def write_blog_from_keywords(search_keywords, url=None):
             logger.error(f"Failed to do Tavily AI research: {err}")
 
         status.update(label="🙎 Generating - Title, Meta Description, Tags, Categories for the content.")
-        blog_title, blog_meta_desc, blog_tags, blog_categories = blog_metadata(blog_markdown_str, 
-                search_keywords, example_blog_titles)
-   
-        generated_image_filepath = None
+        try:
+            blog_title, blog_meta_desc, blog_tags, blog_categories = blog_metadata(blog_markdown_str)
+        except Exception as err:
+            st.error(f"Failed to get blog metadata: {err}")
+
+        try:
+            generated_image_filepath = generate_image(f"{blog_title} + ' ' + {blog_meta_desc}")
+        except Exception as err:
+            st.error(f"Failed in Image generation: {err}")
 
         saved_blog_to_file = save_blog_to_file(blog_markdown_str, blog_title, blog_meta_desc, 
                             blog_tags, blog_categories, generated_image_filepath)
         status.update(label=f"Saved the content in this file: {saved_blog_to_file}")
         blog_frontmatter = dedent(f"""
         \n---------------------------------------------------------------------
-        title: {blog_title.strip()}\n
-        categories: [{blog_categories.strip()}]\n
-        tags: [{blog_tags.strip()}]\n
-        Meta description: {blog_meta_desc.replace(":", "-").strip()}\n
+        title: {blog_title}\n
+        categories: [{blog_categories}]\n
+        tags: [{blog_tags}]\n
+        Meta description: {blog_meta_desc.replace(":", "-")}\n
         ---------------------------------------------------------------------\n
         """)
         logger.info(f"\n\n --------- Finished writing Blog for : {search_keywords} -------------- \n")
-        st.markdown(f"{blog_frontmatter}\n\n{blog_markdown_str}")
+        st.markdown(f"{blog_frontmatter"}
+        st.image(generated_image_filepath)
+        st.markdown(f"{blog_markdown_str}")
         status.update(label=f"Finished, Review & Use your Original Content Below: {saved_blog_to_file}")

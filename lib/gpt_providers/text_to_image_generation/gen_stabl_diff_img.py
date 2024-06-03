@@ -45,7 +45,7 @@ def generate_stable_diffusion_image(prompt):
         raise Exception("Non-200 response: " + str(response.text))
     
     data = response.json()
-    save_generated_image(data)
+    img_path = save_generated_image(data)
 
     for i, image in enumerate(data["artifacts"]):
         # Decode base64 image data
@@ -53,4 +53,6 @@ def generate_stable_diffusion_image(prompt):
         # Open image using PIL
         img = Image.open(BytesIO(img_data))
         # Display the image
-        img.show()  
+        img.show()
+
+    return img_path
