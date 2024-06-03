@@ -1,137 +1,162 @@
-div.row-widget.stRadio > div {
-    flex-direction: row;
-    align-items: stretch;
-}
-
-div.row-widget.stRadio > div[role="radiogroup"] > label[data-baseweb="radio"]  {
-    background-color: #9AC5F4;
-    padding-right: 10px;
-    padding-left: 4px;
-    padding-bottom: 3px;
-    margin: 4px;
-}
-/* Style for the scrollbar track */
-    ::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-    
-    /* Style for the scrollbar handle */
-    ::-webkit-scrollbar-thumb {
-        background-color: #888;
-        border-radius: 10px;
-        border: 3px solid #f1f1f1;
-    }
-    
-    /* Style for the scrollbar handle on hover */
-    ::-webkit-scrollbar-thumb:hover {
-        background: #555;
-    }
-    
-    /* Set the width of the scrollbar */
-    ::-webkit-scrollbar {
-        width: 16px;
-    }
+/* General body styling */
 body {
-    background: #f9f9f9;
-    background-image: linear-gradient(to bottom right, #f0f8ff, #e3f2fd);
+    background: #f0f4f8;
+    background-image: linear-gradient(to bottom right, #d0e1f9, #e1ebf9);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
+
+/* Main header styling */
 .main-header {
     font-size: 2.5em;
     font-weight: bold;
-    color: #2196F3;
+    color: #1565C0;
     margin-bottom: 10px;
     text-align: center;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
-.stApp {
-    margin-top: -80px;
-}
+
+/* Sub-header styling */
 .sub-header {
     font-size: 1.75em;
     font-weight: bold;
-    color: #ff6347;
+    color: #1976D2;
     margin-top: 40px;
     margin-bottom: 10px;
     text-align: center;
 }
+
+/* Styling for the application layout */
+.stApp {
+    margin-top: -80px;
+}
+
+/* Option box styling */
 .option-box {
-    border: 2px solid #f0f0f0;
+    border: 2px solid #e0e0e0;
     padding: 20px;
     border-radius: 10px;
     margin-bottom: 20px;
-    box-shadow: 2px 2px 12px #aaaaaa;
+    box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
     background-color: #f5f5f5;
 }
-.button {
-        background: #ff6347; /* Orange */
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px; /* Rounded corners */
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        margin: 10px 2px;
-        cursor: pointer;
-        transition: background-color 0.3s ease; /* Smooth transition for hover effect */
-        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2); /* Add a subtle shadow */
-        font-weight: bold; /* Make the text bold */
+
+/* Custom button styling */
+.custom-button {
+    background: #1976D2;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 10px 2px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    font-weight: bold;
 }
 
-.button:hover {
-    background-color: #ff4d4d; /* Darker orange */
-    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3); /* Slightly larger shadow on hover */
+.custom-button:hover {
+    background-color: #1565C0;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
+
+/* Tabs styling */
 .stTabs [role="tab"] {
     font-size: 1.2em;
     font-weight: bold;
     color: white;
-    background: #673AB7;
+    background: #1565C0;
     padding: 10px;
     margin: 5px;
     border-radius: 5px;
     border: 2px solid #ddd;
     transition: background 0.3s ease;
 }
+
 .stTabs [role="tab"]:hover {
-    background: #9575CD;
+    background: #1976D2;
 }
+
 .stTabs [role="tab"][aria-selected="true"] {
-    background: #D1C4E9;
+    background: #E3F2FD;
     color: #333;
-    border: 2px solid #673AB7;
+    border: 2px solid #1565C0;
 }
+
+/* Sidebar header styling */
 .sidebar-header {
     font-size: 1.5em;
     font-weight: bold;
     color: #333;
     margin-bottom: 20px;
 }
+
+/* Sidebar option styling */
 .sidebar-option {
     margin-bottom: 10px;
     font-size: 1.2em;
-    color: #2196F3;
+    color: #1565C0;
 }
+
+/* Content section styling */
 .content-section {
     padding: 20px;
     margin-bottom: 30px;
     border-radius: 10px;
-    box-shadow: 2px 2px 10px #ddd;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
     background-color: #f8f8f8;
 }
+
+/* Radio button group styling */
+div.row-widget.stRadio > div {
+    flex-direction: row;
+    align-items: stretch;
+}
+
+div.row-widget.stRadio > div[role="radiogroup"] > label[data-baseweb="radio"] {
+    background-color: #BBDEFB;
+    padding-right: 10px;
+    padding-left: 4px;
+    padding-bottom: 3px;
+    margin: 4px;
+}
+
+/* Radio wrapper styling */
 .radio-wrapper {
-    border: 2px solid #4CAF50;
+    border: 2px solid #1565C0;
     border-radius: 5px;
     padding: 15px;
     margin: 10px 0;
     background-color: #f9f9f9;
 }
 
+/* Content title styling */
 .content-title {
     font-size: 1.5em;
     font-weight: bold;
     margin-bottom: 10px;
     color: #333;
 }
+
+/* Scrollbar styling */
+::-webkit-scrollbar-track {
+    background: #e1ebf9;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #90CAF9;
+    border-radius: 10px;
+    border: 3px solid #e1ebf9;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #64B5F6;
+}
+
+::-webkit-scrollbar {
+    width: 16px;
+}
+
