@@ -1,133 +1,109 @@
 import os
 import configparser
-
+import streamlit as st
 from crewai import Agent, Task, Crew
 from crewai_tools import SerperDevTool
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-def setup_environment():
-    os.environ["OPENAI_MODEL_NAME"] = 'gpt-3.5-turbo'  # Adjust based on available model
+# Initialize session state variables if not already done
+if 'progress' not in st.session_state:
+    st.session_state.progress = 0
+
 
 def create_agents(search_keywords):
+    """Create agents for content creation."""
     search_tool = SerperDevTool()
-
-    # Load the google gemini api key
     google_api_key = os.getenv("GEMINI_API_KEY")
-
-    # Set gemini pro as llm
+    
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-flash-latest", verbose=True, temperature=0.6, google_api_key=google_api_key
     )
 
-    role, goal, backstory = read_config("content_researcher")
-    content_researcher = Agent(
-        role = role,
-        goal = goal,
-        backstory = backstory,
-        tools = [search_tool],
-        memory = True,  # Enable memory
-        verbose = True,
-        max_rpm = None,  # No limit on requests per minute
-        max_iter = 10,  # Default value for maximum iterations
-        allow_delegation = False,
-        llm = llm
-    )
+    try:
+        role, goal, backstory = read_config("content_researcher")
+        content_researcher = Agent(
+            role=role, goal=goal, backstory=backstory, tools=[search_tool], memory=True, 
+            verbose=True, max_rpm=None, max_iter=10, allow_delegation=False, llm=llm
+        )
 
-    role, goal, backstory = read_config("content_outliner")
-    content_outliner = Agent(
-        role = role,
-        goal = goal,
-        backstory = backstory,
-        memory = True,  # Enable memory
-        verbose = True,
-        tools = [search_tool],
-        max_rpm = 10,  # No limit on requests per minute
-        max_iter = 10,  # Default value for maximum iterations
-        allow_delegation = False,
-        llm = llm
-    )
+        role, goal, backstory = read_config("content_outliner")
+        content_outliner = Agent(
+            role=role, goal=goal, backstory=backstory, memory=True, 
+            verbose=True, tools=[search_tool], max_rpm=10, max_iter=10, allow_delegation=False, llm=llm
+        )
 
-    role, goal, backsotry = read_config("content_writer")
-    content_writer = Agent(
-        role = role,
-        goal = goal,
-        backstory = backstory,
-        memory = True,  # Enable memory
-        verbose = True,
-        max_rpm = 10,  # No limit on requests per minute
-        max_iter = 15,  # Default value for maximum iterations
-        allow_delegation = False,
-        llm = llm
-    )
+        role, goal, backstory = read_config("content_writer")
+        content_writer = Agent(
+            role=role, goal=goal, backstory=backstory, memory=True, 
+            verbose=True, max_rpm=10, max_iter=15, allow_delegation=False, llm=llm
+        )
 
-    reviewer_config = read_config("content_reviewer")
-    content_reviewer = Agent(
-	    role=role,
-        goal=goal,
-        backstory=backstory,
-        memory=True,  # Enable memory
-        verbose=True,
-        max_rpm=10,  # No limit on requests per minute
-        max_iter=10,  # Default value for maximum iterations
-        allow_delegation=False,
-        llm=llm
-    )
+        role, goal, backstory = read_config("content_reviewer")
+        content_reviewer = Agent(
+            role=role, goal=goal, backstory=backstory, memory=True, 
+            verbose=True, max_rpm=10, max_iter=10, allow_delegation=False, llm=llm
+        )
+
+    except Exception as err:
+        st.error(f"Error creating agents: {err}")
+        st.stop()
 
     return [content_researcher, content_outliner, content_writer, content_reviewer]
 
 def create_tasks(agents, search_keywords):
-    task_description, expected_output = read_config("research_task")
-    print(task_description, expected_output)
-    research_task = Task(
-        description=f"""The main focus keywords are: "{search_keywords}".\n{task_description}.
-        Set the input parameter as : search_query""",
-        expected_output = expected_output,
-        agent=agents[0]  # Assign to the researcher agent
-    )
+    """Create tasks for the agents."""
+    try:
+        task_description, expected_output = read_config("research_task")
+        research_task = Task(
+            description=f"The main focus keywords are: '{search_keywords}'.\n{task_description}.",
+            expected_output=expected_output,
+            agent=agents[0]
+        )
 
-    task_description, expected_output = read_config("outline_task")
-    outline_task = Task(
-        description=f"{task_description}.\n The main focus keywords are {search_keywords}",
-        expected_output=f"{expected_output}",
-        #human_input=True,
-        agent=agents[1]  # Assign to the outliner agent
-    )
+        task_description, expected_output = read_config("outline_task")
+        outline_task = Task(
+            description=f"{task_description}.\nThe main focus keywords are {search_keywords}",
+            expected_output=expected_output,
+            agent=agents[1]
+        )
 
-    task_description, expected_output = read_config("writer_task")
-    writer_task = Task(
-        description=f"{task_description}\nThe main focus keywords are {search_keywords}\n.",
-        expected_output=expected_output,
-        agent=agents[2]  # Assign to the writer agent
-    )
+        task_description, expected_output = read_config("writer_task")
+        writer_task = Task(
+            description=f"{task_description}\nThe main focus keywords are {search_keywords}.",
+            expected_output=expected_output,
+            agent=agents[2]
+        )
 
-    task_description, expected_output = read_config("review_task")
-    proofread_task = Task(
-        description=f"{task_description}.\nThe main focus keywords are: {search_keywords}.",
-        expected_output=expected_output,
-        agent=agents[3]  # Assign to the reviewer agent
-    )
+        task_description, expected_output = read_config("review_task")
+        proofread_task = Task(
+            description=f"{task_description}.\nThe main focus keywords are: {search_keywords}.",
+            expected_output=expected_output,
+            agent=agents[3]
+        )
+
+    except Exception as err:
+        st.error(f"Error creating tasks: {err}")
+        st.stop()
 
     return [research_task, outline_task, writer_task, proofread_task]
 
 def execute_tasks(agents, tasks, lang):
+    """Execute tasks with the agents."""
     crew = Crew(
         agents=agents,
         tasks=tasks,
-        verbose=2,  # You can set it to 1 or 2 for different logging levels
-        #process=Process.sequential,
-        #memory=True,
+        verbose=2,
         language=lang
     )
-    result = crew.kickoff()
+    try:
+        result = crew.kickoff()
+    except Exception as err:
+        st.error(f"Error executing tasks: {err}")
+        st.stop()
     return result
 
-
 def read_config(which_member):
-    """
-    Reads the role, goal, and backstory from the config file. 
-    """
-    # Assign the specific config file for each agent.
-    # Base path to workspace/my_content_team
+    """Reads configuration for the specified agent or task."""
     team_dir = os.path.join(os.getcwd(), "lib", "workspace", "my_content_team")
     config_file = None
     
@@ -139,8 +115,7 @@ def read_config(which_member):
         config_file = os.path.join(team_dir, "content_reviewer.txt")
     elif 'content_outliner' in which_member or 'outline_task' in which_member:
         config_file = os.path.join(team_dir, "content_outliner.txt")
-    
-    config = {}
+
     try:
         config = configparser.ConfigParser()
         config.read(config_file)
@@ -148,20 +123,59 @@ def read_config(which_member):
         goal = config.get('main', 'goal')
         backstory = config.get('backstory', 'text')
     except Exception as err:
-        print(f"Error reading agent config: {err}")
+        st.error(f"Error reading config: {err}")
+        st.stop()
 
-    if not 'task' in which_member:
+    if 'task' not in which_member:
         return role, goal, backstory
     else:
-        task_description = config.get('task', 'task_description')
-        expected_output = config.get('task', 'task_expected_output')
+        try:
+            task_description = config.get('task', 'task_description')
+            expected_output = config.get('task', 'task_expected_output')
+        except Exception as err:
+            st.error(f"Error reading task config: {err}")
+            st.stop()
         return task_description, expected_output
 
 
 def ai_agents_writers(search_keywords, lang="en"):
-    setup_environment()
-    agents = create_agents(search_keywords)
-    tasks = create_tasks(agents, search_keywords)
-    result = execute_tasks(agents, tasks, lang)
-    print("######################")
-    print(result)
+    """Main function to kickoff AI Agents content team."""
+
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    
+    st.session_state.progress = 0
+    status_text.text("Setting up environment...")
+    status_text.text("Creating Agents team...")
+    try:
+        agents = create_agents(search_keywords)
+        st.session_state.progress += 10
+        progress_bar.progress(st.session_state.progress)
+    except Exception as err:
+        st.error(f"Failed in creating Agents team: {err}")
+        st.stop()
+
+    status_text.text("Creating tasks for Agents team...")
+    try:
+        tasks = create_tasks(agents, search_keywords)
+        st.session_state.progress += 25
+        progress_bar.progress(st.session_state.progress)
+    except Exception as err:
+        st.error(f"Failed in creating tasks for Agents team: {err}")
+        st.stop()
+
+    status_text.text("AI Agents busy writing your content...")
+    try:
+        result = execute_tasks(agents, tasks, lang)
+        st.session_state.progress += 60
+        progress_bar.progress(st.session_state.progress)
+        status_text.text("Tasks executed successfully.")
+        st.success("Successfully executed tasks.")
+        
+        # Display result with an option to copy the content
+        st.markdown("### Result")
+        st.code(result, language='markdown')
+        st.download_button('Download Content', data=result, file_name='alwrity_result.md')
+    except Exception as err:
+        st.error(f"Failed to execute tasks: {err}")
+
