@@ -20,7 +20,8 @@ from lib.utils.alwrity_streamlit_utils import (
 css_file_path = os.path.join('lib', 'workspace', 'alwrity_ui_styling.css')
 with open(css_file_path) as f:
     custom_css = f.read()
-
+# Set the page configuration
+st.set_page_config(page_title="Alwrity", layout="wide")
 # Inject custom CSS into the Streamlit app
 st.markdown(f'<style>{custom_css}</style>', unsafe_allow_html=True)
 
