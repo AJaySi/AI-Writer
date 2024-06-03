@@ -7,7 +7,7 @@ import streamlit as st
 # Load .env file
 load_dotenv()
 
-from lib.chatbot_custom.chatbot_local_docqa import alwrity_chat_docqa
+#from lib.chatbot_custom.chatbot_local_docqa import alwrity_chat_docqa
 from lib.utils.alwrity_streamlit_utils import (
         blog_from_keyword, ai_agents_team, 
         blog_from_audio, write_story,
