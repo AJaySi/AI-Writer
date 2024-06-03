@@ -28,3 +28,4 @@ html2image
 lxml_html_clean
 yfinance
 pandas_ta
+llama_index

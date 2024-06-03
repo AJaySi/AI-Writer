@@ -1,8 +1,8 @@
 {
     "Blog Content Characteristics": {
         "Blog Length": "2000",
-        "Blog Tone": "Beginner",
-        "Blog Demographic": "Tech-savvy",
+        "Blog Tone": "Casual",
+        "Blog Demographic": "Working professional",
         "Blog Type": "Informational",
         "Blog Language": "English",
         "Blog Output Format": "markdown"
