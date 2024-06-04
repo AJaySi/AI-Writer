@@ -1,8 +1,8 @@
 {
     "Blog Content Characteristics": {
         "Blog Length": "2000",
-        "Blog Tone": "Casual",
-        "Blog Demographic": "Professional",
+        "Blog Tone": "Customize",
+        "Blog Demographic": "Customize",
         "Blog Type": "Informational",
         "Blog Language": "English",
         "Blog Output Format": "markdown"

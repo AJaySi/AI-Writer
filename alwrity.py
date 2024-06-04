@@ -104,24 +104,26 @@ def sidebar_configuration():
         blog_length = st.text_input("**Content Length**", value="2000", 
                           help="Length of blogs Or word count. Note: It won't be exact and depends on GPT providers and Max token count.")
         
-        blog_tone_options = ["Casual", "Professional", "How-to", "Beginner", "Research", "Programming", "Social Media", "Others"]
+        blog_tone_options = ["Casual", "Professional", "How-to", "Beginner", "Research", "Programming", "Social Media", "Customize"]
         blog_tone = st.selectbox("**Content Tone**",
                           options=blog_tone_options,
                           help="Choose the tone of the blog.")
 
-        if blog_tone == "Others":
+        if blog_tone == "Customize":
             custom_tone = st.text_input("Enter the tone of your content", help="Specify the tone of your content.")
             if custom_tone:
                 blog_tone = custom_tone
             else:
                 st.warning("Please specify the tone of your content.")
         
-        blog_demographic_options = ["Professional", "Domain Experts", "Gen-Z", "Tech-savvy", "Students", "Digital Marketing", "Others"]
+        blog_demographic_options = ["Professional", "Gen-Z", "Tech-savvy", "Student", "Digital Marketing", "Customize"]
         blog_demographic = st.selectbox("Target Audience",
                                 options=blog_demographic_options,
                                 help="Choose the target audience.")
-        if blog_demographic == "Others":
-            custom_demographic = st.text_input("Enter your target audience", help="Specify your target audience.")
+        if blog_demographic == "Customize":
+            custom_demographic = st.text_input("Enter your target audience", 
+                                help="Specify your target audience.",
+                                placeholder="Eg. Domain expert, Content creator, Financial expert etc..")
             if custom_demographic:
                 blog_demographic = custom_demographic
             else:
