@@ -276,8 +276,25 @@ def write_prompts(prompts, file_path="prompt_llm.txt"):
         for prompt in prompts:
             file.write(f"{prompt}\n")
 
+import base64
+
+# Function to load and encode the image file
+def load_image(image_path):
+    with open(image_path, "rb") as img_file:
+        b64_string = base64.b64encode(img_file.read()).decode()
+    return b64_string
+
+# Load and encode the image
+image_base64 = load_image("lib/workspace/alwrity_logo.png")
+
 def main():
-    st.markdown("<div class='main-header'>Welcome to Alwrity!</div>", unsafe_allow_html=True)
+    # Use the encoded image in HTML
+    st.markdown(f"""
+    <div class='main-header'>
+        <img src='data:image/png;base64,{image_base64}' alt='Alwrity Logo' style='height: 50px; margin-right: 10px; vertical-align: middle;'>
+        Welcome to Alwrity!
+    </div>
+    """, unsafe_allow_html=True)
     # Export the paths and file names. Dont want alwrity to be chatty and prompt for inputs.
     os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "lib", "workspace", "web_research_report",
                                                   f"web_research_report_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}")

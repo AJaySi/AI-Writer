@@ -3,7 +3,15 @@ body {
     background: #f0f4f8;
     background-image: linear-gradient(to bottom right, #d0e1f9, #e1ebf9);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;  /* Remove any default margin */
+    padding: 0;  /* Remove any default padding */
 }
+.block-container {
+    padding-top: 2.5rem;
+    padding-bottom: 3rem;
+    padding-left: 5rem;
+    padding-right: 5rem;
+                }
 
 /* Main header styling */
 .main-header {
@@ -13,6 +21,7 @@ body {
     margin-bottom: 20px;
     text-align: center;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    padding-top: 10px; /* Add padding to the top to move it up */
 }
 
 /* Sub-header styling */
@@ -69,7 +78,7 @@ body {
     margin-bottom: 30px;
     border-radius: 10px;
     box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-    background-color: #f8f8f8;
+    background-color: #f0f4f8;  /* Change background to match body */
 }
 
 /* Input fields styling */
@@ -85,7 +94,7 @@ input[type="text"] {
 
 /* Custom button styling */
 button {
-    background: #1976D2;
+    background: #1565C0;  /* Match tab color */
     color: white;
     border: none;
     padding: 12px 24px;
@@ -102,7 +111,7 @@ button {
 }
 
 button:hover {
-    background-color: #1565C0;
+    background-color: #1976D2;  /* Match tab hover color */
     box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 

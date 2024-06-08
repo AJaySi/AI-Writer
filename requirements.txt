@@ -26,5 +26,6 @@ prompt_toolkit
 ipython
 html2image
 lxml_html_clean
+streamlit
 yfinance
 pandas_ta

@@ -227,9 +227,15 @@ def ai_agents_planner(search_keywords):
     #setup_environment()
     try:
         agents = create_agents(search_keywords, already_written_on)
+    except Exception as err:
+        st.error(f"Failed in Creating in Agents: {err}")
+    try:
         tasks = create_tasks(agents, search_keywords, already_written_on)
+    except Exception as err:
+        st.error(f"Failed to Create Agent Tasks: {err}")
+    try:
         result = execute_tasks(agents, tasks)
     except Exception as err:
-        print(err)
+        st.error(f"Failed to execute Agent Tasks: {err}")
     st.markdown("### Final Content Calender:")
     st.markdown(result)

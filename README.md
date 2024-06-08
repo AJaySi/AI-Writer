@@ -1,7 +1,7 @@
 # How to Alwrity - Getting Started
 
-Alwrity assists content creators and digital marketers in keyword web research, AI content generation, AI social media.
-Our toolkit integrates advanced AI models for text generation, image creation, and data analysis, streamlining your content creation pipeline and ensuring high-quality output with minimal effort.
+Alwrity assists content creators and digital marketers in keyword web research, AI website & Social media content generation & AI Copywriting.
+Our toolkit integrates (OpenAI, Gemini) AI models for text generation, image creation(Stability.ai), STT(whisper, AssemblyAI) and Web or local data analysis, streamlining your content creation pipeline and ensuring high-quality output with minimal effort.
 
 Prompting is abstracted to get going sooner. Focus on your content quality, rather than AI tooling around it.
 Alwrity gives personalization, factual web researched & SEO optimized content and tools for automating content & digital marketing.
@@ -18,14 +18,23 @@ If you have 💻 Laptop + 🛜 Internet + 10 minutes, you will be generating blo
 
 ### [Step-By-Step: Getting Started for Absolute Begginers](https://www.alwrity.com/post/getting-started-with-alwrity-ai-writer)
 
+---
 ### [Getting started for Developers](https://github.com/AJaySi/AI-Writer/wiki/Alwrity--%E2%80%90-Get-started)
+`
+Step1: git clone https://github.com/AJaySi/AI-Writer.git
+Step2: pip install -r requirements.txt
+Step3: streamlit run alwrity.py
 
+Step4: Visit Alwrity UI in Browser & Start generation AI personalized content.
+` 
+---
 ### Updating to latest Code: (Existing users)
 `
 1). Git pull
 2). streamlit run alwrity.py
+3). pip install -r requirements.txt
 `
-
+---
 **Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Someone will bail you out.
 
 ---
@@ -169,3 +178,28 @@ Duh, scraping wont scale, that is GPT vision based scraping will come in handy.
 10). The code is always a mess, lot of changes happening.. 
 11). Focus is to stop making any more AI content tools, but rather revisit & improve user experience & content quality.
 12). To Err is Human & AI....
+
+---
+LICENE
+---
+MIT License
+
+Copyright (c) 2024 Alwrity
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
