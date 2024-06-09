@@ -36,11 +36,11 @@ body {
 
 /* Navigation tabs styling */
 .stTabs [role="tab"] {
-    font-size: 1.2em;
+    font-size: 3.75em;  /* Increased font size */
     font-weight: bold;
     color: white;
     background: #1565C0;
-    padding: 12px 20px;
+    padding: 16px 24px;  /* Increased padding */
     margin: 5px;
     border-radius: 8px;
     border: 2px solid #ddd;
@@ -57,9 +57,11 @@ body {
     border: 2px solid #1565C0;
 }
 
+
+
 /* Sidebar header styling */
 .sidebar-header {
-    font-size: 1.5em;
+    font-size: 2.2em;
     font-weight: bold;
     color: #333;
     margin-bottom: 20px;
@@ -68,7 +70,7 @@ body {
 /* Sidebar option styling */
 .sidebar-option {
     margin-bottom: 10px;
-    font-size: 1.2em;
+    font-size: 2.2em;
     color: #1565C0;
 }
 

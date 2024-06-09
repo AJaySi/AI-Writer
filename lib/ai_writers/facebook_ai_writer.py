@@ -50,28 +50,76 @@ def generate_facebook_post(business_type, target_audience, post_goal, post_tone,
 
 def facebook_post_writer():
     st.title("Alwrity - Facebook Post Generator")
-    st.markdown("This app will help you create a Facebook post prompt for an LLM.")
+    st.markdown(
+        """
+        Welcome to the Facebook Post Generator! This tool will help you create a compelling Facebook post for your business.
+        Please provide the following details to generate your post:
+        """
+    )
 
     try:
-        # Collect user inputs with default values
-        business_type = st.text_input("**What is your business type?**", placeholder="fitness coach")
-        target_audience = st.text_input("**Describe your target audience:**", placeholder="fitness enthusiasts")
-        post_goal = st.selectbox("**What is the goal of your post?**", ["Promote a new product", "Share valuable content", "Increase engagement", "Other"], index=2)
-        post_tone = st.selectbox("**What tone do you want to use?**", ["Informative", "Humorous", "Inspirational", "Upbeat", "Casual"], index=3)
-        include = st.text_input("**What elements do you want to include?** (e.g., images, videos, links, hashtags, questions)", placeholder="short video with a sneak peek of the challenge")
-        avoid = st.text_input("**What elements do you want to avoid?** (e.g., long paragraphs, technical jargon)", placeholder="long paragraphs")
+        col1, col2 = st.columns(2)
 
-        if st.button("Write FaceBook Post"):
+        with col1:
+            business_type = st.text_input(
+                "**What is your business type?**",
+                placeholder="e.g., Fitness coach",
+                help="Provide the type of your business. This will help tailor the post content."
+            )
+            target_audience = st.text_input(
+                "**Describe your target audience:**",
+                placeholder="e.g., Fitness enthusiasts",
+                help="Describe the audience you are targeting with this post."
+            )
+            include = st.text_input(
+                "**What elements do you want to include?**",
+                placeholder="e.g., Short video with a sneak peek of the challenge",
+                help="Specify any elements you want to include in the post (e.g., images, videos, links, hashtags, questions)."
+            )
+
+        with col2:
+            post_goal_options = ["Promote a new product", "Share valuable content", "Increase engagement", "Other"]
+            post_goal = st.selectbox(
+                "**What is the goal of your post?**",
+                post_goal_options,
+                index=2,
+                help="Select the main goal of your post."
+            )
+
+            post_tone = st.selectbox(
+                "**What tone do you want to use?**",
+                ["Informative", "Humorous", "Inspirational", "Upbeat", "Casual"],
+                index=3,
+                help="Choose the tone you want to use for the post."
+            )
+            avoid = st.text_input(
+                "**What elements do you want to avoid?**",
+                placeholder="e.g., Long paragraphs",
+                help="Specify any elements you want to avoid in the post (e.g., long paragraphs, technical jargon)."
+            )
+
+        other_goal = ""
+        if post_goal == "Other":
+            other_goal = st.text_input(
+                "**Please specify the other goal:**",
+                placeholder="e.g., Announce an event",
+                help="Provide a specific goal if you selected 'Other'."
+            )
+
+        if st.button("Generate Facebook Post"):
             if not business_type or not target_audience:
-                st.error("🚫 Provide required inputs. Least, you can do..")
-            
-            generated_post = generate_facebook_post(business_type, target_audience, post_goal, post_tone, include, avoid)
-            if generated_post:
-                st.subheader(f'**🧕 Verify: Alwrity can make mistakes.**')
-                st.write("## Generated Facebook Post:")
-                st.write(generated_post)
-                st.write("\n\n\n\n\n")
+                st.error("🚫 Please provide the required inputs: Business Type and Target Audience.")
             else:
-                st.error("Error: Failed to generate Facebook Post.")
+                final_post_goal = other_goal if post_goal == 'Other' else post_goal
+                generated_post = generate_facebook_post(
+                    business_type, target_audience, final_post_goal, post_tone, include, avoid
+                )
+                if generated_post:
+                    st.subheader("**🧕 Verify: Alwrity can make mistakes.**")
+                    st.write("## Generated Facebook Post:")
+                    st.write(generated_post)
+                    st.markdown("---")
+                else:
+                    st.error("Error: Failed to generate Facebook Post.")
     except Exception as e:
         st.error(f"An error occurred: {e}")

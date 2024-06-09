@@ -8,11 +8,11 @@
 #########################################################
 
 # imports
+import os
 import sys
 import datetime
 
 import openai  # OpenAI Python library to make API calls
-import os  # used to access filepaths
 from loguru import logger
 logger.remove()
 logger.add(sys.stdout,

@@ -3,12 +3,13 @@ import json
 from datetime import datetime
 from dotenv import load_dotenv
 import streamlit as st
+import base64
 
 # Load .env file
 load_dotenv()
 
 #from lib.chatbot_custom.chatbot_local_docqa import alwrity_chat_docqa
-from lib.utils.alwrity_streamlit_utils import (
+from lib.utils.alwrity_utils import (
         blog_from_keyword, ai_agents_team, 
         blog_from_audio, write_story,
         essay_writer, ai_news_writer,
@@ -16,14 +17,6 @@ from lib.utils.alwrity_streamlit_utils import (
         do_web_research, competitor_analysis,
         )
 
-# Read the CSS file content
-css_file_path = os.path.join('lib', 'workspace', 'alwrity_ui_styling.css')
-with open(css_file_path) as f:
-    custom_css = f.read()
-# Set the page configuration
-st.set_page_config(page_title="Alwrity", layout="wide")
-# Inject custom CSS into the Streamlit app
-st.markdown(f'<style>{custom_css}</style>', unsafe_allow_html=True)
 
 
 # Function to check if API keys are present and prompt user to input if not
@@ -276,19 +269,29 @@ def write_prompts(prompts, file_path="prompt_llm.txt"):
         for prompt in prompts:
             file.write(f"{prompt}\n")
 
-import base64
-
 # Function to load and encode the image file
 def load_image(image_path):
     with open(image_path, "rb") as img_file:
         b64_string = base64.b64encode(img_file.read()).decode()
     return b64_string
 
-# Load and encode the image
-image_base64 = load_image("lib/workspace/alwrity_logo.png")
 
 def main():
     # Use the encoded image in HTML
+    # Load and encode the image
+    try:
+        # Read the CSS file content
+        css_file_path = os.path.join('lib', 'workspace', 'alwrity_ui_styling.css')
+        with open(css_file_path) as f:
+            custom_css = f.read()
+        # Set the page configuration
+        st.set_page_config(page_title="Alwrity", layout="wide")
+        # Inject custom CSS into the Streamlit app
+        st.markdown(f'<style>{custom_css}</style>', unsafe_allow_html=True)
+    except Exception as err:
+        st.error(f"Failed in setting up Alwrity Streamlit UI: {err}")
+
+    image_base64 = load_image("lib/workspace/alwrity_logo.png")
     st.markdown(f"""
     <div class='main-header'>
         <img src='data:image/png;base64,{image_base64}' alt='Alwrity Logo' style='height: 50px; margin-right: 10px; vertical-align: middle;'>
@@ -355,8 +358,7 @@ def main():
 # Functions for the main options
 def write_blog():
     options = [
-        "Write from few keywords",
-        "Write from audio files",
+        "AI Blog Writer",
         "Story Writer",
         "Essay writer",
         "Write News reports",
@@ -367,7 +369,7 @@ def write_blog():
     ]
     choice = st.selectbox("**Select a content creation type:**", options, index=0, format_func=lambda x: f"📝 {x}")
 
-    if choice == "Write from few keywords":
+    if choice == "AI Blog Writer":
         blog_from_keyword()
     elif choice == "Write from audio files":
         blog_from_audio()
@@ -386,22 +388,23 @@ def write_blog():
 
 
 def content_planning_tools():
-    st.markdown("<div class='sub-header'>Content Planning</div>", unsafe_allow_html=True)
     st.markdown("""**Alwrity content Ideation & Planning** : Provide few keywords to do comprehensive web research.
              Provide few keywords to get Google, Neural, pytrends analysis. Know keywords, blog titles to target.
-             Generate months long content calender around given keywords.""")
+             Generate months long content calendar around given keywords.""")
+    
     options = [
         "Keywords Researcher",
-        "Competitor Analysis"
+        "Competitor Analysis",
+        "Get Content Calender"
     ]
-    choice = st.selectbox("Select a content planning tool:", options, index=0, format_func=lambda x: f"🔍 {x}")
-
+    choice = st.radio("Select a content planning tool:", options, index=0, format_func=lambda x: f"🔍 {x}")
+    
     if choice == "Keywords Researcher":
         do_web_research()
     elif choice == "Competitor Analysis":
         competitor_analysis()
-    #elif choice == "Get Content Calender":
-    #    planning_agents()
+    elif choice == "Get Content Calender":
+        planning_agents()
 
 
 def alwrity_brain():

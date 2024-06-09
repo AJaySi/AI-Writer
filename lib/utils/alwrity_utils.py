@@ -1,26 +1,169 @@
 import os
+import streamlit as st
 from pathlib import Path
 import configparser
 from datetime import datetime
+import uuid
 
-from prompt_toolkit.shortcuts import checkboxlist_dialog, message_dialog, input_dialog
-from prompt_toolkit import prompt
-from prompt_toolkit.completion import WordCompleter
-from prompt_toolkit.validation import Validator, ValidationError
-from prompt_toolkit.shortcuts import radiolist_dialog
 from rich import print
 from lib.ai_web_researcher.gpt_online_researcher import gpt_web_researcher
 from lib.ai_web_researcher.metaphor_basic_neural_web_search import metaphor_find_similar
-from lib.ai_writers.keywords_to_blog import write_blog_from_keywords
+from lib.ai_writers.keywords_to_blog_streamlit import write_blog_from_keywords
 from lib.ai_writers.speech_to_blog.main_audio_to_blog import generate_audio_blog
 from lib.ai_writers.long_form_ai_writer import long_form_generator
 from lib.ai_writers.ai_news_article_writer import ai_news_generation
 from lib.ai_writers.ai_agents_crew_writer import ai_agents_writers
 from lib.ai_writers.ai_financial_writer import write_basic_ta_report
+from lib.ai_writers.facebook_ai_writer import facebook_post_writer
+from lib.ai_writers.linkedin_ai_writer import linked_post_writer
+from lib.ai_writers.twitter_ai_writer import tweet_writer 
+from lib.ai_writers.insta_ai_writer import insta_writer
+from lib.ai_writers.youtube_ai_writer import write_yt_title, write_yt_description, write_yt_script
 from lib.gpt_providers.text_generation.ai_story_writer import ai_story_generator
 from lib.gpt_providers.text_generation.ai_essay_writer import ai_essay_generator
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_planner
+
+
+def is_youtube_link(text):
+    youtube_regex = re.compile(r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?([^&=%\?]{11})')
+    return youtube_regex.match(text)
+
+def is_web_link(text):
+    web_regex = re.compile(r'(https?://)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)')
+    return web_regex.match(text)
+
+def process_input(input_text, uploaded_file):
+    if is_youtube_link(input_text):
+        st.success("Detected YouTube link")
+        st.video(input_text)
+    elif is_web_link(input_text):
+        st.success("Detected Web link")
+        st.write(f"[Visit link]({input_text})")
+    else:
+        st.success("Detected Keywords")
+        st.write(input_text)
+
+    if uploaded_file is not None:
+        file_details = {"filename": uploaded_file.name, "filetype": uploaded_file.type, "filesize": uploaded_file.size}
+        st.write(file_details)
+        if uploaded_file.type.startswith("text/"):
+            content = uploaded_file.read().decode("utf-8")
+            st.text(content)
+        elif uploaded_file.type == "application/pdf":
+            st.write("PDF file uploaded. Add your PDF processing logic here.")
+        elif uploaded_file.type in ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword"]:
+            st.write("Word document uploaded. Add your DOCX processing logic here.")
+        elif uploaded_file.type.startswith("image/"):
+            st.image(uploaded_file)
+        elif uploaded_file.type.startswith("audio/"):
+            st.audio(uploaded_file)
+        elif uploaded_file.type.startswith("video/"):
+            st.video(uploaded_file)
+
+def blog_from_keyword():
+    """ Input blog keywords, research and write a factual blog."""
+    st.title("Blog Content Writer")
+    col1, col2 = st.columns([2, 1.5])
+    with col1:
+        blog_keywords = st.text_area('**Enter Keywords/Title/YouTube Link/Web URLs**',
+                                  help='Provide keywords, titles, YouTube links, or web URLs to generate content.',
+                                  placeholder="""Write Blog From:
+        - Keywords/Blog Title: Provide keywords to web research & write blog.
+        - Attach file: Attach Text, Audio, Video, Image file to blog on.
+        - YouTube Link: Provide a YouTube video link to convert into blog.
+        - Web URLs: Provide web URL to write similar blog on.""")
+
+    with col2:
+        uploaded_file = st.file_uploader("**Attach files (Audio, Video, Image, Document)**",
+                                         type=["txt", "pdf", "docx", "jpg", "jpeg", "png", "mp3", "wav", "mp4", "mkv", "avi"],
+                                         help='Attach files such as audio, video, images, or documents.')
+
+    if blog_keywords and len(blog_keywords.split()) < 2:
+        st.error('🚫 Blog keywords should be at least two words long. Please try again.')
+
+    content_type = st.radio("Select content type:", ["Normal-length content", "Long-form content", "Experimental - AI Agents team"])
+    if st.button("Write Blog"):
+        # Clear the previous results from the screen
+        st.empty()
+        if blog_keywords and len(blog_keywords.split()) >= 2:
+            if content_type == "Normal-length content":
+                try:
+                    short_blog = write_blog_from_keywords(blog_keywords)
+                    st.markdown(short_blog)
+                except Exception as err:
+                    st.error(f"🚫 Failed to write blog on {blog_keywords}, Error: {err}")
+            elif content_type == "Long-form content":
+                try:
+                    st.empty()
+                    long_form_generator(blog_keywords)
+                    st.success(f"Successfully wrote long-form blog on: {blog_keywords}")
+                except Exception as err:
+                    st.error(f"🚫 Failed to write blog on {blog_keywords}, Error: {err}")
+            elif content_type == "Experimental - AI Agents team":
+                try:
+                    ai_agents_writers(blog_keywords)
+                    st.success(f"Successfully wrote content with AI agents on: {blog_keywords}")
+                except Exception as err:
+                    st.error(f"🚫 Failed to Write content with AI agents: {err}")
+
+
+def ai_agents_team():
+    # Define options for AI Content Teams
+    st.title("🐲 Your AI Agents Teams")
+    st.markdown("""Alwrity offers AI agents team for content creators to easily modify them for their needs.
+                Abstracting tech & plumbing, easily define role, goal, task. Use different AI agents framework.""")
+    
+    options = [
+        "AI Planning Team",
+        "AI Content Creation Team"
+    ]
+
+    # Radio button for choosing an AI Content Team
+    selected_team = st.radio("**Choose AI Agents Team:**", options)
+
+    if selected_team == "AI Planning Team":
+        st.title("AI Agents for Content Ideation")
+        plan_keywords = st.text_input(
+            "Enter Keywords to get 2 months content calendar:",
+            placeholder="Enter keywords to generate AI content calendar:",
+            help="Enter at least two words for better results."
+        )
+        if st.button("Get calendar"):
+            if plan_keywords and len(plan_keywords.split()) >= 2:
+                with st.spinner("Get Content Plan..."):
+                    try:
+                        plan_content = ai_agents_planner(plan_keywords)
+                        st.success(f"Successfully generated content plan for: {plan_keywords}")
+                        st.markdown(plan_content)
+                    except Exception as err:
+                        st.error(f"Failed to generate content plan: {err}")
+            else:
+                st.error("🚫 Single keywords are just too vague. Try again.")
+    elif selected_team == "AI Content Creation Team":
+        content_agents()
+
+
+
+def content_agents():
+    st.markdown("AI Agents Team for Content Writing")
+    content_keywords = st.text_input(
+        "Enter Main Domain Keywords of your business:",
+        placeholder="Better keywords, Better content. Get keywords from Google search",
+        help="These keywords define your main business sector, blogging niche, Industry, domain etc"
+    )
+
+    if st.button("Start Writing"):
+        if content_keywords and len(content_keywords.split()) >= 2:
+            with st.spinner("Generating Content..."):
+                try:
+                    calendar_content = ai_agents_writers(content_keywords)
+                    st.success(f"Successfully generated content for: {content_keywords}")
+                    st.markdown(calendar_content)
+                except Exception as err:
+                    st.error(f"Failed to generate content with AI Agents: {err}")
+        else:
+            st.error("🚫 Single keywords are just too vague. Try again.")
 
 
 
@@ -29,193 +172,55 @@ def blog_from_audio():
     Prompt the user to input either a YouTube URL, a file location, or keywords to search on YouTube.
     Validate the input and take appropriate actions based on the input type.
     """
+    st.title("Audio Blog Generator 🎤📝")
+    st.write("Generate a blog from an audio input. You can provide a YouTube URL or upload an audio file from your local folder.")
 
-    while True:
-        audio_input = prompt("""Enter Youtube video URL OR provide Full-Path to audio file.\n👋 : """)
-        # If the user cancels, exit the loop and the application
-        if audio_input is None:
-            break
+    # Toggle button to choose input method
+    input_method = st.radio(
+        "Choose input method:",
+        ('YouTube URL', 'Upload Audio File')
+    )
 
-        # If the user presses OK without providing any input, prompt again
-        if not audio_input.strip():
-            continue
-
-        # Check if the input is a valid YouTube URL
-        if audio_input.startswith("https://www.youtube.com/") or audio_input.startswith("http://www.youtube.com/") or os.path.exists(audio_input):
-            # Validate YouTube URL, Process YouTube URL
-            generate_audio_blog(audio_input)
-            break
-
-
-def ai_finance_ta_writer():
-    """ Call upon AI finance writer with user inputs. """
-    print("________________________________________________________________")
-    content_keywords = input_dialog(
-            title='Enter Ticker Symbol For TA.',
-            text='👋 Be sure of ticker symbol, Else no results:(Examples:IBM, BABA, HDFCBANK.NS, TATAMOTORS.NS etc)',
-            ).run()
-
-    # If the user cancels, exit the loop
-    if content_keywords.strip():
-        try:
-            write_basic_ta_report(content_keywords)
-        except Exception as err:
-            print(f"🚫 Check ticker symbol: Failed to write Financial Technical Analysis.")
-            exit(1)
-    else:
-        message_dialog(
-                title='Error',
-                text='🚫 Provide Symbol Ticker. Dont waste my time.'
-                ).run()
-        exit(1)
-
-
-def blog_from_keyword():
-    """ Input blog keywords, research and write a factual blog."""
-    while True:
-            print("________________________________________________________________")
-            content_keywords = input_dialog(
-                    title='Enter Keywords/Blog Title',
-                    text='Shit in, Shit Out; Better keywords, better research, hence better content.\n👋 Enter keywords/Blog Title for blog generation:',
-                ).run()
-
-            # If the user cancels, exit the loop
-            if content_keywords is None:
-                break
-            if content_keywords and len(content_keywords.split()) >= 2:
-                break
+    if input_method == 'YouTube URL':
+        youtube_url = st.text_input("Enter YouTube video URL", placeholder="https://www.youtube.com/...")
+        if st.button("Generate Blog"):
+            if youtube_url:
+                if youtube_url.startswith("https://www.youtube.com/") or youtube_url.startswith("http://www.youtube.com/"):
+                    st.success("Valid YouTube URL provided. Processing...")
+                    generate_audio_blog(youtube_url)
+                else:
+                    st.error("Invalid YouTube URL. Please enter a valid URL.")
             else:
-                message_dialog(
-                    title='Error',
-                    text='🚫 Blog keywords should be at least two words long. Please try again.'
-                ).run()
-    choice = radiolist_dialog(
-        title="Select content type:",
-        values=[
-            ("normal", "Normal-length content"),
-            ("long", "Long-form content"),
-            ("Experimental", "Experimental - AI Agents team")
-        ],
-        default="normal"
-    ).run()
-
-    if choice == "normal":
-        try:
-            write_blog_from_keywords(content_keywords)
-        except Exception as err:
-            print(f"🚫 Failed to write blog on {content_keywords}, Error: {err}\n")
-            exit(1)
-    elif choice == "long":
-        try:
-            long_form_generator(content_keywords)
-        except Exception as err:
-            print(f"🚫 Failed to write blog on {content_keywords}, Error: {err}\n")
-            exit(1)
-    elif choice == "Experimental":
-        try:
-            ai_agents_writers(content_keywords)
-        except Exception as err:
-            print(f"🚫 Failed to Write content with AI agents: {err}\n")
-            exit(1)
-
-
-def ai_news_writer():
-    """ """
-    while True:
-        print("________________________________________________________________")
-        news_keywords = input_dialog(
-                title='Enter Keywords from News headlines:',
-                text='Describe the News article in 3-5 words.\n👋 Enter main keywords describing the News Event: ',
-            ).run()
-
-        # If the user cancels, exit the loop
-        if news_keywords is None:
-            break
-        if news_keywords and len(news_keywords.split()) >= 2:
-            break
-        else:
-            message_dialog(
-                title='Error',
-                text='🚫 News keywords should be at least two words long. Least, you can do..'
-            ).run()
-    news_country = radiolist_dialog(
-        title="Select origin country of the News event:",
-        values=[
-            ("es", "Spain"),
-            ("vn", "Vietnam"),
-            ("pk", "Pakistan"),
-            ("in", "India"),
-            ("de", "Germany"),
-            ("cn", "China")
-        ],
-        default="in"
-    ).run()
-    news_language = radiolist_dialog(
-        title="Select news article language to search for:",
-        values=[
-            ("en", "English"),
-            ("es", "Spanish"),
-            ("vi", "Vietnamese"),
-            ("ar", "Arabic"),
-            ("hi", "Hindi"),
-            ("de", "German"),
-            ("zh-cn", "Chinese")
-        ],
-        default="en"
-    ).run()
-    try:
-        ai_news_generation(news_keywords, news_country, news_language)
-    except Exception as err:
-        raise err
-
-
-def do_web_research():
-    """ Input keywords and do web research and present a report."""
-    while True:
-        print("________________________________________________________________")
-        search_keywords = input_dialog(
-                title='Enter Search Keywords below: More Options in main_config.',
-                text='👋 Enter keywords for web research (Or keywords from your blog):',
-            ).run()
-        if search_keywords and len(search_keywords.split()) >= 2:
-            break
-        else:
-            message_dialog(
-                title='Warning',
-                text='🚫 Search keywords should be at least three words long. Please try again.'
-            ).run()
-
-    try:
-        print(f"🚀🎬🚀 [bold green]Starting web research on given keywords: {search_keywords}..")
-        web_research_result = gpt_web_researcher(search_keywords)
-    except Exception as err:
-        print(f"\n💥🤯 [bold red]ERROR 🤯 : Failed to do web research: {err}\n")
-
+                st.error("Please enter a YouTube URL to generate a blog.")
+    else:
+        uploaded_file = st.file_uploader("Upload an audio file", type=["mp3", "wav", "m4a"])
+        if st.button("Generate Blog"):
+            if uploaded_file:
+                file_path = os.path.join("uploads", uploaded_file.name)
+                with open(file_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+                st.success(f"File {uploaded_file.name} uploaded successfully. Processing...")
+                generate_audio_blog(file_path)
+            else:
+                st.error("Please upload an audio file to generate a blog.")
 
 def write_story():
     """ Alwrity AI Story Writer """
+
     personas = [
-        ("Award-Winning Science Fiction Author", "Award-Winning Science Fiction Author"),
-        ("Historical Fiction Author", "Historical Fiction Author"),
-        ("Fantasy World Builder", "Fantasy World Builder"),
-        ("Mystery Novelist", "Mystery Novelist"),
-        ("Romantic Poet", "Romantic Poet"),
-        ("Thriller Writer", "Thriller Writer"),
-        ("Children's Book Author", "Children's Book Autho"),
-        ("Satirical Humorist", "Satirical Humorist"),
-        ("Biographical Writer", "Biographical Writer"),
-        ("Dystopian Visionary", "Dystopian Visionary"),
-        ("Magical Realism Author", "Magical Realism Author")
+        "Award-Winning Science Fiction Author",
+        "Historical Fiction Author",
+        "Fantasy World Builder",
+        "Mystery Novelist",
+        "Romantic Poet",
+        "Thriller Writer",
+        "Children's Book Author",
+        "Satirical Humorist",
+        "Biographical Writer",
+        "Dystopian Visionary",
+        "Magical Realism Author"
     ]
 
-    dialog = radiolist_dialog(
-        title="Select Your Story Writing Persona Or Book Genre",
-        text="Choose a persona that resonates you want AI Story Writer to adopt.",
-        values=personas
-    )
-
-    selected_persona_name = dialog.run()
-    # Define persona descriptions
     persona_descriptions = {
         "Award-Winning Science Fiction Author": "You are an award-winning science fiction author with a penchant for expansive, intricately woven stories. Your ultimate goal is to write the next award-winning sci-fi novel.",
         "Historical Fiction Author": "You are a seasoned historical fiction author, meticulously researching past eras to weave captivating narratives. Your goal is to transport readers to different times and places through your vivid storytelling.",
@@ -229,331 +234,280 @@ def write_story():
         "Dystopian Visionary": "You are a visionary writer, exploring dark and dystopian futures that reflect contemporary fears and anxieties. Your vision is to challenge societal norms and provoke reflection on the path humanity is heading.",
         "Magical Realism Author": "You are a purveyor of magical realism, blending the ordinary with the extraordinary to create enchanting and thought-provoking tales. Your goal is to blur the lines between reality and fantasy, leaving readers enchanted and introspective."
     }
+
+    st.title("Alwrity AI Story Writer ✍️")
+    st.write("Select your story writing persona or book genre and let AI help you craft an amazing story. 🌟")
+
+    # Select persona
+    selected_persona_name = st.selectbox(
+        "Select Your Story Writing Persona or Book Genre:",
+        options=personas,
+        help="Choose a persona that resonates with the style you want the AI Story Writer to adopt."
+    )
+
+    # Display persona description
     if selected_persona_name:
-        selected_persona = next((persona for persona in personas if persona[0] == selected_persona_name), None)
-        if selected_persona:
-            character_input = input_dialog(
-                title=f"Enter characters for {selected_persona[0]}",
-                text=persona_descriptions[selected_persona_name]
-            ).run()
+        st.info(persona_descriptions[selected_persona_name])
 
-    #FIXME/TBD: Presently supports gemini only. Openai, minstral coming up.
-    # Check if LLM API KEYS are present and Not none.
-    if os.getenv('GEMINI_API_KEY'):
-        ai_story_generator(selected_persona_name, selected_persona_name, character_input)
-    else:
-        print(f"ERROR: Provide Google Gemini API keys. Openai, mistral, ollama coming up.")
-        exit(1)
+    # Combined input for characters and plot details
+    story_details_input = st.text_area(
+        "Enter characters and plot details for your story:",
+        placeholder="E.g., Characters: John, Alice, Dragon, Detective\nPlot: A detective is trying to solve a mystery in a small town...",
+        help="Provide a list of characters and a brief outline of the plot for your story."
+    )
 
-
-def ai_content_team():
-    """ AI Content team for content planning and writing. """
-    # Define the options for the radio list
-    options = [
-        ('1', 'AI Content Ideation & Planning Team'),
-        ('2', 'AI Content Creation Team')
-    ]
-
-    # Create the radio list dialog
-    result = radiolist_dialog(
-        title='Select Purpose based AI Content Team',
-        text='Please choose one of the following AI Teams:',
-        values=options,
-        ok_text='Select',
-        cancel_text='Cancel'
-    ).run()
-
-    # Check the result and display a message
-    if result == '1':
-        content_planning_agents()
-    elif result == '2':
-        content_creation_agents()
-
-
-def content_creation_agents():
-    """Agents team to create a content calendar"""
-    while True:
-        print("________________________________________________________________")
-        content_keywords = input_dialog(
-            title='Enter Main Domain Keywords of your business:',
-            text='Better keywords will generate better blog titles, content calendar. Play with keywords & combine them into a single calendar:',
-        ).run()
-
-        # If the user cancels, exit the loop and the function
-        if content_keywords is None:
-            print("User cancelled the input. Exiting the content creation process.")
-            return
-
-        if content_keywords and len(content_keywords.split()) >= 2:
-            break
+    # Generate story button
+    if st.button("Generate Story"):
+        if selected_persona_name and story_details_input:
+            st.success(f"Generating story for {selected_persona_name} with the provided details.")
+            ai_story_generator(selected_persona_name, persona_descriptions[selected_persona_name], story_details_input)
         else:
-            message_dialog(
-                title='Error',
-                text='🚫 Single keywords are just too vague. Try again.'
-            ).run()
+            st.error("Please select a persona and enter the story details to generate a story.")
 
-    try:
-        ai_agents_writers(content_keywords)
-    except Exception as err:
-        print(f"Failed to generate content calendar: {err}")
-
-
-def content_planning_agents():
-    """ Agents team to create a content calender """
-    while True:
-            print("________________________________________________________________")
-            content_keywords = input_dialog(
-                    title='Enter Main Domain Keywords of your business:',
-                    text='Better keywords will generate better blog titles, content calender, Play with keywords & combine into single calender:',
-                ).run()
-
-            # If the user cancels, exit the loop
-            if content_keywords is None:
-                return
-            if content_keywords and len(content_keywords.split()) >= 2:
-                break
-            else:
-                message_dialog(
-                    title='Error',
-                    text='🚫 Single keywords are just too vague. Try again.'
-                ).run() 
-    try:
-        ai_agents_planner(content_keywords)
-    except Exception as err:
-        print(f"Failed to genrate content calender: {err}")
 
 
 def essay_writer():
+    st.title("AI Essay Writer 📝")
+    st.write("Select your essay type, education level, and desired length, then let AI generate an essay for you. ✨")
+
     # Define essay types and education levels
     essay_types = [
-        ("Argumentative", "Argumentative - Forming an opinion via research. Building an evidence-based argument."),
-        ("Expository", "Expository - Knowledge of a topic. Communicating information clearly."),
-        ("Narrative", "Narrative - Creative language use. Presenting a compelling narrative."),
-        ("Descriptive", "Descriptive - Creative language use. Describing sensory details.")
+        "Argumentative - Forming an opinion via research. Building an evidence-based argument.",
+        "Expository - Knowledge of a topic. Communicating information clearly.",
+        "Narrative - Creative language use. Presenting a compelling narrative.",
+        "Descriptive - Creative language use. Describing sensory details."
     ]
 
     education_levels = [
-        ("Primary School", "Primary School"),
-        ("High School", "High School"),
-        ("College", "College"),
-        ("Graduate School", "Graduate School")
+        "Primary School",
+        "High School",
+        "College",
+        "Graduate School"
     ]
 
     # Define the options for number of pages
     num_pages_options = [
-        ("Short Form (1-2 pages)", "Short Form"),
-        ("Medium Form (3-5 pages)", "Medium Form"),
-        ("Long Form (6+ pages)", "Long Form")
+        "Short Form (1-2 pages)",
+        "Medium Form (3-5 pages)",
+        "Long Form (6+ pages)"
+    ]
+
+    # Create columns for inputs
+    col1, col2, = st.columns(2)
+
+    with col1:
+        # Ask the user for the title of the essay
+        essay_title = st.text_input("Essay Title", placeholder="Enter the title of your essay", help="Provide a clear and concise title for your essay.")
+
+    with col2:
+        # Ask the user for type of essay
+        selected_essay_type = st.selectbox("Type of Essay", options=essay_types, help="Choose the type of essay you want to write.")
+
+    # Create another row for number of pages
+    col3, col4 = st.columns(2)
+    with col3:
+        # Ask the user for level of education
+        selected_education_level = st.selectbox("Level of Education", options=education_levels, help="Choose your level of education.")
+
+    with col4:
+        # Prompt the user to select the length of the essay
+        selected_num_pages = st.selectbox("Number of Pages", options=num_pages_options, help="Select the length of your essay.")
+
+    st.markdown("### Generate Your Essay")
+
+    if st.button("Generate Essay"):
+        if essay_title:
+            st.success("Generating your essay...")
+            ai_essay_generator(essay_title, selected_essay_type, selected_education_level, selected_num_pages)
+        else:
+            st.error("Please enter a valid title for your essay.")
+
+
+def essay_writer():
+    st.title("AI Essay Writer 📝")
+    st.write("Select your essay type, education level, and desired length, then let AI generate an essay for you. ✨")
+
+    # Define essay types and education levels
+    essay_types = [
+        "Argumentative - Forming an opinion via research. Building an evidence-based argument.",
+        "Expository - Knowledge of a topic. Communicating information clearly.",
+        "Narrative - Creative language use. Presenting a compelling narrative.",
+        "Descriptive - Creative language use. Describing sensory details."
+    ]
+
+    education_levels = [
+        "Primary School",
+        "High School",
+        "College",
+        "Graduate School"
+    ]
+
+    # Define the options for number of pages
+    num_pages_options = [
+        "Short Form (1-2 pages)",
+        "Medium Form (3-5 pages)",
+        "Long Form (6+ pages)"
     ]
 
     # Ask the user for the title of the essay
-    essay_title = input_dialog(title="Essay Title", text="Enter the title of your essay:").run()
-    while not essay_title.strip():
-        print("Please enter a valid title for your essay.")
-        essay_title = input_dialog(title="Essay Title", text="Enter the title of your essay:").run()
+    essay_title = st.text_input("Essay Title", placeholder="Enter the title of your essay", help="Provide a clear and concise title for your essay.")
 
     # Ask the user for type of essay, level of education, and number of pages
-    selected_essay_type = radiolist_dialog(title="Type of Essay", text="Choose the type of essay you want to write:",
-                                           values=essay_types).run()
+    selected_essay_type = st.selectbox("Type of Essay", options=essay_types, help="Choose the type of essay you want to write.")
+    selected_education_level = st.selectbox("Level of Education", options=education_levels, help="Choose your level of education.")
+    selected_num_pages = st.selectbox("Number of Pages", options=num_pages_options, help="Select the length of your essay.")
 
-    selected_education_level = radiolist_dialog(title="Level of Education", text="Choose your level of education:",
-                                               values=education_levels).run()
-
-    # Prompt the user to select the length of the essay
-    num_pages_prompt = "Select the length of your essay:"
-    selected_num_pages = radiolist_dialog(title="Number of Pages", text=num_pages_prompt, values=num_pages_options).run()
-
-    ai_essay_generator(essay_title, selected_essay_type, selected_education_level, selected_num_pages)
-
+    if st.button("Generate Essay"):
+        if essay_title:
+            st.success("Generating your essay...")
+            ai_essay_generator(essay_title, selected_essay_type, selected_education_level, selected_num_pages)
+        else:
+            st.error("Please enter a valid title for your essay.")
 
 
-def blog_tools():
-    os.system("clear" if os.name == "posix" else "cls")
-    text = "_______________________________________________________________________\n"
-    text += "\n⚠️    Alert!   💥❓💥\n"
-    text += "Collection of Helpful Blogging Tools, powered by LLMs.\n"
-    text += "_______________________________________________________________________\n"
-    print(text)
+def ai_news_writer():
+    """ AI News Writer """
+    st.markdown("<div class='sub-header'>AI News Writer</div>", unsafe_allow_html=True)
 
-    personas = [
-        ("Get Content Outline", "Get Content Outline"),
-        ("Write Blog Title", "Write Blog Title"),
-        ("Write Blog Meta Description", "Write Blog Meta Description"),
-#        ("Write Blog Introduction", "Write Blog Introduction"),
-#        ("Write Blog conclusion", "Write Blog conclusion"),
-#        ("Write Blog Outline", "Write Blog Outline"),
-        ("Generate Blog FAQs", "Generate Blog FAQs"),
-        ("AI Linkedin Post", "AI Linkedin Post"),
-        ("YouTube To Blog", "YouTube To Blog"),
-        ("AI Essay Writer", "AI Essay Writer"),
-        ("AI Story Writer", "AI Story Writer"),
-#        ("Research blog references", "Research blog references"),
-#        ("Convert Blog To HTML", "Convert Blog To HTML"),
-#        ("Convert Blog To Markdown", "Convert Blog To Markdown"),
-#        ("Blog Proof Reader", "Blog Proof Reader"),
-#        ("Get Blog Tags", "Get Blog Tags"),
-#        ("Get blog categories", "Get blog categories"),
-#        ("Get Blog Code Examples", "Get Blog Code Examples"),
-#        ("Check WebPage Performance", "Check WebPage Performance"),
-        ("Quit/Exit", "Quit/Exit")
-    ]
-    dialog = radiolist_dialog(
-        title = "Select Your AI content tool.",
-        text = "Choose a tool to use and visit provided online link to try them out.",
-        values = personas
+    news_keywords = st.text_input(
+        "Enter Keywords from News Headlines:",
+        placeholder="Describe the News article in 3-5 words. Enter main keywords describing the News Event:",
+        help="Enter at least two words for better results."
     )
 
-    selected_persona_name = dialog.run()
+    if news_keywords and len(news_keywords.split()) <= 2:
+        st.error("🚫 News keywords should be at least two words long. Least, you can do..")
 
-    persona_descriptions = {
-        "Get Content Outline": "Get Content Outline - VISIT: https://alwrity-outline.streamlit.app/",
-        "Write Blog Title": "Write Blog Title - VISIT: https://alwrity-title.streamlit.app/",
-        "Write Blog Meta Description": "Write Blog Meta Description - VISIT: https://alwrity-metadesc.streamlit.app/",
-#        "Write Blog Introduction": "Write Blog Introduction - To Be Done (TBD)",
-#        "Write Blog conclusion": "Write Blog conclusion - ",
-#        "Write Blog Outline": "Write Blog Outline - ",
-        "Generate Blog FAQs": "Generate Blog FAQs - VISIT: https://alwrity-faq.streamlit.app/",
-        "AI Linkedin Post": "AI Linkedin Post writer - VISIT: https://alwrity-linkedin.streamlit.app/",
-        "YouTube To Blog": "YouTube To Blog - VISIT: https://alwrity-yt-blog.streamlit.app/",
-        "AI Essay Writer": "AI Essay Writer - VISIT: https://alwrity-essay.streamlit.app/",
-        "AI Story Writer": "AI Story Writer - VISIT: https://alwrity-story.streamlit.app/",
-#        "Research blog references": "Research blog references - Example: https://example.com/research-blog-references",
-#        "Convert Blog To HTML": "Convert Blog To HTML - Example: https://example.com/convert-blog-to-html",
-#        "Convert Blog To Markdown": "Convert Blog To Markdown - Example: https://example.com/convert-blog-to-markdown",
-#        "Blog Proof Reader": "Blog Proof Reader - Example: https://example.com/blog-proof-reader",
-#        "Get Blog Tags": "Get Blog Tags - Example: https://example.com/get-blog-tags",
-#        "Get blog categories": "Get blog categories - Example: https://example.com/get-blog-categories",
-#        "Get Blog Code Examples": "Get Blog Code Examples - Example: https://example.com/get-blog-code-examples",
-#        "SEO Checks": "SEO checks - TBD",
-        "Quit/Exit": "Quit/Exit - Example: Quit/Exit"
-    }
+    # Selectbox for country
+    countries = [
+        ("es", "Spain"),
+        ("vn", "Vietnam"),
+        ("pk", "Pakistan"),
+        ("in", "India"),
+        ("de", "Germany"),
+        ("cn", "China")
+    ]
 
-    if selected_persona_name:
-        selected_persona = next((persona for persona in personas if persona[0] == selected_persona_name), None)
-        if selected_persona:
-            character_input = message_dialog(
-                    title=f"To Try {selected_persona_name}, Visit below URL:",
-                    text=persona_descriptions[selected_persona_name]
-            ).run()
+    # Selectbox for language
+    languages = [
+        ("en", "English"),
+        ("es", "Spanish"),
+        ("vi", "Vietnamese"),
+        ("ar", "Arabic"),
+        ("hi", "Hindi"),
+        ("de", "German"),
+        ("zh-cn", "Chinese")
+    ]
+    col1, col2 = st.columns(2)
+    with col1:
+        news_country = st.selectbox("Select Origin Country of News Event:", countries, format_func=lambda x: x[1])
+    with col2:
+        news_language = st.selectbox("Select News Article Language to search for:", languages, format_func=lambda x: x[1])
 
+    if st.button("Generate News Report"):
+        with st.spinner("Generating News Report..."):
+            try:
+                news_report = ai_news_generation(news_keywords, news_country, news_language)
+                st.success(f"Successfully generated news report on: {news_keywords}")
+                st.markdown(news_report)
+            except Exception as err:
+                st.error(f"Failed to generate news report: {err}")
 
-def image_generator():
-    """ Generate image from given text """
-    print("Enter your long string below---")
-    img_prompt = prompt("Enter text to create image from:: ")
-
-    img_models = WordCompleter(['Stability-Stable-Diffusion', 'Dalle2', 'Dalle3'], ignore_case=True)
-    print("Choose between:: Stable-Diffusion, Dalle2, Dalle3")
-    img_model = prompt('Choose the image model to use for generation: ', completer=img_models, validator=ModelTypeValidator())
-
-    if 'Stability-Stable-Diffusion' in img_model:
-        api_key = 'STABILITY_API_KEY'
-    elif 'Dalle3' in img_model:
-        api_key = 'OPENAI_API_KEY'
-
-    if os.getenv(api_key) is None:
-        print(f"\n\n[bold green] 🙋 Get {api_key} Here:https://platform.stability.ai/docs/getting-started 🙋 -- \n")
-        user_input = prompt(f"💩 -**Please Enter(copy/paste) {api_key} Key** - Here🙋:")
-        os.environ[api_key] = user_input
-        try:
-            with open(".env", "a") as env_file:
-                env_file.write(f"{api_key}={user_input}\n")
-                print(f"✅ API Key added to .env file.")
-        except Exception as err:
-            print(f"Error: {err}")
-    try:
-        generate_image(img_prompt, img_model)
-    except Exception as err:
-        print(f"Failed to generate image: {err}")
-
-
-
-class ModelTypeValidator(Validator):
-    def validate(self, document):
-        if document.text.lower() not in ['stability-stable-diffusion', 'dalle2', 'dalle3']:
-            raise ValidationError(message='Please choose a valid Text to image model.')
-
-
-def image_to_text_writer():
-    """ IMage to Text Content Generation"""
-    os.system("clear" if os.name == "posix" else "cls")
-    text = "_______________________________________________________________________\n"
-    text += "\n⚠️    Alert!   💥❓💥\n"
-    text += "Provide Inputs Below to Continue..\n"
-    text += "_______________________________________________________________________\n\n"
-    print(text)
-
-    print("Make sure the file path is correct and the file is one of the following image types: PNG, JPEG, WEBP, HEIC, HEIF.\n")
-    
-    file_location = prompt('⚠️  Enter the image file location: ', validator=FileTypeValidator())
-    if file_location:
-        writing_completer = WordCompleter(['Blog', 'Food Recipe', 'Alt Text', 'Marketing Copy'], ignore_case=True)
-        print("Choose between 'Blog', 'Food Recipe', 'Alt Text', 'Marketing Copy'")
-        writing_type = prompt('Select the type of writing: ', completer=writing_completer, validator=WritingTypeValidator())
-    
-    prompt_gemini = None
-    if writing_type.lower() == 'blog':
-        prompt_gemini = "Given an image of a product and its target audience, write an engaging marketing description",
-    elif writing_type.lower() == 'food recipe':
-        prompt_gemini = """I have the ingredients above. Not sure what to cook for lunch.
-        Show me a list of foods with the recipes.
-        Accurately identify the baked good in the image and provide an appropriate and recipe consistent with your analysis.
-        Write a short, engaging blog post based on this picture.
-        It should include a description of the meal in the photo and talk about my journey meal prepping.
-        """
-    elif writing_type.lower() == 'alt text':
-        prompt_gemini = """Given an image from my blog, generate 3 different ALT texts.
-        The image alt text should be of maximum 2 lines. It should be descriptive and SEO optimised."""
-    elif writing_type.lower() == 'marketing copy':
-        prompt_gemini = "Given an image of a product and its target audience, write an engaging marketing description"
-
-    print("TBD/FIXME: Will be taken up soon..")
-
-
-class WritingTypeValidator(Validator):
-    def validate(self, document):
-        writing_type = document.text.strip().lower()
-        if writing_type not in ['blog', 'food recipe', 'alt text', 'marketing copy']:
-            raise ValidationError(message="Please select a valid writing type: Blog, Food Recipe, Alt Text, or Marketing Copy.")
-
-
-class FileTypeValidator(Validator):
-    def validate(self, document):
-        file_path = document.text.strip()
-        if not os.path.exists(file_path):
-            raise ValidationError(message="File does not exist.")
-        elif not self.is_valid_file_type(file_path):
-            raise ValidationError(message="Unsupported file type or MIME type. Please select an image file.")
-    
-    def is_valid_file_type(self, file_path):
-        # Define supported MIME types for image files
-        supported_types = ['image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif']
-        file_mime_type = self.get_file_mime_type(file_path)
-        return file_mime_type in supported_types
-    
-    def get_file_mime_type(self, file_path):
-        # Placeholder function to get the MIME type of the file
-        # You can use libraries like magic or mimetypes for this purpose
-        # Example:
-        # import magic
-        # mime = magic.Magic(mime=True)
-        # return mime.from_file(file_path)
-        return 'image/png'  # Placeholder value for demonstration
 
 
 def competitor_analysis():
-    text = "_______________________________________________________________________\n"
-    text += "\n⚠️    Alert!   💥❓💥\n"
-    text += "Provide competitor's URL, get details of similar/alternative companies.\n"
-    text += "Usecases: Know similar companies and alternatives, to given URL\n"
-    text += "Usecases: Write about similar companies, tools, alternative-to, similar products, similar websites etc\n"
-    text += "Read More Here: https://docs.exa.ai/reference/company-analyst \n"
-    text += "_______________________________________________________________________\n"
-    print(text)
-    similar_url = prompt("⚠️ 👋  Enter a single Valid URL for web analysis:: ")
-    try:
-        metaphor_find_similar(similar_url)
-    except Exception as err:
-        print(f"[bold red]✖ 🚫 Failed to do similar search.\nError:{err}[/bold red]")
-    return
+    st.title("Competitor Analysis")
+    st.markdown("""**Use Cases:**
+        - Know similar companies and alternatives for the given URL.
+        - Write listicles, similar companies, Top tools, alternative-to, similar products, similar websites, etc.
+        [Read More Here](https://docs.exa.ai/reference/company-analyst)
+    """)
 
+    similar_url = st.text_input("👋 Enter a single valid URL for web analysis:",
+                placeholder="Provide a competitor's URL and get details of similar/alternative companies.")
+
+    if st.button("Analyze"):
+        if similar_url:
+            try:
+                st.info(f"Starting analysis for the URL: {similar_url}")
+                with st.spinner("Performing competitor analysis..."):
+                    result = metaphor_find_similar(similar_url)
+                st.success("Analysis completed successfully!")
+                st.write(result)
+            except Exception as err:
+                st.error(f"✖ 🚫 Failed to do similar search.\nError: {err}")
+        else:
+            st.error("Please enter a valid URL.")
+
+
+def do_web_research():
+    """ Input keywords and do web research and present a report."""
+    st.title("Web Research Assistant")
+    st.write("Enter keywords for web research. The keywords should be at least three words long.")
+    
+    search_keywords = st.text_input("Search Keywords", placeholder="Enter keywords for web research...")
+    if st.button("Start Web Research"):
+        if search_keywords and len(search_keywords.split()) >= 3:
+            try:
+                st.info(f"Starting web research on given keywords: {search_keywords}")
+                with st.spinner("Performing web research..."):
+                    web_research_result = gpt_web_researcher(search_keywords)
+                st.success("Web research completed successfully!")
+                st.write(web_research_result)
+            except Exception as err:
+                st.error(f"ERROR: Failed to do web research: {err}")
+        else:
+            st.warning("Search keywords should be at least three words long. Please try again.")
+
+
+def ai_finance_ta_writer():
+    st.markdown("<div class='sub-header'>AI Financial Technical Analysis Writer</div>", unsafe_allow_html=True)
+
+    ticker_symbol = st.text_input(
+        "Enter Ticker Symbol for TA:",
+        placeholder="Enter a valid Ticker Symbol (Examples: IBM, BABA, HDFCBANK.NS, TATAMOTORS.NS etc)",
+        help="Be sure of the ticker symbol. Double-check it! Examples: IBM, BABA, HDFCBANK.NS, TATAMOTORS.NS"
+    )
+
+    if st.button("Generate TA Report"):
+        if ticker_symbol:
+            with st.spinner("Generating TA Report..."):
+                try:
+                    ta_report = write_basic_ta_report(ticker_symbol)
+                    st.success(f"Successfully generated TA report for: {ticker_symbol}")
+                    st.markdown(ta_report)
+                except Exception as err:
+                    st.error(f"🚫 Check ticker symbol: Failed to write Financial Technical Analysis. Error: {err}")
+        else:
+            st.error("🚫 Provide a valid Ticker Symbol. Don't waste my time.")
+
+def ai_social_writer():
+    # Define social media platforms as radio buttons
+    social_media_options = [
+        ("facebook", "Facebook"),
+        ("linkedin", "LinkedIn"),
+        ("twitter", "Twitter"),
+        ("instagram", "Instagram"),
+        ("youtube", "YouTube")  # Add YouTube
+    ]
+
+    # Selectbox for choosing a platform
+    selected_platform = st.radio("Choose a Social Media Platform:", social_media_options, format_func=lambda x: x[1])
+    if "facebook" in selected_platform:
+        facebook_post_writer()
+    elif "linkedin" in selected_platform:
+        linked_post_writer()
+    elif "twitter" in selected_platform:
+        tweet_writer()
+    elif "instagram" in selected_platform:
+        insta_writer()
+#    elif "youtube" in selected_platform:
+#        options = ["Write YT Description", "Write YT Title", "Write YT Script"]
+#        selected_option = st.radio("", options)
+#
+#        if selected_option == "Write YT Description":
+#            write_yt_description()
+#        elif selected_option == "Write YT Title":
+#            write_yt_title()
+#        elif selected_option == "Write YT Script":
+#            write_yt_script()
