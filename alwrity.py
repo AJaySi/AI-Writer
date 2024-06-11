@@ -24,7 +24,9 @@ def check_api_keys():
     api_keys = {
         "METAPHOR_API_KEY": "Metaphor AI Key (Get it here: https://dashboard.exa.ai/login)",
         "TAVILY_API_KEY": "Tavily AI Key (Get it here: https://tavily.com/#api)",
-        "SERPER_API_KEY": "Serper API Key (Get it here: https://serper.dev/signup)"
+        "SERPER_API_KEY": "Serper API Key (Get it here: https://serper.dev/signup)",
+        "STABILITY_API_KEY": "Stability API Key (Get it here: https://platform.stability.ai/)",
+        "FIRECRAWL_API_KEY": "Firecrawl API key (Get it here: https://www.firecrawl.dev/account)"
     }
     missing_keys = []
 

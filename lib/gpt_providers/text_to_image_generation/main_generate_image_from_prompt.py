@@ -11,6 +11,7 @@
 import os
 import sys
 import datetime
+import streamlit as st
 
 import openai  # OpenAI Python library to make API calls
 from loguru import logger
@@ -56,6 +57,7 @@ def generate_image(user_prompt):
             image_stored_at = generate_stable_diffusion_image(img_prompt)
     except Exception as err:
         logger.error(f"Failed to generate Image: {err}")
+        st.warning(f"Failed to generate Image: {err}")
     return image_stored_at
 
 

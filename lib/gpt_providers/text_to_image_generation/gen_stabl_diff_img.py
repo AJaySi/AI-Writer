@@ -8,6 +8,7 @@ import os
 import requests
 from PIL import Image
 from io import BytesIO
+import streamlit as st
 
 from .save_image import save_generated_image
 
@@ -18,7 +19,7 @@ def generate_stable_diffusion_image(prompt):
     api_key = os.getenv("STABILITY_API_KEY")
     
     if api_key is None:
-        raise Exception("Missing Stability API key.")
+        st.warning("Missing Stability API key.")
     
     response = requests.post(
         f"{api_host}/v1/generation/{engine_id}/text-to-image",

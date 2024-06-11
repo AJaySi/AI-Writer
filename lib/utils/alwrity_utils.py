@@ -1,4 +1,5 @@
 import os
+import re
 import streamlit as st
 from pathlib import Path
 import configparser
@@ -19,6 +20,7 @@ from lib.ai_writers.linkedin_ai_writer import linked_post_writer
 from lib.ai_writers.twitter_ai_writer import tweet_writer 
 from lib.ai_writers.insta_ai_writer import insta_writer
 from lib.ai_writers.youtube_ai_writer import write_yt_title, write_yt_description, write_yt_script
+from lib.ai_writers.web_url_ai_writer import blog_from_url
 from lib.gpt_providers.text_generation.ai_story_writer import ai_story_generator
 from lib.gpt_providers.text_generation.ai_essay_writer import ai_essay_generator
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
@@ -35,14 +37,15 @@ def is_web_link(text):
 
 def process_input(input_text, uploaded_file):
     if is_youtube_link(input_text):
-        st.success("Detected YouTube link")
-        st.video(input_text)
+        if input_text.startswith("https://www.youtube.com/") or input_text.startswith("http://www.youtube.com/"):
+            return("youtube_url")
+        else:
+            st.error("Invalid YouTube URL. Please enter a valid URL.")
+
     elif is_web_link(input_text):
-        st.success("Detected Web link")
-        st.write(f"[Visit link]({input_text})")
+        return("web_url")
     else:
-        st.success("Detected Keywords")
-        st.write(input_text)
+        return("keywords")
 
     if uploaded_file is not None:
         file_details = {"filename": uploaded_file.name, "filetype": uploaded_file.type, "filesize": uploaded_file.size}
@@ -66,7 +69,7 @@ def blog_from_keyword():
     st.title("Blog Content Writer")
     col1, col2 = st.columns([2, 1.5])
     with col1:
-        blog_keywords = st.text_area('**Enter Keywords/Title/YouTube Link/Web URLs**',
+        user_input = st.text_area('**Enter Keywords/Title/YouTube Link/Web URLs**',
                                   help='Provide keywords, titles, YouTube links, or web URLs to generate content.',
                                   placeholder="""Write Blog From:
         - Keywords/Blog Title: Provide keywords to web research & write blog.
@@ -79,33 +82,40 @@ def blog_from_keyword():
                                          type=["txt", "pdf", "docx", "jpg", "jpeg", "png", "mp3", "wav", "mp4", "mkv", "avi"],
                                          help='Attach files such as audio, video, images, or documents.')
 
-    if blog_keywords and len(blog_keywords.split()) < 2:
-        st.error('🚫 Blog keywords should be at least two words long. Please try again.')
-
+    input_type = process_input(user_input, uploaded_file)
     content_type = st.radio("Select content type:", ["Normal-length content", "Long-form content", "Experimental - AI Agents team"])
     if st.button("Write Blog"):
         # Clear the previous results from the screen
         st.empty()
-        if blog_keywords and len(blog_keywords.split()) >= 2:
-            if content_type == "Normal-length content":
-                try:
-                    short_blog = write_blog_from_keywords(blog_keywords)
-                    st.markdown(short_blog)
-                except Exception as err:
-                    st.error(f"🚫 Failed to write blog on {blog_keywords}, Error: {err}")
-            elif content_type == "Long-form content":
-                try:
-                    st.empty()
-                    long_form_generator(blog_keywords)
-                    st.success(f"Successfully wrote long-form blog on: {blog_keywords}")
-                except Exception as err:
-                    st.error(f"🚫 Failed to write blog on {blog_keywords}, Error: {err}")
-            elif content_type == "Experimental - AI Agents team":
-                try:
-                    ai_agents_writers(blog_keywords)
-                    st.success(f"Successfully wrote content with AI agents on: {blog_keywords}")
-                except Exception as err:
-                    st.error(f"🚫 Failed to Write content with AI agents: {err}")
+        # Check if the user input is keywords or blog title.
+        if 'keywords' in input_type:
+            if user_input and len(user_input.split()) >= 2:
+                if content_type == "Normal-length content":
+                    try:
+                        short_blog = write_blog_from_keywords(user_input)
+                        st.markdown(short_blog)
+                    except Exception as err:
+                        st.error(f"🚫 Failed to write blog on {user_keywords}, Error: {err}")
+                elif content_type == "Long-form content":
+                    try:
+                        st.empty()
+                        long_form_generator(user_input)
+                        st.success(f"Successfully wrote long-form blog on: {user_input}")
+                    except Exception as err:
+                        st.error(f"🚫 Failed to write blog on {user_input}, Error: {err}")
+                elif content_type == "Experimental - AI Agents team":
+                    try:
+                        ai_agents_writers(user_input)
+                        st.success(f"Successfully wrote content with AI agents on: {user_input}")
+                    except Exception as err:
+                        st.error(f"🚫 Failed to Write content with AI agents: {err}")
+            else:
+                st.error('🚫 Blog keywords should be at least two words long. Please try again.')
+        
+        elif 'youtube_url' in input_type:
+            generate_audio_blog(user_input)
+        elif 'web_url' in input_type:
+            blog_from_url(user_input)
 
 
 def ai_agents_team():

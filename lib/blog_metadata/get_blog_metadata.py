@@ -1,6 +1,7 @@
 import sys
 import configparser
 import json
+import streamlit as st
 
 from loguru import logger
 logger.remove()
@@ -12,7 +13,7 @@ logger.add(sys.stdout,
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
-def blog_metadata(blog_content):
+def blog_metadata(blog_article):
     """ Common function to get blog metadata """
     logger.info(f"Generating Content MetaData\n")
 
@@ -47,7 +48,7 @@ def blog_metadata(blog_content):
         result_json = json.loads(result_json)
     except Exception as err:
         logger.error(f"Failed to get response from LLM: {err}")
-        raise err
+        st.error(f"Failed to get response from LLM: {err}")
 
     # Extract the data from the JSON response
     blog_title = result_json.get("title")
