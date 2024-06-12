@@ -301,11 +301,11 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     # Export the paths and file names. Dont want alwrity to be chatty and prompt for inputs.
-    os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "lib", "workspace", "web_research_report",
+    os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "lib", "workspace", "alwrity_web_research",
                                                   f"web_research_report_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}")
-    os.environ["IMG_SAVE_DIR"] = os.path.join(os.getcwd(), "lib", "workspace", "generated_content")
-    os.environ["CONTENT_SAVE_DIR"] = os.path.join(os.getcwd(), "lib", "workspace", "generated_content")
-    os.environ["PROMPTS_DIR"] = os.path.join(os.getcwd(), "lib", "workspace", "prompts")
+    os.environ["IMG_SAVE_DIR"] = os.path.join(os.getcwd(), "lib", "workspace", "alwrity_content")
+    os.environ["CONTENT_SAVE_DIR"] = os.path.join(os.getcwd(), "lib", "workspace", "alwrity_content")
+    os.environ["PROMPTS_DIR"] = os.path.join(os.getcwd(), "lib", "workspace", "alwrity_prompts")
     os.environ["ALWRITY_CONFIG"] = os.path.join(os.getcwd(), "lib", "workspace", "alwrity_config", "main_config.json")
 
     # Check API keys and LLM environment settings
