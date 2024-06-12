@@ -60,10 +60,14 @@ def scrape_url(url):
     Returns:
         dict: The result of the URL scraping, or None if an error occurred.
     """
-    print(f"\n\nURL: {url} ---- {os.getenv('FIRECRAWL_API_KEY')}\n\n")
     client = initialize_client()
+    params = {
+    'pageOptions': {
+        'onlyMainContent': True
+        }
+    }
     try:
-        result = client.scrape_url(url)
+        result = client.scrape_url(url, params=params)
         return result
     except Exception as e:
         logging.error(f"Error scraping URL: {e}")

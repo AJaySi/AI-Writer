@@ -75,8 +75,6 @@ def write_blog_from_keywords(search_keywords, url=None):
                 logger.info(f"\n\n######### Blog content after Tavily AI research: ######### \n\n")
                 blog_markdown_str = write_blog_google_serp(search_keywords, tavily_search_result)
                 status.update(label="Finished Writing Blog From Tavily Results:{blog_markdown_str}")
-            else:
-                print("Not Writing with TAVILY..\n\n")
         except Exception as err:
             logger.error(f"Failed to do Tavily AI research: {err}")
 
@@ -96,10 +94,10 @@ def write_blog_from_keywords(search_keywords, url=None):
         status.update(label=f"Saved the content in this file: {saved_blog_to_file}")
         blog_frontmatter = dedent(f"""
         \n---------------------------------------------------------------------
-        title: {blog_title}\n
-        categories: [{blog_categories}]\n
-        tags: [{blog_tags}]\n
-        Meta description: {blog_meta_desc.replace(":", "-")}\n
+        title: {blog_title.strip()}\n
+        categories: [{blog_categories.strip()}]\n
+        tags: [{blog_tags.strip()}]\n
+        Meta description: {blog_meta_desc.replace(":", "-").strip()}\n
         ---------------------------------------------------------------------\n
         """)
         logger.info(f"\n\n --------- Finished writing Blog for : {search_keywords} -------------- \n")

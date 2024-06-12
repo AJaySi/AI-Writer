@@ -166,4 +166,20 @@ div.row-widget.stRadio > div[role="radiogroup"] > label[data-baseweb="radio"] {
     margin-bottom: 10px;
     color: #333;
 }
+audio::-webkit-media-controls-panel,
+audio::-webkit-media-controls-enclosure {
+    background-color:#532b5a;}
 
+audio::-webkit-media-controls-time-remaining-display,
+audio::-webkit-media-controls-current-time-display {
+    color: white;
+    text-shadow: none; 
+
+}
+
+audio::-webkit-media-controls-timeline {
+  background-color: #532b5a;
+  border-radius: 25px;
+  margin-left: 10px;
+  margin-right: 10px;
+}

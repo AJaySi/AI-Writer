@@ -21,19 +21,21 @@ from lib.ai_writers.twitter_ai_writer import tweet_writer
 from lib.ai_writers.insta_ai_writer import insta_writer
 from lib.ai_writers.youtube_ai_writer import write_yt_title, write_yt_description, write_yt_script
 from lib.ai_writers.web_url_ai_writer import blog_from_url
-from lib.gpt_providers.text_generation.ai_story_writer import ai_story_generator
-from lib.gpt_providers.text_generation.ai_essay_writer import ai_essay_generator
+from lib.ai_writers.ai_story_writer import ai_story_generator
+from lib.ai_writers.ai_essay_writer import ai_essay_generator
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_planner
 
 
 def is_youtube_link(text):
-    youtube_regex = re.compile(r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?([^&=%\?]{11})')
-    return youtube_regex.match(text)
+    if text is not None:
+        youtube_regex = re.compile(r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?([^&=%\?]{11})')
+        return youtube_regex.match(text)
 
 def is_web_link(text):
-    web_regex = re.compile(r'(https?://)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)')
-    return web_regex.match(text)
+    if text is not None:
+        web_regex = re.compile(r'(https?://)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)')
+        return web_regex.match(text)
 
 def process_input(input_text, uploaded_file):
     if is_youtube_link(input_text):
@@ -44,8 +46,10 @@ def process_input(input_text, uploaded_file):
 
     elif is_web_link(input_text):
         return("web_url")
-    else:
+    elif input_text is not None:
         return("keywords")
+    elif input_text is None:
+        input_text = None
 
     if uploaded_file is not None:
         file_details = {"filename": uploaded_file.name, "filetype": uploaded_file.type, "filesize": uploaded_file.size}
@@ -61,8 +65,10 @@ def process_input(input_text, uploaded_file):
             st.image(uploaded_file)
         elif uploaded_file.type.startswith("audio/"):
             st.audio(uploaded_file)
+            return("audio_file")
         elif uploaded_file.type.startswith("video/"):
             st.video(uploaded_file)
+    
 
 def blog_from_keyword():
     """ Input blog keywords, research and write a factual blog."""
@@ -82,11 +88,16 @@ def blog_from_keyword():
                                          type=["txt", "pdf", "docx", "jpg", "jpeg", "png", "mp3", "wav", "mp4", "mkv", "avi"],
                                          help='Attach files such as audio, video, images, or documents.')
 
-    input_type = process_input(user_input, uploaded_file)
     content_type = st.radio("Select content type:", ["Normal-length content", "Long-form content", "Experimental - AI Agents team"])
     if st.button("Write Blog"):
         # Clear the previous results from the screen
         st.empty()
+        if user_input == "": user_input = None
+        if uploaded_file is None and user_input is None:
+            st.error("🤬🤬 Either Enter/Type/Attach, can't read your mind.(yet..)")
+            st.stop()
+
+        input_type = process_input(user_input, uploaded_file)
         # Check if the user input is keywords or blog title.
         if 'keywords' in input_type:
             if user_input and len(user_input.split()) >= 2:
@@ -95,10 +106,9 @@ def blog_from_keyword():
                         short_blog = write_blog_from_keywords(user_input)
                         st.markdown(short_blog)
                     except Exception as err:
-                        st.error(f"🚫 Failed to write blog on {user_keywords}, Error: {err}")
+                        st.error(f"🚫 Failed to write blog on {user_input}, Error: {err}")
                 elif content_type == "Long-form content":
                     try:
-                        st.empty()
                         long_form_generator(user_input)
                         st.success(f"Successfully wrote long-form blog on: {user_input}")
                     except Exception as err:
@@ -112,7 +122,7 @@ def blog_from_keyword():
             else:
                 st.error('🚫 Blog keywords should be at least two words long. Please try again.')
         
-        elif 'youtube_url' in input_type:
+        elif 'youtube_url' in input_type or 'audio_file' in input_type:
             generate_audio_blog(user_input)
         elif 'web_url' in input_type:
             blog_from_url(user_input)
@@ -248,23 +258,28 @@ def write_story():
     st.title("Alwrity AI Story Writer ✍️")
     st.write("Select your story writing persona or book genre and let AI help you craft an amazing story. 🌟")
 
-    # Select persona
-    selected_persona_name = st.selectbox(
-        "Select Your Story Writing Persona or Book Genre:",
-        options=personas,
-        help="Choose a persona that resonates with the style you want the AI Story Writer to adopt."
-    )
+    # Create two columns
+    col1, col2 = st.columns(2)
 
-    # Display persona description
-    if selected_persona_name:
-        st.info(persona_descriptions[selected_persona_name])
+    with col1:
+        # Select persona
+        selected_persona_name = st.selectbox(
+            "Select Your Story Writing Persona or Book Genre:",
+            options=personas,
+            help="Choose a persona that resonates with the style you want the AI Story Writer to adopt."
+        )
 
-    # Combined input for characters and plot details
-    story_details_input = st.text_area(
-        "Enter characters and plot details for your story:",
-        placeholder="E.g., Characters: John, Alice, Dragon, Detective\nPlot: A detective is trying to solve a mystery in a small town...",
-        help="Provide a list of characters and a brief outline of the plot for your story."
-    )
+        # Display persona description
+        if selected_persona_name:
+            st.info(persona_descriptions[selected_persona_name])
+
+    with col2:
+        # Combined input for characters and plot details
+        story_details_input = st.text_area(
+            "Enter characters and plot details for your story:",
+            placeholder="E.g., Characters: John, Alice, Dragon, Detective\nPlot: A detective is trying to solve a mystery in a small town...",
+            help="Provide a list of characters and a brief outline of the plot for your story."
+        )
 
     # Generate story button
     if st.button("Generate Story"):
@@ -273,7 +288,6 @@ def write_story():
             ai_story_generator(selected_persona_name, persona_descriptions[selected_persona_name], story_details_input)
         else:
             st.error("Please select a persona and enter the story details to generate a story.")
-
 
 
 def essay_writer():
