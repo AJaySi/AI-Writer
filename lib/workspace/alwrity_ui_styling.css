@@ -95,7 +95,7 @@ input[type="text"] {
 }
 
 /* Custom button styling */
-button {
+div.stButton > button:first-child {
     background: #1565C0;  /* Match tab color */
     color: white;
     border: none;
@@ -112,8 +112,8 @@ button {
     font-weight: bold;
 }
 
-button:hover {
-    background-color: #1976D2;  /* Match tab hover color */
+div.stButton > button:hover:first-child {
+    background-color: #1976A2;  /* Match tab hover color */
     box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 

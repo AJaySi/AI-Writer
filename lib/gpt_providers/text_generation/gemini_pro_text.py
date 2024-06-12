@@ -2,6 +2,7 @@
 import os
 import sys
 from pathlib import Path
+import streamlit as st
 
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -44,6 +45,7 @@ def gemini_text_response(prompt, temperature, top_p, n, max_tokens):
             for chunk in response:
                 # text_response.append(chunk.text)
                 print(chunk.text)
+                #st.write(chunk.text)
         else:
             print(response)
         logger.info(f"Number of Token in Prompt Sent: {model.count_tokens(prompt)}")

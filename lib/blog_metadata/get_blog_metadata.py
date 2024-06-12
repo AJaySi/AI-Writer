@@ -1,27 +1,51 @@
 import sys
 import streamlit as st
-
 from loguru import logger
+import random
+import time
+
 logger.remove()
 logger.add(sys.stdout,
-        colorize=True,
-        format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
-    )   
+           colorize=True,
+           format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
+           )
 
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
-
 
 def blog_metadata(blog_article):
     """ Common function to get blog metadata """
     logger.info(f"Generating Content MetaData\n")
+    
+    progress_bar = st.progress(0)
+    total_steps = 4
 
+    # Step 1: Generate blog title
+    time.sleep(random.uniform(1, 3))
     blog_title = generate_blog_title(blog_article)
+    progress_bar.progress(1 / total_steps)
+
+    # Step 2: Generate blog meta description
+    time.sleep(random.uniform(1, 3))
     blog_meta_desc = generate_blog_description(blog_article)
+    progress_bar.progress(2 / total_steps)
+
+    # Step 3: Generate blog tags
+    time.sleep(random.uniform(1, 3))
     blog_tags = get_blog_tags(blog_article)
+    progress_bar.progress(3 / total_steps)
+
+    # Step 4: Generate blog categories
+    time.sleep(random.uniform(1, 3))
     blog_categories = get_blog_categories(blog_article)
+    progress_bar.progress(4 / total_steps)
+
+    # Present the result in a table format
+    st.table({
+        "Metadata": ["Blog Title", "Meta Description", "Tags", "Categories"],
+        "Value": [blog_title, blog_meta_desc, blog_tags, blog_categories]
+    })
 
     return blog_title, blog_meta_desc, blog_tags, blog_categories
-
 
 def generate_blog_title(blog_article):
     """
@@ -43,7 +67,6 @@ def generate_blog_title(blog_article):
         logger.error(f"Failed to get response from LLM: {err}")
         raise err
 
-
 def generate_blog_description(blog_content):
     """
         Prompt designed to give SEO optimized blog descripton
@@ -62,7 +85,6 @@ def generate_blog_description(blog_content):
         logger.error(f"Failed to get response from LLM:{err}")
         raise err
 
-
 def get_blog_categories(blog_article):
     """
     Function to generate blog categories for given blog content.
@@ -80,12 +102,10 @@ def get_blog_categories(blog_article):
     except Exception as err:
         logger.error(f"get_blog_categories:Failed to get response from LLM: {err}")
 
-
 def get_blog_tags(blog_article):
     """
         Function to suggest tags for the given blog content
     """
-    # Suggest at least 5 tags for the following blog post [Enter your blog post text here].
     prompt = f"""As an expert SEO and blog writer, suggest only 2 relevant and specific blog tags
          for the given blog content. Only reply with comma separated values.
          Blog content:  {blog_article}."""
@@ -96,3 +116,4 @@ def get_blog_tags(blog_article):
     except Exception as err:
         logger.error(f"Failed to get response from LLM: {err}")
         raise err
+

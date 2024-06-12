@@ -22,11 +22,11 @@ from lib.utils.alwrity_utils import (
 # Function to check if API keys are present and prompt user to input if not
 def check_api_keys():
     api_keys = {
-        "METAPHOR_API_KEY": "Metaphor AI Key (Get it here: https://dashboard.exa.ai/login)",
-        "TAVILY_API_KEY": "Tavily AI Key (Get it here: https://tavily.com/#api)",
-        "SERPER_API_KEY": "Serper API Key (Get it here: https://serper.dev/signup)",
-        "STABILITY_API_KEY": "Stability API Key (Get it here: https://platform.stability.ai/)",
-        "FIRECRAWL_API_KEY": "Firecrawl API key (Get it here: https://www.firecrawl.dev/account)"
+        "METAPHOR_API_KEY": "[Get Metaphor AI Key](https://dashboard.exa.ai/login)",
+        "TAVILY_API_KEY": "[Get Tavily AI Key](https://tavily.com/#api)",
+        "SERPER_API_KEY": "[Get Serper API Key](https://serper.dev/signup)",
+        "STABILITY_API_KEY": "[Get Stability API Key Here](https://platform.stability.ai/)",
+        "FIRECRAWL_API_KEY": "[Get Firecrawl API key Here](https://www.firecrawl.dev/account)"
     }
     missing_keys = []
 
@@ -35,14 +35,21 @@ def check_api_keys():
             missing_keys.append((key, description))
 
     if missing_keys:
-        st.warning(f"API keys are missing. Please provide them below:{missing_keys}")
+        st.warning("🚨 Some API keys are missing! Please provide them below: 🚨")
+        
+        new_keys = []
         for key, description in missing_keys:
-            api_key = st.text_input(f"Enter {key}:", placeholder=description, help=description)
+            api_key = st.text_input(f"Enter 🔏 {key}: 👉{description}👈", placeholder=description, help=description)
             if api_key:
-                with open(".env", "a") as env_file:
+                new_keys.append((key, api_key))
+        
+        if new_keys:
+            with open(".env", "a") as env_file:
+                for key, api_key in new_keys:
                     env_file.write(f"{key}={api_key}\n")
-                os.environ[key] = api_key
-                st.success(f"{key} added successfully! Enter to Continue..")
+                    os.environ[key] = api_key
+                    st.success(f"✅ {key} added successfully! Press Enter to continue.")
+        
         return False
     return True
 
@@ -317,7 +324,6 @@ def main():
         sidebar_configuration()
     else:
         st.error("Error loading Environment variables.")
-        st.stop()
 
     # Define the tabs
     tab1, tab2, tab3, tab4, tab5 = st.tabs(

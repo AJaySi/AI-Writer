@@ -74,11 +74,11 @@ def write_blog_from_keywords(search_keywords, url=None):
             if blog_markdown_str and tavily_search_result:
                 logger.info(f"\n\n######### Blog content after Tavily AI research: ######### \n\n")
                 blog_markdown_str = write_blog_google_serp(search_keywords, tavily_search_result)
-                status.update(label="Finished Writing Blog From Tavily Results:{blog_markdown_str}")
+                status.update(label="Finished Writing Blog From Tavily Results:{blog_markdown_str}", expanded=True)
         except Exception as err:
             logger.error(f"Failed to do Tavily AI research: {err}")
 
-        status.update(label="🙎 Generating - Title, Meta Description, Tags, Categories for the content.")
+        status.update(label="🙎 Generating - Title, Meta Description, Tags, Categories for the content.", expanded=True)
         try:
             blog_title, blog_meta_desc, blog_tags, blog_categories = blog_metadata(blog_markdown_str)
         except Exception as err:
@@ -87,21 +87,14 @@ def write_blog_from_keywords(search_keywords, url=None):
         try:
             generated_image_filepath = generate_image(f"{blog_title} + ' ' + {blog_meta_desc}")
         except Exception as err:
-            st.error(f"Failed in Image generation: {err}")
+            st.warning(f"Failed in Image generation: {err}")
 
         saved_blog_to_file = save_blog_to_file(blog_markdown_str, blog_title, blog_meta_desc, 
                             blog_tags, blog_categories, generated_image_filepath)
         status.update(label=f"Saved the content in this file: {saved_blog_to_file}")
-        blog_frontmatter = dedent(f"""
-        \n---------------------------------------------------------------------
-        title: {blog_title.strip()}\n
-        categories: [{blog_categories.strip()}]\n
-        tags: [{blog_tags.strip()}]\n
-        Meta description: {blog_meta_desc.replace(":", "-").strip()}\n
-        ---------------------------------------------------------------------\n
-        """)
         logger.info(f"\n\n --------- Finished writing Blog for : {search_keywords} -------------- \n")
-        st.markdown(f"{blog_frontmatter}")
+       
+        # Render the result on streamlit UI
         st.image(generated_image_filepath)
         st.markdown(f"{blog_markdown_str}")
-        status.update(label=f"Finished, Review & Use your Original Content Below: {saved_blog_to_file}")
+        status.update(label=f"Finished, Review & Use your Original Content Below: {saved_blog_to_file}", state="complete")

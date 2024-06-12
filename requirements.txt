@@ -5,6 +5,7 @@ python-dotenv
 loguru
 openai
 crewai[tools]
+crewai_tools
 google.generativeai
 mistralai
 tenacity
