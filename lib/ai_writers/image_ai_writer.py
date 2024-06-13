@@ -2,6 +2,7 @@ import sys
 import os
 
 from textwrap import dedent
+from PIL import Image
 import json
 from pathlib import Path
 from datetime import datetime
@@ -22,39 +23,32 @@ from ..blog_postprocessing.save_blog_to_file import save_blog_to_file
 from ..gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
+import google.generativeai as genai
 
-def blog_from_url(weburl):
+
+def blog_from_image(prompt, uploaded_img):
     """
     This function will take a blog Topic to first generate sections for it
     and then generate content for each section.
     """
     # Use to store the blog in a string, to save in a *.md file.
     blog_markdown_str = None
-    tavily_search_result = None
-    example_blog_titles = []
+    logger.info(f"Researching and Writing Blog on {uploaded_img} and {prompt}")
+    # FIXME: Implement support for Openai.
+    if not os.getenv("GEMINI_API_KEY"):
+        st.error("Only Gemini supported, Open Issue ticket on github for Openai, others.")
+        st.stop()
 
-    logger.info(f"Researching and Writing Blog on: {weburl}")
-    with st.status("Started Writing..", expanded=True) as status:
+    with st.status("Started Writing from Image..", expanded=True) as status:
         st.empty()
-        status.update(label=f"Researching and Writing Blog on: {weburl}")
+        status.update(label=f"Researching and Writing Blog on given Image")
         try:
-            scraped_text = scrape_url(weburl)
-            logger.info(scraped_text)
+            blog_markdown_str = write_blog_from_image(prompt, uploaded_img)
         except Exception as err:
-            st.error(f"Failed to scrape web page from url-{weburl} - Error: {err}")
-            logger.error(f"Failed in web research: {err}")
+            st.error(f"Failed to write blog from Image - Error: {err}")
+            logger.error(f"Failed to write blog from image: {err}")
             st.stop()
-        status.update(label="Successfully Scraped/Fetched url: {weburl}", expanded=False, state="complete")
-
-    with st.status(f"Started Writing blog from {weburl}..", expanded=True) as status:
-        # Do Tavily AI research to augument the above blog.
-        try:
-            blog_markdown_str = write_blog_from_weburl(scraped_text)
-            status.update(label="Finished Writing Blog From: {weburl}")
-        except Exception as err:
-            logger.error(f"Failed to write blog from: {weburl}")
-            st.error(f"Failed to write blog from: {weburl}")
-            st.stop()
+        status.update(label="Successfully wrote blog from image.", expanded=False, state="complete")
 
         try:
             status.update(label="🙎 Generating - Title, Meta Description, Tags, Categories for the content.")
@@ -71,13 +65,16 @@ def blog_from_url(weburl):
         saved_blog_to_file = save_blog_to_file(blog_markdown_str, blog_title, blog_meta_desc, 
                             blog_tags, blog_categories, generated_image_filepath)
         status.update(label=f"Saved the content in this file: {saved_blog_to_file}")
-        logger.info(f"\n\n --------- Finished writing Blog for : {weburl} -------------- \n")
-        st.image(generated_image_filepath)
+        logger.info(f"\n\n --------- Finished writing Blog -------------- \n")
+        st.image(generated_image_filepath, caption=blog_title)
         st.markdown(f"{blog_markdown_str}")
         status.update(label=f"Finished, Review & Use your Original Content Below: {saved_blog_to_file}", state="complete")
-        
 
-def write_blog_from_weburl(scraped_website):
+        # Clean up the temporary file after processing (optional)
+        os.remove(uploaded_img)
+
+
+def write_blog_from_image(prompt, uploaded_img):
     """Combine the given online research and GPT blog content"""
     try:
         config_path = Path(os.environ["ALWRITY_CONFIG"])
@@ -89,26 +86,27 @@ def write_blog_from_weburl(scraped_website):
 
     blog_characteristics = config['Blog Content Characteristics']
     
-    prompt = f"""
-        As expert Creative Content writer, I will provide you with scraped website content.
-        I want you to write a detailed {blog_characteristics['Blog Type']} blog post including 5 FAQs.
+    if not prompt:
+        prompt = f"""
+            As expert Creative Content writer, analyse the given image carefully.
+            I want you to write a detailed {blog_characteristics['Blog Type']} blog post including 5 FAQs.
         
-        Below are the guidelines to follow:
-        1). You must respond in {blog_characteristics['Blog Language']} language.
-        2). Tone and Brand Alignment: Adjust your tone, voice, personality for {blog_characteristics['Blog Tone']} audience.
-        3). Make sure your response content length is of {blog_characteristics['Blog Length']} words.
-        4). Include FAQs from 'People also Ask' section of provided context 'google search result'.
-
-        I want the post to offer unique insights, relatable examples, and a fresh perspective on the topic.
-        \n\n
-        Website Content:
-        '''{scraped_website}'''
-        """ 
+            Below are the guidelines to follow:
+            1). You must respond in {blog_characteristics['Blog Language']} language.
+            2). Tone and Brand Alignment: Adjust your tone, voice, personality for {blog_characteristics['Blog Tone']} audience.
+            3). Make sure your response content length is of {blog_characteristics['Blog Length']} words.
+        """
     logger.info("Generating blog and FAQs from Google web search results.")
     
     try:
-        response = llm_text_gen(prompt)
-        return response
+        #response = llm_text_gen(prompt)
+        genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+        version = 'models/gemini-1.5-flash'
+        model = genai.GenerativeModel(version)
+        model_info = genai.get_model(version)
+        print(f'{version} - input limit: {model_info.input_token_limit}, output limit: {model_info.output_token_limit}')
+        response = model.generate_content([prompt, Image.open(uploaded_img)])
+        return response.text
     except Exception as err:
         logger.error(f"Exit: Failed to get response from LLM: {err}")
         exit(1)

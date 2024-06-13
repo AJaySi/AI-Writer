@@ -307,6 +307,7 @@ def main():
         Welcome to Alwrity!
     </div>
     """, unsafe_allow_html=True)
+    
     # Export the paths and file names. Dont want alwrity to be chatty and prompt for inputs.
     os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "lib", "workspace", "alwrity_web_research",
                                                   f"web_research_report_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}")
@@ -375,7 +376,7 @@ def write_blog():
         "AI Copywriter",
         "Quit"
     ]
-    choice = st.selectbox("**Select a content creation type:**", options, index=0, format_func=lambda x: f"📝 {x}")
+    choice = st.selectbox("**👇Select a content creation type:**", options, index=0, format_func=lambda x: f"📝 {x}")
 
     if choice == "AI Blog Writer":
         blog_from_keyword()

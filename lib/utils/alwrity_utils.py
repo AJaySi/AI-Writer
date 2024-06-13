@@ -1,6 +1,7 @@
 import os
 import re
 import streamlit as st
+import tempfile
 from pathlib import Path
 import configparser
 from datetime import datetime
@@ -21,6 +22,7 @@ from lib.ai_writers.twitter_ai_writer import tweet_writer
 from lib.ai_writers.insta_ai_writer import insta_writer
 from lib.ai_writers.youtube_ai_writer import write_yt_title, write_yt_description, write_yt_script
 from lib.ai_writers.web_url_ai_writer import blog_from_url
+from lib.ai_writers.image_ai_writer import blog_from_image
 from lib.ai_writers.ai_story_writer import ai_story_generator
 from lib.ai_writers.ai_essay_writer import ai_essay_generator
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
@@ -61,11 +63,15 @@ def process_input(input_text, uploaded_file):
             st.write("PDF file uploaded. Add your PDF processing logic here.")
         elif uploaded_file.type in ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword"]:
             st.write("Word document uploaded. Add your DOCX processing logic here.")
+        
         elif uploaded_file.type.startswith("image/"):
             st.image(uploaded_file)
+            return("image_file")
+
         elif uploaded_file.type.startswith("audio/"):
             st.audio(uploaded_file)
             return("audio_file")
+        
         elif uploaded_file.type.startswith("video/"):
             st.video(uploaded_file)
     
@@ -75,7 +81,7 @@ def blog_from_keyword():
     st.title("Blog Content Writer")
     col1, col2 = st.columns([2, 1.5])
     with col1:
-        user_input = st.text_area('**Enter Keywords/Title/YouTube Link/Web URLs**',
+        user_input = st.text_area('**👇Enter Keywords/Title/YouTube Link/Web URLs**',
                                   help='Provide keywords, titles, YouTube links, or web URLs to generate content.',
                                   placeholder="""Write Blog From:
         - Keywords/Blog Title: Provide keywords to web research & write blog.
@@ -84,11 +90,19 @@ def blog_from_keyword():
         - Web URLs: Provide web URL to write similar blog on.""")
 
     with col2:
-        uploaded_file = st.file_uploader("**Attach files (Audio, Video, Image, Document)**",
+        uploaded_file = st.file_uploader("**👇Attach files (Audio, Video, Image, Document)**",
                                          type=["txt", "pdf", "docx", "jpg", "jpeg", "png", "mp3", "wav", "mp4", "mkv", "avi"],
                                          help='Attach files such as audio, video, images, or documents.')
 
-    content_type = st.radio("Select content type:", ["Normal-length content", "Long-form content", "Experimental - AI Agents team"])
+    temp_file_path = None
+    if uploaded_file is not None:
+        # Save the uploaded file to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=uploaded_file.name) as temp_file:
+            temp_file.write(uploaded_file.read())
+            temp_file_path = temp_file.name
+
+
+    content_type = st.radio("**👇Select content type:**", ["Normal-length content", "Long-form content", "Experimental - AI Agents team"])
     if st.button("Write Blog"):
         # Clear the previous results from the screen
         st.empty()
@@ -126,6 +140,8 @@ def blog_from_keyword():
             generate_audio_blog(user_input)
         elif 'web_url' in input_type:
             blog_from_url(user_input)
+        elif 'image_file' in input_type:
+            blog_from_image(user_input, temp_file_path)
 
 
 def ai_agents_team():

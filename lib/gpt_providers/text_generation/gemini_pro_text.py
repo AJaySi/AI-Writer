@@ -29,7 +29,7 @@ def gemini_text_response(prompt, temperature, top_p, n, max_tokens):
     except Exception as err:
         logger.error(f"Failed to configure Gemini: {err}")
     logger.info(f"Temp: {temperature}, MaxTokens: {max_tokens}, TopP: {top_p}, N: {n}")
-    # Set up the model
+    # Set up AI model config
     generation_config = {
         "temperature": temperature,
         "top_p": top_p,

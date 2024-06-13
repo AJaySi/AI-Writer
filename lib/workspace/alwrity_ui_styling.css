@@ -3,15 +3,13 @@ body {
     background: #f0f4f8;
     background-image: linear-gradient(to bottom right, #d0e1f9, #e1ebf9);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;  /* Remove any default margin */
-    padding: 0;  /* Remove any default padding */
+    margin: 0;
+    padding: 0;
 }
+
 .block-container {
-    padding-top: 2.5rem;
-    padding-bottom: 3rem;
-    padding-left: 5rem;
-    padding-right: 5rem;
-                }
+    padding: 2.5rem 5rem 3rem 5rem;
+}
 
 /* Main header styling */
 .main-header {
@@ -21,7 +19,7 @@ body {
     margin-bottom: 20px;
     text-align: center;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-    padding-top: 10px; /* Add padding to the top to move it up */
+    padding-top: 10px;
 }
 
 /* Sub-header styling */
@@ -36,11 +34,11 @@ body {
 
 /* Navigation tabs styling */
 .stTabs [role="tab"] {
-    font-size: 3.75em;  /* Increased font size */
+    font-size: 1.25em;
     font-weight: bold;
     color: white;
     background: #1565C0;
-    padding: 16px 24px;  /* Increased padding */
+    padding: 16px 24px;
     margin: 5px;
     border-radius: 8px;
     border: 2px solid #ddd;
@@ -57,11 +55,9 @@ body {
     border: 2px solid #1565C0;
 }
 
-
-
 /* Sidebar header styling */
 .sidebar-header {
-    font-size: 2.2em;
+    font-size: 1.5em;
     font-weight: bold;
     color: #333;
     margin-bottom: 20px;
@@ -70,8 +66,14 @@ body {
 /* Sidebar option styling */
 .sidebar-option {
     margin-bottom: 10px;
-    font-size: 2.2em;
+    font-size: 1.1em;
     color: #1565C0;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.sidebar-option:hover {
+    color: #1976D2;
 }
 
 /* Content section styling */
@@ -80,11 +82,11 @@ body {
     margin-bottom: 30px;
     border-radius: 10px;
     box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-    background-color: #f0f4f8;  /* Change background to match body */
+    background-color: #ffffff;
 }
 
 /* Input fields styling */
-input[type="text"] {
+input[type="text"], input[type="file"], select {
     width: 100%;
     padding: 12px;
     margin: 8px 0;
@@ -92,11 +94,18 @@ input[type="text"] {
     border: 2px solid #ddd;
     border-radius: 4px;
     background-color: #f0f8ff;
+    font-size: 16px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input[type="text"]:focus, input[type="file"]:focus, select:focus {
+    border-color: #1565C0;
+    box-shadow: 0 0 5px rgba(21, 101, 192, 0.5);
 }
 
 /* Custom button styling */
 div.stButton > button:first-child {
-    background: #1565C0;  /* Match tab color */
+    background: #1565C0;
     color: white;
     border: none;
     padding: 12px 24px;
@@ -113,7 +122,7 @@ div.stButton > button:first-child {
 }
 
 div.stButton > button:hover:first-child {
-    background-color: #1976A2;  /* Match tab hover color */
+    background-color: #1976A2;
     box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
@@ -166,20 +175,47 @@ div.row-widget.stRadio > div[role="radiogroup"] > label[data-baseweb="radio"] {
     margin-bottom: 10px;
     color: #333;
 }
+
+/* Audio player styling */
 audio::-webkit-media-controls-panel,
 audio::-webkit-media-controls-enclosure {
-    background-color:#532b5a;}
+    background-color: #532b5a;
+}
 
 audio::-webkit-media-controls-time-remaining-display,
 audio::-webkit-media-controls-current-time-display {
     color: white;
-    text-shadow: none; 
-
+    text-shadow: none;
 }
 
 audio::-webkit-media-controls-timeline {
-  background-color: #532b5a;
-  border-radius: 25px;
-  margin-left: 10px;
-  margin-right: 10px;
+    background-color: #532b5a;
+    border-radius: 25px;
+    margin-left: 10px;
+    margin-right: 10px;
 }
+
+/* Select input styling */
+.stSelectbox > div[data-baseweb="select"] > div {
+    padding: 12px;
+    margin: 8px 0;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    background-color: #f0f8ff;
+    font-size: 16px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    appearance: none;
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+}
+
+select:focus {
+    border-color: #1565C0;
+    box-shadow: 0 0 5px rgba(21, 101, 192, 0.5);
+}
+
+select option {
+    padding: 10px;
+}
+
