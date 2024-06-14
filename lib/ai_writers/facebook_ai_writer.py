@@ -49,10 +49,10 @@ def generate_facebook_post(business_type, target_audience, post_goal, post_tone,
 
 
 def facebook_post_writer():
-    st.title("Alwrity - Facebook Post Generator")
+    st.title("📱 Alwrity - Facebook Post Generator")
     st.markdown(
         """
-        Welcome to the Facebook Post Generator! This tool will help you create a compelling Facebook post for your business.
+        Facebook Post Generator will help you create a compelling Facebook post for your business.
         Please provide the following details to generate your post:
         """
     )
@@ -61,62 +61,69 @@ def facebook_post_writer():
         col1, col2 = st.columns(2)
 
         with col1:
-            business_type = st.text_input(
-                "**What is your business type?**",
-                placeholder="e.g., Fitness coach",
-                help="Provide the type of your business. This will help tailor the post content."
-            )
-            target_audience = st.text_input(
-                "**Describe your target audience:**",
-                placeholder="e.g., Fitness enthusiasts",
-                help="Describe the audience you are targeting with this post."
-            )
-            include = st.text_input(
-                "**What elements do you want to include?**",
-                placeholder="e.g., Short video with a sneak peek of the challenge",
-                help="Specify any elements you want to include in the post (e.g., images, videos, links, hashtags, questions)."
-            )
-
-        with col2:
-            post_goal_options = ["Promote a new product", "Share valuable content", "Increase engagement", "Other"]
+            post_goal_options = ["Promote a new product", "Share valuable content", "Increase engagement", "Customize"]
             post_goal = st.selectbox(
-                "**What is the goal of your post?**",
+                "🎯 **What is the goal of your post?**",
                 post_goal_options,
                 index=2,
                 help="Select the main goal of your post."
             )
 
+            if post_goal == "Customize":
+                post_goal = st.text_input(
+                    "🎯 **Customize your goal:**",
+                    placeholder="e.g., Announce an event",
+                    help="Provide a specific goal if you selected 'Customize'."
+                )
+            target_audience = st.text_input(
+                "👥 **Describe your target audience:**",
+                placeholder="e.g., Fitness enthusiasts",
+                help="Describe the audience you are targeting with this post."
+            )
+            include = st.text_input(
+                "📷 **What elements do you want to include?**",
+                placeholder="e.g., Short video with a sneak peek of the challenge",
+                help="Specify any elements you want to include in the post (e.g., images, videos, links, hashtags, questions)."
+            )
+
+        with col2:
+            business_type = st.text_input(
+                "🏢 **What is your business type?**",
+                placeholder="e.g., Fitness coach",
+                help="Provide the type of your business. This will help tailor the post content."
+            )
+
+            post_tone_options = ["Informative", "Humorous", "Inspirational", "Upbeat", "Casual", "Customize"]
             post_tone = st.selectbox(
-                "**What tone do you want to use?**",
-                ["Informative", "Humorous", "Inspirational", "Upbeat", "Casual"],
+                "🎨 **What tone do you want to use?**",
+                post_tone_options,
                 index=3,
                 help="Choose the tone you want to use for the post."
             )
+
+            if post_tone == "Customize":
+                post_tone = st.text_input(
+                    "🎨 **Customize your tone:**",
+                    placeholder="e.g., Professional",
+                    help="Provide a specific tone if you selected 'Customize'."
+                )
+
             avoid = st.text_input(
-                "**What elements do you want to avoid?**",
+                "❌ **What elements do you want to avoid?**",
                 placeholder="e.g., Long paragraphs",
                 help="Specify any elements you want to avoid in the post (e.g., long paragraphs, technical jargon)."
             )
 
-        other_goal = ""
-        if post_goal == "Other":
-            other_goal = st.text_input(
-                "**Please specify the other goal:**",
-                placeholder="e.g., Announce an event",
-                help="Provide a specific goal if you selected 'Other'."
-            )
-
-        if st.button("Generate Facebook Post"):
+        if st.button("🚀 Generate Facebook Post"):
             if not business_type or not target_audience:
                 st.error("🚫 Please provide the required inputs: Business Type and Target Audience.")
             else:
-                final_post_goal = other_goal if post_goal == 'Other' else post_goal
                 generated_post = generate_facebook_post(
-                    business_type, target_audience, final_post_goal, post_tone, include, avoid
+                    business_type, target_audience, post_goal, post_tone, include, avoid
                 )
                 if generated_post:
                     st.subheader("**🧕 Verify: Alwrity can make mistakes.**")
-                    st.write("## Generated Facebook Post:")
+                    st.write("## 📄 Generated Facebook Post:")
                     st.write(generated_post)
                     st.markdown("---")
                 else:

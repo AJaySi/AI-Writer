@@ -6,6 +6,8 @@ loguru
 openai
 crewai[tools]
 crewai_tools
+python-docx
+PyPDF2
 google.generativeai
 mistralai
 tenacity
