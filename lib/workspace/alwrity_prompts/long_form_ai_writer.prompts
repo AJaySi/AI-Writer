@@ -1,15 +1,13 @@
 writing_guidelines: |
-  As an expert content writer and web researcher, demonstrate your world-class {content_type} content writing skills.
+  As an expert content writer and web researcher, write highly detailed long form, {content_type} content on {content_keywords}.
   Follow these writing guidelines:
-  1. Write in {content_language} language.
+  1. You must Write in {content_language} language.
   2. Ensure your content appeals to the target audience of {target_audience}.
   3. Maintain a consistent tone of {content_tone} throughout.
-  4. Ensure originality and human-like content.
-  5. Use simple {content_language} words to appeal to all readers.
-  6. Format your content using {output_format}.
-  7. Avoid words like: Unleash, ultimate, uncover, discover, elevate, revolutionizing, unveiling, harnessing, dive, delve into, embrace.
-  Remember, your main goal is to write as much as you can. Expanding content is good; summarizing is bad.
-
+  4. Use simple {content_language} words to appeal to all readers.
+  5. Format your content using {output_format}.
+  6. Avoid words like: Unleash, ultimate, uncover, discover, elevate, revolutionizing, unveiling, harnessing, dive, delve into, embrace.
+  Remember, your main goal is to write as much as you can. If you get through the story too fast, that is bad. Expand, never summarize.
 
 
 content_title: |
@@ -19,7 +17,7 @@ content_title: |
   3. Review the provided web research results for {content_keywords}. Ensure your title competes effectively against them.
   4. Avoid words like: Unleash, ultimate, uncover, discover, elevate, revolutionizing, unveiling, harnessing, dive, delve into, embrace.
   5). Provide no explanations for your response and only respond with only one og your best blog title.
-  Web research results:
+  \n\nWeb research results:
   """{{web_research_result}}"""
 
 
@@ -52,8 +50,8 @@ starting_prompt: |
 
   First, silently review the content outline and title. Consider how to begin writing your content. Take your time.
   Start by writing the very beginning of the outline. You are not expected to finish the entire content now.
-  Your writing should be detailed, only scratching the surface of the first bullet point of given outline.
-
+  Your writing should be detailed, only scratching the surface of the first bullet of your outline.
+  Try to write AT MINIMUM 1000 WORDS and MAXIMUM 2000 WORDS.
 
   """{{writing_guidelines}}"""
 
@@ -62,29 +60,30 @@ starting_prompt: |
 continuation_prompt: |
   As an expert {content_language} content writer and web researcher specializing in SEO-optimized content, continue writing the content for the given title and outline.
 
-  Title:
+  The Title of the content is:
   """{{content_title}}"""
 
-  Outline:
+  The content Outline is:
   """{{content_outline}}"""
 
-  Relevant web research results:
+  Relevant web research results to use:
   """{{web_research_result}}"""
 
-  ===========
-
-  First, silently review the content outline and what you've written so far. Take your time.
-  Focus and Identify the next part of given outline to write on.
-  Important to Continue from where you left off.
+  You've begun to immerse yourself in this world, and the words are flowing.
   Here's what you've written so far:
   """{{content_text}}"""
 
+
   ===========
 
   First, silently review the content outline and what you've written so far. Take your time.
-  Continue from where you've written so far. Do Not repeat the content.
-  You are not expected to finish the entire content now.
-  Once the content is completely finished, write IAMDONE. 
-  Remember, do NOT write entire sections right now.
+  Identify what the single next part of your outline you should write.
+  Important to Continue from where you left off.
+
+  Your task is to continue where you left off and write the next part of the outline.
+  You are not expected to finish the whole content now. Your writing should be
+  detailed enough that you are only scratching the surface of the next part of
+  your outline. Try to write AT MINIMUM 1000 WORDS. However, only once the whole outline content
+  is COMPLETELY finished, write IAMDONE. Remember, do NOT write a whole outline sections right now.
 
   """{{writing_guidelines}}"""

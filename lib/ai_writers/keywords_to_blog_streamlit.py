@@ -98,3 +98,29 @@ def write_blog_from_keywords(search_keywords, url=None):
         st.image(generated_image_filepath)
         st.markdown(f"{blog_markdown_str}")
         status.update(label=f"Finished, Review & Use your Original Content Below: {saved_blog_to_file}", state="complete")
+
+        # Display options below the content
+        col1, col2, col3, col4, col5 = st.columns(5)
+        if col1.button('Copy'):
+            pyperclip.copy(blog_markdown_str)
+            st.success("Text copied to clipboard!")
+        
+        if col2.button('Rephrase'):
+            rephrased_text = rephrase_text(blog_markdown_str)
+            st.markdown(rephrased_text)
+        
+        if col3.button('Change Tone'):
+            tone = st.selectbox("Select Tone", ["Formal", "Casual", "Professional"])
+            if st.button("Apply Tone"):
+                toned_text = change_tone(blog_markdown_str, tone)
+                st.markdown(toned_text)
+        
+        if col4.button('Make Shorter'):
+            shorter_text = make_shorter(blog_markdown_str)
+            st.markdown(shorter_text)
+        
+        if col5.button('Translate'):
+            language = st.selectbox("Select Language", ["Spanish", "French", "German"])
+            if st.button("Translate"):
+                translated_text = translate_text(blog_markdown_str, language)
+                st.markdown(translated_text)
