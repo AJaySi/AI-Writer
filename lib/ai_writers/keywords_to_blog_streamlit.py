@@ -84,8 +84,13 @@ def write_blog_from_keywords(search_keywords, url=None):
         except Exception as err:
             st.error(f"Failed to get blog metadata: {err}")
 
+        generated_image_filepath = None
         try:
-            generated_image_filepath = generate_image(f"{blog_title} + ' ' + {blog_meta_desc}")
+            # FIXME: Temporary fix.
+            text_to_image = f"{blog_title} + ' ' + {blog_meta_desc}"
+            if not text_to_image:
+                text_to_image = blog_markdown_str
+            generated_image_filepath = generate_image(text_to_image)
         except Exception as err:
             st.warning(f"Failed in Image generation: {err}")
 

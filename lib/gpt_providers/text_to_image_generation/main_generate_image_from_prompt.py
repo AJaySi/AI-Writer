@@ -45,20 +45,24 @@ def generate_image(user_prompt):
     """
     # FIXME: Need to remove default value to match sidebar input.
     image_engine = 'Stability-AI'
+    image_stored_at = None
 
-    try:
-        img_prompt = generate_img_prompt(user_prompt)
-        if 'Dalle3' in image_engine:
-            logger.info(f"Calling Dalle3 text-to-image with prompt: {img_prompt}")
-            image_stored_at = generate_dalle3_images(img_prompt)
-        elif 'Stability-AI' in image_engine:
-            logger.info(f"Calling Stable diffusion text-to-image with prompt: \n{img_prompt}")
-            print("\n\n")
-            image_stored_at = generate_stable_diffusion_image(img_prompt)
-    except Exception as err:
-        logger.error(f"Failed to generate Image: {err}")
-        st.warning(f"Failed to generate Image: {err}")
-    return image_stored_at
+    if user_prompt:
+        try:
+            img_prompt = generate_img_prompt(user_prompt)
+            if 'Dalle3' in image_engine:
+                logger.info(f"Calling Dalle3 text-to-image with prompt: {img_prompt}")
+                image_stored_at = generate_dalle3_images(img_prompt)
+            elif 'Stability-AI' in image_engine:
+                logger.info(f"Calling Stable diffusion text-to-image with prompt: \n{img_prompt}")
+                print("\n\n")
+                image_stored_at = generate_stable_diffusion_image(img_prompt)
+            return image_stored_at
+        except Exception as err:
+            logger.error(f"Failed to generate Image: {err}")
+            st.warning(f"Failed to generate Image: {err}")
+    else:
+        logger.error("Skipping Image creation, No prompt provided.")
 
 
 def generate_img_prompt(user_prompt):
@@ -66,15 +70,16 @@ def generate_img_prompt(user_prompt):
     Given prompt, this functions generated a prompt for image generation.
     """
     prompt = f"""
-        As an expert prompt engineer and artist, I will provide you with 'text' for creating image.
-        I want you to act as a prompt generator for AI text to image models(no more than 150 words).
+        As an expert prompt generator for AI text to image models and artist, I will provide you with 'user text' for creating images.
+        Your task is to create a prompt for a highly relevant image from given 'user text'.
         \n
         Choose from various art styles, utilize light & shadow effects etc.
         Make sure to avoid common image generation mistakes.
         Reply with only one answer, no descrition and in plaintext.
         Make sure your prompt is detailed and creative descriptions that will inspire unique and interesting images from the AI. 
         
-        \n\ntext:{user_prompt} """
+        \n\nuser text:  
+        '''{user_prompt}'''"""
 
     response = llm_text_gen(prompt)
     return response
