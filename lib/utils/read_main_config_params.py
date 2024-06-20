@@ -1,6 +1,14 @@
 import os
+import sys
 import json
 from pathlib import Path
+from loguru import logger
+logger.remove()
+logger.add(sys.stdout,
+        colorize=True,
+        format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
+    )
+
 
 def read_return_config_section(config_section):
     """ read_return_config_section

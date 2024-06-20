@@ -20,20 +20,20 @@ If you have 💻 Laptop + 🛜 Internet + 10 minutes, you will be generating blo
 
 ---
 ### [Getting started for Developers](https://github.com/AJaySi/AI-Writer/wiki/Alwrity--%E2%80%90-Get-started)
-`
+```
 Step1: git clone https://github.com/AJaySi/AI-Writer.git
 Step2: pip install -r requirements.txt
 Step3: streamlit run alwrity.py
 
 Step4: Visit Alwrity UI in Browser & Start generation AI personalized content.
-` 
+```
 ---
 ### Updating to latest Code: (Existing users)
-`
+```
 1). Git pull
 2). streamlit run alwrity.py
 3). pip install -r requirements.txt
-`
+```
 ---
 **Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Someone will bail you out.
 
@@ -92,6 +92,7 @@ Use the [main_config](https://github.com/AJaySi/AI-Writer/blob/main/main_config)
   - [Gemini API](https://gemini.google.com/app): Google powered LLM for natural language processing tasks.
   - [Ollama](https://ollama.com/) : Local, Privacy focused, LLM provider for research and content generation capabilities.
   - [CrewAI](https://www.crewai.com/): Collaborative AI agents framework.
+  - [firecrawl](https://www.firecrawl.dev/): Turn websites into LLM-ready data
 ---
 
 ## Features

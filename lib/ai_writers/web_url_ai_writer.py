@@ -17,7 +17,7 @@ logger.add(sys.stdout,
     )
 
 from ..ai_web_researcher.firecrawl_web_crawler import scrape_url
-from ..blog_metadata.get_blog_metadata import blog_metadata
+from ..blog_metadata.get_blog_metadata import blog_metadata, run_async
 from ..blog_postprocessing.save_blog_to_file import save_blog_to_file
 from ..gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
@@ -31,7 +31,11 @@ def blog_from_url(weburl):
     # Use to store the blog in a string, to save in a *.md file.
     blog_markdown_str = None
     tavily_search_result = None
-    example_blog_titles = []
+    # Initializing the variables
+    blog_title = None
+    blog_meta_desc = None
+    blog_tags = None
+    blog_categories = None
 
     logger.info(f"Researching and Writing Blog on: {weburl}")
     with st.status("Started Writing..", expanded=True) as status:
@@ -39,12 +43,12 @@ def blog_from_url(weburl):
         status.update(label=f"Researching and Writing Blog on: {weburl}")
         try:
             scraped_text = scrape_url(weburl)
-            logger.info(scraped_text)
+            #logger.info(scraped_text)
         except Exception as err:
             st.error(f"Failed to scrape web page from url-{weburl} - Error: {err}")
             logger.error(f"Failed in web research: {err}")
             st.stop()
-        status.update(label="Successfully Scraped/Fetched url: {weburl}", expanded=False, state="complete")
+        status.update(label=f"Successfully Scraped/Fetched url: {weburl}", expanded=False, state="complete")
 
     with st.status(f"Started Writing blog from {weburl}..", expanded=True) as status:
         # Do Tavily AI research to augument the above blog.
@@ -58,7 +62,7 @@ def blog_from_url(weburl):
 
         try:
             status.update(label="🙎 Generating - Title, Meta Description, Tags, Categories for the content.")
-            blog_title, blog_meta_desc, blog_tags, blog_categories = blog_metadata(blog_markdown_str)
+            blog_title, blog_meta_desc, blog_tags, blog_categories = run_async(blog_metadata(blog_markdown_str))
         except Exception as err:
             st.error(f"Failed to get blog metadata: {err}")
 
@@ -71,8 +75,11 @@ def blog_from_url(weburl):
         saved_blog_to_file = save_blog_to_file(blog_markdown_str, blog_title, blog_meta_desc, 
                             blog_tags, blog_categories, generated_image_filepath)
         status.update(label=f"Saved the content in this file: {saved_blog_to_file}")
+        
         logger.info(f"\n\n --------- Finished writing Blog for : {weburl} -------------- \n")
-        st.image(generated_image_filepath)
+        if generated_image_filepath:
+            st.image(generated_image_filepath)
+        
         st.markdown(f"{blog_markdown_str}")
         status.update(label=f"Finished, Review & Use your Original Content Below: {saved_blog_to_file}", state="complete")
         

@@ -124,15 +124,15 @@ def long_form_generator(content_keywords):
         # Configure generative AI
         load_dotenv(Path('../.env'))
         generation_config = {
-           "temperature": 0.6,
+           "temperature": 0.7,
            "top_p": 1,
            "max_output_tokens": 8096,
         }
         
         genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
         # Initialize the generative model
-        #model = genai.GenerativeModel('gemini-pro', generation_config=generation_config)
-        model_pro = genai.GenerativeModel('gemini-1.5-flash', generation_config=generation_config)
+        model = genai.GenerativeModel('gemini-1.5-flash', generation_config=generation_config)
+        model_pro = genai.GenerativeModel('gemini-pro', generation_config=generation_config)
         
         # Do SERP web research for given keywords to generate title and outline.
         web_research_result, g_titles = do_google_serp_search(content_keywords)
@@ -203,14 +203,14 @@ def long_form_generator(content_keywords):
         logger.info(f"Writing in progress... Current draft length: {len(draft)} characters")
         status.update(label=f"Writing in progress... Current draft length: {len(draft)} characters")
         search_terms = f"""
-            I will provide you with blog outline, your task is to read the outline & return 8 google search keywords.
+            I will provide you with content outline below, your task is to read the outline & return 8 google search keywords.
             Your response will be used to do web research for writing on the given outline.
             Do not explain your response, provide 8 google search sentences encompassing the given content outline.
-            Provide the search term results as comma separated values.\n\n
+            Important: Provide the search term results as comma separated values.\n\n
             Content Outline:\n
             '{content_outline}'
             """
-        search_words = generate_with_retry(model_pro, search_terms).text
+        search_words = generate_with_retry(model, search_terms).text
         status.update(label=f"Search terms from written draft: {search_words}")
         
         while 'IAMDONE' not in continuation:
@@ -218,6 +218,7 @@ def long_form_generator(content_keywords):
             str_list = re.split(r',\s*', search_words)
             # Strip quotes from each element 
             str_list = [s.strip('\'"') for s in str_list]
+
             for search_term in str_list:
                 web_research_result, m_titles, t_titles = do_tavily_ai_search(search_term, max_results=5)
                 try:

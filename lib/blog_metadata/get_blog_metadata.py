@@ -2,7 +2,7 @@ import sys
 import streamlit as st
 from loguru import logger
 import random
-import time
+import asyncio
 
 logger.remove()
 logger.add(sys.stdout,
@@ -12,7 +12,7 @@ logger.add(sys.stdout,
 
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
-def blog_metadata(blog_article):
+async def blog_metadata(blog_article):
     """ Common function to get blog metadata """
     logger.info(f"Generating Content MetaData\n")
     
@@ -20,22 +20,22 @@ def blog_metadata(blog_article):
     total_steps = 4
 
     # Step 1: Generate blog title
-    time.sleep(random.uniform(1, 3))
+    await asyncio.sleep(random.uniform(1, 3))
     blog_title = generate_blog_title(blog_article)
     progress_bar.progress(1 / total_steps)
 
     # Step 2: Generate blog meta description
-    time.sleep(random.uniform(1, 3))
+    await asyncio.sleep(random.uniform(1, 3))
     blog_meta_desc = generate_blog_description(blog_article)
     progress_bar.progress(2 / total_steps)
 
     # Step 3: Generate blog tags
-    time.sleep(random.uniform(1, 3))
+    await asyncio.sleep(random.uniform(1, 3))
     blog_tags = get_blog_tags(blog_article)
     progress_bar.progress(3 / total_steps)
 
     # Step 4: Generate blog categories
-    time.sleep(random.uniform(1, 3))
+    await asyncio.sleep(random.uniform(1, 3))
     blog_categories = get_blog_categories(blog_article)
     progress_bar.progress(4 / total_steps)
 
@@ -117,3 +117,10 @@ def get_blog_tags(blog_article):
         logger.error(f"Failed to get response from LLM: {err}")
         raise err
 
+# Helper function to run the asyncio event loop within Streamlit
+def run_async(coro):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    result = loop.run_until_complete(coro)
+    loop.close()
+    return result

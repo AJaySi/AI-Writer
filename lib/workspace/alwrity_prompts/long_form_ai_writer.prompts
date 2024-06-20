@@ -1,13 +1,27 @@
 writing_guidelines: |
-  As an expert content writer and web researcher, write highly detailed long form, {content_type} content on {content_keywords}.
-  Follow these writing guidelines:
-  1. You must Write in {content_language} language.
-  2. Ensure your content appeals to the target audience of {target_audience}.
-  3. Maintain a consistent tone of {content_tone} throughout.
-  4. Use simple {content_language} words to appeal to all readers.
-  5. Format your content using {output_format}.
-  6. Avoid words like: Unleash, ultimate, uncover, discover, elevate, revolutionizing, unveiling, harnessing, dive, delve into, embrace.
-  Remember, your main goal is to write as much as you can. If you get through the story too fast, that is bad. Expand, never summarize.
+
+  Writing Guidelines:
+  As an expert {content_type} content writer and web researcher on {content_keywords}, follow these writing guidelines:
+
+  Language: Write in the {content_language} language.
+  Audience: Ensure your content appeals to the target audience of {target_audience}.
+  Tone: Maintain a consistent tone of {content_tone} throughout.
+  Simplicity: Use simple {content_language} words to appeal to all readers.
+  Formatting: Format your content using {output_format}.
+  Word Choice: Avoid words like: unleash, ultimate, uncover, discover, elevate, revolutionizing, unveiling, harnessing, dive, delve into, embrace.
+
+  Immerse yourself fully in the topic you're exploring. Use vivid descriptions to captivate your readers and bring your subject to life. 
+  Develop your ideas thoroughly—let their nuances, challenges, and intricacies unfold naturally. 
+  Follow the structure of your outline, but don't feel constrained by it. Allow your blog post to evolve as you write.
+
+  Incorporate rich imagery, sensory details, and evocative language to make your content engaging and relatable. 
+  Introduce elements subtly that can grow into deeper discussions, related topics, or additional insights later in the post. 
+  Keep your readers intrigued by not resolving everything too quickly. 
+  Plant the seeds of subtopics or potential shifts in perspective that can be expanded upon in future posts.
+
+  Remember, your main goal is to provide valuable, in-depth content. If you rush through your topic, it will leave readers wanting more. 
+  Expand your ideas, never summarize. Write as much as you can, ensuring that your content is thorough and comprehensive.
+
 
 
 content_title: |
@@ -51,7 +65,7 @@ starting_prompt: |
   First, silently review the content outline and title. Consider how to begin writing your content. Take your time.
   Start by writing the very beginning of the outline. You are not expected to finish the entire content now.
   Your writing should be detailed, only scratching the surface of the first bullet of your outline.
-  Try to write AT MINIMUM 1000 WORDS and MAXIMUM 2000 WORDS.
+  Try to write AT MINIMUM 500 WORDS.
 
   """{{writing_guidelines}}"""
 
@@ -60,30 +74,29 @@ starting_prompt: |
 continuation_prompt: |
   As an expert {content_language} content writer and web researcher specializing in SEO-optimized content, continue writing the content for the given title and outline.
 
-  The Title of the content is:
-  """{{content_title}}"""
+  Title of the Content:
+  {{content_title}}
 
-  The content Outline is:
-  """{{content_outline}}"""
+  Content Outline:
+  {{content_outline}}
 
-  Relevant web research results to use:
-  """{{web_research_result}}"""
+  Relevant Web Research Results to Use:
+  {{web_research_result}}
 
-  You've begun to immerse yourself in this world, and the words are flowing.
-  Here's what you've written so far:
-  """{{content_text}}"""
+  You've begun to immerse yourself in this subject, and the words are flowing. Here's what you've written so far:
+  {{content_text}}
 
+  =====
 
-  ===========
+  First, silently review the content outline and what you've written so far. 
+  Take your time to understand the flow and context. 
+  Identify the next section of your outline to write about. 
+  It is important to continue from where you left off.
 
-  First, silently review the content outline and what you've written so far. Take your time.
-  Identify what the single next part of your outline you should write.
-  Important to Continue from where you left off.
+  Your task is to continue writing from where you left off and cover the next part of the outline. 
+  You are not expected to finish the entire content now. 
+  Your writing should be detailed enough to thoroughly explore the next part of your outline. 
+  Aim to write at least 500 words. However, only once the entire content is completely finished, write IAMDONE. 
+  Remember, do not write the whole outline sections right now.
 
-  Your task is to continue where you left off and write the next part of the outline.
-  You are not expected to finish the whole content now. Your writing should be
-  detailed enough that you are only scratching the surface of the next part of
-  your outline. Try to write AT MINIMUM 1000 WORDS. However, only once the whole outline content
-  is COMPLETELY finished, write IAMDONE. Remember, do NOT write a whole outline sections right now.
-
-  """{{writing_guidelines}}"""
+  {writing_guidelines}

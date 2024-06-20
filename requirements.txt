@@ -33,3 +33,5 @@ streamlit
 yfinance
 pandas_ta
 firecrawl-py
+gTTS
+streamlit-mic-recorder

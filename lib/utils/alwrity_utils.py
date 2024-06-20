@@ -2,6 +2,8 @@ import os
 import re
 import sys
 import streamlit as st
+from streamlit_mic_recorder import speech_to_text
+
 import tempfile
 from pathlib import Path
 import configparser
@@ -10,7 +12,6 @@ import uuid
 from PIL import Image
 from PyPDF2 import PdfReader
 from docx import Document
-
 from loguru import logger
 logger.remove()
 logger.add(sys.stdout,
@@ -19,7 +20,6 @@ logger.add(sys.stdout,
     )
 
 
-from rich import print
 from lib.ai_web_researcher.gpt_online_researcher import gpt_web_researcher
 from lib.ai_web_researcher.metaphor_basic_neural_web_search import metaphor_find_similar
 from lib.ai_writers.keywords_to_blog_streamlit import write_blog_from_keywords
@@ -41,10 +41,39 @@ from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt 
 from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_planner
 
 
+def record_voice(language="en"):
+    # https://github.com/B4PT0R/streamlit-mic-recorder?tab=readme-ov-file#example
+
+    state = st.session_state
+
+    if "text_received" not in state:
+        state.text_received = []
+
+    text = speech_to_text(
+        start_prompt="🎙️Record🔊",
+        stop_prompt="🔇Stop Recording🚨",
+        language=language,
+        use_container_width=True,
+        just_once=False,    
+    )
+
+    if text:
+        state.text_received.append(text)
+
+    result = ""
+    for text in state.text_received:
+        result += text
+
+    state.text_received = []
+
+    return result if result else None
+
+
 def is_youtube_link(text):
     if text is not None:
         youtube_regex = re.compile(r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?([^&=%\?]{11})')
         return youtube_regex.match(text)
+
 
 def is_web_link(text):
     if text is not None:
@@ -87,10 +116,11 @@ def process_input(input_text, uploaded_file):
             return "video_file"
     return None
 
+
 def blog_from_keyword():
     """ Input blog keywords, research and write a factual blog."""
     st.title("Blog Content Writer")
-    col1, col2 = st.columns([2, 1.5])
+    col1, col2, col3 = st.columns([2, 1.5, 0.5])
     with col1:
         user_input = st.text_area('**👇Enter Keywords/Title/YouTube Link/Web URLs**',
                                   help='Provide keywords, titles, YouTube links, or web URLs to generate content.',
@@ -104,6 +134,10 @@ def blog_from_keyword():
         uploaded_file = st.file_uploader("**👇Attach files (Audio, Video, Image, Document)**",
                                          type=["txt", "pdf", "docx", "jpg", "jpeg", "png", "mp3", "wav", "mp4", "mkv", "avi"],
                                          help='Attach files such as audio, video, images, or documents.')
+    with col3:
+        user_input = record_voice()
+        if user_input:
+            st.info(user_input)
 
     temp_file_path = None
     if uploaded_file is not None:

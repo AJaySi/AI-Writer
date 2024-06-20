@@ -33,7 +33,7 @@ def check_api_keys():
             missing_keys.append((key, description))
 
     if missing_keys:
-        st.warning("🚨 Some API keys are missing! Please provide them below: 🚨")
+        st.error("🚨 Some API keys are missing! Please provide them below: 🚨")
         
         new_keys = []
         for key, description in missing_keys:
@@ -321,45 +321,43 @@ def main():
     if api_keys_valid and llm_environs_valid:
         # Clear previous messages and display the sidebar configuration
         sidebar_configuration()
-    else:
-        st.error("Error loading Environment variables.")
 
-    # Define the tabs
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(
+        # Define the tabs
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(
             ["AI Writers", "Content Planning", "Agents Content Teams", "Alwrity Brain", "Ask Alwrity"])
-    with tab1:
-        write_blog()
+        with tab1:
+            write_blog()
 
-    with tab2:
-        content_planning_tools()
+        with tab2:
+            content_planning_tools()
 
-    with tab3:
-        ai_agents_team()
+        with tab3:
+            ai_agents_team()
 
-    with tab4:
-        alwrity_brain()
+        with tab4:
+            alwrity_brain()
 
-    with tab5:
-        st.info("Chatbot")
-        st.markdown("Create a collection by uploading files (PDF, MD, CSV, etc), or crawl a data source (Websites, more sources coming soon.")
-        st.markdown("One can ask/chat, summarize and do semantic search over the uploaded data")
-        #alwrity_chat_docqa()
+        with tab5:
+            st.info("Chatbot")
+            st.markdown("Create a collection by uploading files (PDF, MD, CSV, etc), or crawl a data source (Websites, more sources coming soon.")
+            st.markdown("One can ask/chat, summarize and do semantic search over the uploaded data")
+            #alwrity_chat_docqa()
     
-    # Sidebar for prompt modification
-    st.sidebar.title("📝 Modify Prompts")
-    prompts = read_prompts()
+        # Sidebar for prompt modification
+        st.sidebar.title("📝 Modify Prompts")
+        prompts = read_prompts()
 
-    if prompts:
-        edited_prompts = []
-        for i, prompt in enumerate(prompts):
-            edited_prompt = st.sidebar.text_area(f"Prompt {i+1}", prompt)
-            edited_prompts.append(edited_prompt)
+        if prompts:
+            edited_prompts = []
+            for i, prompt in enumerate(prompts):
+                edited_prompt = st.sidebar.text_area(f"Prompt {i+1}", prompt)
+                edited_prompts.append(edited_prompt)
         
-        if st.sidebar.button("Save Prompts"):
-            write_prompts(edited_prompts)
-            st.sidebar.success("Prompts saved successfully!")
-    else:
-        st.sidebar.warning("No prompts found in the file.")
+            if st.sidebar.button("Save Prompts"):
+                write_prompts(edited_prompts)
+                st.sidebar.success("Prompts saved successfully!")
+        else:
+            st.sidebar.warning("No prompts found in the file.")
 
 
 # Functions for the main options
