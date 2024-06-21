@@ -135,9 +135,9 @@ def blog_from_keyword():
                                          type=["txt", "pdf", "docx", "jpg", "jpeg", "png", "mp3", "wav", "mp4", "mkv", "avi"],
                                          help='Attach files such as audio, video, images, or documents.')
     with col3:
-        user_input = record_voice()
-        if user_input:
-            st.info(user_input)
+        audio_input = record_voice()
+        if audio_input:
+            st.info(audio_input)
 
     temp_file_path = None
     if uploaded_file is not None:
@@ -152,7 +152,7 @@ def blog_from_keyword():
         st.empty()
         if user_input == "":
             user_input = None
-        if uploaded_file is None and user_input is None:
+        if not uploaded_file and not user_input and not audio_input:
             st.error("🤬🤬 Either Enter/Type/Attach, can't read your mind.(yet..)")
             st.stop()
 

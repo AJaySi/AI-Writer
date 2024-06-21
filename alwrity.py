@@ -117,6 +117,7 @@ def sidebar_configuration():
                 st.warning("Please specify the tone of your content.")
         
         blog_demographic_options = ["Professional", "Gen-Z", "Tech-savvy", "Student", "Digital Marketing", "Customize"]
+        
         blog_demographic = st.selectbox("Target Audience",
                                 options=blog_demographic_options,
                                 help="Choose the target audience.")
@@ -132,9 +133,17 @@ def sidebar_configuration():
         blog_type = st.selectbox("Content Type", 
                           options=["Informational", "Commercial", "Company", "News", "Finance", "Competitor", "Programming", "Scholar"], 
                           help="Choose the type of the blog.")
+
         blog_language = st.selectbox("Content Language", 
-                          options=["English", "Spanish", "German", "Chinese", "Arabic", "Nepali", "Hindi", "Hindustani"], 
+                          options=["English", "Spanish", "German", "Chinese", "Arabic", "Nepali", "Hindi", "Hindustani", "Customize"], 
                           help="Choose the language of the blog.")
+        if blog_language == "Customize":
+            custom_lang = st.text_input("Enter the language of your choice", help="Specify the content language.")
+            if custom_lang:
+                blog_language = custom_lang
+            else:
+                st.warning("Please specify the language of your content.")
+
         blog_output_format = st.selectbox("Content Output Format", 
                           options=["markdown", "HTML", "plaintext"], 
                           help="Choose the output format of the blog.")

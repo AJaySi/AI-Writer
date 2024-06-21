@@ -38,7 +38,7 @@ body {
     font-weight: bold;
     color: white;
     background: #1565C0;
-    padding: 12px 20px;
+    padding: 6px 10px;
     margin: 5px;
     border-radius: 8px;
     border: 2px solid #ddd;
@@ -86,24 +86,6 @@ body {
     background-color: #ffffff;
 }
 
-/* Input fields styling */
-input[type="text"], input[type="file"], select {
-    width: 100%;
-    padding: 12px;
-    font-weight: bold;
-    margin: 8px 0;
-    box-sizing: border-box;
-    border: 2px solid #ddd;
-    border-radius: 4px;
-    background-color: #f0f8ff;
-    font-size: 16px;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-input[type="text"]:focus, input[type="file"]:focus, select:focus {
-    border-color: #1565C0;
-    box-shadow: 0 0 3px rgba(21, 101, 192, 0.5);
-}
 
 /* Custom button styling */
 div.stButton > button:first-child {
@@ -199,12 +181,11 @@ audio::-webkit-media-controls-timeline {
 
 /* Select input styling */
 .stSelectbox > div[data-baseweb="select"] > div {
-    padding: 6px;
-    margin: 8px 0;
-    border: 2px solid #1565C0;
-    border-radius: 2px;
-    background-color: #f0f8ff;
-    font-size: 18px;
+    padding: -1px;
+    margin: 2px 0;
+    border: 3px solid #1565C0;
+    background-color: #ffc10794;
+    font-size: 16px;
     font-weight: bold;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
     appearance: none;
