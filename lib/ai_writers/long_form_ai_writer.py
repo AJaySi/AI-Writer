@@ -50,7 +50,8 @@ def generate_with_retry(model, prompt):
         return model.generate_content(prompt, request_options={'retry':retry.Retry()})
     except Exception as e:
         logger.error(f"Error generating content: {e}")
-        return ""
+        st.error(f"Error generating content: {e}")
+        return False
 
 
 def long_form_generator(content_keywords):

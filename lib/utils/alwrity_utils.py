@@ -3,7 +3,7 @@ import re
 import sys
 import streamlit as st
 from streamlit_mic_recorder import speech_to_text
-
+import asyncio
 import tempfile
 from pathlib import Path
 import configparser
@@ -35,7 +35,6 @@ from lib.ai_writers.insta_ai_writer import insta_writer
 from lib.ai_writers.youtube_ai_writer import write_yt_title, write_yt_description, write_yt_script
 from lib.ai_writers.web_url_ai_writer import blog_from_url
 from lib.ai_writers.image_ai_writer import blog_from_image
-from lib.ai_writers.ai_story_writer import ai_story_generator
 from lib.ai_writers.ai_essay_writer import ai_essay_generator
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_planner
@@ -43,29 +42,23 @@ from lib.content_planning_calender.content_planning_agents_alwrity_crew import a
 
 def record_voice(language="en"):
     # https://github.com/B4PT0R/streamlit-mic-recorder?tab=readme-ov-file#example
-
     state = st.session_state
-
     if "text_received" not in state:
         state.text_received = []
 
     text = speech_to_text(
-        start_prompt="🎙️Record🔊",
+        start_prompt="🎙️Press & Speak🔊",
         stop_prompt="🔇Stop Recording🚨",
         language=language,
         use_container_width=True,
         just_once=False,    
     )
-
     if text:
         state.text_received.append(text)
-
     result = ""
     for text in state.text_received:
         result += text
-
     state.text_received = []
-
     return result if result else None
 
 
@@ -128,8 +121,9 @@ def blog_from_keyword():
         - Keywords/Blog Title: Provide keywords to web research & write blog.
         - Attach file: Attach Text, Audio, Video, Image file to blog on.
         - YouTube Link: Provide a YouTube video link to convert into blog.
-        - Web URLs: Provide web URL to write similar blog on.""")
-
+        - Web URLs: Provide web URL to write similar blog on.
+        - Provide Local folder location with your documents to use for content creation.""")
+        
     with col2:
         uploaded_file = st.file_uploader("**👇Attach files (Audio, Video, Image, Document)**",
                                          type=["txt", "pdf", "docx", "jpg", "jpeg", "png", "mp3", "wav", "mp4", "mkv", "avi"],
@@ -138,6 +132,9 @@ def blog_from_keyword():
         audio_input = record_voice()
         if audio_input:
             st.info(audio_input)
+
+    # Validate the provided folder path
+    #st.info("🚨 Currently supported file formats are: PDF, plain text, CSV, Excel, Markdown, PowerPoint, and Word documents.")
 
     temp_file_path = None
     if uploaded_file is not None:
@@ -247,69 +244,6 @@ def content_agents():
                     st.error(f"🚫 Failed to generate content with AI Agents: {err}")
         else:
             st.error("🚫 Single keywords are just too vague. Try again.")
-
-
-
-def write_story():
-    """Alwrity AI Story Writer"""
-
-    personas = [
-        "👽 Award-Winning Science Fiction Author",
-        "🏺 Historical Fiction Author",
-        "🧙 Fantasy World Builder",
-        "🔍 Mystery Novelist",
-        "💖 Romantic Poet",
-        "🔪 Thriller Writer",
-        "📚 Children's Book Author",
-        "😂 Satirical Humorist",
-        "📜 Biographical Writer",
-        "🌌 Dystopian Visionary",
-        "🪄 Magical Realism Author"
-    ]
-
-    persona_descriptions = {
-        "👽 Award-Winning Science Fiction Author": "Create intricate, expansive sci-fi stories that push the boundaries of imagination.",
-        "🏺 Historical Fiction Author": "Transport readers to different eras with meticulously researched historical narratives.",
-        "🧙 Fantasy World Builder": "Craft magical realms filled with mythical creatures and epic quests.",
-        "🔍 Mystery Novelist": "Keep readers on the edge of their seats with suspenseful, twisty mysteries.",
-        "💖 Romantic Poet": "Capture the essence of love and longing in beautiful, heartfelt verses.",
-        "🔪 Thriller Writer": "Write adrenaline-pumping tales filled with danger and high-stakes action.",
-        "📚 Children's Book Author": "Inspire young readers with whimsical worlds and lovable characters.",
-        "😂 Satirical Humorist": "Use humor and wit to satirize the absurdities of everyday life.",
-        "📜 Biographical Writer": "Illuminate the human experience with richly detailed biographies.",
-        "🌌 Dystopian Visionary": "Explore dark futures that challenge societal norms and provoke reflection.",
-        "🪄 Magical Realism Author": "Blend the ordinary with the extraordinary in enchanting, thought-provoking tales."
-    }
-
-    st.title("Alwrity AI Story Writer ✍️")
-    st.write("Select your story writing persona or book genre and let AI help you craft an amazing story. 🌟")
-
-    # Create two columns
-    col1, col2 = st.columns(2)
-
-    with col1:
-        # Select persona
-        selected_persona_name = st.selectbox(
-            "**📝 Select Your Story Writing Persona or Book Genre:**",
-            options=personas,
-            help="Choose a persona that resonates with the style you want the AI Story Writer to adopt."
-        )
-
-    with col2:
-        # Combined input for characters and plot details
-        story_details_input = st.text_area(
-            "**📜 Enter Characters and Plot Details for Your Story:**",
-            placeholder="E.g., Characters: John, Alice, Dragon, Detective\nPlot: A detective is trying to solve a mystery in a small town...",
-            help="Provide a list of characters and a brief outline of the plot for your story."
-        )
-
-    # Generate story button
-    if st.button("**🚀 Generate Story**"):
-        if selected_persona_name and story_details_input:
-            st.success(f"Generating story for {selected_persona_name} with the provided details. 🎉")
-            ai_story_generator(selected_persona_name, persona_descriptions[selected_persona_name], story_details_input)
-        else:
-            st.error("Please select a persona and enter the story details to generate a story. 📝")
 
 
 

@@ -10,11 +10,12 @@ load_dotenv()
 
 #from lib.chatbot_custom.chatbot_local_docqa import alwrity_chat_docqa
 from lib.utils.alwrity_utils import (blog_from_keyword, ai_agents_team, 
-        write_story, essay_writer, ai_news_writer,
+        essay_writer, ai_news_writer,
         ai_finance_ta_writer, ai_social_writer,
         do_web_research, competitor_analysis,
         )
 
+from lib.ai_writers.ai_story_writer.story_writer import story_input_section
 
 
 # Function to check if API keys are present and prompt user to input if not
@@ -388,7 +389,7 @@ def write_blog():
     elif choice == "Write from audio files":
         blog_from_audio()
     elif choice == "Story Writer":
-        write_story()
+        story_input_section()
     elif choice == "Essay writer":
         essay_writer()
     elif choice == "Write News reports":

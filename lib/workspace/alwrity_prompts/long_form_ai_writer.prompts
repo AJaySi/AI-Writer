@@ -1,5 +1,4 @@
 writing_guidelines: |
-
   Writing Guidelines:
   As an expert {content_type} content writer and web researcher on {content_keywords}, follow these writing guidelines:
 
@@ -10,17 +9,12 @@ writing_guidelines: |
   Formatting: Format your content using {output_format}.
   Word Choice: Avoid words like: unleash, ultimate, uncover, discover, elevate, revolutionizing, unveiling, harnessing, dive, delve into, embrace.
 
-  Immerse yourself fully in the topic you're exploring. Use vivid descriptions to captivate your readers and bring your subject to life. 
-  Develop your ideas thoroughly—let their nuances, challenges, and intricacies unfold naturally. 
   Follow the structure of your outline, but don't feel constrained by it. Allow your blog post to evolve as you write.
 
-  Incorporate rich imagery, sensory details, and evocative language to make your content engaging and relatable. 
-  Introduce elements subtly that can grow into deeper discussions, related topics, or additional insights later in the post. 
-  Keep your readers intrigued by not resolving everything too quickly. 
-  Plant the seeds of subtopics or potential shifts in perspective that can be expanded upon in future posts.
-
-  Remember, your main goal is to provide valuable, in-depth content. If you rush through your topic, it will leave readers wanting more. 
-  Expand your ideas, never summarize. Write as much as you can, ensuring that your content is thorough and comprehensive.
+  Remember, your main goal is to provide valuable, in-depth content. 
+  Do not repeat any sections of the content.
+  If you rush through your topic, it will leave readers wanting more. Expand your ideas, never summarize. 
+  Write as much as you can, ensuring that your content is thorough and comprehensive.
 
 
 
@@ -30,19 +24,22 @@ content_title: |
   2. Ensure the title appeals to the target audience of {target_audience}.
   3. Review the provided web research results for {content_keywords}. Ensure your title competes effectively against them.
   4. Avoid words like: Unleash, ultimate, uncover, discover, elevate, revolutionizing, unveiling, harnessing, dive, delve into, embrace.
-  5). Provide no explanations for your response and only respond with only one og your best blog title.
-  \n\nWeb research results:
+  5. Provide no explanations for your response and only respond with only one of your best blog titles.
+
+  Web research results:
   """{{web_research_result}}"""
 
 
 
 content_outline: |
   As an expert {content_language} content outliner specializing in {content_type} content, create a highly detailed content outline for the given title based on the provided context.
+
   Title: {{content_title}}
   Instructions:
   1. Include most of the topics from the given web research results as context.
   2. Ensure the outline appeals to the target audience of {target_audience}.
   3. Your response should only include the detailed outline, no explanations.
+
   Web research results:
   """{{web_research_result}}"""
 
@@ -65,13 +62,14 @@ starting_prompt: |
   First, silently review the content outline and title. Consider how to begin writing your content. Take your time.
   Start by writing the very beginning of the outline. You are not expected to finish the entire content now.
   Your writing should be detailed, only scratching the surface of the first bullet of your outline.
-  Try to write AT MINIMUM 500 WORDS.
+  Try to write AT MINIMUM 1000 WORDS.
 
-  """{{writing_guidelines}}"""
+  {writing_guidelines}
 
 
 
 continuation_prompt: |
+
   As an expert {content_language} content writer and web researcher specializing in SEO-optimized content, continue writing the content for the given title and outline.
 
   Title of the Content:
@@ -83,20 +81,18 @@ continuation_prompt: |
   Relevant Web Research Results to Use:
   {{web_research_result}}
 
-  You've begun to immerse yourself in this subject, and the words are flowing. Here's what you've written so far:
+  Here's what you've written so far:
   {{content_text}}
 
-  =====
+  ===============
 
   First, silently review the content outline and what you've written so far. 
   Take your time to understand the flow and context. 
-  Identify the next section of your outline to write about. 
-  It is important to continue from where you left off.
+  Important to Identify the next section of your outline to write on.
 
   Your task is to continue writing from where you left off and cover the next part of the outline. 
   You are not expected to finish the entire content now. 
-  Your writing should be detailed enough to thoroughly explore the next part of your outline. 
-  Aim to write at least 500 words. However, only once the entire content is completely finished, write IAMDONE. 
-  Remember, do not write the whole outline sections right now.
+  Aim to write at least 1000 words. 
+  However, only once the entire content is completely finished, write IAMDONE.
 
   {writing_guidelines}
