@@ -9,7 +9,7 @@ crewai_tools
 python-docx
 PyPDF2
 google.generativeai
-mistralai
+anthropic
 tenacity
 tavily-python
 tabulate
@@ -35,3 +35,4 @@ pandas_ta
 firecrawl-py
 gTTS
 streamlit-mic-recorder
+

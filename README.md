@@ -1,7 +1,7 @@
 # How to Alwrity - Getting Started
 
 Alwrity assists content creators and digital marketers in keyword web research, AI website & Social media content generation & AI Copywriting.
-Our toolkit integrates (OpenAI, Gemini) AI models for text generation, image creation(Stability.ai), STT(whisper, AssemblyAI) and Web or local data analysis, streamlining your content creation pipeline and ensuring high-quality output with minimal effort.
+Our toolkit integrates (OpenAI, Gemini, Anthropic) AI models for text generation, image creation(Stability.ai), STT(whisper, AssemblyAI) and Web or local data analysis, streamlining your content creation pipeline and ensuring high-quality output with minimal effort.
 
 Prompting is abstracted to get going sooner. Focus on your content quality, rather than AI tooling around it.
 Alwrity gives personalization, factual web researched & SEO optimized content and tools for automating content & digital marketing.
@@ -58,8 +58,11 @@ If you have 💻 Laptop + 🛜 Internet + 10 minutes, you will be generating blo
 | 14  | Agentic Content Creation           | Explores innovative content creation methods with CrewAI.                      |
 | 15  | AI Finance Writer                  | Uses ufinance & padnas_ta to write TA report for given stock symbol            |
 | 16  | AI Agents Team                     | Easily create AI Agents team for Content creation & Digital marketing          |
-| 17  | Talk to your Docs                  | Write content from your local documents of any type(multi-modal)               |
+| 17  | Talk to your Docs (WIP)            | Write content from your local documents of any type(multi-modal)               |
 | 18  | Wordpress API integration          | Programmatically upload blogs to wordpress website with API keys               |
+| 19  | Talk to your website               | Crawl Crawl your entire website & write content based on its content, Or Not   |
+| 20  | Content From URLs                  | Provide any URL to create an original, unique content from                     |
+
 ---
 
 # AI Content Generation Toolkit - Alwrity

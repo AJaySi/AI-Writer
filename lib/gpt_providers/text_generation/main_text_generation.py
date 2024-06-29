@@ -14,6 +14,7 @@ logger.add(sys.stdout,
 
 from .openai_text_gen import openai_chatgpt
 from .gemini_pro_text import gemini_text_response
+from .anthropic_text_gen import anthropic_text_response
 from ...utils.read_main_config_params import read_return_config_section
 
 
@@ -48,6 +49,14 @@ def llm_text_gen(prompt):
                 return response
             except Exception as err:
                 logger.error(f"Failed to get response from Openai: {err}")
+                raise err
+        elif 'anthropic' in gpt_provider.lower():
+            try:
+                logger.info(f"Using Anthropic Model: {model} for text Generation.")
+                response = anthropic_text_response(prompt)
+                return response
+            except Exception as err:
+                logger.error(f"Failed to get response from Anthropic: {err}")
                 raise err
 
     except Exception as err:
@@ -95,6 +104,8 @@ def get_api_key(gpt_provider):
         api_key = os.getenv('GEMINI_API_KEY')
     elif gpt_provider.lower() == 'openai':
         api_key = os.getenv('OPENAI_API_KEY')
+    elif gpt_provider.lower() == 'anthropic':
+        api_key = os.getenv('ANTHROPIC_API_KEY')
 
     if not api_key:
         raise ValueError(f"No API key found for the specified GPT provider: '{gpt_provider}'")
