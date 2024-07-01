@@ -1,3 +1,6 @@
+import os
+import time
+import datetime
 import sys
 import streamlit as st
 from loguru import logger
@@ -9,8 +12,11 @@ logger.add(sys.stdout,
            colorize=True,
            format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
            )
+import google.generativeai as genai
+from google.generativeai import caching
 
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
+
 
 async def blog_metadata(blog_article):
     """ Common function to get blog metadata """
@@ -46,6 +52,7 @@ async def blog_metadata(blog_article):
     })
 
     return blog_title, blog_meta_desc, blog_tags, blog_categories
+
 
 def generate_blog_title(blog_article):
     """
@@ -124,3 +131,48 @@ def run_async(coro):
     result = loop.run_until_complete(coro)
     loop.close()
     return result
+
+
+def get_blog_metadata_longform(longform_content):
+    """ Function for caching long-form content """
+    # Open the file in write mode ("w") to overwrite existing content.
+    filepath = os.path.join(os.getenv("CONTENT_SAVE_DIR"), "lognform_metadata_file")
+    with open(filepath, "w") as file:
+        # Write the text to the file
+        file.write(longform_content)
+        print(f"String saved successfully to: {filepath}")
+
+    genai.configure(api_key=os.environ['GEMINI_API_KEY'])
+    file_path = genai.upload_file(path=filepath)
+    
+    # Wait for the file to finish processing
+    while file_path.state.name == 'PROCESSING':
+        print('Waiting for video to be processed.')
+        time.sleep(2)
+        file_path = genai.get_file(video_file.name)
+
+    print(f'Video processing complete: {file_path.uri}')
+
+    # Create a cache with a 5 minute TTL
+    cache = caching.CachedContent.create(
+        model='models/gemini-1.5-flash-001',
+        display_name='Alwrity Longform content', # used to identify the cache
+        system_instruction=(
+            'You are an expert file analyzer , and your job is to answer '
+            'the user\'s query based on the file you have access to.'
+        ),
+        contents=[file_path],
+        ttl=datetime.timedelta(minutes=15),
+    )
+
+    # Construct a GenerativeModel which uses the created cache.
+    model = genai.GenerativeModel.from_cached_content(cached_content=cache)
+
+    # Query the model
+    response = model.generate_content([(
+        'SUmmarize the given file '
+        'in 10 lines '
+        'list main points')])
+
+    #print(response.usage_metadata)
+    return(response.text)
