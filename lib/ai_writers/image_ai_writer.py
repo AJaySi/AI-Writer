@@ -4,6 +4,7 @@ import os
 from textwrap import dedent
 from PIL import Image
 import json
+import asyncio
 from pathlib import Path
 from datetime import datetime
 import streamlit as st
@@ -52,7 +53,7 @@ def blog_from_image(prompt, uploaded_img):
 
         try:
             status.update(label="🙎 Generating - Title, Meta Description, Tags, Categories for the content.")
-            blog_title, blog_meta_desc, blog_tags, blog_categories = blog_metadata(blog_markdown_str)
+            blog_title, blog_meta_desc, blog_tags, blog_categories = asyncio.run(blog_metadata(blog_markdown_str))
         except Exception as err:
             st.error(f"Failed to get blog metadata: {err}")
 
