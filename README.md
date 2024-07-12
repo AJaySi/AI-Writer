@@ -1,7 +1,7 @@
 # How to Alwrity - Getting Started
 
 Alwrity assists content creators and digital marketers in keyword web research, AI website & Social media content generation & AI Copywriting.
-Our toolkit integrates **(OpenAI, Gemini, Anthropic)** AI models for text generation, image creation**(Stability.ai), STT(whisper, AssemblyAI)** and Web or local data analysis, streamlining your content creation pipeline and ensuring high-quality output with minimal effort.
+Our toolkit integrates **(OpenAI, Gemini, Anthropic)** AI models for text generation, image creation **(Stability.ai), STT(whisper, AssemblyAI)** and Web or local data analysis, streamlining your content creation pipeline and ensuring high-quality output with minimal effort.
 
 Prompting is abstracted to get going sooner. Focus on your content quality, rather than AI tooling around it.
 Alwrity gives hyper content personalization, factual web researched & SEO optimized content and tools for automating content & digital marketing.
@@ -36,8 +36,8 @@ If you have 💻 Laptop + 🛜 Internet + 10 minutes, you will be generating blo
 ```
 ---
 **Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Someone will bail you out.
-
 ---
+
 
 ### AI Tools & Features of Alwrity:
 | No. | Alwrity Tool                       | Description                                                                    |
@@ -62,6 +62,7 @@ If you have 💻 Laptop + 🛜 Internet + 10 minutes, you will be generating blo
 | 18  | Wordpress API integration          | Programmatically upload blogs to wordpress website with API keys               |
 | 19  | Talk to your website               | Crawl Crawl your entire website & write content based on its content, Or Not   |
 | 20  | Content From URLs                  | Provide any URL to create an original, unique content from                     |
+| 21  | SEO Structured Data                | Feature: AI SEO - Generate rich snippet from url                               |
 
 ---
 
