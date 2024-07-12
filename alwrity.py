@@ -10,7 +10,7 @@ load_dotenv()
 
 #from lib.chatbot_custom.chatbot_local_docqa import alwrity_chat_docqa
 from lib.utils.alwrity_utils import (blog_from_keyword, ai_agents_team, 
-        essay_writer, ai_news_writer,
+        essay_writer, ai_news_writer, ai_seo_tools,
         ai_finance_ta_writer, ai_social_writer,
         do_web_research, competitor_analysis,
         )
@@ -333,8 +333,8 @@ def main():
         sidebar_configuration()
 
         # Define the tabs
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(
-            ["AI Writers", "Content Planning", "Agents Content Teams", "Alwrity Brain", "Ask Alwrity"])
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+            ["AI Writers", "Content Planning", "Agents Teams", "AI SEO tools", "Alwrity Brain", "Ask Alwrity"])
         with tab1:
             write_blog()
 
@@ -345,9 +345,12 @@ def main():
             ai_agents_team()
 
         with tab4:
-            alwrity_brain()
+            ai_seo_tools()
 
         with tab5:
+            alwrity_brain()
+
+        with tab6:
             st.info("Chatbot")
             st.markdown("Create a collection by uploading files (PDF, MD, CSV, etc), or crawl a data source (Websites, more sources coming soon.")
             st.markdown("One can ask/chat, summarize and do semantic search over the uploaded data")

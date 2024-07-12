@@ -36,6 +36,7 @@ from lib.ai_writers.youtube_ai_writer import write_yt_title, write_yt_descriptio
 from lib.ai_writers.web_url_ai_writer import blog_from_url
 from lib.ai_writers.image_ai_writer import blog_from_image
 from lib.ai_writers.ai_essay_writer import ai_essay_generator
+from lib.ai_seo_tools.seo_structured_data import ai_structured_data
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_planner
 
@@ -108,6 +109,19 @@ def process_input(input_text, uploaded_file):
             st.video(uploaded_file)
             return "video_file"
     return None
+
+
+def ai_seo_tools():
+    """ Collection SEO tools for content creators. """
+    options = [
+        "Generate Structured Data - Rich Snippet",
+        "AI SEO Audit",
+        "Quit"
+    ]
+    choice = st.selectbox("**👇Select AI SEO Tool:**", options, index=0, format_func=lambda x: f"📝 {x}")
+
+    if choice == "Generate Structured Data - Rich Snippet":
+        ai_structured_data()
 
 
 def blog_from_keyword():

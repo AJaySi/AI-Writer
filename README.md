@@ -1,10 +1,10 @@
 # How to Alwrity - Getting Started
 
 Alwrity assists content creators and digital marketers in keyword web research, AI website & Social media content generation & AI Copywriting.
-Our toolkit integrates (OpenAI, Gemini, Anthropic) AI models for text generation, image creation(Stability.ai), STT(whisper, AssemblyAI) and Web or local data analysis, streamlining your content creation pipeline and ensuring high-quality output with minimal effort.
+Our toolkit integrates **(OpenAI, Gemini, Anthropic)** AI models for text generation, image creation**(Stability.ai), STT(whisper, AssemblyAI)** and Web or local data analysis, streamlining your content creation pipeline and ensuring high-quality output with minimal effort.
 
 Prompting is abstracted to get going sooner. Focus on your content quality, rather than AI tooling around it.
-Alwrity gives personalization, factual web researched & SEO optimized content and tools for automating content & digital marketing.
+Alwrity gives hyper content personalization, factual web researched & SEO optimized content and tools for automating content & digital marketing.
 
 AI will help achieve Content Hyper-Personalization.
 ![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/alwrity_ai_writer.png)
@@ -22,7 +22,7 @@ If you have 💻 Laptop + 🛜 Internet + 10 minutes, you will be generating blo
 ### [Getting started for Developers](https://github.com/AJaySi/AI-Writer/wiki/Alwrity--%E2%80%90-Get-started)
 ```
 1). git clone https://github.com/AJaySi/AI-Writer.git
-2). pip install -r requirements.txt
+2). pip install -r -U requirements.txt
 3). streamlit run alwrity.py
 
 4). Visit Alwrity UI in a Browser & Start generation AI personalized content.
