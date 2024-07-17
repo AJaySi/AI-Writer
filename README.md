@@ -35,11 +35,14 @@ If you have 💻 Laptop + 🛜 Internet + 10 minutes, you will be generating blo
 3). streamlit run alwrity.py
 ```
 ---
-**Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Someone will bail you out.**
+Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Someone will bail you out.
 ---
 
 ![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/structured_data_seo.mp4)
-
+![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
+![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/Alwrity_linkedin_post_generator.gif)
+![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/alwrity_blog_post_writer.gif)
+![AI Google Ads Generator](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/alwrity_google_ads_generator.gif)
 ### AI Tools & Features of Alwrity:
 | No. | Alwrity Tool                       | Description                                                                    |
 |-----|------------------------------------|--------------------------------------------------------------------------------|
