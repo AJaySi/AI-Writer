@@ -87,12 +87,6 @@ def facebook_post_writer():
             )
 
         with col2:
-            business_type = st.text_input(
-                "🏢 **What is your business type?**",
-                placeholder="e.g., Fitness coach",
-                help="Provide the type of your business. This will help tailor the post content."
-            )
-
             post_tone_options = ["Informative", "Humorous", "Inspirational", "Upbeat", "Casual", "Customize"]
             post_tone = st.selectbox(
                 "🎨 **What tone do you want to use?**",
@@ -107,6 +101,12 @@ def facebook_post_writer():
                     placeholder="e.g., Professional",
                     help="Provide a specific tone if you selected 'Customize'."
                 )
+
+            business_type = st.text_input(
+                "🏢 **What is your business type?**",
+                placeholder="e.g., Fitness coach",
+                help="Provide the type of your business. This will help tailor the post content."
+            )
 
             avoid = st.text_input(
                 "❌ **What elements do you want to avoid?**",

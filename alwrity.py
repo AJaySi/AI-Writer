@@ -9,13 +9,13 @@ import base64
 load_dotenv()
 
 #from lib.chatbot_custom.chatbot_local_docqa import alwrity_chat_docqa
-from lib.utils.alwrity_utils import (blog_from_keyword, ai_agents_team, 
-        essay_writer, ai_news_writer, ai_seo_tools,
+from lib.utils.alwrity_utils import (blog_from_keyword, ai_agents_team, essay_writer, ai_news_writer, ai_seo_tools,
         ai_finance_ta_writer, ai_social_writer,
         do_web_research, competitor_analysis,
         )
 
 from lib.ai_writers.ai_story_writer.story_writer import story_input_section
+from lib.ai_writers.ai_product_description_writer import write_ai_prod_desc
 
 
 # Function to check if API keys are present and prompt user to input if not
@@ -334,9 +334,9 @@ def main():
 
         # Define the tabs
         tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
-            ["AI Writers", "Content Planning", "Agents Teams", "AI SEO tools", "Alwrity Brain", "Ask Alwrity"])
+            ["AI Writers", "Content Planning", "Agents Teams", "AI SEO tools", "AI Social Tools", "Ask Alwrity"])
         with tab1:
-            write_blog()
+            ai_writers()
 
         with tab2:
             content_planning_tools()
@@ -348,10 +348,10 @@ def main():
             ai_seo_tools()
 
         with tab5:
-            alwrity_brain()
+            ai_social_writer()
 
         with tab6:
-            st.info("Chatbot")
+            st.subheader("Chat with your Data, Chat with any Data.. COMING SOON !")
             st.markdown("Create a collection by uploading files (PDF, MD, CSV, etc), or crawl a data source (Websites, more sources coming soon.")
             st.markdown("One can ask/chat, summarize and do semantic search over the uploaded data")
             #alwrity_chat_docqa()
@@ -374,14 +374,14 @@ def main():
 
 
 # Functions for the main options
-def write_blog():
+def ai_writers():
     options = [
         "AI Blog Writer",
         "Story Writer",
         "Essay writer",
         "Write News reports",
         "Write Financial TA report",
-        "AI Social writer (instagram, tweets, linkedin, facebook post)",
+        "AI Product Description Writer",
         "AI Copywriter",
         "Quit"
     ]
@@ -399,10 +399,10 @@ def write_blog():
         ai_news_writer()
     elif choice == "Write Financial TA report":
         ai_finance_ta_writer()
-    elif choice == "AI Social writer (instagram, tweets, linkedin, facebook post)":
-        ai_social_writer()
+    elif choice == "AI Product Description Writer":
+        write_ai_prod_desc()
     elif choice == "Quit":
-        st.write("Exiting, Getting Lost. But.... I have nowhere to go 🥹🥹")
+        st.subheader("Exiting, Getting Lost. But.... I have nowhere to go 🥹🥹")
 
 
 def content_planning_tools():

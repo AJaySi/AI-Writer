@@ -7,7 +7,7 @@ Prompting is abstracted to get going sooner. Focus on your content quality, rath
 Alwrity gives hyper content personalization, factual web researched & SEO optimized content and tools for automating content & digital marketing.
 
 AI will help achieve Content Hyper-Personalization.
-![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/alwrity_ai_writer.png)
+![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
 ---
 1). [Visit alwrity.com](https://www.alwrity.com/ai-writing-tools), You will find AI content writing tools, which are Free & No-Signup.
 **Note:** Although, this is limited, as is our wallet & Resources.
@@ -35,9 +35,10 @@ If you have 💻 Laptop + 🛜 Internet + 10 minutes, you will be generating blo
 3). streamlit run alwrity.py
 ```
 ---
-**Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Someone will bail you out.
+**Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Someone will bail you out.**
 ---
 
+![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/structured_data_seo.mp4)
 
 ### AI Tools & Features of Alwrity:
 | No. | Alwrity Tool                       | Description                                                                    |
@@ -67,7 +68,7 @@ If you have 💻 Laptop + 🛜 Internet + 10 minutes, you will be generating blo
 ---
 
 # AI Content Generation Toolkit - Alwrity
-![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
+![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/alwrity_ai_writer.png)
 
 ## Introduction
 
