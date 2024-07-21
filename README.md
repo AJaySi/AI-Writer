@@ -34,14 +34,15 @@ If you have 💻 Laptop + 🛜 Internet + 10 minutes, you will be generating blo
 2). pip install -U -r requirements.txt
 3). streamlit run alwrity.py
 ```
+
 ---
 Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Someone will bail you out.
 ---
 
-![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/structured_data_seo.mp4)
-![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
-![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/Alwrity_linkedin_post_generator.gif)
-![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/alwrity_blog_post_writer.gif)
+![AI SEO Tool Structured Data Generator](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/structured_data.gif)
+![ALwrity AI Blog writer](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
+![ALwrity AI Linkedin Post generator](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/Alwrity_linkedin_post_generator.gif)
+![ALwrity AI writer](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/alwrity_blog_post_writer.gif)
 ![AI Google Ads Generator](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/alwrity_google_ads_generator.gif)
 ### AI Tools & Features of Alwrity:
 | No. | Alwrity Tool                       | Description                                                                    |
@@ -72,7 +73,7 @@ Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Som
 
 # AI Content Generation Toolkit - Alwrity
 ![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/alwrity_ai_writer.png)
-
+(Click to Read Details of each available features)[https://github.com/AJaySi/AI-Writer/wiki/ALwrity-Interface-first-page-explanation]
 ## Introduction
 
 Alwrity automates and enhances the process of content creation, optimization, and management(Really ?). 

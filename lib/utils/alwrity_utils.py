@@ -37,6 +37,8 @@ from lib.ai_writers.web_url_ai_writer import blog_from_url
 from lib.ai_writers.image_ai_writer import blog_from_image
 from lib.ai_writers.ai_essay_writer import ai_essay_generator
 from lib.ai_seo_tools.seo_structured_data import ai_structured_data
+from lib.ai_seo_tools.content_title_generator import ai_title_generator
+from lib.ai_seo_tools.meta_desc_generator import metadesc_generator_main
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_planner
 
@@ -115,13 +117,19 @@ def ai_seo_tools():
     """ Collection SEO tools for content creators. """
     options = [
         "Generate Structured Data - Rich Snippet",
-        "AI SEO Audit",
+        "Generate SEO optimized Blog Titles",
+        "Generate Meta Description for SEO",
         "Quit"
     ]
     choice = st.selectbox("**👇Select AI SEO Tool:**", options, index=0, format_func=lambda x: f"📝 {x}")
 
     if choice == "Generate Structured Data - Rich Snippet":
         ai_structured_data()
+    elif choice == "Generate Meta Description for SEO":
+        metadesc_generator_main()
+    elif choice == "Generate SEO optimized Blog Titles":
+        ai_title_generator()
+
 
 
 def blog_from_keyword():
