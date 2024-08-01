@@ -20,7 +20,7 @@ def openai_chatgpt(prompt, model, temperature, max_tokens, top_p, n, fp):
 
     Args:
         prompt (str): The input text to generate completion for.
-        model (str, optional): Model to be used for the completion. Defaults to "gpt-4-1106-preview".
+        model (str, optional): Model to be used for the completion. Defaults to "gpt-4o".
         temperature (float, optional): Controls randomness. Lower values make responses more deterministic. Defaults to 0.2.
         max_tokens (int, optional): Maximum number of tokens to generate. Defaults to 4096
         top_p (float, optional): Controls diversity. Defaults to 0.9.

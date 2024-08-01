@@ -1,4 +1,4 @@
-# How to Alwrity - Getting Started
+# How to ALwrity - Getting Started
 
 Alwrity assists content creators and digital marketers in keyword web research, AI website & Social media content generation & AI Copywriting.
 Our toolkit integrates **(OpenAI, Gemini, Anthropic)** AI models for text generation, image creation **(Stability.ai), STT(whisper, AssemblyAI)** and Web or local data analysis, streamlining your content creation pipeline and ensuring high-quality output with minimal effort.

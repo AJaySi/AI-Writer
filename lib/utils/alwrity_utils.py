@@ -10,7 +10,9 @@ import configparser
 from datetime import datetime
 import uuid
 from PIL import Image
-from PyPDF2 import PdfReader
+import PyPDF2
+import openai
+import tiktoken
 from docx import Document
 from loguru import logger
 logger.remove()
@@ -41,6 +43,7 @@ from lib.ai_seo_tools.content_title_generator import ai_title_generator
 from lib.ai_seo_tools.meta_desc_generator import metadesc_generator_main
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_planner
+from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
 def record_voice(language="en"):
@@ -92,13 +95,15 @@ def process_input(input_text, uploaded_file):
         return "keywords"
     
     if uploaded_file is not None:
-        file_details = {"filename": uploaded_file.name, "filetype": uploaded_file.type, "filesize": uploaded_file.size}
+        file_details = {"filename": uploaded_file.name, "filetype": uploaded_file.type}
         st.write(file_details)
         if uploaded_file.type.startswith("text/"):
             content = uploaded_file.read().decode("utf-8")
             st.text(content)
+
         elif uploaded_file.type == "application/pdf":
-            st.write("PDF file uploaded. Add your PDF processing logic here.")
+            return "PDF_file"
+
         elif uploaded_file.type in ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword"]:
             st.write("Word document uploaded. Add your DOCX processing logic here.")
         elif uploaded_file.type.startswith("image/"):
@@ -174,8 +179,8 @@ def blog_from_keyword():
         if not uploaded_file and not user_input and not audio_input:
             st.error("🤬🤬 Either Enter/Type/Attach, can't read your mind.(yet..)")
             st.stop()
-
-        input_type = process_input(user_input, uploaded_file)
+        else:
+            input_type = process_input(user_input, uploaded_file)
         
         if input_type == "keywords":
             if user_input and len(user_input.split()) >= 2:
@@ -208,6 +213,94 @@ def blog_from_keyword():
         
         elif input_type == "image_file":
             blog_from_image(user_input, temp_file_path)
+
+        elif input_type == "PDF_file":
+            pdf_reader = PyPDF2.PdfReader(uploaded_file)
+            text = ""
+            combined_result = ""
+            # Create a placeholder for the progress bar
+            progress_bar = st.progress(0)
+
+            # Loop through each page with a progress bar
+            for page_num, page in enumerate(pdf_reader.pages):
+                text += page.extract_text()
+                # Replace newlines with spaces
+                text = text.replace("\n", " ")
+                # Use regex to add a space between words that are combined
+                text = re.sub(r"(\w)([A-Z])", r"\1 \2", text)
+
+                results = blog_from_pdf(text)
+                # Update the progress bar
+                progress_bar.progress((page_num + 1) / len(pdf_reader.pages))
+                combined_result += str(results[-1])
+
+            # Clear progress bar at the end
+            progress_bar.empty()
+
+            st.markdown(combined_result)
+
+
+def blog_from_pdf(pdf_text):
+    """ Load in a long PDF and pull the text out. Create a prompt to be used to extract key bits of information.
+        Chunk up our document and process each chunk to pull any answers out. Combine them at the end. 
+        This simple approach will then be extended to three more difficult questions.
+    """
+    # FixME: 
+    document = '<document>'
+    template_prompt=f'''Extract key pieces of information from the given document.
+
+        When you extract a key piece of information, include the closest page number.
+        Ex: Extracted Information (Page number)
+        \n\nDocument: \"\"\"<document>\"\"\"\n\n'''
+
+    # Initialise tokenizer
+    tokenizer = tiktoken.get_encoding("cl100k_base")
+    results = []
+    
+    chunks = create_chunks(pdf_text, 1000, tokenizer)
+    text_chunks = [tokenizer.decode(chunk) for chunk in chunks]
+
+    for chunk in text_chunks:
+        results.append(extract_chunk(chunk, template_prompt))
+
+    #zipped = list(zip(*groups))
+    #zipped = [x for y in zipped for x in y if "Not specified" not in x and "__" not in x]
+    return results
+
+
+# Split a text into smaller chunks of size n, preferably ending at the end of a sentence
+def create_chunks(text, n, tokenizer):
+    tokens = tokenizer.encode(text)
+    """Yield successive n-sized chunks from text."""
+    i = 0
+    while i < len(tokens):
+        # Find the nearest end of sentence within a range of 0.5 * n and 1.5 * n tokens
+        j = min(i + int(1.5 * n), len(tokens))
+        while j > i + int(0.5 * n):
+            # Decode the tokens and check for full stop or newline
+            chunk = tokenizer.decode(tokens[i:j])
+            if chunk.endswith(".") or chunk.endswith("\n"):
+                break
+            j -= 1
+        # If no end of sentence found, use n tokens as the chunk size
+        if j == i + int(0.5 * n):
+            j = min(i + n, len(tokens))
+        yield tokens[i:j]
+        i = j
+
+
+def extract_chunk(document, template_prompt):
+    """ Chunking for large documents, exceed context window"""
+    client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    prompt = template_prompt.replace('<document>', document)
+
+    try:
+        response = llm_text_gen(prompt)
+        return response
+    except Exception as err:
+        logger.error(f"Exit: Failed to get response from LLM: {err}")
+        exit(1)
+
 
 
 def ai_agents_team():
