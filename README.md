@@ -22,7 +22,7 @@ If you have 💻 Laptop + 🛜 Internet + 10 minutes, you will be generating blo
 ### [Getting started for Developers](https://github.com/AJaySi/AI-Writer/wiki/Alwrity--%E2%80%90-Get-started)
 ```
 1). git clone https://github.com/AJaySi/AI-Writer.git
-2). pip install -r -U requirements.txt
+2). pip install -U -r requirements.txt
 3). streamlit run alwrity.py
 
 4). Visit Alwrity UI in a Browser & Start generation AI personalized content.
