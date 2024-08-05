@@ -9,6 +9,7 @@ Alwrity gives hyper content personalization, factual web researched & SEO optimi
 AI will help achieve Content Hyper-Personalization.
 ![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
 ---
+
 1). [Visit alwrity.com](https://www.alwrity.com/ai-writing-tools), You will find AI content writing tools, which are Free & No-Signup.
 **Note:** Although, this is limited, as is our wallet & Resources.
 
@@ -19,15 +20,17 @@ If you have 💻 Laptop + 🛜 Internet + 10 minutes, you will be generating blo
 ### [Step-By-Step: Getting Started for Absolute Begginers](https://www.alwrity.com/post/getting-started-with-alwrity-ai-writer)
 
 ---
-### [Getting started for Developers](https://github.com/AJaySi/AI-Writer/wiki/Alwrity--%E2%80%90-Get-started)
+
+### [Getting started for Developers](https://github.com/AJaySi/AI-Writer/wiki/Getting-started-with-ALwrity-AI-writer)
 ```
 1). git clone https://github.com/AJaySi/AI-Writer.git
-2). pip install -r -U requirements.txt
+2). pip install -r requirements.txt
 3). streamlit run alwrity.py
 
 4). Visit Alwrity UI in a Browser & Start generation AI personalized content.
 ```
 ---
+
 ### Updating to latest Code: (Existing users)
 ```
 1). Git pull
