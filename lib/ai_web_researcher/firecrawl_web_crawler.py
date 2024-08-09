@@ -61,13 +61,14 @@ def scrape_url(url):
         dict: The result of the URL scraping, or None if an error occurred.
     """
     client = initialize_client()
-    params = {
-    'pageOptions': {
-        'onlyMainContent': True
-        }
-    }
+    #params = {
+    #'pageOptions': {
+    #    'onlyMainContent': True
+    #    }
+    #}
     try:
-        result = client.scrape_url(url, params=params)
+        #result = client.scrape_url(url, params=params)
+        result = client.scrape_url(url)
         return result
     except Exception as e:
         logging.error(f"Error scraping URL: {e}")

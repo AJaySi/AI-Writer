@@ -4,8 +4,9 @@ from bs4 import BeautifulSoup
 import requests
 import os
 
-# Set up OpenAI API key
-openai.api_key = os.getenv('OPENAI_API_KEY')  # Assuming you have it in a .env file
+from ..ai_web_researcher.firecrawl_web_crawler import scrape_url
+from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
+
 
 # Placeholder function for web scraping the URL (to be replaced with your mechanism)
 def scrape_webpage(url):

@@ -1,10 +1,12 @@
 # How to ALwrity - Getting Started
 
 Alwrity assists content creators and digital marketers in keyword web research, AI website & Social media content generation & AI Copywriting.
-Our toolkit integrates **(OpenAI, Gemini, Anthropic)** AI models for text generation, image creation **(Stability.ai), STT(whisper, AssemblyAI)** and Web or local data analysis, streamlining your content creation pipeline and ensuring high-quality output with minimal effort.
+Our toolkit integrates **(OpenAI, Gemini, Anthropic)** AI models for text generation, image creation **(Stability.ai), STT(whisper, AssemblyAI)** and AI Web research **(Tavily AI, exa AI, Serper.dev)**, streamlining your content creation pipeline and ensuring high-quality output with minimal effort.
 
 Prompting is abstracted to get going sooner. Focus on your content quality, rather than AI tooling around it.
 Alwrity gives hyper content personalization, factual web researched & SEO optimized content and tools for automating content & digital marketing.
+
+Alwrity, is a complete content life cycle platform with Content planning, Content Generation, Content publishing, Analytics & monitoring & more. AI SEO & marketing tools will help reach wider audience. Its in active development with many bridges to cross. 
 
 AI will help achieve Content Hyper-Personalization.
 ![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
