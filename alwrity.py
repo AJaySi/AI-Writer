@@ -18,83 +18,78 @@ from lib.ai_writers.ai_story_writer.story_writer import story_input_section
 from lib.ai_writers.ai_product_description_writer import write_ai_prod_desc
 
 
-# Function to check if API keys are present and prompt user to input if not
 def check_api_keys():
+    """
+    Checks if the required API keys are present in the environment variables.
+    Prompts the user to enter missing keys and saves them in the .env file.
+    """
     api_keys = {
-        "METAPHOR_API_KEY": "[Get Metaphor AI Key](https://dashboard.exa.ai/login)",
-        "TAVILY_API_KEY": "[Get Tavily AI Key](https://tavily.com/#api)",
-        "SERPER_API_KEY": "[Get Serper API Key](https://serper.dev/signup)",
-        "STABILITY_API_KEY": "[Get Stability API Key Here](https://platform.stability.ai/)",
-        "FIRECRAWL_API_KEY": "[Get Firecrawl API key Here](https://www.firecrawl.dev/account)"
+        "METAPHOR_API_KEY": "https://dashboard.exa.ai/login",
+        "TAVILY_API_KEY": "https://tavily.com/#api",
+        "SERPER_API_KEY": "https://serper.dev/signup",
+        "STABILITY_API_KEY": "https://platform.stability.ai/",
+        "FIRECRAWL_API_KEY": "https://www.firecrawl.dev/account"
     }
-    missing_keys = []
 
-    for key, description in api_keys.items():
-        if os.getenv(key) is None:
-            missing_keys.append((key, description))
+    missing_keys = {
+        key: url for key, url in api_keys.items() if os.getenv(key) is None
+    }
 
     if missing_keys:
-        st.error("🚨 Some API keys are missing! Please provide them below: 🚨")
-        
-        new_keys = []
-        for key, description in missing_keys:
-            api_key = st.text_input(f"Enter 🔏 {key}: 👉{description}👈", placeholder=description, help=description)
+        st.error("🚨 Some API keys are missing! Please provide them below:")
+        for key, url in missing_keys.items():
+            api_key = st.text_input(f"Enter 🔏 {key}: 👉[Get it here]({url})👈")
             if api_key:
-                new_keys.append((key, api_key))
-        
-        if new_keys:
-            with open(".env", "a") as env_file:
-                for key, api_key in new_keys:
+                os.environ[key] = api_key
+                with open(".env", "a") as env_file:
                     env_file.write(f"{key}={api_key}\n")
-                    os.environ[key] = api_key
-                    st.success(f"✅ {key} added successfully! Press Enter to continue.")
-        
+                st.success(f"✅ {key} added successfully!")
         return False
     return True
 
 
-# Function to check LLM provider and API key
 def check_llm_environs():
+    """
+    Ensures that the LLM provider and corresponding API key are set.
+    Prompts the user to select a provider and enter the API key if missing.
+    """
     gpt_provider = os.getenv("GPT_PROVIDER")
-    supported_providers = ['google', 'openai', 'mistralai']
+    supported_providers = {
+        'google': "GEMINI_API_KEY",
+        'openai': "OPENAI_API_KEY",
+        'mistralai': "MISTRAL_API_KEY"
+    }
 
-    if gpt_provider is None or gpt_provider.lower() not in map(str.lower, supported_providers):
+    if not gpt_provider or gpt_provider.lower() not in supported_providers:
         gpt_provider = st.selectbox(
-            "Select your LLM Provider",
-            options=["google", "openai", "mistralai"],
-            help="Select from 'google', 'openai', 'mistralai'"
+            "Select your LLM Provider", options=list(supported_providers.keys())
         )
         os.environ["GPT_PROVIDER"] = gpt_provider
         with open(".env", "a") as env_file:
             env_file.write(f"GPT_PROVIDER={gpt_provider}\n")
         st.success(f"GPT Provider set to {gpt_provider}")
 
-    api_key_var = ""
-    if gpt_provider.lower() == "google":
-        api_key_var = "GEMINI_API_KEY"
-        missing_api_msg = "To get your Gemini API key, please visit: https://aistudio.google.com/app/apikey"
-    elif gpt_provider.lower() == "openai":
-        api_key_var = "OPENAI_API_KEY"
-        missing_api_msg = "To get your OpenAI API key, please visit: https://openai.com/blog/openai-api"
-    elif gpt_provider.lower() == "mistralai":
-        api_key_var = "MISTRAL_API_KEY"
-        missing_api_msg = "To get your MistralAI API key, please visit: https://mistralai.com/api"
-
-    if os.getenv(api_key_var) is None:
-        api_key = st.text_input(f"Enter {api_key_var}:", placeholder=missing_api_msg, help=missing_api_msg)
+    api_key_var = supported_providers[gpt_provider.lower()]
+    if not os.getenv(api_key_var):
+        api_key = st.text_input(f"Enter {api_key_var}:")
         if api_key:
+            os.environ[api_key_var] = api_key
             with open(".env", "a") as env_file:
                 env_file.write(f"{api_key_var}={api_key}\n")
-            os.environ[api_key_var] = api_key
-            st.success(f"{api_key_var} added successfully! Enter to continue..")
+            st.success(f"{api_key_var} added successfully!")
         return False
     return True
 
 
-# Function to save configuration to a file
 def save_config(config):
-    with open(os.getenv("ALWRITY_CONFIG"), "w") as config_file:
-        json.dump(config, config_file, indent=4)
+    """
+    Saves the provided configuration dictionary to a JSON file specified by the environment variable.
+    """
+    try:
+        with open(os.getenv("ALWRITY_CONFIG"), "w") as config_file:
+            json.dump(config, config_file, indent=4)
+    except Exception as e:
+        st.error(f"An error occurred while saving the configuration: {e}")
 
 
 # Sidebar configuration
@@ -325,13 +320,9 @@ def main():
     os.environ["ALWRITY_CONFIG"] = os.path.join(os.getcwd(), "lib", "workspace", "alwrity_config", "main_config.json")
 
     # Check API keys and LLM environment settings
-    api_keys_valid = check_api_keys()
-    llm_environs_valid = check_llm_environs()
+    sidebar_configuration()
 
-    if api_keys_valid and llm_environs_valid:
-        # Clear previous messages and display the sidebar configuration
-        sidebar_configuration()
-
+    if check_api_keys() and check_llm_environs():
         # Define the tabs
         tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
             ["AI Writers", "Content Planning", "Agents Teams", "AI SEO tools", "AI Social Tools", "Ask Alwrity"])
@@ -439,7 +430,6 @@ def alwrity_brain():
                 st.error(f"Error processing folder: {e}")
         else:
             st.warning("Please enter a valid folder path.")
-
 
 
 if __name__ == "__main__":

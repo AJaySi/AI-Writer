@@ -1,15 +1,32 @@
+> [!NOTE]  
+><p><em>H Content Enthusiast !</em></p>
+><p><em>ALwrity is in the "just for friends" stage and WIP (Work in Progress). Run this App or visit alwrity.com to gauge present status. Read About present features below. Our highly ambitious Roadmap is here. We'd love your feedback or contributions.</em></p>
+
 # How to ALwrity - Getting Started
 
-Alwrity assists content creators and digital marketers in keyword web research, AI website & Social media content generation & AI Copywriting.
+ALwrity assists content creators and digital marketers in keyword web research, AI website & Social media content generation & AI Copywriting.
 Our toolkit integrates **(OpenAI, Gemini, Anthropic)** AI models for text generation, image creation **(Stability.ai), STT(whisper, AssemblyAI)** and AI Web research **(Tavily AI, exa AI, Serper.dev)**, streamlining your content creation pipeline and ensuring high-quality output with minimal effort.
 
-Prompting is abstracted to get going sooner. Focus on your content quality, rather than AI tooling around it.
-Alwrity gives hyper content personalization, factual web researched & SEO optimized content and tools for automating content & digital marketing.
+[!NOTE] Wide Range of AI Writers for All platforms
+AI content generators for blogs, news, articles, essay, story, Linkedin & Facebook posts, tweets, instagram captions, YT descriptions, titles etc.
 
-Alwrity, is a complete content life cycle platform with Content planning, Content Generation, Content publishing, Analytics & monitoring & more. AI SEO & marketing tools will help reach wider audience. Its in active development with many bridges to cross. 
-
-AI will help achieve Content Hyper-Personalization.
 ![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
+
+[!NOTE] Prompting is abstracted to get going sooner.
+Focus on your content quality, rather than AI tooling around it.
+ALwrity gives hyper content personalization, factual web researched & SEO optimized content and tools for automating content & digital marketing.
+
+[!NOTE] AI Agents for Content planning & Personalized Teams
+ALwrity integrates AI Agents team for content creators & Marketing teams. Brainstrom content calenders, write in hyper personlized brand tone, voice. Its very easy to create your own content AI Agents team with ALwrity.
+
+
+[!NOTE] All in One Content platform (WIP)
+Not just AI Writer, content planning, scheduling, publishing, monitoring analytics. ALwrity, is a complete content life cycle platform with **Content planning, Content Generation, Content publishing, Analytics & monitoring & more**. We are busy building blocks for each phase of content life cycle with AI.
+
+[!NOTE] AI SEO & marketing tools (WIP)
+AI SEO Tools create Titles, meta descriptions, opengraph tags, structured data(json-ld) are already present to help with technical SEO.
+![This helps SEO & For growing your traffic.](https://github.com/AJaySi/AI-Writer/wiki/ALwrity-AI-SEO-Tools)
+
 ---
 
 1). [Visit alwrity.com](https://www.alwrity.com/ai-writing-tools), You will find AI content writing tools, which are Free & No-Signup.
@@ -42,59 +59,32 @@ If you have 💻 Laptop + 🛜 Internet + 10 minutes, you will be generating blo
 
 ---
 Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Someone will bail you out.
+[!NOTE]![Alwrity Documentation is here for more details](https://github.com/AJaySi/AI-Writer/wiki)
 ---
 
 ![AI SEO Tool Structured Data Generator](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/structured_data.gif)
-![ALwrity AI Blog writer](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
 ![ALwrity AI Linkedin Post generator](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/Alwrity_linkedin_post_generator.gif)
-![ALwrity AI writer](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/alwrity_blog_post_writer.gif)
 ![AI Google Ads Generator](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/alwrity_google_ads_generator.gif)
-### AI Tools & Features of Alwrity:
-| No. | Alwrity Tool                       | Description                                                                    |
-|-----|------------------------------------|--------------------------------------------------------------------------------|
-| 1   | AI Blog Writer                     | Generates blog content based on the latest web research on given keywords.     |
-| 2   | AI YouTube to Content Writer       | Transforms content from provided YouTube URLs into written form.               |
-| 3   | AI Long Form Content               | Creates extensive and detailed articles.                                       |
-| 4   | AI Essay Writer                    | Produces lengthy essays on various topics, with room for improvement.          |
-| 5   | AI Story Writer                    | Constructs narratives and stories based on provided backstories and characters.|
-| 6   | AI Email Writer                    | Generates various types of professional letters.                               |
-| 7   | AI Letter Writer                   | Crafts business letters for formal communication.                              |
-| 8   | AI LinkedIn Blog Post Generator    | Develops blog posts optimized for sharing on LinkedIn.                         |
-| 9   | AI Instagram Caption Generation    | Creates engaging captions for Instagram posts.                                 |
-| 10  | AI Content Outline Generator       | Generates outlines based on keywords gathered from web research.               |
-| 11  | AI Web Researcher                  | Conducts comprehensive web research and analysis using various methods.        |
-| 12  | AI Content Planning & Calendar     | Assists in planning and organizing content with a comprehensive calendar.      |
-| 13  | Create Blog Images                 | Generates images to complement blog content using Stable Diffusion.            |
-| 14  | Agentic Content Creation           | Explores innovative content creation methods with CrewAI.                      |
-| 15  | AI Finance Writer                  | Uses ufinance & padnas_ta to write TA report for given stock symbol            |
-| 16  | AI Agents Team                     | Easily create AI Agents team for Content creation & Digital marketing          |
-| 17  | Talk to your Docs (WIP)            | Write content from your local documents of any type(multi-modal)               |
-| 18  | Wordpress API integration          | Programmatically upload blogs to wordpress website with API keys               |
-| 19  | Talk to your website               | Crawl Crawl your entire website & write content based on its content, Or Not   |
-| 20  | Content From URLs                  | Provide any URL to create an original, unique content from                     |
-| 21  | SEO Structured Data                | Feature: AI SEO - Generate rich snippet from url                               |
 
 ---
+
+### ![List of all AI Tools & Features of Alwrity](https://github.com/AJaySi/AI-Writer/wiki/Features-of-ALwrity-AI-writer)
+[!NOTE] Alwrity is WIP & Under active development.
+---
+
+How To Personlize ALwrity & Content Generation
 
 # AI Content Generation Toolkit - Alwrity
 ![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/alwrity_ai_writer.png)
 (Click to Read Details of each available features)[https://github.com/AJaySi/AI-Writer/wiki/ALwrity-Interface-first-page-explanation]
-## Introduction
-
-Alwrity automates and enhances the process of content creation, optimization, and management(Really ?). 
-Leveraging AI technologies, it assists content creators and digital marketers in generating, formatting, 
-and uploading blog content efficiently(Hmmmm, OK...).
-The toolkit integrates advanced AI models for text generation, image creation, 
-and data analysis, streamlining the content creation pipeline(Who reads introductions, right!).
 
 ## [Read Alwrity Configuration Options](https://www.alwrity.com/post/know-powerful-alwrity-ai-writer-configuration):
 Use the [main_config](https://github.com/AJaySi/AI-Writer/blob/main/main_config) file to modify Alwrity behavior for your content needs.
 
 ---
 
-## Under the hood:
+## Under the hood: Tech-Stack on the shoulders of Giants - (Credits):
 
-### Tech-Stack on the shoulders of Giants - (Credits):
 - **APIs**:
   - [Exa API](https://exa.ai/): Provides semantic search capabilities for finding similar topics and technologies.
   - [Tavily API](https://tavily.com/): Offers AI-powered web search functionality for conducting in-depth keyword research.
@@ -107,6 +97,7 @@ Use the [main_config](https://github.com/AJaySi/AI-Writer/blob/main/main_config)
   - [Ollama](https://ollama.com/) : Local, Privacy focused, LLM provider for research and content generation capabilities.
   - [CrewAI](https://www.crewai.com/): Collaborative AI agents framework.
   - [firecrawl](https://www.firecrawl.dev/): Turn websites into LLM-ready data
+
 ---
 
 ## Features
@@ -133,16 +124,8 @@ This gives context for generating content. Tavily AI, Google search, serp and Vi
 - **Wordpress, Jekyll Integration**: Implemented generating and uploading blog content, media to wordpress via its REST APIs. Most of the static website which can work with markdown style should work with little testing.
 	
 
-### AI-Driven Content Creation
-
-- **Text Generation**: Leverages OpenAI's ChatGPT, Google Gemini Pro for generating text for blogs.
-- [**Customizable AI Parameters**](https://github.com/AJaySi/AI-Writer/blob/main/main_config): Offers flexibility in adjusting AI parameters like model selection, temperature, and token limits to suit different content needs.
-
-### Image Detail Extraction
-- **Analyzing and Extracting Image Details**: Uses OpenAI's Vision API, Google Gemini vision to analyze images and extract details such as alt text, descriptions, titles, and captions, enhancing the SEO of image content.
-
 ---
-**Note**: This toolkit is designed for automated blog management and requires appropriate API keys and access credentials for full functionality.
+[!NOTE] This toolkit is designed for automated blog management and requires appropriate API keys and access credentials for full functionality.
 ---
 
 ### Web Research
