@@ -4,6 +4,8 @@ import json
 import requests
 import streamlit as st
 
+from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
+
 
 def tweet_writer():
     """ AI Tweet Generator """
@@ -25,15 +27,14 @@ def tweet_writer():
             )
 
     if st.button('**Write Tweets**'):
-        with st.status("Assigning AI professional to write your Google Ads copy..", expanded=True) as status:
-            if not target_audience or not hook:
-                st.error("🚫 Please provide all required inputs.")
-            else:
+        if not target_audience or not hook:
+            st.error("🚫 Please provide all required inputs.")
+        else:
+            with st.status("Assigning AI professional to write your Google Ads copy..", expanded=True) as status:
                 response = tweet_generator(target_audience, hook)
                 if response:
-                    st.subheader(f'**🧕👩: Your Final Tweets!**')
-                    st.write(response)
-                    st.write("\n\n\n\n\n\n")
+                    st.subheader(f'**🧕👩: Your Tweets!**')
+                    st.markdown(response)
                 else:
                     st.error("💥**Failed to write Letter. Please try again!**")
 
@@ -67,7 +68,7 @@ def tweet_generator(target_audience, hook):
     """
 
     try:
-        response = generate_text_with_exception_handling(prompt)
+        response = llm_text_gen(prompt)
         return response
     except Exception as err:
         st.error(f"Exit: Failed to get response from LLM: {err}")

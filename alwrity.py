@@ -325,7 +325,7 @@ def main():
     if check_api_keys() and check_llm_environs():
         # Define the tabs
         tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
-            ["AI Writers", "Content Planning", "Agents Teams", "AI SEO tools", "AI Social Tools", "Ask Alwrity"])
+            ["✍️🤖AI Writers", " 📝📅Content Planning", "🤝🤖Agents Teams", "🛠️🔍AI SEO tools", "📱AI Social Tools", " 💬Ask Alwrity"])
         with tab1:
             ai_writers()
 

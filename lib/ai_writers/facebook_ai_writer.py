@@ -4,7 +4,7 @@ import json
 import requests
 import streamlit as st
 
-from streamlit_quill import st_quill
+#from streamlit_quill import st_quill
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 

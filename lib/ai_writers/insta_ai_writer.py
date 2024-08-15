@@ -4,6 +4,8 @@ import json
 import requests
 import streamlit as st
 
+from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
+
 
 def insta_writer():
     # Title and description
@@ -42,7 +44,7 @@ def insta_writer():
                             )
                     if insta_captions:
                         st.subheader('**👩👩🔬Go Viral, with these Instagram captions!🎆🎇 🎇**')
-                        st.code(insta_captions)
+                        st.markdown(insta_captions)
                     else:
                         st.error("💥**Failed to generate instagram Captions. Please try again!**")
 
@@ -69,5 +71,10 @@ def generate_insta_captions(input_insta_keywords, input_insta_type, input_insta_
 
         \nInstagram caption keywords: '{input_insta_keywords}'\n
         """
-        insta_captions = generate_text_with_exception_handling(prompt)
-        return insta_captions
+
+    try:
+        response = llm_text_gen(prompt)
+        return response
+    except Exception as err:
+        st.error(f"Exit: Failed to get response from LLM: {err}")
+        exit(1)
