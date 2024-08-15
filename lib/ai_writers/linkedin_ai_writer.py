@@ -4,6 +4,9 @@ import json
 import requests
 import streamlit as st
 
+from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
+from ..ai_web_researcher.gpt_online_researcher import do_google_serp_search
+
 
 def linked_post_writer():
     # Title and description
@@ -43,12 +46,12 @@ def generate_linkedin_post(input_blog_keywords, input_linkedin_type, input_linke
     """ Function to call upon LLM to get the work done. """
 
     # Fetch SERP results & PAA questions for FAQ.
-    serp_results, people_also_ask = get_serp_results(input_blog_keywords)
+    serp_results, people_also_ask = do_google_serp_search(input_blog_keywords)
 
     # If keywords and content both are given.
     if serp_results:
-        prompt = f"""As a SEO expert and experienced linkedin content writer, 
-        I will provide you with my 'blog keywords' and 'google serp results'.
+        prompt = f"""As an Experienced, industry veteran and experienced linkedin content writer, 
+        I will provide you with my 'blog keywords' and 'google serp results' done for the keywords.
         Your task is to write a detailed linkedin post, using given keywords and search results.
 
         Follow below guidelines for generating the linkedin post:
@@ -59,9 +62,15 @@ def generate_linkedin_post(input_blog_keywords, input_linkedin_type, input_linke
         5). Optimise your response for blog type of {input_linkedin_type}.
         6). Important to provide your response in {input_linkedin_language} language.\n
 
-        blog keywords: '{input_blog_keywords}'\n
-        google serp results: '{serp_results}'
-        people_also_ask: '{people_also_ask}'
+        Your final response should demostrate Experience, Expertise, Authoritativeness, and Trustworthiness.
+
+        blog keywords: \'\'\'{input_blog_keywords}\'\'\'
+        google serp results: \'\'\'{serp_results}\'\'\'
         """
-        linkedin_post = generate_text_with_exception_handling(prompt)
-        return linkedin_post
+
+    try:
+        response = llm_text_gen(prompt)
+        return response
+    except Exception as err:
+        st.error(f"Failed to generate Open Graph tags: {err}")
+        return None

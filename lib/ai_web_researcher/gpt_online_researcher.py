@@ -56,7 +56,9 @@ def gpt_web_researcher(search_keywords):
 
 
 def do_google_serp_search(search_keywords):
-    """ """
+    """ COmmon function to do google SERP analysis and return results. """
+
+    # FIXME: Add a return filter to either return full json, titles, PAA, relatedsearches etc.
     try:
         logger.info(f"Doing Google search for: {search_keywords}\n")
         g_results = google_search(search_keywords)
