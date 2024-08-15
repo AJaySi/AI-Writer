@@ -43,6 +43,7 @@ from lib.ai_seo_tools.content_title_generator import ai_title_generator
 from lib.ai_seo_tools.meta_desc_generator import metadesc_generator_main
 from lib.ai_seo_tools.image_alt_text_generator import alt_text_gen
 from lib.ai_seo_tools.opengraph_generator import og_tag_generator
+from lib.ai_seo_tools.optimize_images_for_upload import main_img_optimizer
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_planner
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
@@ -127,7 +128,8 @@ def ai_seo_tools():
         "Generate SEO optimized Blog Titles",
         "Generate Meta Description for SEO",
         "Generate Image Alt Text",
-        "Generate OpenGraph Tags"
+        "Generate OpenGraph Tags",
+        "Optimize/Resize Image"
     ]
     choice = st.selectbox("**👇Select AI SEO Tool:**", options, index=0, format_func=lambda x: f"📝 {x}")
 
@@ -141,6 +143,8 @@ def ai_seo_tools():
         alt_text_gen()
     elif choice == "Generate OpenGraph Tags":
         og_tag_generator()
+    elif choice == "Optimize/Resize Image":
+        main_img_optimizer()
 
 
 

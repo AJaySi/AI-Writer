@@ -1,4 +1,4 @@
-> [!NOTE] <p><em>ALwrity is in Work in Progress (WIP). All in One Content platform
+> [!NOTE] <p><em>ALwrity is All in One Content platform for content writers, without AI tooling knowledge. WIP.
 Not just AI Writers, ALwrity is a complete content life cycle platform with **Content planning & Research, Personlized Content Generation, Content SEO audits, Content Scheduling/publishing, Analytics & monitoring & more**. We are busy building blocks for each phase of content life cycle with AI. We'd love your feedback or contributions.</em></p>
 
 # How to ALwrity - Getting Started
@@ -6,7 +6,15 @@ Not just AI Writers, ALwrity is a complete content life cycle platform with **Co
 ALwrity assists content creators and digital marketers in keyword web research, ![AI writers](https://www.alwrity.com/ai-writing-tools) & ![Social media content generation](https://www.alwrity.com/ai-youtube-script-writer) & ![AI Copywriting](https://www.alwrity.com/ai-copywriting-formula-generator).
 Our toolkit integrates **(OpenAI, Gemini, Anthropic)** AI models for text generation, image creation **(Stability.ai), STT(whisper, AssemblyAI)** and AI Web research **(Tavily AI, exa AI, Serper.dev)**, streamlining your content creation pipeline and ensuring high-quality output with minimal effort.
 
-![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
+- ![Generate Content Calender for Months](https://www.alwrity.com/post/automating-content-calendars-with-ai-agents)
+- ![Specilized AI writers for every need & platform](https://github.com/AJaySi/AI-Writer/wiki/Features-of-ALwrity-AI-writer)
+- ![ALwrity AI SEO Tools](https://github.com/AJaySi/AI-Writer/wiki/ALwrity-AI-SEO-Tools)
+- ![ALwrity Web Researcher](https://github.com/AJaySi/AI-Writer/wiki/Alwrity-AI-Web-Research-Details-for-content-writing)
+- RoadMap - Coming Soon..
+
+---
+> ![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
+---
 
 ### Option 1: Get Started Now, [Visit alwrity.com](https://www.alwrity.com/ai-writing-tools) 
 > [!NOTE] <p>You will find AI content writing tools, which are Free & No-Signup.
