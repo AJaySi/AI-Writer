@@ -4,19 +4,20 @@ from datetime import datetime
 from dotenv import load_dotenv
 import streamlit as st
 import base64
+import requests
 
 # Load .env file
 load_dotenv()
 
 #from lib.chatbot_custom.chatbot_local_docqa import alwrity_chat_docqa
-from lib.utils.alwrity_utils import (blog_from_keyword, ai_agents_team, essay_writer, ai_news_writer, ai_seo_tools,
-        ai_finance_ta_writer, ai_social_writer,
-        do_web_research, competitor_analysis,
-        )
+from lib.utils.alwrity_utils import ai_agents_team, ai_seo_tools, ai_social_writer, competitor_analysis
 
 from lib.ai_writers.ai_story_writer.story_writer import story_input_section
 from lib.ai_writers.ai_product_description_writer import write_ai_prod_desc
 
+
+# Define the base URL for the FastAPI backend
+BASE_URL = "http://localhost:8000"
 
 def check_api_keys():
     """
@@ -42,7 +43,8 @@ def check_api_keys():
             if api_key:
                 os.environ[key] = api_key
                 with open(".env", "a") as env_file:
-                    env_file.write(f"{key}={api_key}\n")
+                    env_file.write(f"{key}={api_key}
+")
                 st.success(f"✅ {key} added successfully!")
         return False
     return True
@@ -66,7 +68,8 @@ def check_llm_environs():
         )
         os.environ["GPT_PROVIDER"] = gpt_provider
         with open(".env", "a") as env_file:
-            env_file.write(f"GPT_PROVIDER={gpt_provider}\n")
+            env_file.write(f"GPT_PROVIDER={gpt_provider}
+")
         st.success(f"GPT Provider set to {gpt_provider}")
 
     api_key_var = supported_providers[gpt_provider.lower()]
@@ -75,7 +78,8 @@ def check_llm_environs():
         if api_key:
             os.environ[api_key_var] = api_key
             with open(".env", "a") as env_file:
-                env_file.write(f"{api_key_var}={api_key}\n")
+                env_file.write(f"{api_key_var}={api_key}
+")
             st.success(f"{api_key_var} added successfully!")
         return False
     return True
@@ -279,7 +283,8 @@ def read_prompts(file_path="prompt_llm.txt"):
 def write_prompts(prompts, file_path="prompt_llm.txt"):
     with open(file_path, "w") as file:
         for prompt in prompts:
-            file.write(f"{prompt}\n")
+            file.write(f"{prompt}
+")
 
 # Function to load and encode the image file
 def load_image(image_path):
@@ -365,6 +370,51 @@ def main():
 
 
 # Functions for the main options
+def blog_from_keyword():
+    keyword = st.text_input("Enter a keyword for the blog:")
+    if st.button("Generate Blog"):
+        response = requests.post(f"{BASE_URL}/items", json={"keyword": keyword})
+        if response.status_code == 200:
+            st.write(response.json())
+        else:
+            st.error("Failed to generate blog")
+
+def essay_writer():
+    topic = st.text_input("Enter the essay topic:")
+    if st.button("Generate Essay"):
+        response = requests.post(f"{BASE_URL}/items", json={"topic": topic})
+        if response.status_code == 200:
+            st.write(response.json())
+        else:
+            st.error("Failed to generate essay")
+
+def ai_news_writer():
+    topic = st.text_input("Enter the news topic:")
+    if st.button("Generate News"):
+        response = requests.post(f"{BASE_URL}/items", json={"topic": topic})
+        if response.status_code == 200:
+            st.write(response.json())
+        else:
+            st.error("Failed to generate news")
+
+def ai_finance_ta_writer():
+    stock_symbol = st.text_input("Enter the stock symbol:")
+    if st.button("Generate Financial TA Report"):
+        response = requests.post(f"{BASE_URL}/items", json={"stock_symbol": stock_symbol})
+        if response.status_code == 200:
+            st.write(response.json())
+        else:
+            st.error("Failed to generate financial TA report")
+
+def write_ai_prod_desc():
+    product_name = st.text_input("Enter the product name:")
+    if st.button("Generate Product Description"):
+        response = requests.post(f"{BASE_URL}/items", json={"product_name": product_name})
+        if response.status_code == 200:
+            st.write(response.json())
+        else:
+            st.error("Failed to generate product description")
+
 def ai_writers():
     options = [
         "AI Blog Writer",
@@ -380,6 +430,14 @@ def ai_writers():
 
     if choice == "AI Blog Writer":
         blog_from_keyword()
+    elif choice == "Essay writer":
+        essay_writer()
+    elif choice == "Write News reports":
+        ai_news_writer()
+    elif choice == "Write Financial TA report":
+        ai_finance_ta_writer()
+    elif choice == "AI Product Description Writer":
+        write_ai_prod_desc()
     elif choice == "Write from audio files":
         blog_from_audio()
     elif choice == "Story Writer":
