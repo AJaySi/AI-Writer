@@ -33,15 +33,7 @@ def llm_text_gen(prompt):
             blog_output_format, blog_length = read_return_config_section('blog_characteristics')
 
         # Construct the system prompt with the sidebar config params.
-        system_instructions = f"""
-        Below are the guidelines to follow:
-        1). You must respond in {blog_language} language.
-        2). Tone and Brand Alignment: Adjust your tone, voice, personality for {blog_tone} audience.
-        3). Make sure your response content length is of {blog_length} words.
-        4). The type of blog is {blog_type}, write accordingly.
-        5). The demographic for this content is {blog_demographic}.
-        6). Your response should be in {blog_output_format} format.
-        """
+        system_instructions = read_return_config_section('system_prompt') 
 
         #gpt_provider = check_gpt_provider(gpt_provider)
         # Check if API key is provided for the given gpt_provider

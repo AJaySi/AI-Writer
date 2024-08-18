@@ -30,7 +30,14 @@ def read_return_config_section(config_section):
         with open(config_path, 'r', encoding="utf-8") as file:
             config = json.load(file)
         
-        if config_section == 'llm_config':
+
+        if config_section == 'system_prompt':
+            prompt_file_path = os.path.join(os.getcwd(), 'lib', 'workspace', 'alwrity_prompts', 'alwrity_system_instruction.prompts')
+            with open(prompt_file_path, 'r') as file:
+                content = file.read()
+            return content
+
+        elif config_section == 'llm_config':
             gpt_provider = config['LLM Options']['GPT Provider']
             model = config['LLM Options']['Model']
             temperature = config['LLM Options']['Temperature']
