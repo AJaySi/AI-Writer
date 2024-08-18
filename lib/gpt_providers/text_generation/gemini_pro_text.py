@@ -2,7 +2,6 @@
 import os
 import sys
 from pathlib import Path
-import streamlit as st
 
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -21,7 +20,7 @@ from tenacity import (
 
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-def gemini_text_response(prompt, temperature, top_p, n, max_tokens):
+def gemini_text_response(prompt, temperature, top_p, n, max_tokens, system_prompt):
     """ Common functiont to get response from gemini pro Text. """
     #FIXME: Include : https://github.com/google-gemini/cookbook/blob/main/quickstarts/rest/System_instructions_REST.ipynb
     try:
@@ -37,7 +36,9 @@ def gemini_text_response(prompt, temperature, top_p, n, max_tokens):
         "max_output_tokens": max_tokens,
     }
     # FIXME: Expose model_name in main_config
-    model = genai.GenerativeModel(model_name="gemini-1.5-pro-latest", generation_config=generation_config)
+    model = genai.GenerativeModel(model_name="gemini-1.5-pro-latest", 
+                                  generation_config=generation_config,
+                                  system_instruction=system_prompt)
     try:
         # text_response = []
         response = model.generate_content(prompt, stream=True)
@@ -45,7 +46,6 @@ def gemini_text_response(prompt, temperature, top_p, n, max_tokens):
             for chunk in response:
                 # text_response.append(chunk.text)
                 print(chunk.text)
-                #st.write(chunk.text)
         else:
             print(response)
         logger.info(f"Number of Token in Prompt Sent: {model.count_tokens(prompt)}")

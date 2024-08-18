@@ -15,26 +15,9 @@ from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 def write_blog_google_serp(search_keyword, search_results):
     """Combine the given online research and GPT blog content"""
-    try:
-        config_path = Path(os.environ["ALWRITY_CONFIG"])
-        with open(config_path, 'r', encoding='utf-8') as file:
-            config = json.load(file)
-    except Exception as err:
-        logger.error(f"Error: Failed to read values from config: {err}")
-        exit(1)
-
-    blog_characteristics = config['Blog Content Characteristics']
-    
     prompt = f"""
         As expert Creative Content writer,
-        I want you to write {blog_characteristics['Blog Type']} blog post,
-        that explores {search_keyword} and also include 5 FAQs.
-        
-        Below are the guidelines to follow:
-        1). You must respond in {blog_characteristics['Blog Language']} language.
-        2). Tone and Brand Alignment: Adjust your tone, voice, personality for {blog_characteristics['Blog Tone']} audience.
-        3). Make sure your response content length is of {blog_characteristics['Blog Length']} words.
-        4). Include FAQs from 'People also Ask' section of provided context 'google search result'.
+        I want you to write blog post, that explores {search_keyword} and also include 5 FAQs.
 
         I want the post to offer unique insights, relatable examples, and a fresh perspective on the topic.
         Here are some Google search results to spark your creativity on {search_keyword}:
@@ -50,6 +33,7 @@ def write_blog_google_serp(search_keyword, search_results):
     except Exception as err:
         logger.error(f"Exit: Failed to get response from LLM: {err}")
         exit(1)
+
 
 def improve_blog_intro(blog_content, blog_intro):
     """Combine the given online research and gpt blog content"""

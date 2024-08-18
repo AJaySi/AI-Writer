@@ -27,7 +27,21 @@ def llm_text_gen(prompt):
         str: Generated text based on the prompt.
     """
     try:
+        # Read the config param to create system instruction for the LLM.
         gpt_provider, model, temperature, max_tokens, top_p, n, fp = read_return_config_section('llm_config')
+        blog_tone, blog_demographic, blog_type, blog_language, \
+            blog_output_format, blog_length = read_return_config_section('blog_characteristics')
+
+        # Construct the system prompt with the sidebar config params.
+        system_instructions = f"""
+        Below are the guidelines to follow:
+        1). You must respond in {blog_language} language.
+        2). Tone and Brand Alignment: Adjust your tone, voice, personality for {blog_tone} audience.
+        3). Make sure your response content length is of {blog_length} words.
+        4). The type of blog is {blog_type}, write accordingly.
+        5). The demographic for this content is {blog_demographic}.
+        6). Your response should be in {blog_output_format} format.
+        """
 
         #gpt_provider = check_gpt_provider(gpt_provider)
         # Check if API key is provided for the given gpt_provider
@@ -37,7 +51,7 @@ def llm_text_gen(prompt):
         if 'google' in gpt_provider.lower():
             try:
                 logger.info("Using Google Gemini Pro text generation model.")
-                response = gemini_text_response(prompt, temperature, top_p, n, max_tokens)
+                response = gemini_text_response(prompt, temperature, top_p, n, max_tokens, system_instructions)
                 return response
             except Exception as err:
                 logger.error(f"Failed to get response from gemini: {err}")
@@ -45,7 +59,7 @@ def llm_text_gen(prompt):
         elif 'openai' in gpt_provider.lower():
             try:
                 logger.info(f"Using OpenAI Model: {model} for text Generation.")
-                response = openai_chatgpt(prompt, model, temperature, max_tokens, top_p, n, fp)
+                response = openai_chatgpt(prompt, model, temperature, max_tokens, top_p, n, fp, system_instructions)
                 return response
             except Exception as err:
                 logger.error(f"Failed to get response from Openai: {err}")

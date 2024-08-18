@@ -131,8 +131,11 @@ def ai_seo_tools():
         "Generate OpenGraph Tags",
         "Optimize/Resize Image"
     ]
-    choice = st.selectbox("**👇Select AI SEO Tool:**", options, index=0, format_func=lambda x: f"📝 {x}")
-
+    
+    # Using st.radio instead of st.selectbox
+    choice = st.radio("**👇 Select AI SEO Tool:**", options, index=0, format_func=lambda x: f"📝 {x}")
+    
+    # Handle choices based on the selected option
     if choice == "Generate Structured Data - Rich Snippet":
         ai_structured_data()
     elif choice == "Generate Meta Description for SEO":

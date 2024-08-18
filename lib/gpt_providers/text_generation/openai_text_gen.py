@@ -14,7 +14,7 @@ from tenacity import (
  
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-def openai_chatgpt(prompt, model, temperature, max_tokens, top_p, n, fp):
+def openai_chatgpt(prompt, model, temperature, max_tokens, top_p, n, fp, system_prompt):
     """
     Wrapper function for OpenAI's ChatGPT completion.
 
@@ -45,7 +45,8 @@ def openai_chatgpt(prompt, model, temperature, max_tokens, top_p, n, fp):
         client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
         response = client.chat.completions.create(
             model=model,
-            messages=[{"role": "user", "content": prompt}],
+            messages=[{"role": "system", "content": system_prompt}, 
+                      {"role": "user", "content": prompt}],
             max_tokens=max_tokens,
             n=n,
             top_p=top_p,
