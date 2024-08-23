@@ -44,6 +44,7 @@ from lib.ai_seo_tools.meta_desc_generator import metadesc_generator_main
 from lib.ai_seo_tools.image_alt_text_generator import alt_text_gen
 from lib.ai_seo_tools.opengraph_generator import og_tag_generator
 from lib.ai_seo_tools.optimize_images_for_upload import main_img_optimizer
+from lib.ai_seo_tools.google_pagespeed_insights import google_pagespeed_insights
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_planner
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
@@ -129,7 +130,8 @@ def ai_seo_tools():
         "Generate Meta Description for SEO",
         "Generate Image Alt Text",
         "Generate OpenGraph Tags",
-        "Optimize/Resize Image"
+        "Optimize/Resize Image",
+        "Run Google PageSpeed Insights"
     ]
     
     # Using st.radio instead of st.selectbox
@@ -148,6 +150,8 @@ def ai_seo_tools():
         og_tag_generator()
     elif choice == "Optimize/Resize Image":
         main_img_optimizer()
+    elif choice == "Run Google PageSpeed Insights":
+        google_pagespeed_insights()
 
 
 
