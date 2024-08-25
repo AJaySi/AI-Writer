@@ -36,3 +36,4 @@ firecrawl-py
 gTTS
 streamlit-mic-recorder
 tinify
+cloudscraper
