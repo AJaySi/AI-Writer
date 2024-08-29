@@ -33,6 +33,7 @@ streamlit
 yfinance
 pandas_ta
 firecrawl-py
+pysqlite3-binary
 gTTS
 streamlit-mic-recorder
 tinify
