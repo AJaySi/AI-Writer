@@ -71,53 +71,92 @@ Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Som
 
 ---
 
-## ALwrity Features
+## Alwrity Features: Power Up Your Content Creation Life cycle ⚡️
 
-| No. | Alwrity Tool                       | Description                                                                    |
-|-----|------------------------------------|--------------------------------------------------------------------------------|
-| 1   | ![AI Blog Writer](https://www.alwrity.com/ai-blog-writer)                     | Generates blog content based on the latest web research on given keywords.     |
-| 2   | AI YouTube to Content Writer       | Transforms content from provided YouTube URLs into written form.               |
-| 3   | AI Long Form Content               | Creates extensive and detailed articles.                                       |
-| 4   | AI Essay Writer                    | Produces lengthy essays on various topics, with room for improvement.          |
-| 5   | AI Story Writer                    | Constructs narratives and stories based on provided backstories and characters.|
-| 6   | AI Email Writer                    | Generates various types of professional letters.                               |
-| 7   | AI Letter Writer                   | Crafts business letters for formal communication.                              |
-| 8   | AI LinkedIn Blog Post Generator    | Develops blog posts optimized for sharing on LinkedIn.                         |
-| 9   | AI Instagram Caption Generation    | Creates engaging captions for Instagram posts.                                 |
-| 10  | AI Content Outline Generator       | Generates outlines based on keywords gathered from web research.               |
-| 11  | AI Web Researcher                  | Conducts comprehensive web research and analysis using various methods.        |
-| 12  | AI Content Planning & Calendar     | Assists in planning and organizing content with a comprehensive calendar.      |
-| 13  | Create Blog Images                 | Generates images to complement blog content using Stable Diffusion.            |
-| 14  | Agentic Content Creation           | Explores innovative content creation methods with CrewAI.                      |
-| 15  | AI Finance Writer                  | Uses ufinance & padnas_ta to write TA report for given stock symbol            |
-| 16  | AI Agents Team                     | Easily create AI Agents team for Content creation & Digital marketing          |
-| 17  | Talk to your Docs (WIP)            | Write content from your local documents of any type(multi-modal)               |
-| 18  | Wordpress API integration          | Programmatically upload blogs to wordpress website with API keys               |
-| 19  | Talk to your website               | Crawl Crawl your entire website & write content based on its content, Or Not   |
-| 20  | Content From URLs                  | Provide any URL to create an original, unique content from                     |
-| 21  | SEO Structured Data                | Feature: AI SEO - Generate rich snippet from url                               |
+**AI Writer Tools:**
 
-- **Online Research Integration**: Enhances blog content by integrating insights and information gathered from online research(SERP, Tavily, Metaphor), ensuring the content is informative and up-to-date. 
-This gives context for generating content. Reduces AI Hallucination. Tavily AI, Google search, serp and Vision AI is used to scrape web data for context augumentation. CrewAI for web research agents.
+| Tool                                  | Description                                                                 |
+|---------------------------------------|---------------------------------------------------------------------------|
+| AI Blog Writer                        | Generates blog content based on the latest web research on given keywords. |
+| AI YouTube to Content Writer        | Transforms content from provided YouTube URLs into written form.           |
+| AI Long Form Content                  | Creates extensive and detailed articles.                                   |
+| AI Essay Writer                       | Produces lengthy essays on various topics, with room for improvement.        |
+| AI Story Writer                       | Constructs narratives and stories based on provided backstories and characters. |
+| AI Email Writer                        | Generates various types of professional letters.                            |
+| AI Letter Writer                       | Crafts business letters for formal communication.                          |
+| AI LinkedIn Blog Post Generator     | Develops blog posts optimized for sharing on LinkedIn.                       |
+| AI Instagram Caption Generation      | Creates engaging captions for Instagram posts.                              |
+| AI Content Outline Generator       | Generates outlines based on keywords gathered from web research.               |
 
-- **Long Form Content Generation**: Write Essay, Story, Long form Blogs with web researched context.
+---
+**AI SEO Tools:**
 
-- **AI Content planning & Calender**: Writer's block, Alwrity will provide you with months worth of blog titles.
+| Tool                                  | Description                                                                 |
+|---------------------------------------|---------------------------------------------------------------------------|
+| AI Content Outline Generator       | Generates outlines based on keywords gathered from web research.               |
+| AI SEO - Generate rich snippet from url | Creates structured data for rich snippets (e.g., reviews, recipes) |
 
-- **Multilingual**: Write Content in your language, web research in your language and country(main_config).
+**AI Content Planning Tools:**
 
-- **Prevents AI Hallucinations**: Web researched context generates factual content.
+| Tool                                  | Description                                                                 |
+|---------------------------------------|---------------------------------------------------------------------------|
+| AI Content Planning & Calendar     | Assists in planning and organizing content with a comprehensive calendar.      |
+| Create Blog Images                 | Generates images to complement blog content using Stable Diffusion.            |
+| Agentic Content Creation           | Explores innovative content creation methods with CrewAI.                      |
+| AI Finance Writer                  | Uses ufinance & padnas_ta to write TA report for given stock symbol            |
 
-- **Text-To-Text, Speech-To-Text, Text-To-Image, Image-To-Text**: Multimodal content generatiom suite.
+**AI Web Research Integrations:**
 
-- **Agentic Content Team**: Crewai content team for you company. Define persona, roles, goals, task for your AI content team(Beta). 
+| Tool                                  | Description                                                                 |
+|---------------------------------------|---------------------------------------------------------------------------|
+| AI Web Researcher                  | Conducts comprehensive web research and analysis using various methods.        |
+| Talk to your Docs (WIP)            | Write content from your local documents of any type (multi-modal)               |
 
-- **Image Generation and Processing**: Utilizes AI models like DALL-E 3, stable difffusion to create relevant images based on blog content. Offers features to process and optimize images for web usage. FIXME: Need more work with stable diffusion.
+**Integrations:**
 
-- **SEO Optimization**: Employs AI to generate SEO-friendly blog titles, meta descriptions, tags, and categories. Ensures content is optimized for search engines.
+| Tool                                  | Description                                                                 |
+|---------------------------------------|---------------------------------------------------------------------------|
+| AI Agents Team                     | Easily create AI Agents team for Content creation & Digital marketing          |
+| Wordpress API integration          | Programmatically upload blogs to wordpress website with API keys               |
+| Talk to your website               | Crawl your entire website & write content based on its content, Or Not   |
+| Content From URLs                  | Provide any URL to create an original, unique content from                     |
 
-- **Wordpress, Jekyll Integration**: Implemented generating and uploading blog content, media to wordpress via its REST APIs. Most of the static website which can work with markdown style should work with little testing.
-	
+---
+
+## Superpowers 🚀 **🧠  Here's what Alwrity can do for you:**
+
+* **Online content Research:** 🔍  Supercharge your blog posts by integrating insights from online research (SERP, Tavily, Metaphor). Say goodbye to AI hallucinations! Tavily AI, Google Search, SERP, Vision AI, and CrewAI web research agents ensure your content is packed with accurate information.
+* **Long Form Content Generation:** ✍️  Write essays, stories, and in-depth blogs with web-researched context. No more staring at a blank page!
+* **AI Content Planning & Calendar:** 🗓️  Say goodbye to writer's block! Alwrity will give you months' worth of blog title ideas. 
+
+**🌍  Multi-Language Magic:**
+
+* **Multilingual Support:** 🌎  Write content and conduct web research in your language. We support multiple languages and regions (main_config)!
+
+**🧠  Fighting AI Hallucinations:**
+
+* **Fact-Checked Content:**  🙅  We use web-researched context to generate factual content, eliminating the risk of AI hallucinations. 
+
+**🎨  Multimodal Content Mastery:**
+
+* **Text-To-Text, Speech-To-Text, Text-To-Image, Image-To-Text:** 🖼️  Our multimodal suite empowers you to create a variety of content formats.
+
+**🤖  Your Content Creation Crew:**
+
+* **Agentic Content Team:** 🤝  Build your own AI content team with CrewAI! Define their personas, roles, goals, and tasks. (Beta) 
+
+**📸  Visualize Your Content:**
+
+* **Image Generation and Processing:**  ✨  Create stunning images based on your blog content using DALL-E 3 and Stable Diffusion.  Optimize your images for web use.  (FIXME: More Stable Diffusion magic to come!) 
+
+**SEO Mastery:**
+
+* **SEO Optimization:** 📈  Boost your content's visibility. Alwrity generates SEO-friendly titles, meta descriptions, tags, and categories. 
+
+**🤖  Streamlined Content Publishing:**
+
+* **WordPress & Jekyll Integration:**  🚀  Effortlessly generate and upload your content (and media!) to WordPress using its REST API.  Most markdown-based static websites should integrate seamlessly with minimal effort. 
+
 
 ---
 > [!NOTE] <p>This toolkit is designed for automated blog management and requires appropriate API keys and access credentials for full functionality. ALwrity will guide your through this process, we selected APIs which offer generous free trials, **you** only need email id & patience.</p>

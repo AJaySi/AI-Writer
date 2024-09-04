@@ -16,6 +16,7 @@ from lib.utils.alwrity_utils import (blog_from_keyword, ai_agents_team, essay_wr
 
 from lib.ai_writers.ai_story_writer.story_writer import story_input_section
 from lib.ai_writers.ai_product_description_writer import write_ai_prod_desc
+from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
 
 
 def check_api_keys():
@@ -325,12 +326,12 @@ def main():
     if check_api_keys() and check_llm_environs():
         # Define the tabs
         tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
-            ["✍️🤖AI Writers", " 📝📅Content Planning", "🤝🤖Agents Teams", "🛠️🔍AI SEO tools", "📱AI Social Tools", " 💬Ask Alwrity"])
+            ["📅Content Planning", " 📝🤖AI Writers", "🤝🤖Agents Teams", "🛠️🔍AI SEO tools", "📱AI Social Tools", " 💬Ask Alwrity"])
         with tab1:
-            ai_writers()
+            content_planning_tools()
 
         with tab2:
-            content_planning_tools()
+            ai_writers()
 
         with tab3:
             ai_agents_team()
@@ -404,7 +405,7 @@ def content_planning_tools():
     options = [
         "Keywords Researcher",
         "Competitor Analysis",
-        "Get Content Calender"
+        "Content Calender Ideator"
     ]
     choice = st.radio("Select a content planning tool:", options, index=0, format_func=lambda x: f"🔍 {x}")
     
@@ -412,8 +413,17 @@ def content_planning_tools():
         do_web_research()
     elif choice == "Competitor Analysis":
         competitor_analysis()
-    elif choice == "Get Content Calender":
-        planning_agents()
+    elif choice == "Content Calender Ideator":
+        plan_keywords = st.text_input(
+            "**Enter Your main Keywords to get 2 months content calendar:**",
+            placeholder="Enter 2-3 main keywords to generate AI content calendar with keyword researched blog titles",
+            help="The keywords are the ones where you would want to generate 50-60 blogs/articles on."
+        )
+        if st.button("**Ideate Content Calender**"):
+            if plan_keywords:
+                ai_agents_content_planner(plan_keywords)
+            else:
+                st.error("Come on, really, Enter some keywords to plan on..")
 
 
 def alwrity_brain():

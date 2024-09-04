@@ -17,6 +17,25 @@ def get_image_description(image_path):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}"
     }
+ 
+#  Understand which images are informative, decorative, functional, or complex.
+#  Identify informative images, then write the text alternative for images using the essential information, describing it in detail. 
+#  Don’t forget to include the emotional implications of the image.
+#  Filter out decorative images, like a flourish or stylistic elements that lack meaningful context. 
+#  Then, write the alt text as “null” as in, <img alt=””> so that screen readers won’t waste users’ time by announcing it.
+#  Take your functional images, which describe what happens when you click an image, like the ‘download’ icon. 
+#  Then, make sure your alt text doesn’t describe those images but instead, denotes their functionality.
+#  Grab your complex infographics or diagrams, then compose alt text describing the information laid out in the images.
+#    
+#  Less is more: Ensure the length of alternative text is under 125 characters when possible, spaces included.
+#  Don’t skimp on quality: Pay close attention to the accuracy of the information and insight the image provides in that short amount of words.
+#  Don’t use images of text, whenever possible, except in logos. If used, the image alt text should include the same words as in the image.
+#  For image maps, with multiple clickable areas, a group alt text gives the overall context of the map. 
+#  Any clickable area should also have its own individual alternative text, describing the link’s destination and purpose.
+#  Don’t ever assign a random, vague, or ambiguous alternative text description to an image simply to increase your accessibility score.
+#  This could lead to confusion and frustration for a screen reader user. 
+#  Alt text accessibility is rooted in providing meaningful and functional alternative means of usability.
+#  Poor or random alt text descriptions can arguably be worse than having no alt text at all.
 
     payload = {
         "model": "gpt-4o-mini",

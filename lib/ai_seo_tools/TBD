@@ -1,4 +1,3 @@
-https://pypi.org/project/textstat/
 https://github.com/greghub/website-launch-checklist
 https://github.com/marcobiedermann/search-engine-optimization
 https://developers.google.com/speed/docs/insights/v5/get-started
@@ -11,3 +10,26 @@ https://github.com/dataforseo/PythonClient
 https://mysiteauditor.com/api
 
 https://github.com/searchsolved/search-solved-public-seo/blob/main/keyword-research/low-competition-keyword-finder-serp-api/low_competition_finder_serp_api.py
+
+### Structured Data
+
+- [Facebook Debugger](https://developers.facebook.com/tools/debug) - Enter the URL you want to scrape to see how the page's markup appears to Facebook.
+- [Pinterest](https://developers.pinterest.com/rich_pins/validator/) - Validate your Rich Pins and apply to get them on Pinterest.
+- [Structured Data Testing Tool](https://developers.google.com/structured-data/testing-tool/) - Paste in your rich snippets or url to test it.
+- [Twitter card validator](https://cards-dev.twitter.com/validator) - Enter the URL of the page with the meta tags to validate.
+
+https://github.com/sethblack/python-seo-analyzer
+
+https://www.holisticseo.digital/python-seo/analyse-compare-robots-txt/
+
+https://github.com/Nv7-GitHub/googlesearch
+https://www.semrush.com/blog/python-for-google-search/
+
+https://www.kaggle.com/code/eliasdabbas/botpresso-crawl-audit-analysis
+https://www.kaggle.com/code/eliasdabbas/nike-xml-sitemap-audit-analysis
+https://www.kaggle.com/code/eliasdabbas/twitter-user-account-analysis-python-sejournal
+https://www.kaggle.com/code/eliasdabbas/seo-crawl-analysis-template
+https://www.kaggle.com/code/eliasdabbas/advertools-seo-crawl-analysis-template
+
+https://www.semrush.com/blog/content-analysis-xml-sitemaps-python/
+

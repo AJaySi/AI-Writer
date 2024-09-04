@@ -220,7 +220,7 @@ def execute_tasks(agents, tasks):
         print(err)
 
 
-def ai_agents_planner(search_keywords):
+def ai_agents_content_planner(search_keywords):
     already_written_on = os.path.join(os.getcwd(), "lib", "content_planning_calender", "content_already_planned.txt")
     do_google_trends_analysis(search_keywords)
     result = None

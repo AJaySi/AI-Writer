@@ -45,9 +45,10 @@ from lib.ai_seo_tools.image_alt_text_generator import alt_text_gen
 from lib.ai_seo_tools.opengraph_generator import og_tag_generator
 from lib.ai_seo_tools.optimize_images_for_upload import main_img_optimizer
 from lib.ai_seo_tools.google_pagespeed_insights import google_pagespeed_insights
-from lib.ai-seo_tools.on_page_seo_analyzer import analyze_onpage_seo
+from lib.ai_seo_tools.on_page_seo_analyzer import analyze_onpage_seo
+from lib.ai_seo_tools.weburl_seo_checker import url_seo_checker
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
-from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_planner
+from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
@@ -133,7 +134,8 @@ def ai_seo_tools():
         "Generate OpenGraph Tags",
         "Optimize/Resize Image",
         "Run Google PageSpeed Insights",
-        "Analyze On Page SEO"
+        "Analyze On Page SEO",
+        "URL SEO Checker"
     ]
     
     # Using st.radio instead of st.selectbox
@@ -156,12 +158,13 @@ def ai_seo_tools():
         google_pagespeed_insights()
     elif choice == "Analyze On Page SEO":
         analyze_onpage_seo()
-
+    elif choice == "URL SEO Checker":
+        url_seo_checker()
 
 
 def blog_from_keyword():
     """ Input blog keywords, research and write a factual blog."""
-    st.title("Blog Content Writer")
+    st.header("Blog Content Writer")
     col1, col2, col3 = st.columns([2, 1.5, 0.5])
     with col1:
         user_input = st.text_area('**👇Enter Keywords/Title/YouTube Link/Web URLs**',
@@ -193,6 +196,28 @@ def blog_from_keyword():
             temp_file_path = temp_file.name
 
     content_type = st.radio("**👇Select content type:**", ["Normal-length content", "Long-form content", "Experimental - AI Agents team"])
+
+    # Add an expandable section for advanced writing options
+    with st.expander("Advanced Writing Options", expanded=False):
+        # Option 1: Select content type
+        content_type = st.radio("**👇 Select content type:**", 
+                            ["Normal-length content", "Long-form content", "Experimental - AI Agents team"])
+
+        # Option 2: Checkbox for 'Create SEO tags' (Checked by default)
+        create_seo_tags = st.checkbox('Create SEO tags', value=True, 
+                                  help='Generate json-ld schema, Twitter, and Facebook tags.')
+
+        # Option 3: Checkbox for 'Generate Social Media content' (Unchecked by default)
+        generate_social_media = st.checkbox('Generate Social Media content', value=False,
+                                help="Write Facebook, Instagram posts & tweets for generated blog. Needed for marketing your blogs.")
+
+        # Option 4: Checkbox for 'Do Content Analysis & Critique' (Unchecked by default)
+        content_analysis = st.checkbox('Do Content Analysis & Critique', value=False,
+                                       help="Blog Proof reading, Critique generated blog. Provide actionable changes & Editing options.")
+
+        # Display a message at the bottom for user guidance
+        st.info("🚨 Make sure to personalize content from the sidebar. Important.")
+
     if st.button("Write Blog"):
         # Clear the previous results from the screen
         st.empty()
@@ -350,7 +375,7 @@ def ai_agents_team():
             if plan_keywords and len(plan_keywords.split()) >= 2:
                 with st.spinner("Get Content Plan..."):
                     try:
-                        plan_content = ai_agents_planner(plan_keywords)
+                        plan_content = ai_agents_content_planner(plan_keywords)
                         st.success(f"Successfully generated content plan for: {plan_keywords}")
                         st.markdown(plan_content)
                     except Exception as err:
