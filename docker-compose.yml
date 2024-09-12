@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  app:
+    image: python:3.12
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: bash -c "pip install -r requirements.txt && streamlit run alwrity.py"
+    ports:
+      - "8501:8501"
