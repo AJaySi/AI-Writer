@@ -55,23 +55,30 @@ def write_blog_from_keywords(search_keywords, url=None):
     example_blog_titles = []
 
     logger.info(f"Researching and Writing Blog on keywords: {search_keywords}")
-    with st.status("Started Writing..", expanded=True) as status:
+    with st.status("Started Web Research..", expanded=True) as status:
         st.empty()
         status.update(label="Researching and Writing Blog on keywords.")
         # Call on the got-researcher, tavily apis for this. Do google search for organic competition.
         try:
             google_search_result, g_titles = do_google_serp_search(search_keywords)
-            status.update(label=f"🙎 Finished with Google web for Search: {search_keywords}")
-            example_blog_titles.append(g_titles)
+            if google_search_result:
+                status.update(label=f"🙎 Finished with Google web for Search: {search_keywords}")
+                example_blog_titles.append(g_titles)
+            else:
+                st.warning("Failed to Google SERP results.")
+        except Exception as err:
+            st.warning(f"Failed in Google web research: {err}")
+            logger.error(f"Failed in Google web research: {err}")
 
+        try:
             status.update(label=f"🛀 Starting Tavily AI research: {search_keywords}")
             tavily_search_result, t_titles, t_answer = do_tavily_ai_search(search_keywords)
             status.update(label=f"🙆 Finished Google Search & Tavily AI Search on: {search_keywords}",
                           state="complete", expanded=False)
-
         except Exception as err:
-            st.error(f"Failed in web research: {err}")
-            logger.error(f"Failed in web research: {err}")
+            st.warning(f"Failed in Tavily web research: {err}")
+            logger.error(f"Failed in Tavily web research: {err}")
+
 
     with st.status("Started Writing blog from google search..", expanded=True) as status:
         status.update(label="Researching and Writing Blog on keywords.")
@@ -82,6 +89,7 @@ def write_blog_from_keywords(search_keywords, url=None):
             st.markdown(blog_markdown_str)
             status.update(label="🙎 Draft 1: Your Content from Google search result.", state="complete", expanded=False)
         except Exception as err:
+            status.update(label="🙎 Failed Content from Google SERP.", state="error", expanded=False)
             st.error(f"Failed in Google web research: {err}")
             logger.error(f"Failed in Google web research: {err}")
 
@@ -92,11 +100,12 @@ def write_blog_from_keywords(search_keywords, url=None):
         # Do Tavily AI research to augment the above blog.
         try:
             # example_blog_titles.append(t_titles)
-            if blog_markdown_str and tavily_search_result:
+            if tavily_search_result:
                 logger.info(f"\n\n######### Blog content after Tavily AI research: ######### \n\n")
                 blog_markdown_str = write_blog_google_serp(search_keywords, tavily_search_result)
                 status.update(label=f"Finished Writing Blog From Tavily Results:{blog_markdown_str}", expanded=True)
         except Exception as err:
+            status.update(label="🙎 Failed content from Tavily search.", state="error", expanded=False)
             logger.error(f"Failed to do Tavily AI research: {err}")
 
         status.update(label="🙎 Generating - Title, Meta Description, Tags, Categories for the content.", expanded=True)

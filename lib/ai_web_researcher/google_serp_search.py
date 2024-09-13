@@ -49,9 +49,9 @@ logger.add(
            )
 
 from .common_utils import save_in_file, cfg_search_param
-
-
 from tenacity import retry, stop_after_attempt, wait_random_exponential
+
+
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
 def google_search(query):
     """
@@ -75,10 +75,12 @@ def google_search(query):
     try:
         logger.info("Trying Google search with Serper.dev: https://serper.dev/api-key")
         search_result = perform_serperdev_google_search(query)
-        process_search_results(search_result)
-        return(search_result)
+        if search_result:
+            process_search_results(search_result)
+            return(search_result)
     except Exception as err:
-        logger.error(f"Failed to do Google search with serper.dev: {err}")
+        logger.error(f"Failed Google search with serper.dev: {err}")
+        return None
 
  
 #    # Retry with BROWSERLESS API

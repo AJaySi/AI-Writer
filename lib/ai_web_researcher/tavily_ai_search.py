@@ -36,7 +36,7 @@ from tabulate import tabulate
 # Load environment variables from .env file
 load_dotenv(Path('../../.env'))
 from rich import print
-
+import streamlit as st
 # Configure logger
 logger.remove()
 logger.add(sys.stdout,
@@ -95,9 +95,35 @@ def get_tavilyai_results(keywords, max_results=5):
                     max_results=max_results)
 
         print_result_table(tavily_search_result)
+        streamlit_display_results(tavily_search_result)
         return(tavily_search_result)
     except Exception as err:
         logger.error(f"Failed to do Tavily Research: {err}")
+
+
+def streamlit_display_results(output_data):
+    """Display Tavily AI search results in Streamlit UI."""
+
+    # Prepare data for display
+    table_data = []
+    for item in output_data.get("results", []):
+        title = item.get("title", "")
+        snippet = item.get("content", "")
+        link = item.get("url", "")
+        table_data.append([title, snippet, link])
+
+    # Display the table in Streamlit
+    st.table(table_data)
+
+    # Display the 'answer' in Streamlit
+    answer = output_data.get("answer", "No answer available")
+    st.write(f"**The answer to your search query:** {answer}")
+
+    # Display follow-up questions if available
+    follow_up_questions = output_data.get("follow_up_questions", [])
+    if follow_up_questions:
+        st.write(f"**Follow-up questions for the query:** {output_data.get('query')}")
+        st.write(", ".join(follow_up_questions))
 
 
 def print_result_table(output_data):

@@ -17,7 +17,7 @@ def write_blog_google_serp(search_keyword, search_results):
     """Combine the given online research and GPT blog content"""
     prompt = f"""
         As expert Creative Content writer,
-        I want you to write blog post, that explores {search_keyword} and also include 5 FAQs.
+        I want you to write highly detailed blog post, that explores {search_keyword} and also include 5 FAQs.
 
         I want the post to offer unique insights, relatable examples, and a fresh perspective on the topic.
         Here are some Google search results to spark your creativity on {search_keyword}:
@@ -65,15 +65,14 @@ def improve_blog_intro(blog_content, blog_intro):
 def blog_with_keywords(blog, keywords):
     """Combine the given online research and gpt blog content"""
     prompt = f"""
+        You are Sarah, the Creative Content writer, writing up fresh ideas and crafts them with care. 
+        She makes complex topics easy to understand and writes in a friendly tone that connects with everyone.
+        She excels at simplifying complex topics and communicates with charisma, making technical jargon come alive for her audience.
+
         As an expert digital content writer, specializing in content optimization and SEO. 
         I will provide you with my 'blog content' and 'list of keywords' on the same topic.
         Your task is to write an original blog, utilizing given keywords and blog content.
         Your blog should be highly detailed and well formatted. 
-
-        You are Sarah, the Creative Content writer, writing up fresh ideas and crafts them with care. 
-        She makes complex topics easy to understand and writes in a friendly tone that connects with everyone.
-        She excels at simplifying complex topics and communicates with charisma, making technical jargon come alive for her audience.
-        
 
         Blog content: '{blog}'
         list of keywords: '{keywords}'

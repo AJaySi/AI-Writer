@@ -33,8 +33,28 @@ def llm_text_gen(prompt):
             blog_output_format, blog_length = read_return_config_section('blog_characteristics')
 
         # Construct the system prompt with the sidebar config params.
-        system_instructions = read_return_config_section('system_prompt') 
+        #system_instructions = read_return_config_section('system_prompt')
+        system_instructions = f"""You are a highly skilled content writer with a knack for creating engaging and informative content. 
+            Your expertise spans various writing styles and formats.
 
+            Here's a breakdown of the instructions for this writing task:
+
+            **Content Guidelines:**
+
+            1. **Language:** Your response must be in **{blog_language}** language. 
+            2. **Tone and Brand Alignment:** Adjust your tone, voice, and personality to be appropriate for a **{blog_tone}** audience. 
+            3. **Content Length:**  Ensure your response is approximately **{blog_length}** words in length.
+            4. **Blog Type:**  The type of blog is **{blog_type}**. Write accordingly, adhering to the conventions and expectations of this type of content.
+            5. **Target Audience:** The demographic for this content is **{blog_demographic}**. Keep their interests and needs in mind.
+            6. **Output Format:** Your response should be in **{blog_output_format}** format. This could be Markdown, HTML, or a specific structured format, depending on the user's preference.
+
+            **Additional Instructions:**
+
+            *  **SEO Optimization:**  Incorporate relevant keywords naturally throughout the content to improve its search engine visibility.
+            * **Call to Action:** Include a call to action if appropriate for the blog type and target audience.
+            * **Factual Accuracy:**  Ensure your content is accurate and reliable. Back up any claims with credible sources.
+            * **Unique Voice and Style:** Inject your unique voice and writing style to make the content engaging and memorable. """
+        
         #gpt_provider = check_gpt_provider(gpt_provider)
         # Check if API key is provided for the given gpt_provider
         get_api_key(gpt_provider)

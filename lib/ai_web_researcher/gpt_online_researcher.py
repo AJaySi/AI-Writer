@@ -62,10 +62,12 @@ def do_google_serp_search(search_keywords):
     try:
         logger.info(f"Doing Google search for: {search_keywords}\n")
         g_results = google_search(search_keywords)
-        g_titles = extract_info(g_results, 'titles')
-        return(g_results, g_titles)
+        if g_results:
+            g_titles = extract_info(g_results, 'titles')
+            return(g_results, g_titles)
     except Exception as err:
-        logger.error(f"Failed to do Google Serpapi research: {err}")
+        logger.error(f"Failed to do Google SERP research: {err}")
+        return None
         # Not failing, as tavily would do same and then GPT-V to search.
 
 
