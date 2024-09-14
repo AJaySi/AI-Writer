@@ -74,9 +74,10 @@ def fetch_multirange_interest_over_time(keywords, timeframes):
         data = pytrends.multirange_interest_over_time()
         data = data.reset_index()
 
-        # Visualization using Plotly
-        fig = px.line(data, x='date', y=keywords, title='Multirange Interest Over Time')
-        fig.show()
+        # Display data and explanation
+        print("\n📈 Multirange Interest Over Time:")
+        print("This metric shows the interest of each keyword over multiple time ranges, allowing you to see trends and patterns.")
+        print(data.to_string(index=False))
 
         return data
     except Exception as e:
@@ -101,9 +102,10 @@ def fetch_historical_hourly_interest(keywords, start_date, end_date):
         data = pytrends.get_historical_interest(keywords, year_start=int(start_date[:4]), month_start=int(start_date[5:7]), day_start=int(start_date[8:10]), hour_start=0, year_end=int(end_date[:4]), month_end=int(end_date[5:7]), day_end=int(end_date[8:10]), hour_end=0)
         data = data.reset_index()
 
-        # Visualization using Plotly
-        fig = px.line(data, x='date', y=keywords, title='Historical Hourly Interest')
-        fig.show()
+        # Display data and explanation
+        print("\n⏰ Historical Hourly Interest:")
+        print("This metric provides the interest level of each keyword on an hourly basis, useful for understanding daily patterns.")
+        print(data.to_string(index=False))
 
         return data
     except Exception as e:
@@ -125,9 +127,10 @@ def fetch_trending_searches(region='united_states'):
         pytrends = TrendReq(hl='en-US', tz=360)
         data = pytrends.trending_searches(pn=region)
 
-        # Display using tabulate
-        table = tabulate(data, headers='keys', tablefmt='fancy_grid')
-        print(table)
+        # Display data and explanation
+        print("\n🔥 Trending Searches:")
+        print("These are the searches that are currently trending in the specified region, indicating popular topics.")
+        print(data.to_string(index=False))
 
         return data
     except Exception as e:
@@ -149,9 +152,10 @@ def fetch_realtime_search_trends(region='US'):
         pytrends = TrendReq(hl='en-US', tz=360)
         data = pytrends.realtime_trending_searches(pn=region)
 
-        # Display using tabulate
-        table = tabulate(data, headers='keys', tablefmt='fancy_grid')
-        print(table)
+        # Display data and explanation
+        print("\n📊 Realtime Search Trends:")
+        print("These are the searches that are trending in real-time, providing insights into current events and interests.")
+        print(data.to_string(index=False))
 
         return data
     except Exception as e:
@@ -174,9 +178,10 @@ def fetch_top_charts(year, region='GLOBAL'):
         pytrends = TrendReq(hl='en-US', tz=360)
         data = pytrends.top_charts(year, geo=region)
 
-        # Display using tabulate
-        table = tabulate(data, headers='keys', tablefmt='fancy_grid')
-        print(table)
+        # Display data and explanation
+        print("\n🏆 Top Charts:")
+        print("These charts show the top searches for a given year and region, highlighting significant trends over time.")
+        print(data.to_string(index=False))
 
         return data
     except Exception as e:
@@ -198,9 +203,10 @@ def fetch_suggestions(keyword):
         pytrends = TrendReq(hl='en-US', tz=360)
         suggestions = pytrends.suggestions(keyword)
 
-        # Display using tabulate
-        table = tabulate(suggestions, headers='keys', tablefmt='fancy_grid')
-        print(table)
+        # Display data and explanation
+        print("\n💡 Suggestions:")
+        print("These are suggested search terms related to the given keyword, useful for expanding your search strategy.")
+        print(pd.DataFrame(suggestions).to_string(index=False))
 
         return suggestions
     except Exception as e:
