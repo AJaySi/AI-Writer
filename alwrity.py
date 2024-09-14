@@ -103,15 +103,16 @@ def check_llm_environs():
     return True
 
 
-def save_config(config):
+def save_config(config, save_now=False):
     """
     Saves the provided configuration dictionary to a JSON file specified by the environment variable.
     """
-    try:
-        with open(os.getenv("ALWRITY_CONFIG"), "w") as config_file:
-            json.dump(config, config_file, indent=4)
-    except Exception as e:
-        st.error(f"An error occurred while saving the configuration: {e}")
+    if save_now:
+        try:
+            with open(os.getenv("ALWRITY_CONFIG"), "w") as config_file:
+                json.dump(config, config_file, indent=4)
+        except Exception as e:
+            st.error(f"An error occurred while saving the configuration: {e}")
 
 
 # Sidebar configuration
@@ -284,8 +285,9 @@ def sidebar_configuration():
         }
     }
 
-    # Writing the configuration to a file whenever a change is made
-    save_config(config)
+    # Option to save the configuration explicitly
+    if st.sidebar.button("Save Configuration"):
+        save_config(config, save_now=True)
 
 
 
