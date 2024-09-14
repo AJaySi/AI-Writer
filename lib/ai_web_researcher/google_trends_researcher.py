@@ -339,6 +339,11 @@ def get_related_topics_and_save_csv(search_keywords):
             logger.error(f"Failed to get pytrends realted topics: {err}")
             return None
 
+        # Check if data contains expected keys
+        if not data or 'top' not in list(data.values())[0] or 'rising' not in list(data.values())[0]:
+            logger.error("No related topics found.")
+            return pd.DataFrame()
+
         # Extract data from the result
         top_topics = list(data.values())[0]['top']
         rising_topics = list(data.values())[0]['rising']
