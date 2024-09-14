@@ -1,19 +1,17 @@
 import os
 import json
+import base64
 from datetime import datetime
 from dotenv import load_dotenv
 import streamlit as st
-import base64
 
 # Load .env file
 load_dotenv()
 
-#from lib.chatbot_custom.chatbot_local_docqa import alwrity_chat_docqa
-from lib.utils.alwrity_utils import (blog_from_keyword, ai_agents_team, essay_writer, ai_news_writer, ai_seo_tools,
-        ai_finance_ta_writer, ai_social_writer,
-        do_web_research, competitor_analysis,
-        )
-
+from lib.utils.alwrity_utils import (
+    blog_from_keyword, ai_agents_team, essay_writer, ai_news_writer, ai_seo_tools,
+    ai_finance_ta_writer, ai_social_writer, do_web_research, competitor_analysis
+)
 from lib.ai_writers.ai_story_writer.story_writer import story_input_section
 from lib.ai_writers.ai_product_description_writer import write_ai_prod_desc
 from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
@@ -51,8 +49,11 @@ def check_api_keys():
             api_key = st.text_input(f"Enter 🔏 {key}: 👉[Get it here]({url})👈")
             if api_key:
                 os.environ[key] = api_key
-                with open(".env", "a") as env_file:
-                    env_file.write(f"{key}={api_key}\n")
+                try:
+                    with open(".env", "a") as env_file:
+                        env_file.write(f"{key}={api_key}\n")
+                except IOError as e:
+                    st.error(f"Failed to write {key} to .env file: {e}")
                 st.success(f"✅ {key} added successfully!")
         return False
     return True
@@ -75,8 +76,11 @@ def check_llm_environs():
             "Select your LLM Provider", options=list(supported_providers.keys())
         )
         os.environ["GPT_PROVIDER"] = gpt_provider
-        with open(".env", "a") as env_file:
-            env_file.write(f"GPT_PROVIDER={gpt_provider}\n")
+        try:
+            with open(".env", "a") as env_file:
+                env_file.write(f"GPT_PROVIDER={gpt_provider}\n")
+        except IOError as e:
+            st.error(f"Failed to write GPT_PROVIDER to .env file: {e}")
         st.success(f"GPT Provider set to {gpt_provider}")
 
     api_key_var = supported_providers[gpt_provider.lower()]
