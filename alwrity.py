@@ -11,6 +11,16 @@ from lib.utils.seo_tools import ai_seo_tools
 from lib.utils.alwrity_utils import ai_agents_team, ai_social_writer
 from lib.utils.file_processor import load_image, read_prompts, write_prompts
 from lib.utils.voice_processing import record_voice
+from lib.ai_web_researcher.google_trends_researcher import (
+    fetch_multirange_interest_over_time,
+    fetch_historical_hourly_interest,
+    fetch_trending_searches,
+    fetch_realtime_search_trends,
+    fetch_top_charts,
+    fetch_suggestions
+)
+import pandas as pd
+import matplotlib.pyplot as plt
 
 # Placeholder function definitions for missing functions
 def blog_from_audio():
