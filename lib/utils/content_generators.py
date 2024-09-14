@@ -22,8 +22,6 @@ def ai_writers():
 
     if choice == "AI Blog Writer":
         blog_from_keyword()
-    elif choice == "Write from audio files":
-        blog_from_audio()
     elif choice == "Story Writer":
         story_input_section()
     elif choice == "Essay writer":
