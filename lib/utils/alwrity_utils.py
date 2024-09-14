@@ -52,6 +52,7 @@ from lib.content_planning_calender.content_planning_agents_alwrity_crew import a
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
+@st.cache_data
 def record_voice(language="en"):
     # https://github.com/B4PT0R/streamlit-mic-recorder?tab=readme-ov-file#example
     state = st.session_state

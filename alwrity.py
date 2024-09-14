@@ -2,11 +2,12 @@ import os
 import json
 import base64
 from datetime import datetime
-from dotenv import load_dotenv
 import streamlit as st
 
 # Load .env file
-load_dotenv()
+def load_environment():
+    from dotenv import load_dotenv
+    load_dotenv()
 
 from lib.utils.alwrity_utils import (
     blog_from_keyword, ai_agents_team, essay_writer, ai_news_writer, ai_seo_tools,
@@ -26,6 +27,7 @@ def process_folder_for_rag(folder_path):
     st.write(f"This is a placeholder for processing the folder: {folder_path}")
 
 
+@st.cache_data
 def check_api_keys():
     """
     Checks if the required API keys are present in the environment variables.
@@ -59,6 +61,7 @@ def check_api_keys():
     return True
 
 
+@st.cache_data
 def check_llm_environs():
     """
     Ensures that the LLM provider and corresponding API key are set.
@@ -282,6 +285,7 @@ def sidebar_configuration():
 
 
 # Function to read prompts from the file
+@st.cache_data
 def read_prompts(file_path="prompt_llm.txt"):
     if os.path.exists(file_path):
         with open(file_path, "r") as file:
@@ -303,6 +307,7 @@ def load_image(image_path):
 
 
 def main():
+    load_environment()
     setup_ui()
     setup_environment_paths()
     sidebar_configuration()
