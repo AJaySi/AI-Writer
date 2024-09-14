@@ -108,16 +108,16 @@ def save_config(config):
 
 # Sidebar configuration
 def sidebar_configuration():
-    st.sidebar.title("🛠️ Personalization 🏗️")
+    st.sidebar.title("🛠️ Personalization & Settings 🏗️")
 
     with st.sidebar.expander("**👷 Content Personalization**"):
-        blog_length = st.text_input("**Content Length**", value="2000", 
-                          help="Length of blogs Or word count. Note: It won't be exact and depends on GPT providers and Max token count.")
+        blog_length = st.text_input("**Content Length (words)**", value="2000", 
+                          help="Approximate word count for blogs. Note: Actual length may vary based on GPT provider and max token count.")
         
         blog_tone_options = ["Casual", "Professional", "How-to", "Beginner", "Research", "Programming", "Social Media", "Customize"]
         blog_tone = st.selectbox("**Content Tone**",
                           options=blog_tone_options,
-                          help="Choose the tone of the blog.")
+                          help="Select the desired tone for the blog content.")
 
         if blog_tone == "Customize":
             custom_tone = st.text_input("Enter the tone of your content", help="Specify the tone of your content.")
@@ -128,9 +128,9 @@ def sidebar_configuration():
         
         blog_demographic_options = ["Professional", "Gen-Z", "Tech-savvy", "Student", "Digital Marketing", "Customize"]
         
-        blog_demographic = st.selectbox("Target Audience",
+        blog_demographic = st.selectbox("**Target Audience**",
                                 options=blog_demographic_options,
-                                help="Choose the target audience.")
+                                help="Select the primary audience for the blog content.")
         if blog_demographic == "Customize":
             custom_demographic = st.text_input("Enter your target audience", 
                                 help="Specify your target audience.",
@@ -140,13 +140,13 @@ def sidebar_configuration():
             else:
                 st.warning("Please specify your target audience.")
         
-        blog_type = st.selectbox("Content Type", 
+        blog_type = st.selectbox("**Content Type**", 
                           options=["Informational", "Commercial", "Company", "News", "Finance", "Competitor", "Programming", "Scholar"], 
-                          help="Choose the type of the blog.")
+                          help="Select the category that best describes the blog content.")
 
-        blog_language = st.selectbox("Content Language", 
+        blog_language = st.selectbox("**Content Language**", 
                           options=["English", "Spanish", "German", "Chinese", "Arabic", "Nepali", "Hindi", "Hindustani", "Customize"], 
-                          help="Choose the language of the blog.")
+                          help="Select the language in which the blog will be written.")
         if blog_language == "Customize":
             custom_lang = st.text_input("Enter the language of your choice", help="Specify the content language.")
             if custom_lang:
@@ -154,21 +154,21 @@ def sidebar_configuration():
             else:
                 st.warning("Please specify the language of your content.")
 
-        blog_output_format = st.selectbox("Content Output Format", 
+        blog_output_format = st.selectbox("**Content Output Format**", 
                           options=["markdown", "HTML", "plaintext"], 
-                          help="Choose the output format of the blog.")
+                          help="Select the format for the blog output.")
 
     with st.sidebar.expander("**🩻 Images Personalization**"):
-        image_generation_model = st.selectbox("Image Generation Model", 
+        image_generation_model = st.selectbox("**Image Generation Model**", 
                           options=["stable-diffusion", "dalle2", "dalle3"], 
-                          help="Choose the image generation model.")
-        number_of_blog_images = st.number_input("Number of Blog Images", value=1, help="Number of blog images to include.")
+                          help="Select the model to generate images for the blog.")
+        number_of_blog_images = st.number_input("**Number of Blog Images**", value=1, help="Specify the number of images to include in the blog.")
 
     with st.sidebar.expander("**🤖 LLM Personalization**"):
-        gpt_provider = st.selectbox("GPT Provider", 
+        gpt_provider = st.selectbox("**GPT Provider**", 
                           options=["google", "openai", "minstral"], 
-                          help="Choose the GPT provider.")
-        model = st.text_input("Model", value="gemini-1.5-flash-latest", help="Mention which model of the above provider to use.")
+                          help="Select the provider for the GPT model.")
+        model = st.text_input("**Model**", value="gemini-1.5-flash-latest", help="Specify the model version to use from the selected provider.")
         temperature = st.slider(
             "Temperature",
             min_value=0.1,
@@ -224,23 +224,23 @@ def sidebar_configuration():
         )
 
     with st.sidebar.expander("**🕵️ Search Engine Personalization**"):
-        geographic_location = st.selectbox("Geographic Location", 
+        geographic_location = st.selectbox("**Geographic Location**", 
                           options=["us", "in", "fr", "cn"], 
-                          help="Choose the geo location for the web search.")
-        search_language = st.selectbox("Search Language", 
+                          help="Select the geographic location for tailoring search results.")
+        search_language = st.selectbox("**Search Language**", 
                           options=["en", "zn-cn", "de", "hi"], 
-                          help="Choose the language for search results.")
-        number_of_results = st.number_input("Number of Results", 
+                          help="Select the language for the search results.")
+        number_of_results = st.number_input("**Number of Results**", 
                             value=10,
                             max_value=20,
                             min_value=1,
-                            help="Number of Google search results to fetch.")
-        time_range = st.selectbox("Time Range", 
+                            help="Specify the number of search results to retrieve.")
+        time_range = st.selectbox("**Time Range**", 
                           options=["anytime", "past day", "past week", "past month", "past year"], 
-                          help="Choose the time range for search results.")
-        include_domains = st.text_input("Include Domains", value="", 
-                          help="A list of domains to specifically include in the search results. Default is None, which includes all domains.")
-        similar_url = st.text_input("Similar URL", value="", help="A single URL that instructs search engines to give results similar to the given URL.")
+                          help="Select the time range for filtering search results.")
+        include_domains = st.text_input("**Include Domains**", value="", 
+                          help="List specific domains to include in search results. Leave blank to include all domains.")
+        similar_url = st.text_input("**Similar URL**", value="", help="Provide a URL to find similar results. Leave blank if not needed.")
 
     # Storing collected inputs in a dictionary
     config = {
