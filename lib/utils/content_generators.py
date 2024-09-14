@@ -16,6 +16,8 @@ from lib.ai_web_researcher.google_trends_researcher import (
 )
 from lib.ai_writers.ai_product_description_writer import write_ai_prod_desc
 from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
+from pytrends.request import TrendReq
+from datetime import datetime
 
 def ai_writers():
     options = [
@@ -113,9 +115,10 @@ def content_planning_tools():
                     st.error(f"ERROR: Failed to do web research: {err}")
             else:
                 st.warning("Search keywords should be at least three words long. Please try again.")
-    elif choice == "Competitor Analysis":
+    elif choice == "Keywords Researcher":
+        google_trends_analysis()
         competitor_analysis()
-    elif choice == "Content Calender Ideator":
+    elif choice == "Competitor Analysis":
         plan_keywords = st.text_input(
             "**Enter Your main Keywords to get 2 months content calendar:**",
             placeholder="Enter 2-3 main keywords to generate AI content calendar with keyword researched blog titles",
@@ -126,3 +129,46 @@ def content_planning_tools():
                 ai_agents_content_planner(plan_keywords)
             else:
                 st.error("Come on, really, Enter some keywords to plan on..")
+def google_trends_analysis():
+    st.title("Google Trends Analysis")
+
+    # Prompt user for required input
+    keyword = st.text_input("Enter Keyword(s)", help="Enter one or more keywords separated by commas.")
+    
+    # Optional inputs with intelligent defaults
+    start_time = st.date_input("Start Time", value=datetime(2004, 1, 1), help="Start date for the analysis.")
+    end_time = st.date_input("End Time", value=datetime.now(), help="End date for the analysis.")
+    geo = st.text_input("Geographic Location", value="US", help="Location of interest (e.g., 'US').")
+    hl = st.text_input("Preferred Language", value="en", help="Preferred language (e.g., 'en').")
+    timezone = st.number_input("Timezone", value=360, help="Timezone offset in minutes from UTC.")
+    category = st.number_input("Category", value=0, help="Category to search within.")
+    property = st.selectbox("Google Property", options=["", "images", "news", "youtube", "froogle"], help="Google property to filter on.")
+    resolution = st.selectbox("Resolution", options=["COUNTRY", "REGION", "CITY", "DMA"], help="Granularity of the geo search.")
+    granular_time_resolution = st.checkbox("Granular Time Resolution", value=False, help="Use finer time resolution if applicable.")
+
+    if st.button("Analyze"):
+        if not keyword:
+            st.error("Keyword is required.")
+            return
+
+        # Initialize pytrends
+        pytrends = TrendReq(hl=hl, tz=timezone)
+
+        # Build the payload
+        pytrends.build_payload(
+            kw_list=keyword.split(','),
+            timeframe=f"{start_time.strftime('%Y-%m-%d')} {end_time.strftime('%Y-%m-%d')}",
+            geo=geo,
+            cat=category,
+            gprop=property
+        )
+
+        # Fetch interest over time
+        interest_over_time_df = pytrends.interest_over_time()
+        st.subheader("Interest Over Time")
+        st.dataframe(interest_over_time_df)
+
+        # Fetch interest by region
+        interest_by_region_df = pytrends.interest_by_region(resolution=resolution)
+        st.subheader("Interest By Region")
+        st.dataframe(interest_by_region_df)
