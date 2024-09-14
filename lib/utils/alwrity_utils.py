@@ -2,7 +2,6 @@ import re
 import streamlit as st
 import tempfile
 from loguru import logger
-from lib.ai_web_researcher.gpt_online_researcher import gpt_web_researcher
 from lib.ai_web_researcher.metaphor_basic_neural_web_search import metaphor_find_similar
 from lib.ai_writers.keywords_to_blog_streamlit import write_blog_from_keywords
 from lib.ai_writers.speech_to_blog.main_audio_to_blog import generate_audio_blog
@@ -14,15 +13,12 @@ from lib.ai_writers.facebook_ai_writer import facebook_post_writer
 from lib.ai_writers.linkedin_ai_writer import linked_post_writer
 from lib.ai_writers.twitter_ai_writer import tweet_writer 
 from lib.ai_writers.insta_ai_writer import insta_writer
-from lib.ai_writers.youtube_ai_writer import write_yt_title, write_yt_description, write_yt_script
 from lib.ai_writers.web_url_ai_writer import blog_from_url
 from lib.ai_writers.image_ai_writer import blog_from_image
 from lib.ai_writers.ai_essay_writer import ai_essay_generator
 import os
 import PyPDF2
 import tiktoken
-import openai
-from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from lib.ai_seo_tools.seo_structured_data import ai_structured_data
 from lib.ai_seo_tools.content_title_generator import ai_title_generator
 from lib.ai_seo_tools.meta_desc_generator import metadesc_generator_main
@@ -38,41 +34,41 @@ from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
 def is_youtube_link(text):
-    if text is not None:
+    """Check if the provided text is a YouTube link."""
+    if text:
         youtube_regex = re.compile(r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?([^&=%\?]{11})')
         return youtube_regex.match(text)
 
 
 def is_web_link(text):
-    if text is not None:
+    """Check if the provided text is a web link."""
+    if text:
         web_regex = re.compile(r'(https?://)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)')
         return web_regex.match(text)
 
 
 def process_input(input_text, uploaded_file):
-    if input_text and is_youtube_link(input_text):
-        if input_text.startswith("https://www.youtube.com/") or input_text.startswith("http://www.youtube.com/"):
-            return "youtube_url"
+    """Process the input text or uploaded file and determine its type."""
+    if input_text:
+        if is_youtube_link(input_text):
+            if input_text.startswith("https://www.youtube.com/") or input_text.startswith("http://www.youtube.com/"):
+                return "youtube_url"
+            else:
+                st.error("Invalid YouTube URL. Please enter a valid URL.")
+                return None
+        elif is_web_link(input_text):
+            return "web_url"
         else:
-            st.error("Invalid YouTube URL. Please enter a valid URL.")
-            return None
-
-    elif input_text and is_web_link(input_text):
-        return "web_url"
+            return "keywords"
     
-    elif input_text:
-        return "keywords"
-    
-    if uploaded_file is not None:
+    if uploaded_file:
         file_details = {"filename": uploaded_file.name, "filetype": uploaded_file.type}
         st.write(file_details)
         if uploaded_file.type.startswith("text/"):
             content = uploaded_file.read().decode("utf-8")
             st.text(content)
-
         elif uploaded_file.type == "application/pdf":
             return "PDF_file"
-
         elif uploaded_file.type in ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword"]:
             st.write("Word document uploaded. Add your DOCX processing logic here.")
         elif uploaded_file.type.startswith("image/"):
