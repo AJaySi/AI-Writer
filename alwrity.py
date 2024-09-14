@@ -1,21 +1,12 @@
-import os
-import json
-import base64
-from datetime import datetime
 import streamlit as st
-
-# Load .env file
-def load_environment():
-    from dotenv import load_dotenv
-    load_dotenv()
-
-from lib.utils.alwrity_utils import (
-    blog_from_keyword, ai_agents_team, essay_writer, ai_news_writer, ai_seo_tools,
-    ai_finance_ta_writer, ai_social_writer, do_web_research, competitor_analysis
-)
-from lib.ai_writers.ai_story_writer.story_writer import story_input_section
-from lib.ai_writers.ai_product_description_writer import write_ai_prod_desc
-from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
+from lib.utils.environment_utils import load_environment
+from lib.utils.config_manager import save_config
+from lib.utils.ui_setup import setup_ui, setup_tabs
+from lib.utils.api_key_manager import check_api_keys, check_llm_environs
+from lib.utils.content_generators import ai_writers, content_planning_tools
+from lib.utils.seo_tools import ai_seo_tools
+from lib.utils.file_processor import load_image, read_prompts, write_prompts
+from lib.utils.voice_processing import record_voice
 
 # Placeholder function definitions for missing functions
 def blog_from_audio():

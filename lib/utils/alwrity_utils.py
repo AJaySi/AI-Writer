@@ -1,27 +1,7 @@
-import os
 import re
-import sys
 import streamlit as st
-from streamlit_mic_recorder import speech_to_text
-import asyncio
 import tempfile
-from pathlib import Path
-import configparser
-from datetime import datetime
-import uuid
-from PIL import Image
-import PyPDF2
-import openai
-import tiktoken
-from docx import Document
 from loguru import logger
-logger.remove()
-logger.add(sys.stdout,
-        colorize=True,
-        format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
-    )
-
-
 from lib.ai_web_researcher.gpt_online_researcher import gpt_web_researcher
 from lib.ai_web_researcher.metaphor_basic_neural_web_search import metaphor_find_similar
 from lib.ai_writers.keywords_to_blog_streamlit import write_blog_from_keywords
@@ -38,41 +18,9 @@ from lib.ai_writers.youtube_ai_writer import write_yt_title, write_yt_descriptio
 from lib.ai_writers.web_url_ai_writer import blog_from_url
 from lib.ai_writers.image_ai_writer import blog_from_image
 from lib.ai_writers.ai_essay_writer import ai_essay_generator
-from lib.ai_seo_tools.seo_structured_data import ai_structured_data
-from lib.ai_seo_tools.content_title_generator import ai_title_generator
-from lib.ai_seo_tools.meta_desc_generator import metadesc_generator_main
-from lib.ai_seo_tools.image_alt_text_generator import alt_text_gen
-from lib.ai_seo_tools.opengraph_generator import og_tag_generator
-from lib.ai_seo_tools.optimize_images_for_upload import main_img_optimizer
-from lib.ai_seo_tools.google_pagespeed_insights import google_pagespeed_insights
-from lib.ai_seo_tools.on_page_seo_analyzer import analyze_onpage_seo
-from lib.ai_seo_tools.weburl_seo_checker import url_seo_checker
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
-
-
-@st.cache_data
-def record_voice(language="en"):
-    # https://github.com/B4PT0R/streamlit-mic-recorder?tab=readme-ov-file#example
-    state = st.session_state
-    if "text_received" not in state:
-        state.text_received = []
-
-    text = speech_to_text(
-        start_prompt="🎙️Press & Speak🔊",
-        stop_prompt="🔇Stop Recording🚨",
-        language=language,
-        use_container_width=True,
-        just_once=False,    
-    )
-    if text:
-        state.text_received.append(text)
-    result = ""
-    for text in state.text_received:
-        result += text
-    state.text_received = []
-    return result if result else None
 
 
 def is_youtube_link(text):
