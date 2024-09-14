@@ -47,6 +47,7 @@ from tabulate import tabulate
 from pytrends.request import TrendReq
 from datetime import datetime
 from loguru import logger
+from wordcloud import WordCloud
 
 # Configure logger
 logger.remove()
