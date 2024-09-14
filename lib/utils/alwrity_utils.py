@@ -19,6 +19,7 @@ from lib.ai_writers.ai_essay_writer import ai_essay_generator
 import os
 import PyPDF2
 import tiktoken
+import openai
 from lib.ai_seo_tools.seo_structured_data import ai_structured_data
 from lib.ai_seo_tools.content_title_generator import ai_title_generator
 from lib.ai_seo_tools.meta_desc_generator import metadesc_generator_main
