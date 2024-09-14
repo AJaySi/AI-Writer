@@ -23,7 +23,7 @@ Note: Ensure that the required libraries are installed using 'pip install pytren
 """
 
 import os
-import time # I wish
+import time
 import random
 import requests
 import numpy as np
@@ -45,6 +45,7 @@ from urllib.parse import quote_plus
 from tqdm import tqdm
 from tabulate import tabulate
 from pytrends.request import TrendReq
+from datetime import datetime
 from loguru import logger
 
 # Configure logger
@@ -55,7 +56,155 @@ logger.add(sys.stdout,
            )
 
 
-def fetch_google_trends_interest_overtime(keyword):
+def fetch_multirange_interest_over_time(keywords, timeframes):
+    """
+    Fetch multirange interest over time for given keywords and timeframes.
+
+    Args:
+        keywords (list): List of keywords.
+        timeframes (list): List of timeframes.
+
+    Returns:
+        pd.DataFrame: DataFrame containing interest over time data.
+    """
+    try:
+        pytrends = TrendReq(hl='en-US', tz=360)
+        pytrends.build_payload(keywords, timeframe=timeframes)
+        data = pytrends.multirange_interest_over_time()
+        data = data.reset_index()
+
+        # Visualization using Plotly
+        fig = px.line(data, x='date', y=keywords, title='Multirange Interest Over Time')
+        fig.show()
+
+        return data
+    except Exception as e:
+        logger.error(f"Error in fetch_multirange_interest_over_time: {e}")
+        return pd.DataFrame()
+
+
+def fetch_historical_hourly_interest(keywords, start_date, end_date):
+    """
+    Fetch historical hourly interest for given keywords.
+
+    Args:
+        keywords (list): List of keywords.
+        start_date (str): Start date in 'YYYY-MM-DD' format.
+        end_date (str): End date in 'YYYY-MM-DD' format.
+
+    Returns:
+        pd.DataFrame: DataFrame containing historical hourly interest data.
+    """
+    try:
+        pytrends = TrendReq(hl='en-US', tz=360)
+        data = pytrends.get_historical_interest(keywords, year_start=int(start_date[:4]), month_start=int(start_date[5:7]), day_start=int(start_date[8:10]), hour_start=0, year_end=int(end_date[:4]), month_end=int(end_date[5:7]), day_end=int(end_date[8:10]), hour_end=0)
+        data = data.reset_index()
+
+        # Visualization using Plotly
+        fig = px.line(data, x='date', y=keywords, title='Historical Hourly Interest')
+        fig.show()
+
+        return data
+    except Exception as e:
+        logger.error(f"Error in fetch_historical_hourly_interest: {e}")
+        return pd.DataFrame()
+
+
+def fetch_trending_searches(region='united_states'):
+    """
+    Fetch trending searches for a given region.
+
+    Args:
+        region (str): Region for which to fetch trending searches.
+
+    Returns:
+        pd.DataFrame: DataFrame containing trending searches.
+    """
+    try:
+        pytrends = TrendReq(hl='en-US', tz=360)
+        data = pytrends.trending_searches(pn=region)
+
+        # Display using tabulate
+        table = tabulate(data, headers='keys', tablefmt='fancy_grid')
+        print(table)
+
+        return data
+    except Exception as e:
+        logger.error(f"Error in fetch_trending_searches: {e}")
+        return pd.DataFrame()
+
+
+def fetch_realtime_search_trends(region='US'):
+    """
+    Fetch realtime search trends for a given region.
+
+    Args:
+        region (str): Region for which to fetch realtime search trends.
+
+    Returns:
+        pd.DataFrame: DataFrame containing realtime search trends.
+    """
+    try:
+        pytrends = TrendReq(hl='en-US', tz=360)
+        data = pytrends.realtime_trending_searches(pn=region)
+
+        # Display using tabulate
+        table = tabulate(data, headers='keys', tablefmt='fancy_grid')
+        print(table)
+
+        return data
+    except Exception as e:
+        logger.error(f"Error in fetch_realtime_search_trends: {e}")
+        return pd.DataFrame()
+
+
+def fetch_top_charts(year, region='GLOBAL'):
+    """
+    Fetch top charts for a given year and region.
+
+    Args:
+        year (int): Year for which to fetch top charts.
+        region (str): Region for which to fetch top charts.
+
+    Returns:
+        pd.DataFrame: DataFrame containing top charts.
+    """
+    try:
+        pytrends = TrendReq(hl='en-US', tz=360)
+        data = pytrends.top_charts(year, geo=region)
+
+        # Display using tabulate
+        table = tabulate(data, headers='keys', tablefmt='fancy_grid')
+        print(table)
+
+        return data
+    except Exception as e:
+        logger.error(f"Error in fetch_top_charts: {e}")
+        return pd.DataFrame()
+
+
+def fetch_suggestions(keyword):
+    """
+    Fetch suggestions for a given keyword.
+
+    Args:
+        keyword (str): Keyword for which to fetch suggestions.
+
+    Returns:
+        list: List of suggestions.
+    """
+    try:
+        pytrends = TrendReq(hl='en-US', tz=360)
+        suggestions = pytrends.suggestions(keyword)
+
+        # Display using tabulate
+        table = tabulate(suggestions, headers='keys', tablefmt='fancy_grid')
+        print(table)
+
+        return suggestions
+    except Exception as e:
+        logger.error(f"Error in fetch_suggestions: {e}")
+        return []
     try:
         pytrends = TrendReq(hl='en-US', tz=360)
         pytrends.build_payload([keyword], timeframe='today 1-y', geo='US')
