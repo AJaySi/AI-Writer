@@ -503,24 +503,6 @@ def competitor_analysis():
             st.error("Please enter a valid URL.")
 
 
-def do_web_research():
-    """ Input keywords and do web research and present a report."""
-    st.title("Web Research Assistant")
-    st.write("Enter keywords for web research. The keywords should be at least three words long.")
-    
-    search_keywords = st.text_input("Search Keywords", placeholder="Enter keywords for web research...")
-    if st.button("Start Web Research"):
-        if search_keywords and len(search_keywords.split()) >= 3:
-            try:
-                st.info(f"Starting web research on given keywords: {search_keywords}")
-                with st.spinner("Performing web research..."):
-                    web_research_result = gpt_web_researcher(search_keywords)
-                st.success("Web research completed successfully!")
-                st.write(web_research_result)
-            except Exception as err:
-                st.error(f"ERROR: Failed to do web research: {err}")
-        else:
-            st.warning("Search keywords should be at least three words long. Please try again.")
 
 
 def ai_finance_ta_writer():
