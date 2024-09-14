@@ -290,16 +290,22 @@ def load_image(image_path):
 
 
 def main():
-    # Use the encoded image in HTML
-    # Load and encode the image
+    setup_ui()
+    setup_environment_paths()
+    sidebar_configuration()
+
+    if check_api_keys() and check_llm_environs():
+        setup_tabs()
+        modify_prompts_sidebar()
+
+
+def setup_ui():
+    """Sets up the Streamlit UI with custom CSS and logo."""
     try:
-        # Read the CSS file content
         css_file_path = os.path.join('lib', 'workspace', 'alwrity_ui_styling.css')
         with open(css_file_path) as f:
             custom_css = f.read()
-        # Set the page configuration
         st.set_page_config(page_title="Alwrity", layout="wide")
-        # Inject custom CSS into the Streamlit app
         st.markdown(f'<style>{custom_css}</style>', unsafe_allow_html=True)
     except Exception as err:
         st.error(f"Failed in setting up Alwrity Streamlit UI: {err}")
@@ -311,8 +317,10 @@ def main():
         Welcome to Alwrity!
     </div>
     """, unsafe_allow_html=True)
-    
-    # Export the paths and file names. Dont want alwrity to be chatty and prompt for inputs.
+
+
+def setup_environment_paths():
+    """Sets up environment paths for saving files and configurations."""
     os.environ["SEARCH_SAVE_FILE"] = os.path.join(os.getcwd(), "lib", "workspace", "alwrity_web_research",
                                                   f"web_research_report_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}")
     os.environ["IMG_SAVE_DIR"] = os.path.join(os.getcwd(), "lib", "workspace", "alwrity_content")
@@ -320,49 +328,49 @@ def main():
     os.environ["PROMPTS_DIR"] = os.path.join(os.getcwd(), "lib", "workspace", "alwrity_prompts")
     os.environ["ALWRITY_CONFIG"] = os.path.join(os.getcwd(), "lib", "workspace", "alwrity_config", "main_config.json")
 
-    # Check API keys and LLM environment settings
-    sidebar_configuration()
 
-    if check_api_keys() and check_llm_environs():
-        # Define the tabs
-        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
-            ["📅Content Planning", " 📝🤖AI Writers", "🤝🤖Agents Teams", "🛠️🔍AI SEO tools", "📱AI Social Tools", " 💬Ask Alwrity"])
-        with tab1:
-            content_planning_tools()
+def setup_tabs():
+    """Sets up the main tabs in the Streamlit app."""
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+        ["📅Content Planning", " 📝🤖AI Writers", "🤝🤖Agents Teams", "🛠️🔍AI SEO tools", "📱AI Social Tools", " 💬Ask Alwrity"])
+    with tab1:
+        content_planning_tools()
 
-        with tab2:
-            ai_writers()
+    with tab2:
+        ai_writers()
 
-        with tab3:
-            ai_agents_team()
+    with tab3:
+        ai_agents_team()
 
-        with tab4:
-            ai_seo_tools()
+    with tab4:
+        ai_seo_tools()
 
-        with tab5:
-            ai_social_writer()
+    with tab5:
+        ai_social_writer()
 
-        with tab6:
-            st.subheader("Chat with your Data, Chat with any Data.. COMING SOON !")
-            st.markdown("Create a collection by uploading files (PDF, MD, CSV, etc), or crawl a data source (Websites, more sources coming soon.")
-            st.markdown("One can ask/chat, summarize and do semantic search over the uploaded data")
-            #alwrity_chat_docqa()
-    
-        # Sidebar for prompt modification
-        st.sidebar.title("📝 Modify Prompts")
-        prompts = read_prompts()
+    with tab6:
+        st.subheader("Chat with your Data, Chat with any Data.. COMING SOON !")
+        st.markdown("Create a collection by uploading files (PDF, MD, CSV, etc), or crawl a data source (Websites, more sources coming soon.")
+        st.markdown("One can ask/chat, summarize and do semantic search over the uploaded data")
+        # alwrity_chat_docqa()
 
-        if prompts:
-            edited_prompts = []
-            for i, prompt in enumerate(prompts):
-                edited_prompt = st.sidebar.text_area(f"Prompt {i+1}", prompt)
-                edited_prompts.append(edited_prompt)
-        
-            if st.sidebar.button("Save Prompts"):
-                write_prompts(edited_prompts)
-                st.sidebar.success("Prompts saved successfully!")
-        else:
-            st.sidebar.warning("No prompts found in the file.")
+
+def modify_prompts_sidebar():
+    """Provides a sidebar for modifying prompts."""
+    st.sidebar.title("📝 Modify Prompts")
+    prompts = read_prompts()
+
+    if prompts:
+        edited_prompts = []
+        for i, prompt in enumerate(prompts):
+            edited_prompt = st.sidebar.text_area(f"Prompt {i+1}", prompt)
+            edited_prompts.append(edited_prompt)
+
+        if st.sidebar.button("Save Prompts"):
+            write_prompts(edited_prompts)
+            st.sidebar.success("Prompts saved successfully!")
+    else:
+        st.sidebar.warning("No prompts found in the file.")
 
 
 # Functions for the main options
