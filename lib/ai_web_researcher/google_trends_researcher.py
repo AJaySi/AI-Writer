@@ -658,7 +658,7 @@ def do_google_trends_analysis(search_term):
     all_the_keywords = []
     try:
         for asearch_term in search_term:
-            #FIXME: Lets work with a single root keyword.
+            # FIXME: Lets work with a single root keyword.
             suggestions_df = get_suggestions_for_keyword(asearch_term)
             if len(suggestions_df['Keywords']) > 10:
                 result_df = perform_keyword_clustering(suggestions_df)
@@ -671,13 +671,14 @@ def do_google_trends_analysis(search_term):
             # Generate a random sleep time between 2 and 3 seconds 
             time.sleep(random.uniform(2, 3))
 
-#        
-#        # FIXME: Get result from vision GPT. Fetch and visualize Google Trends data
-#        #trends_data = fetch_google_trends_interest_overtime("llamaindex")
-#
-#        # FIXME: Plot Interest Over time.
-#        result_df = plot_interest_by_region(search_term)
-#        
+        # Fetch and display various Google Trends data
+        fetch_multirange_interest_over_time(search_term, ['today 3-m', 'today 1-m'])
+        fetch_historical_hourly_interest(search_term, '2023-01-01', '2023-01-31')
+        fetch_trending_searches()
+        fetch_realtime_search_trends()
+        fetch_top_charts(2023)
+        fetch_suggestions(search_term[0])
+
         # Display additional information
         try:
             result_df = get_related_topics_and_save_csv(search_term)
@@ -685,13 +686,10 @@ def do_google_trends_analysis(search_term):
             if result_df:
                 top_topic_title = result_df['topic_title'].values.tolist()
                 # Join each sublist into one string separated by comma
-                #top_topic_title = [','.join(filter(None, map(str, sublist))) for sublist in top_topic_title]
                 top_topic_title = ','.join([', '.join(filter(None, map(str, sublist))) for sublist in top_topic_title])
         except Exception as err:
             logger.error(f"Failed to get results from google trends related topics: {err}")
 
-        # TBD: Not getting great results OR unable to understand them.
-        #all_the_keywords += top_topic_title
         all_the_keywords = all_the_keywords.split(',')
         # Split the list into chunks of 5 keywords
         chunk_size = 4
@@ -708,7 +706,6 @@ def do_google_trends_analysis(search_term):
             logger.error(f"Failed to save search results: {save_results_err}")
         print(table)
         
-        #generate_wordcloud(all_the_keywords)
         return(all_the_keywords)
     except Exception as e:
         logger.error(f"Error in Google Trends Analysis: {e}")
