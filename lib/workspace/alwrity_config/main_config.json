@@ -5,7 +5,7 @@
         "Blog Demographic": "Professional",
         "Blog Type": "Informational",
         "Blog Language": "English",
-        "Blog Output Format": "HTML"
+        "Blog Output Format": "markdown"
     },
     "Blog Images Details": {
         "Image Generation Model": "stable-diffusion",
