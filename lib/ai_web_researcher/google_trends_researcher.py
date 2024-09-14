@@ -75,7 +75,7 @@ def fetch_multirange_interest_over_time(keywords, timeframes):
         data = data.reset_index()
 
         # Display data and explanation
-        print("\n📈 Multirange Interest Over Time:")
+        print(f"\n📈 Multirange Interest Over Time for '{keywords}':")
         print("This metric shows the interest of each keyword over multiple time ranges, allowing you to see trends and patterns.")
         print(data.to_string(index=False))
 
@@ -103,7 +103,7 @@ def fetch_historical_hourly_interest(keywords, start_date, end_date):
         data = data.reset_index()
 
         # Display data and explanation
-        print("\n⏰ Historical Hourly Interest:")
+        print(f"\n⏰ Historical Hourly Interest for '{keywords}':")
         print("This metric provides the interest level of each keyword on an hourly basis, useful for understanding daily patterns.")
         print(data.to_string(index=False))
 
@@ -128,7 +128,7 @@ def fetch_trending_searches(region='united_states'):
         data = pytrends.trending_searches(pn=region)
 
         # Display data and explanation
-        print("\n🔥 Trending Searches:")
+        print(f"\n🔥 Trending Searches in '{region}':")
         print("These are the searches that are currently trending in the specified region, indicating popular topics.")
         print(data.to_string(index=False))
 
@@ -153,7 +153,7 @@ def fetch_realtime_search_trends(region='US'):
         data = pytrends.realtime_trending_searches(pn=region)
 
         # Display data and explanation
-        print("\n📊 Realtime Search Trends:")
+        print(f"\n📊 Realtime Search Trends in '{region}':")
         print("These are the searches that are trending in real-time, providing insights into current events and interests.")
         print(data.to_string(index=False))
 
@@ -179,7 +179,7 @@ def fetch_top_charts(year, region='GLOBAL'):
         data = pytrends.top_charts(year, geo=region)
 
         # Display data and explanation
-        print("\n🏆 Top Charts:")
+        print(f"\n🏆 Top Charts for {year} in '{region}':")
         print("These charts show the top searches for a given year and region, highlighting significant trends over time.")
         print(data.to_string(index=False))
 
@@ -204,7 +204,7 @@ def fetch_suggestions(keyword):
         suggestions = pytrends.suggestions(keyword)
 
         # Display data and explanation
-        print("\n💡 Suggestions:")
+        print(f"\n💡 Suggestions for '{keyword}':")
         print("These are suggested search terms related to the given keyword, useful for expanding your search strategy.")
         print(pd.DataFrame(suggestions).to_string(index=False))
 
