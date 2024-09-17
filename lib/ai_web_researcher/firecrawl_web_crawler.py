@@ -1,5 +1,8 @@
 from firecrawl_client import initialize_client
 import logging
+import os
+from pathlib import Path
+from firecrawl import FirecrawlApp
 from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv(Path('../../.env'))
