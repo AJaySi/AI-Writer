@@ -129,6 +129,7 @@
 #This solution will significantly streamline the backlinking process by automating the most tedious tasks, from finding sites to personalizing outreach, enabling marketers to focus on content creation and high-level strategies.
 
 from lib.ai_web_researcher.firecrawl_web_crawler import scrape_website
+from lib.gpt_providers.text_generation.main_text_generation import llm_text_gen
 from lib.ai_web_researcher.firecrawl_web_crawler import scrape_url
 
 
@@ -182,6 +183,20 @@ def find_backlink_opportunities(keyword):
             website_data = scrape_website(url)
             if website_data:
                 contact_info = extract_contact_info(url)
+                # Construct a prompt for the LLM
+                prompt = f"""
+                Analyze the following website content and provide insights:
+                Content: {website_data.get("content_summary", "")}
+
+                Please provide:
+                1. A brief summary of what the website is about.
+                2. Guidelines to follow for guest posting.
+                3. Suggested topics to write on.
+                4. Any other insights to help make a highly personalized reach out and decision making.
+                """
+
+                insights = llm_text_gen(prompt)
+
                 detailed_result = {
                     "url": url,
                     "metadata": {
@@ -192,6 +207,7 @@ def find_backlink_opportunities(keyword):
                     },
                     "content_summary": website_data.get("content_summary", ""),
                     "contact_info": contact_info,
+                    "insights": insights,
                     "backlink_opportunity": {
                         "query": query,
                         "context": "Guest post opportunity"
