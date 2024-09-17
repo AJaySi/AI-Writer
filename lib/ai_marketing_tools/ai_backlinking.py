@@ -179,9 +179,25 @@ def find_backlink_opportunities(keyword):
         # Placeholder for a function to search and get URLs
         urls = search_for_urls(query)
         for url in urls:
-            result = scrape_website(url)
-            if result:
-                results.append(result)
+            website_data = scrape_website(url)
+            if website_data:
+                contact_info = extract_contact_info(url)
+                detailed_result = {
+                    "url": url,
+                    "metadata": {
+                        "title": website_data.get("metadata", {}).get("title", ""),
+                        "description": website_data.get("metadata", {}).get("description", ""),
+                        "keywords": website_data.get("metadata", {}).get("keywords", []),
+                        "author": website_data.get("metadata", {}).get("author", ""),
+                    },
+                    "content_summary": website_data.get("content_summary", ""),
+                    "contact_info": contact_info,
+                    "backlink_opportunity": {
+                        "query": query,
+                        "context": "Guest post opportunity"
+                    }
+                }
+                results.append(detailed_result)
     return results
 
 
