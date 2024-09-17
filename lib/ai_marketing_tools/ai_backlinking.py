@@ -203,15 +203,40 @@ def search_for_urls(query):
     return []
 
 
-def extract_contact_info(scraped_data):
+from lib.ai_web_researcher.firecrawl_web_crawler import extract_data
+
+def extract_contact_info(url):
     """
-    Placeholder function to extract contact information from scraped data.
+    Extract contact information from a website using Firecrawl's LLM Extract feature.
     
     Args:
-        scraped_data (dict): The data scraped from a website.
+        url (str): The URL of the website to extract contact information from.
     
     Returns:
         dict: Extracted contact information.
     """
-    # This function needs to be implemented
+    schema = {
+        "type": "object",
+        "properties": {
+            "emails": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "format": "email"
+                }
+            },
+            "contact_forms": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "format": "uri"
+                }
+            }
+        },
+        "required": ["emails", "contact_forms"]
+    }
+    
+    result = extract_data(url, schema)
+    if result and 'extract' in result:
+        return result['extract']
     return {}
