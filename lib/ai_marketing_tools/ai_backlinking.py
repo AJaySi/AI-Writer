@@ -127,7 +127,10 @@
 #    Database: MongoDB or PostgreSQL to track leads, emails, and responses.
 #
 #This solution will significantly streamline the backlinking process by automating the most tedious tasks, from finding sites to personalizing outreach, enabling marketers to focus on content creation and high-level strategies.
+
 from lib.ai_web_researcher.firecrawl_web_crawler import scrape_website
+from lib.ai_web_researcher.firecrawl_web_crawler import scrape_url
+
 
 def generate_search_queries(keyword):
     """
@@ -181,7 +184,7 @@ def find_backlink_opportunities(keyword):
                 results.append(result)
     return results
 
-from lib.ai_web_researcher.firecrawl_web_crawler import scrape_url
+
 
 def search_for_urls(query):
     """
@@ -198,6 +201,7 @@ def search_for_urls(query):
     if result and 'urls' in result:
         return result['urls']
     return []
+
 
 def extract_contact_info(scraped_data):
     """
