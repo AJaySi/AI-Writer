@@ -218,7 +218,7 @@ def find_backlink_opportunities(keyword):
 
 def compose_personalized_email(website_data, insights, user_proposal):
     """
-    Compose a personalized outreach email based on website data, insights, and user proposal.
+    Compose a personalized outreach email using AI LLM based on website data, insights, and user proposal.
 
     Args:
         website_data (dict): The data of the website including metadata and contact info.
@@ -232,22 +232,21 @@ def compose_personalized_email(website_data, insights, user_proposal):
     site_name = website_data.get("metadata", {}).get("title", "your site")
     proposed_topic = user_proposal.get("topic", "a guest post")
 
-    email_body = f"""
-    Hi {contact_name},
+    # Construct a prompt for the LLM to generate a personalized email
+    prompt = f"""
+    You are an AI assistant tasked with composing a personalized outreach email. 
+    Use the following details to craft a compelling message:
 
-    I hope this message finds you well. I recently came across {site_name} and was impressed by the high-quality content you provide on {website_data.get("metadata", {}).get("keywords", "various topics")}. 
+    Contact Name: {contact_name}
+    Website Name: {site_name}
+    Proposed Topic: {proposed_topic}
+    Insights: {insights}
 
-    Based on the insights I gathered, I believe there is a great opportunity for collaboration. I would love to contribute {proposed_topic} that aligns with your site's focus and audience.
-
-    Here are some insights and guidelines I gathered:
-    {insights}
-
-    Please let me know if you are interested in discussing this further. I am excited about the possibility of working together and contributing to your site.
-
-    Best regards,
-    [Your Name]
-    [Your Contact Information]
+    The email should be professional, engaging, and tailored to the recipient's interests and the website's focus.
     """
+
+    # Generate the email using the LLM
+    email_body = llm_text_gen(prompt)
 
     return email_body
 
