@@ -181,17 +181,22 @@ def find_backlink_opportunities(keyword):
                 results.append(result)
     return results
 
+from lib.ai_web_researcher.firecrawl_web_crawler import scrape_url
+
 def search_for_urls(query):
     """
-    Placeholder function to search for URLs based on a query.
-    
+    Search for URLs based on a query using Firecrawl.
+
     Args:
         query (str): The search query.
-    
+
     Returns:
         list: A list of URLs.
     """
-    # This function needs to be implemented
+    # Use Firecrawl to perform the search
+    result = scrape_url(query)
+    if result and 'urls' in result:
+        return result['urls']
     return []
 
 def extract_contact_info(scraped_data):
