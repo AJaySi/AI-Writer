@@ -23,7 +23,7 @@ Note: Ensure that the required libraries are installed using 'pip install pytren
 """
 
 import os
-import time
+import time # I wish
 import random
 import requests
 import numpy as np
@@ -45,9 +45,7 @@ from urllib.parse import quote_plus
 from tqdm import tqdm
 from tabulate import tabulate
 from pytrends.request import TrendReq
-from datetime import datetime
 from loguru import logger
-from wordcloud import WordCloud
 
 # Configure logger
 logger.remove()
@@ -57,161 +55,7 @@ logger.add(sys.stdout,
            )
 
 
-def fetch_multirange_interest_over_time(keywords, timeframes):
-    """
-    Fetch multirange interest over time for given keywords and timeframes.
-
-    Args:
-        keywords (list): List of keywords.
-        timeframes (list): List of timeframes.
-
-    Returns:
-        pd.DataFrame: DataFrame containing interest over time data.
-    """
-    try:
-        pytrends = TrendReq(hl='en-US', tz=360)
-        pytrends.build_payload(keywords, timeframe=timeframes)
-        data = pytrends.multirange_interest_over_time()
-        data = data.reset_index()
-
-        # Display data and explanation
-        print(f"\n📈 Multirange Interest Over Time for '{keywords}':")
-        print("This metric shows the interest of each keyword over multiple time ranges, allowing you to see trends and patterns.")
-        print(data.to_string(index=False))
-
-        return data
-    except Exception as e:
-        logger.error(f"Error in fetch_multirange_interest_over_time: {e}")
-        return pd.DataFrame()
-
-
-def fetch_historical_hourly_interest(keywords, start_date, end_date):
-    """
-    Fetch historical hourly interest for given keywords.
-
-    Args:
-        keywords (list): List of keywords.
-        start_date (str): Start date in 'YYYY-MM-DD' format.
-        end_date (str): End date in 'YYYY-MM-DD' format.
-
-    Returns:
-        pd.DataFrame: DataFrame containing historical hourly interest data.
-    """
-    try:
-        pytrends = TrendReq(hl='en-US', tz=360)
-        data = pytrends.get_historical_interest(keywords, year_start=int(start_date[:4]), month_start=int(start_date[5:7]), day_start=int(start_date[8:10]), hour_start=0, year_end=int(end_date[:4]), month_end=int(end_date[5:7]), day_end=int(end_date[8:10]), hour_end=0)
-        data = data.reset_index()
-
-        # Display data and explanation
-        print(f"\n⏰ Historical Hourly Interest for '{keywords}':")
-        print("This metric provides the interest level of each keyword on an hourly basis, useful for understanding daily patterns.")
-        print(data.to_string(index=False))
-
-        return data
-    except Exception as e:
-        logger.error(f"Error in fetch_historical_hourly_interest: {e}")
-        return pd.DataFrame()
-
-
-def fetch_trending_searches(region='united_states'):
-    """
-    Fetch trending searches for a given region.
-
-    Args:
-        region (str): Region for which to fetch trending searches.
-
-    Returns:
-        pd.DataFrame: DataFrame containing trending searches.
-    """
-    try:
-        pytrends = TrendReq(hl='en-US', tz=360)
-        data = pytrends.trending_searches(pn=region)
-
-        # Display data and explanation
-        print(f"\n🔥 Trending Searches in '{region}':")
-        print("These are the searches that are currently trending in the specified region, indicating popular topics.")
-        print(data.to_string(index=False))
-
-        return data
-    except Exception as e:
-        logger.error(f"Error in fetch_trending_searches: {e}")
-        return pd.DataFrame()
-
-
-def fetch_realtime_search_trends(region='US'):
-    """
-    Fetch realtime search trends for a given region.
-
-    Args:
-        region (str): Region for which to fetch realtime search trends.
-
-    Returns:
-        pd.DataFrame: DataFrame containing realtime search trends.
-    """
-    try:
-        pytrends = TrendReq(hl='en-US', tz=360)
-        data = pytrends.realtime_trending_searches(pn=region)
-
-        # Display data and explanation
-        print(f"\n📊 Realtime Search Trends in '{region}':")
-        print("These are the searches that are trending in real-time, providing insights into current events and interests.")
-        print(data.to_string(index=False))
-
-        return data
-    except Exception as e:
-        logger.error(f"Error in fetch_realtime_search_trends: {e}")
-        return pd.DataFrame()
-
-
-def fetch_top_charts(year, region='GLOBAL'):
-    """
-    Fetch top charts for a given year and region.
-
-    Args:
-        year (int): Year for which to fetch top charts.
-        region (str): Region for which to fetch top charts.
-
-    Returns:
-        pd.DataFrame: DataFrame containing top charts.
-    """
-    try:
-        pytrends = TrendReq(hl='en-US', tz=360)
-        data = pytrends.top_charts(year, geo=region)
-
-        # Display data and explanation
-        print(f"\n🏆 Top Charts for {year} in '{region}':")
-        print("These charts show the top searches for a given year and region, highlighting significant trends over time.")
-        print(data.to_string(index=False))
-
-        return data
-    except Exception as e:
-        logger.error(f"Error in fetch_top_charts: {e}")
-        return pd.DataFrame()
-
-
-def fetch_suggestions(keyword):
-    """
-    Fetch suggestions for a given keyword.
-
-    Args:
-        keyword (str): Keyword for which to fetch suggestions.
-
-    Returns:
-        list: List of suggestions.
-    """
-    try:
-        pytrends = TrendReq(hl='en-US', tz=360)
-        suggestions = pytrends.suggestions(keyword)
-
-        # Display data and explanation
-        print(f"\n💡 Suggestions for '{keyword}':")
-        print("These are suggested search terms related to the given keyword, useful for expanding your search strategy.")
-        print(pd.DataFrame(suggestions).to_string(index=False))
-
-        return suggestions
-    except Exception as e:
-        logger.error(f"Error in fetch_suggestions: {e}")
-        return []
+def fetch_google_trends_interest_overtime(keyword):
     try:
         pytrends = TrendReq(hl='en-US', tz=360)
         pytrends.build_payload([keyword], timeframe='today 1-y', geo='US')
@@ -344,11 +188,6 @@ def get_related_topics_and_save_csv(search_keywords):
         except Exception as err:
             logger.error(f"Failed to get pytrends realted topics: {err}")
             return None
-
-        # Check if data contains expected keys
-        if not data or 'top' not in list(data.values())[0] or 'rising' not in list(data.values())[0]:
-            logger.error("No related topics found.")
-            return pd.DataFrame()
 
         # Extract data from the result
         top_topics = list(data.values())[0]['top']
@@ -658,7 +497,7 @@ def do_google_trends_analysis(search_term):
     all_the_keywords = []
     try:
         for asearch_term in search_term:
-            # FIXME: Lets work with a single root keyword.
+            #FIXME: Lets work with a single root keyword.
             suggestions_df = get_suggestions_for_keyword(asearch_term)
             if len(suggestions_df['Keywords']) > 10:
                 result_df = perform_keyword_clustering(suggestions_df)
@@ -671,14 +510,13 @@ def do_google_trends_analysis(search_term):
             # Generate a random sleep time between 2 and 3 seconds 
             time.sleep(random.uniform(2, 3))
 
-        # Fetch and display various Google Trends data
-        fetch_multirange_interest_over_time(search_term, ['today 3-m', 'today 1-m'])
-        fetch_historical_hourly_interest(search_term, '2023-01-01', '2023-01-31')
-        fetch_trending_searches()
-        fetch_realtime_search_trends()
-        fetch_top_charts(2023)
-        fetch_suggestions(search_term[0])
-
+#        
+#        # FIXME: Get result from vision GPT. Fetch and visualize Google Trends data
+#        #trends_data = fetch_google_trends_interest_overtime("llamaindex")
+#
+#        # FIXME: Plot Interest Over time.
+#        result_df = plot_interest_by_region(search_term)
+#        
         # Display additional information
         try:
             result_df = get_related_topics_and_save_csv(search_term)
@@ -686,10 +524,13 @@ def do_google_trends_analysis(search_term):
             if result_df:
                 top_topic_title = result_df['topic_title'].values.tolist()
                 # Join each sublist into one string separated by comma
+                #top_topic_title = [','.join(filter(None, map(str, sublist))) for sublist in top_topic_title]
                 top_topic_title = ','.join([', '.join(filter(None, map(str, sublist))) for sublist in top_topic_title])
         except Exception as err:
             logger.error(f"Failed to get results from google trends related topics: {err}")
 
+        # TBD: Not getting great results OR unable to understand them.
+        #all_the_keywords += top_topic_title
         all_the_keywords = all_the_keywords.split(',')
         # Split the list into chunks of 5 keywords
         chunk_size = 4
@@ -706,6 +547,7 @@ def do_google_trends_analysis(search_term):
             logger.error(f"Failed to save search results: {save_results_err}")
         print(table)
         
+        #generate_wordcloud(all_the_keywords)
         return(all_the_keywords)
     except Exception as e:
         logger.error(f"Error in Google Trends Analysis: {e}")

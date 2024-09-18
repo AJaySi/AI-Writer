@@ -3,24 +3,16 @@ import os
 import json
 import base64
 from datetime import datetime
+import streamlit as st
 from lib.utils.environment_utils import load_environment
 from lib.utils.config_manager import save_config
+from lib.utils.ui_setup import setup_ui
 from lib.utils.api_key_manager import check_api_keys, check_llm_environs
-from lib.utils.content_generators import ai_writers, content_planning_tools, blog_from_keyword, story_input_section, essay_writer, ai_news_writer, ai_finance_ta_writer, write_ai_prod_desc, competitor_analysis, ai_agents_content_planner
+from lib.utils.content_generators import ai_writers, content_planning_tools, blog_from_keyword, story_input_section, essay_writer, ai_news_writer, ai_finance_ta_writer, write_ai_prod_desc, do_web_research, competitor_analysis, ai_agents_content_planner
 from lib.utils.seo_tools import ai_seo_tools
 from lib.utils.alwrity_utils import ai_agents_team, ai_social_writer
 from lib.utils.file_processor import load_image, read_prompts, write_prompts
 from lib.utils.voice_processing import record_voice
-from lib.ai_web_researcher.google_trends_researcher import (
-    fetch_multirange_interest_over_time,
-    fetch_historical_hourly_interest,
-    fetch_trending_searches,
-    fetch_realtime_search_trends,
-    fetch_top_charts,
-    fetch_suggestions
-)
-import pandas as pd
-import matplotlib.pyplot as plt
 
 # Placeholder function definitions for missing functions
 def blog_from_audio():
@@ -103,16 +95,15 @@ def check_llm_environs():
     return True
 
 
-def save_config(config, save_now=False):
+def save_config(config):
     """
     Saves the provided configuration dictionary to a JSON file specified by the environment variable.
     """
-    if save_now:
-        try:
-            with open(os.getenv("ALWRITY_CONFIG"), "w") as config_file:
-                json.dump(config, config_file, indent=4)
-        except Exception as e:
-            st.error(f"An error occurred while saving the configuration: {e}")
+    try:
+        with open(os.getenv("ALWRITY_CONFIG"), "w") as config_file:
+            json.dump(config, config_file, indent=4)
+    except Exception as e:
+        st.error(f"An error occurred while saving the configuration: {e}")
 
 
 # Sidebar configuration
@@ -285,9 +276,8 @@ def sidebar_configuration():
         }
     }
 
-    # Option to save the configuration explicitly
-    if st.sidebar.button("Save Configuration"):
-        save_config(config, save_now=True)
+    # Writing the configuration to a file whenever a change is made
+    save_config(config)
 
 
 
@@ -443,60 +433,7 @@ def content_planning_tools():
     choice = st.radio("Select a content planning tool:", options, index=0, format_func=lambda x: f"🔍 {x}")
     
     if choice == "Keywords Researcher":
-        st.title("Web Research Assistant")
-        st.write("Enter keywords for web research. The keywords should be at least three words long.")
-        
-        search_keywords = st.text_input("Search Keywords", placeholder="Enter keywords for web research...")
-        if st.button("Start Web Research"):
-            if search_keywords and len(search_keywords.split()) >= 3:
-                try:
-                    st.info(f"Starting web research on given keywords: {search_keywords}")
-                    with st.spinner("Performing web research..."):
-                        # Fetch and display multirange interest over time
-                        st.subheader("Multirange Interest Over Time")
-                        multirange_data = fetch_multirange_interest_over_time([search_keywords], ['today 3-m', 'today 1-m'])
-                        st.dataframe(multirange_data)
-
-                        # Fetch and display historical hourly interest
-                        st.subheader("Historical Hourly Interest")
-                        hourly_data = fetch_historical_hourly_interest([search_keywords], '2023-01-01', '2023-01-31')
-                        st.dataframe(hourly_data)
-
-                        # Fetch and display trending searches
-                        st.subheader("Trending Searches")
-                        trending_data = fetch_trending_searches()
-                        st.dataframe(trending_data)
-
-                        # Fetch and display realtime search trends
-                        st.subheader("Realtime Search Trends")
-                        realtime_data = fetch_realtime_search_trends()
-                        st.dataframe(realtime_data)
-
-                        # Fetch and display top charts
-                        st.subheader("Top Charts")
-                        top_charts_data = fetch_top_charts(2023)
-                        st.dataframe(top_charts_data)
-
-                        # Fetch and display suggestions
-                        st.subheader("Suggestions")
-                        suggestions = fetch_suggestions(search_keywords)
-                        st.dataframe(pd.DataFrame(suggestions))
-
-                        # Example of plotting with Matplotlib
-                        st.subheader("Interest Over Time Plot")
-                        plt.figure(figsize=(10, 6))
-                        plt.plot(multirange_data['date'], multirange_data[search_keywords], label=search_keywords)
-                        plt.title(f'Interest Over Time for "{search_keywords}"')
-                        plt.xlabel('Date')
-                        plt.ylabel('Interest')
-                        plt.legend()
-                        st.pyplot(plt)
-
-                    st.success("Web research completed successfully!")
-                except Exception as err:
-                    st.error(f"ERROR: Failed to do web research: {err}")
-            else:
-                st.warning("Search keywords should be at least three words long. Please try again.")
+        do_web_research()
     elif choice == "Competitor Analysis":
         competitor_analysis()
     elif choice == "Content Calender Ideator":

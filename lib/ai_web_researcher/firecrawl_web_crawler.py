@@ -1,14 +1,26 @@
-from firecrawl_client import initialize_client
-import logging
 import os
 from pathlib import Path
+
 from firecrawl import FirecrawlApp
+import logging
 from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv(Path('../../.env'))
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+
+def initialize_client():
+    """
+    Initialize and return a Firecrawl client.
+
+    Args:
+        api_key (str): Your Firecrawl API key.
+
+    Returns:
+        firecrawl.Client: An instance of the Firecrawl client.
+    """
+    return FirecrawlApp(api_key=os.getenv("FIRECRAWL_API_KEY"))
 
 
 def scrape_website(website_url, depth=1, max_pages=10):
