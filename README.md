@@ -11,6 +11,7 @@ Our toolkit integrates **(OpenAI, Gemini, Anthropic)** AI models for text genera
 - ![ALwrity AI SEO Tools](https://github.com/AJaySi/AI-Writer/wiki/ALwrity-AI-SEO-Tools)
 - ![ALwrity Web Researcher](https://github.com/AJaySi/AI-Writer/wiki/Alwrity-AI-Web-Research-Details-for-content-writing)
 - RoadMap - Coming Soon..
+- <em>Present Focus: Nextjs react Alwrity App - Coming Soon..</em>
 
 ---
 > ![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)

@@ -38,3 +38,4 @@ streamlit-mic-recorder
 tinify
 cloudscraper
 xmlschema
+googlesearch-python

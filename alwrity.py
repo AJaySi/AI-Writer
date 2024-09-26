@@ -3,96 +3,23 @@ import os
 import json
 import base64
 from datetime import datetime
-import streamlit as st
-from lib.utils.environment_utils import load_environment
+from dotenv import load_dotenv
+
 from lib.utils.config_manager import save_config
 from lib.utils.ui_setup import setup_ui
 from lib.utils.api_key_manager import check_api_keys, check_llm_environs
 from lib.utils.content_generators import ai_writers, content_planning_tools, blog_from_keyword, story_input_section, essay_writer, ai_news_writer, ai_finance_ta_writer, write_ai_prod_desc, do_web_research, competitor_analysis, ai_agents_content_planner
 from lib.utils.seo_tools import ai_seo_tools
+from lib.utils.ui_setup import setup_ui, setup_tabs
 from lib.utils.alwrity_utils import ai_agents_team, ai_social_writer
 from lib.utils.file_processor import load_image, read_prompts, write_prompts
 from lib.utils.voice_processing import record_voice
 
-# Placeholder function definitions for missing functions
-def blog_from_audio():
-    """Placeholder for the blog_from_audio function."""
-    st.write("This is a placeholder for the blog_from_audio function.")
+
 
 def process_folder_for_rag(folder_path):
     """Placeholder for the process_folder_for_rag function."""
     st.write(f"This is a placeholder for processing the folder: {folder_path}")
-
-
-@st.cache_data
-def check_api_keys():
-    """
-    Checks if the required API keys are present in the environment variables.
-    Prompts the user to enter missing keys and saves them in the .env file.
-    """
-    api_keys = {
-        "METAPHOR_API_KEY": "https://dashboard.exa.ai/login",
-        "TAVILY_API_KEY": "https://tavily.com/#api",
-        "SERPER_API_KEY": "https://serper.dev/signup",
-        "STABILITY_API_KEY": "https://platform.stability.ai/",
-        "FIRECRAWL_API_KEY": "https://www.firecrawl.dev/account"
-    }
-
-    missing_keys = {
-        key: url for key, url in api_keys.items() if os.getenv(key) is None
-    }
-
-    if missing_keys:
-        st.error("🚨 Some API keys are missing! Please provide them below:")
-        for key, url in missing_keys.items():
-            api_key = st.text_input(f"Enter 🔏 {key}: 👉[Get it here]({url})👈")
-            if api_key:
-                os.environ[key] = api_key
-                try:
-                    with open(".env", "a") as env_file:
-                        env_file.write(f"{key}={api_key}\n")
-                except IOError as e:
-                    st.error(f"Failed to write {key} to .env file: {e}")
-                st.success(f"✅ {key} added successfully!")
-        return False
-    return True
-
-
-@st.cache_data
-def check_llm_environs():
-    """
-    Ensures that the LLM provider and corresponding API key are set.
-    Prompts the user to select a provider and enter the API key if missing.
-    """
-    gpt_provider = os.getenv("GPT_PROVIDER")
-    supported_providers = {
-        'google': "GEMINI_API_KEY",
-        'openai': "OPENAI_API_KEY",
-        'mistralai': "MISTRAL_API_KEY"
-    }
-
-    if not gpt_provider or gpt_provider.lower() not in supported_providers:
-        gpt_provider = st.selectbox(
-            "Select your LLM Provider", options=list(supported_providers.keys())
-        )
-        os.environ["GPT_PROVIDER"] = gpt_provider
-        try:
-            with open(".env", "a") as env_file:
-                env_file.write(f"GPT_PROVIDER={gpt_provider}\n")
-        except IOError as e:
-            st.error(f"Failed to write GPT_PROVIDER to .env file: {e}")
-        st.success(f"GPT Provider set to {gpt_provider}")
-
-    api_key_var = supported_providers[gpt_provider.lower()]
-    if not os.getenv(api_key_var):
-        api_key = st.text_input(f"Enter {api_key_var}:")
-        if api_key:
-            os.environ[api_key_var] = api_key
-            with open(".env", "a") as env_file:
-                env_file.write(f"{api_key_var}={api_key}\n")
-            st.success(f"{api_key_var} added successfully!")
-        return False
-    return True
 
 
 def save_config(config):
@@ -281,30 +208,10 @@ def sidebar_configuration():
 
 
 
-# Function to read prompts from the file
-@st.cache_data
-def read_prompts(file_path="prompt_llm.txt"):
-    if os.path.exists(file_path):
-        with open(file_path, "r") as file:
-            prompts = file.readlines()
-        return [prompt.strip() for prompt in prompts]
-    return []
-
-# Function to write prompts to the file
-def write_prompts(prompts, file_path="prompt_llm.txt"):
-    with open(file_path, "w") as file:
-        for prompt in prompts:
-            file.write(f"{prompt}\n")
-
-# Function to load and encode the image file
-def load_image(image_path):
-    with open(image_path, "rb") as img_file:
-        b64_string = base64.b64encode(img_file.read()).decode()
-    return b64_string
-
-
 def main():
-    load_environment()
+    #load_environment
+    from dotenv import load_dotenv
+    load_dotenv()
     setup_ui()
     setup_environment_paths()
     sidebar_configuration()
@@ -312,26 +219,6 @@ def main():
     if check_api_keys() and check_llm_environs():
         setup_tabs()
         modify_prompts_sidebar()
-
-
-def setup_ui():
-    """Sets up the Streamlit UI with custom CSS and logo."""
-    try:
-        css_file_path = os.path.join('lib', 'workspace', 'alwrity_ui_styling.css')
-        with open(css_file_path) as f:
-            custom_css = f.read()
-        st.set_page_config(page_title="Alwrity", layout="wide")
-        st.markdown(f'<style>{custom_css}</style>', unsafe_allow_html=True)
-    except Exception as err:
-        st.error(f"Failed in setting up Alwrity Streamlit UI: {err}")
-
-    image_base64 = load_image("lib/workspace/alwrity_logo.png")
-    st.markdown(f"""
-    <div class='main-header'>
-        <img src='data:image/png;base64,{image_base64}' alt='Alwrity Logo' style='height: 50px; margin-right: 10px; vertical-align: middle;'>
-        Welcome to Alwrity!
-    </div>
-    """, unsafe_allow_html=True)
 
 
 def setup_environment_paths():
@@ -342,32 +229,6 @@ def setup_environment_paths():
     os.environ["CONTENT_SAVE_DIR"] = os.path.join(os.getcwd(), "lib", "workspace", "alwrity_content")
     os.environ["PROMPTS_DIR"] = os.path.join(os.getcwd(), "lib", "workspace", "alwrity_prompts")
     os.environ["ALWRITY_CONFIG"] = os.path.join(os.getcwd(), "lib", "workspace", "alwrity_config", "main_config.json")
-
-
-def setup_tabs():
-    """Sets up the main tabs in the Streamlit app."""
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
-        ["📅Content Planning", " 📝🤖AI Writers", "🤝🤖Agents Teams", "🛠️🔍AI SEO tools", "📱AI Social Tools", " 💬Ask Alwrity"])
-    with tab1:
-        content_planning_tools()
-
-    with tab2:
-        ai_writers()
-
-    with tab3:
-        ai_agents_team()
-
-    with tab4:
-        ai_seo_tools()
-
-    with tab5:
-        ai_social_writer()
-
-    with tab6:
-        st.subheader("Chat with your Data, Chat with any Data.. COMING SOON !")
-        st.markdown("Create a collection by uploading files (PDF, MD, CSV, etc), or crawl a data source (Websites, more sources coming soon.")
-        st.markdown("One can ask/chat, summarize and do semantic search over the uploaded data")
-        # alwrity_chat_docqa()
 
 
 def modify_prompts_sidebar():
