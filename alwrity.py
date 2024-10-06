@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 from lib.utils.config_manager import save_config
 from lib.utils.ui_setup import setup_ui
-from lib.utils.api_key_manager import check_api_keys, check_llm_environs
+from lib.utils.api_key_manager import check_api_keys
 from lib.utils.content_generators import ai_writers, content_planning_tools, blog_from_keyword, story_input_section, essay_writer, ai_news_writer, ai_finance_ta_writer, write_ai_prod_desc, do_web_research, competitor_analysis, ai_agents_content_planner
 from lib.utils.seo_tools import ai_seo_tools
 from lib.utils.ui_setup import setup_ui, setup_tabs
@@ -216,7 +216,7 @@ def main():
     setup_environment_paths()
     sidebar_configuration()
 
-    if check_api_keys() and check_llm_environs():
+    if check_api_keys():
         setup_tabs()
         modify_prompts_sidebar()
 
