@@ -1,6 +1,8 @@
 > [!NOTE] <p><em>ALwrity is All in One Content platform for content writers, without AI tooling knowledge. WIP.
 Not just AI Writers, ALwrity is a complete content life cycle platform with **Content planning & Research, Personlized Content Generation, Content SEO audits, Content Scheduling/publishing, Analytics & monitoring & more**. We are busy building blocks for each phase of content life cycle with AI. We'd love your feedback or contributions.</em></p>
 
+**This library is in beta and should not be treated as a final implementation.**
+
 # How to ALwrity - Getting Started
 
 ALwrity assists content creators and digital marketers in keyword web research, ![AI writers](https://www.alwrity.com/ai-writing-tools) & ![Social media content generation](https://www.alwrity.com/ai-youtube-script-writer) & ![AI Copywriting](https://www.alwrity.com/ai-copywriting-formula-generator).
