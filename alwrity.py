@@ -213,7 +213,6 @@ def main():
     #load_environment
     from dotenv import load_dotenv
     load_dotenv()
-    load_dotenv()
     setup_ui()
     setup_environment_paths()
     sidebar_configuration()
