@@ -1,5 +1,6 @@
 import os
 import streamlit as st
+from dotenv import load_dotenv
 
 @st.cache_data
 def check_api_keys():
@@ -7,6 +8,7 @@ def check_api_keys():
     Checks if the required API keys are present in the environment variables.
     Prompts the user to enter missing keys and saves them in the .env file.
     """
+    load_dotenv()
     api_keys = {
         "METAPHOR_API_KEY": "https://dashboard.exa.ai/login",
         "TAVILY_API_KEY": "https://tavily.com/#api",
