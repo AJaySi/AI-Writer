@@ -217,10 +217,8 @@ def main():
     setup_environment_paths()
     sidebar_configuration()
 
-    if not check_api_keys():
-        st.stop()
-    if not check_llm_environs():
-        st.stop()
+    check_api_keys()
+    check_llm_environs()
     setup_tabs()
     modify_prompts_sidebar()
 
