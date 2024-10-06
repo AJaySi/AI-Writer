@@ -216,8 +216,7 @@ def main():
     setup_ui()
     setup_environment_paths()
     sidebar_configuration()
-    check_api_keys()
-    check_llm_environs()
+    check_all_api_keys()
     setup_tabs()
     modify_prompts_sidebar()
 
