@@ -20,19 +20,20 @@ def check_api_keys():
         key: url for key, url in api_keys.items() if os.getenv(key) is None
     }
     if missing_keys:
-        st.error("🚨 Some API keys are missing! Please provide them below:")
-        for key, url in missing_keys.items():
-            api_key = st.text_input(f"Enter 🔏 {key}: 👉[Get it here]({url})👈")
-            if api_key:
-                os.environ[key] = api_key
-                try:
-                    with open(".env", "a") as env_file:
-                        env_file.write(f"{key}={api_key}\n")
-                except IOError as e:
-                    st.error(f"Failed to write {key} to .env file: {e}")
-                st.success(f"✅ {key} added successfully!")
+        st.warning(f"API keys not found: {', '.join(missing_keys)}. Please provide them below. Restart the app after saving the keys.")
+        with st.form(key='api_keys_form'):
+            for key, url in missing_keys.items():
+                st.text_input(f"{key}: 👉[Get it here]({url})👈", type="password", key=key)
+            if st.form_submit_button("Save Keys"):
+                with open(".env", "a") as env_file:
+                    for key in missing_keys:
+                        key_value = st.session_state[key]
+                        env_file.write(f"{key}={key_value}\n")
+                st.success("API keys saved successfully! Please restart the application.")
+                st.stop()
         return False
     return True
+
 @st.cache_data
 def check_llm_environs():
     """
@@ -43,7 +44,7 @@ def check_llm_environs():
     supported_providers = {
         'google': "GEMINI_API_KEY",
         'openai': "OPENAI_API_KEY",
-        'mistralai': "MISTRAL_API_KEY"
+        'mistral': "MISTRAL_API_KEY"
     }
     if not gpt_provider or gpt_provider.lower() not in supported_providers:
         gpt_provider = st.selectbox(
