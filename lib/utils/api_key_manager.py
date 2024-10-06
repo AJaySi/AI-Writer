@@ -2,14 +2,15 @@ import os
 import streamlit as st
 from dotenv import load_dotenv
 
-
-@st.cache_data
 def check_all_api_keys():
     """
     Checks if all required API keys are present in the environment variables.
     Prompts the user to enter missing keys and saves them in the .env file.
     This includes general API keys and the LLM provider key.
     """
+    # Load environment variables from .env (MUST COME FIRST)
+    load_dotenv()
+
     api_keys = {
         "METAPHOR_API_KEY": "https://dashboard.exa.ai/login",
         "TAVILY_API_KEY": "https://tavily.com/#api",
@@ -18,6 +19,7 @@ def check_all_api_keys():
         "FIRECRAWL_API_KEY": "https://www.firecrawl.dev/account"
     }
 
+    # Check for missing keys AFTER loading environment variables
     missing_keys = {
         key: url for key, url in api_keys.items() if os.getenv(key) is None
     }
@@ -44,14 +46,18 @@ def check_all_api_keys():
     if not os.getenv(api_key_var):
         missing_keys[api_key_var] = ''
 
+    # If there are missing keys, prompt the user to enter them
     if missing_keys:
         st.warning(f"API keys not found: {', '.join(missing_keys)}. Please provide them below. Restart the app after saving the keys.")
         with st.form(key='api_keys_form'):
+            # Gather all missing keys in one go
             for key, url in missing_keys.items():
                 if url:
                     st.text_input(f"{key}: 👉[Get it here]({url})👈", type="password", key=key)
                 else:
                     st.text_input(f"{key}:", type="password", key=key)
+
+            # Save all keys at once when the button is clicked
             if st.form_submit_button("Save Keys"):
                 with open(".env", "a") as env_file:
                     for key in missing_keys:

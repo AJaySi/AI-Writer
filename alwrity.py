@@ -210,14 +210,14 @@ def sidebar_configuration():
 
 def main():
     #load_environment
-    from dotenv import load_dotenv
     load_dotenv()
     setup_ui()
-    setup_environment_paths()
-    sidebar_configuration()
-    check_all_api_keys()
-    setup_tabs()
-    modify_prompts_sidebar()
+
+    if check_all_api_keys():
+        setup_environment_paths()
+        sidebar_configuration()
+        setup_tabs()
+        modify_prompts_sidebar()
 
 
 def setup_environment_paths():
