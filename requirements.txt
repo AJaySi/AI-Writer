@@ -39,3 +39,4 @@ tinify
 cloudscraper
 xmlschema
 googlesearch-python
+streamlit-aggrid
