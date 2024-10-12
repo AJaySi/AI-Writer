@@ -40,3 +40,4 @@ cloudscraper
 xmlschema
 moviepy
 googlesearch-python
+streamlit-aggrid
