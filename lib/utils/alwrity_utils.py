@@ -169,7 +169,8 @@ def blog_from_keyword():
                 st.error('🚫 Blog keywords should be at least two words long. Please try again.')
         
         elif input_type == "youtube_url" or input_type == "audio_file":
-            generate_audio_blog(user_input)
+            if not generate_audio_blog(user_input):
+                st.stop()
         
         elif input_type == "web_url":
             blog_from_url(user_input)

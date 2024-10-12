@@ -2,7 +2,7 @@ import os
 import re
 import sys
 
-from pytube import YouTube
+from pytubefix import YouTube
 from loguru import logger
 from openai import OpenAI
 from tqdm import tqdm
@@ -21,6 +21,7 @@ def progress_function(stream, chunk, bytes_remaining):
     # Calculate the percentage completion
     current = ((stream.filesize - bytes_remaining) / stream.filesize)
     progress_bar.update(current - progress_bar.n)  # Update the progress bar
+
 
 def rename_file_with_underscores(file_path):
     """Rename a file by replacing spaces and special characters with underscores.
@@ -62,22 +63,32 @@ def speech_to_text(video_url):
         SystemExit: If a critical error occurs that prevents successful execution.
     """
     output_path = os.getenv("CONTENT_SAVE_DIR")
+    yt = None
+    audio_file = None
     with st.status("Started Writing..", expanded=False) as status:
         try:
-            audio_file = None
             if video_url.startswith("https://www.youtube.com/") or video_url.startswith("http://www.youtube.com/"):
                 logger.info(f"Accessing YouTube URL: {video_url}")
                 status.update(label=f"Accessing YouTube URL: {video_url}")
-                yt = YouTube(video_url, on_progress_callback=progress_function)
+                try:
+                    vid_id = video_url.split("=")[1]
+                    yt = YouTube(video_url, on_progress_callback=progress_function)
+                except Exception as err:
+                    logger.error(f"Failed to get pytube stream object: {err}")
+                    st.stop()
     
-                logger.info("Fetching the highest quality audio stream")
-                status.update(label="Fetching the highest quality audio stream")
-                audio_stream = yt.streams.filter(only_audio=True).first()
-    
+                logger.info(f"Fetching the highest quality audio stream:{yt.title}")
+                status.update(label=f"Fetching the highest quality audio stream: {yt.title}")
+                try:
+                    audio_stream = yt.streams.filter(only_audio=True).first()
+                except Exception as err:
+                    logger.error(f"Failed to Download Youtube Audio: {err}")
+                    st.stop()
+
                 if audio_stream is None:
                     logger.warning("No audio stream found for this video.")
                     st.warning("No audio stream found for this video.")
-                    return None
+                    st.stop()
     
                 logger.info(f"Downloading audio for: {yt.title}")
                 status.update(label=f"Downloading audio for: {yt.title}")
@@ -113,9 +124,13 @@ def speech_to_text(video_url):
                 # FIXME: We can chunk hour long videos, the code is not tested.
                 #long_video(audio_file)
                 sys.exit("File size limit exceeded.")
-                st.error("Audio File size limit exceeded.")
+                st.error("Audio File size limit exceeded. File a fixme/issues at ALwrity github.")
     
             try:
+                print(f"Audio File: {audio_file}")
+                transcript = transcribe_audio(audio_file)
+                print(f"\n\n\n--- Tracribe: {transcript}  ----\n\n\n")
+                exit(1)
                 status.update(label=f"Initializing OpenAI client for transcription: {audio_file}")
                 logger.info(f"Initializing OpenAI client for transcription: {audio_file}")
                 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
@@ -170,7 +185,7 @@ def long_video(temp_file_name):
         video_url (str): URL of the YouTube video to be transcribed.
     """
     # Extract audio and split into chunks
-    app.logger.info(f"Processing the YT video: {temp_file_name}")
+    logger.info(f"Processing the YT video: {temp_file_name}")
     full_audio = mp.AudioFileClip(temp_file_name)
     duration = full_audio.duration
     chunk_length = 600  # 10 minutes in seconds

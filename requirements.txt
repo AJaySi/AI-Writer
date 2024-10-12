@@ -38,4 +38,5 @@ streamlit-mic-recorder
 tinify
 cloudscraper
 xmlschema
+moviepy
 googlesearch-python
