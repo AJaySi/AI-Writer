@@ -2,6 +2,7 @@
 Not just AI Writers, ALwrity is a complete content life cycle platform with **Content planning & Research, Personlized Content Generation, Content SEO audits, Content Scheduling/publishing, Analytics & monitoring & more**. We are busy building blocks for each phase of content life cycle with AI. We'd love your feedback or contributions.</em></p>
 
 **This library is in beta and should not be treated as a final implementation.**
+> [!NOTE] <p><em>Busy with Nextjs  SaaS: https://www.alwrity.com/post/whats-alwrity-upto</em></p>
 
 # How to ALwrity - Getting Started
 
@@ -56,13 +57,6 @@ Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Som
 ### ![List of all AI Tools & Features of Alwrity](https://github.com/AJaySi/AI-Writer/wiki/Features-of-ALwrity-AI-writer)
 ---
 
-> ![AI SEO Tool Structured Data Generator](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/structured_data.gif)
----
-> ![ALwrity AI Linkedin Post generator](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/Alwrity_linkedin_post_generator.gif)
----
-> ![AI Google Ads Generator](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/alwrity_google_ads_generator.gif)
-
----
 
 ## How To Personlize ALwrity & Content Generation
 
@@ -163,36 +157,6 @@ Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Som
 
 ---
 > [!NOTE] <p>This toolkit is designed for automated blog management and requires appropriate API keys and access credentials for full functionality. ALwrity will guide your through this process, we selected APIs which offer generous free trials, **you** only need email id & patience.</p>
----
-
-### Web Research
-- **Keyword Research**: Conduct in-depth keyword research by specifying search queries and time ranges.
-- **Domain-Specific Searches**: Include specific URLs to confine searches to certain domains, such as Wikipedia or competitor websites.
-- **Semantic Analysis**: Explore similar topics and technologies by providing a reference URL for semantic analysis.
-
-### Competitor Analysis
-- **Similar Company Discovery**: Analyze competitor websites to discover similar companies, startups, and technologies.
-- **Industry Insights**: Gain insights into industry trends, market competitors, and emerging technologies.
-
-### Blog Writing
-- **Keyword-Based Blogs**: Generate blog content based on specified keywords, leveraging AI to produce engaging and informative articles.
-- **Audio Blog Generation**: Convert audio from YouTube videos into blog posts, facilitating content creation from multimedia sources.
-- **GitHub Repository Blogs**: Transform GitHub repositories or topics into blog posts, showcasing code examples and project insights.
-- **Scholarly Research Blogs**: Generate blog content based on research papers, summarizing key findings and insights.
-
-### Blogging Tools
-- **Title and Meta Description Generation**: Generate catchy titles and meta descriptions for blog posts to improve SEO and user engagement.
-- **Blog Outline Creation**: Generate outlines for blog posts, aiding in structuring content and organizing ideas.
-- **FAQ Generation**: Automatically generate FAQs (Frequently Asked Questions) based on blog content, enhancing user engagement and SEO.
-- **HTML and Markdown Conversion**: Convert blog posts between HTML and Markdown formats for easy integration with various platforms.
-- **Blog Proofreading**: Proofread blog content for grammar, spelling, and readability, ensuring high-quality output.
-- **Tag and Category Suggestions**: Generate tags and categories for blog posts based on content analysis, improving organization and discoverability.
-
-### Interactive Mode
-- **User-Friendly Interface**: Navigate tasks and options easily through an interactive command-line interface.
-- **Menu-Driven Interaction**: Choose between various options, tasks, and tools using intuitive menus and prompts.
-- **Task Guidance**: Receive guidance and instructions for each task, facilitating user interaction and decision-making.
-
 ---
 
 ## Standing on Tech-Shoulders of the Giants - (Credits):
