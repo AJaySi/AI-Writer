@@ -29,6 +29,8 @@ conversation_chain = ConversationChain(llm=llm)
 
 # --- Analyze Button & Processing --- 
 
+authorized_domains = ["example.com", "another-example.com"]
+
 if st.button("Analyze with AI!"):
     with st.spinner('Analyzing your content...'):
         url = url_input.strip()
@@ -36,6 +38,11 @@ if st.button("Analyze with AI!"):
 
         if not url.startswith("http"):
             st.error("Oops! Looks like you forgot 'http://' or 'https://' at the beginning of your URL.  Please add it and try again! 😊")
+            st.stop()
+
+        domain = url.split("//")[-1].split("/")[0]
+        if not any(domain.endswith(auth_domain) for auth_domain in authorized_domains):
+            st.error("The provided URL is not authorized. Please use a URL from an authorized domain.")
             st.stop()
 
         try:
