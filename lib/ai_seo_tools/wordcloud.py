@@ -19,6 +19,8 @@ language_input = st.selectbox("What language is your content?", ('English', 'Ita
 num_results_input = st.slider("How many top words/phrases should we show?", min_value=10, max_value=150, value=50)
 st.write("  ") 
 
+authorized_domains = ["example.com", "another-example.com"]
+
 if st.button("Analyze Your Content!"):
     with st.spinner('Analyzing your content...'):
         url = url_input.strip()
@@ -27,6 +29,12 @@ if st.button("Analyze Your Content!"):
 
         if not url.startswith("http"):
             st.error("Oops! Looks like you forgot 'http://' or 'https://' at the beginning of your URL.  Please add it and try again! 😊")
+            st.stop()
+
+        from urllib.parse import urlparse
+        parsed_url = urlparse(url)
+        if parsed_url.netloc not in authorized_domains:
+            st.error("The domain of the provided URL is not authorized. Please use an authorized domain.")
             st.stop()
 
         try:
