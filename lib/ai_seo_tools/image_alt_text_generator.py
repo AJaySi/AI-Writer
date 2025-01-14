@@ -7,11 +7,19 @@ import os
 
 # Function to encode the image
 def encode_image(image_path):
-    with open(image_path, "rb") as image_file:
+    safe_root = '/safe/root/directory'  # Define your safe root directory
+    normalized_path = os.path.normpath(image_path)
+    if not normalized_path.startswith(safe_root):
+        raise ValueError("Invalid image path")
+    with open(normalized_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 def get_image_description(image_path):
-    base64_image = encode_image(image_path)
+    safe_root = '/safe/root/directory'  # Define your safe root directory
+    normalized_path = os.path.normpath(image_path)
+    if not normalized_path.startswith(safe_root):
+        raise ValueError("Invalid image path")
+    base64_image = encode_image(normalized_path)
 
     headers = {
         "Content-Type": "application/json",

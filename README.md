@@ -9,13 +9,6 @@ Not just AI Writers, ALwrity is a complete content life cycle platform with **Co
 ALwrity assists content creators and digital marketers in keyword web research, ![AI writers](https://www.alwrity.com/ai-writing-tools) & ![Social media content generation](https://www.alwrity.com/ai-youtube-script-writer) & ![AI Copywriting](https://www.alwrity.com/ai-copywriting-formula-generator).
 Our toolkit integrates **(OpenAI, Gemini, Anthropic)** AI models for text generation, image creation **(Stability.ai), STT(whisper, AssemblyAI)** and AI Web research **(Tavily AI, exa AI, Serper.dev)**, streamlining your content creation pipeline and ensuring high-quality output with minimal effort.
 
-- ![Generate Content Calender for Months](https://www.alwrity.com/post/automating-content-calendars-with-ai-agents)
-- ![Specilized AI writers for every need & platform](https://github.com/AJaySi/AI-Writer/wiki/Features-of-ALwrity-AI-writer)
-- ![ALwrity AI SEO Tools](https://github.com/AJaySi/AI-Writer/wiki/ALwrity-AI-SEO-Tools)
-- ![ALwrity Web Researcher](https://github.com/AJaySi/AI-Writer/wiki/Alwrity-AI-Web-Research-Details-for-content-writing)
-- RoadMap - Coming Soon..
-- <em>Present Focus: Nextjs react Alwrity App - Coming Soon..</em>
-
 ---
 > ![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
 ---
@@ -54,9 +47,18 @@ Our toolkit integrates **(OpenAI, Gemini, Anthropic)** AI models for text genera
 ---
 Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Someone will bail you out.
 > ![Alwrity Documentation is here for more details](https://github.com/AJaySi/AI-Writer/wiki)
+
 ### ![List of all AI Tools & Features of Alwrity](https://github.com/AJaySi/AI-Writer/wiki/Features-of-ALwrity-AI-writer)
 ---
 
+- ![Generate Content Calender for Months](https://www.alwrity.com/post/automating-content-calendars-with-ai-agents)
+- ![Specilized AI writers for every need & platform](https://github.com/AJaySi/AI-Writer/wiki/Features-of-ALwrity-AI-writer)
+- ![ALwrity AI SEO Tools](https://github.com/AJaySi/AI-Writer/wiki/ALwrity-AI-SEO-Tools)
+- ![ALwrity Web Researcher](https://github.com/AJaySi/AI-Writer/wiki/Alwrity-AI-Web-Research-Details-for-content-writing)
+- RoadMap - Coming Soon..
+- <em>Present Focus: Nextjs react Alwrity App - Coming Soon..</em>
+
+---
 
 ## How To Personlize ALwrity & Content Generation
 
