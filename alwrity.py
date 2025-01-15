@@ -15,6 +15,18 @@ from lib.utils.alwrity_utils import ai_agents_team, ai_social_writer
 from lib.utils.file_processor import load_image, read_prompts, write_prompts
 from lib.utils.voice_processing import record_voice
 
+# Constants for hardcoded values
+BLOG_TONE_OPTIONS = ["Casual", "Professional", "How-to", "Beginner", "Research", "Programming", "Social Media", "Customize"]
+BLOG_DEMOGRAPHIC_OPTIONS = ["Professional", "Gen-Z", "Tech-savvy", "Student", "Digital Marketing", "Customize"]
+BLOG_TYPE_OPTIONS = ["Informational", "Commercial", "Company", "News", "Finance", "Competitor", "Programming", "Scholar"]
+BLOG_LANGUAGE_OPTIONS = ["English", "Spanish", "German", "Chinese", "Arabic", "Nepali", "Hindi", "Hindustani", "Customize"]
+BLOG_OUTPUT_FORMAT_OPTIONS = ["markdown", "HTML", "plaintext"]
+IMAGE_GENERATION_MODEL_OPTIONS = ["stable-diffusion", "dalle2", "dalle3"]
+GPT_PROVIDER_OPTIONS = ["google", "openai", "minstral"]
+MAX_TOKENS_OPTIONS = [500, 1000, 2000, 4000, 16000, 32000, 64000]
+GEOGRAPHIC_LOCATION_OPTIONS = ["us", "in", "fr", "cn"]
+SEARCH_LANGUAGE_OPTIONS = ["en", "zn-cn", "de", "hi"]
+TIME_RANGE_OPTIONS = ["anytime", "past day", "past week", "past month", "past year"]
 
 
 def process_folder_for_rag(folder_path):
@@ -33,179 +45,151 @@ def save_config(config):
         st.error(f"An error occurred while saving the configuration: {e}")
 
 
-# Sidebar configuration
-def sidebar_configuration():
-    st.sidebar.title("🛠️ Personalization & Settings 🏗️")
+def handle_custom_input(label, default_options, help_text):
+    """
+    Handles custom user input for selectbox options.
+    
+    Args:
+        label (str): The label for the selectbox.
+        default_options (list): The default options for the selectbox.
+        help_text (str): The help text for the selectbox.
 
-    with st.sidebar.expander("**👷 Content Personalization**"):
-        blog_length = st.text_input("**Content Length (words)**", value="2000", 
-                          help="Approximate word count for blogs. Note: Actual length may vary based on GPT provider and max token count.")
-        
-        blog_tone_options = ["Casual", "Professional", "How-to", "Beginner", "Research", "Programming", "Social Media", "Customize"]
-        blog_tone = st.selectbox("**Content Tone**",
-                          options=blog_tone_options,
-                          help="Select the desired tone for the blog content.")
+    Returns:
+        str: The selected or custom input value.
+    """
+    selected_option = st.selectbox(f"**{label}**", options=default_options, help=help_text)
+    if selected_option == "Customize":
+        custom_option = st.text_input(f"Enter your {label.lower()}", help=f"Specify your {label.lower()}.")
+        if custom_option:
+            return custom_option
+        else:
+            st.warning(f"Please specify your {label.lower()}.")
+    return selected_option
 
-        if blog_tone == "Customize":
-            custom_tone = st.text_input("Enter the tone of your content", help="Specify the tone of your content.")
-            if custom_tone:
-                blog_tone = custom_tone
-            else:
-                st.warning("Please specify the tone of your content.")
-        
-        blog_demographic_options = ["Professional", "Gen-Z", "Tech-savvy", "Student", "Digital Marketing", "Customize"]
-        
-        blog_demographic = st.selectbox("**Target Audience**",
-                                options=blog_demographic_options,
-                                help="Select the primary audience for the blog content.")
-        if blog_demographic == "Customize":
-            custom_demographic = st.text_input("Enter your target audience", 
-                                help="Specify your target audience.",
-                                placeholder="Eg. Domain expert, Content creator, Financial expert etc..")
-            if custom_demographic:
-                blog_demographic = custom_demographic
-            else:
-                st.warning("Please specify your target audience.")
-        
-        blog_type = st.selectbox("**Content Type**", 
-                          options=["Informational", "Commercial", "Company", "News", "Finance", "Competitor", "Programming", "Scholar"], 
-                          help="Select the category that best describes the blog content.")
-
-        blog_language = st.selectbox("**Content Language**", 
-                          options=["English", "Spanish", "German", "Chinese", "Arabic", "Nepali", "Hindi", "Hindustani", "Customize"], 
-                          help="Select the language in which the blog will be written.")
-        if blog_language == "Customize":
-            custom_lang = st.text_input("Enter the language of your choice", help="Specify the content language.")
-            if custom_lang:
-                blog_language = custom_lang
-            else:
-                st.warning("Please specify the language of your content.")
-
-        blog_output_format = st.selectbox("**Content Output Format**", 
-                          options=["markdown", "HTML", "plaintext"], 
-                          help="Select the format for the blog output.")
-
-    with st.sidebar.expander("**🩻 Images Personalization**"):
-        image_generation_model = st.selectbox("**Image Generation Model**", 
-                          options=["stable-diffusion", "dalle2", "dalle3"], 
-                          help="Select the model to generate images for the blog.")
-        number_of_blog_images = st.number_input("**Number of Blog Images**", value=1, help="Specify the number of images to include in the blog.")
-
-    with st.sidebar.expander("**🤖 LLM Personalization**"):
-        gpt_provider = st.selectbox("**GPT Provider**", 
-                          options=["google", "openai", "minstral"], 
-                          help="Select the provider for the GPT model.")
-        model = st.text_input("**Model**", value="gemini-1.5-flash-latest", help="Specify the model version to use from the selected provider.")
-        temperature = st.slider(
-            "Temperature",
-            min_value=0.1,
-            max_value=1.0,
-            value=0.7,
-            step=0.1,
-            format="%.1f",
-            help="""Temperature controls the 'creativity' or randomness of the text generated by GPT.
-                Greater determinism with higher values indicating more randomness."""
-        )
-
-        top_p = st.slider(
-            "Top-p",
-            min_value=0.0,
-            max_value=1.0,
-            value=0.9,
-            step=0.1,
-            format="%.1f",
-            help="Top-p sampling controls the level of diversity in the generated text."
-        )
-
-        # Selectbox for max tokens
-        max_tokens_options = [500, 1000, 2000, 4000, 16000, 32000, 64000]
-        max_tokens = st.selectbox(
-            "Max Tokens",
-            options=max_tokens_options,
-            index=max_tokens_options.index(4000),
-            help="Max tokens determine the maximum length of the output sequence generated by a model."
-        )
-        n = st.number_input("N", 
-            value=1,
-            min_value=1,
-            max_value=10,
-            help="Defines the number of words or characters grouped together in a sequence when analyzing text.")
-        frequency_penalty = st.slider(
-            "Frequency Penalty",
-            min_value=0.0,
-            max_value=2.0,
-            value=1.0,
-            step=0.1,
-            format="%.1f",
-            help="Influences word selection during text generation, promoting diversity with higher values."
-        )
-
-        presence_penalty = st.slider(
-            "Presence Penalty",
-            min_value=0.0,
-            max_value=2.0,
-            value=1.0,
-            step=0.1,
-            format="%.1f",
-            help="Encourages the use of diverse words by discouraging repetition."
-        )
-
-    with st.sidebar.expander("**🕵️ Search Engine Personalization**"):
-        geographic_location = st.selectbox("**Geographic Location**", 
-                          options=["us", "in", "fr", "cn"], 
-                          help="Select the geographic location for tailoring search results.")
-        search_language = st.selectbox("**Search Language**", 
-                          options=["en", "zn-cn", "de", "hi"], 
-                          help="Select the language for the search results.")
-        number_of_results = st.number_input("**Number of Results**", 
-                            value=10,
-                            max_value=20,
-                            min_value=1,
-                            help="Specify the number of search results to retrieve.")
-        time_range = st.selectbox("**Time Range**", 
-                          options=["anytime", "past day", "past week", "past month", "past year"], 
-                          help="Select the time range for filtering search results.")
-        include_domains = st.text_input("**Include Domains**", value="", 
-                          help="List specific domains to include in search results. Leave blank to include all domains.")
-        similar_url = st.text_input("**Similar URL**", value="", help="Provide a URL to find similar results. Leave blank if not needed.")
-
-    # Storing collected inputs in a dictionary
-    config = {
-        "Blog Content Characteristics": {
-            "Blog Length": blog_length,
-            "Blog Tone": blog_tone,
-            "Blog Demographic": blog_demographic,
-            "Blog Type": blog_type,
-            "Blog Language": blog_language,
-            "Blog Output Format": blog_output_format
-        },
-        "Blog Images Details": {
-            "Image Generation Model": image_generation_model,
-            "Number of Blog Images": number_of_blog_images
-        },
-        "LLM Options": {
-            "GPT Provider": gpt_provider,
-            "Model": model,
-            "Temperature": temperature,
-            "Top-p": top_p,
-            "Max Tokens": max_tokens,
-            "N": n,
-            "Frequency Penalty": frequency_penalty,
-            "Presence Penalty": presence_penalty
-        },
-        "Search Engine Parameters": {
-            "Geographic Location": geographic_location,
-            "Search Language": search_language,
-            "Number of Results": number_of_results,
-            "Time Range": time_range,
-            "Include Domains": include_domains,
-            "Similar URL": similar_url
-        }
+def configure_content_personalization():
+    """
+    Configures the content personalization settings in the sidebar.
+    
+    Returns:
+        dict: A dictionary containing the blog content characteristics.
+    """
+    st.sidebar.expander("**👷 Content Personalization**")
+    blog_length = st.text_input("**Content Length (words)**", value="2000", help="Approximate word count for blogs. Note: Actual length may vary based on GPT provider and max token count.")
+    blog_tone = handle_custom_input("Content Tone", BLOG_TONE_OPTIONS, "Select the desired tone for the blog content.")
+    blog_demographic = handle_custom_input("Target Audience", BLOG_DEMOGRAPHIC_OPTIONS, "Select the primary audience for the blog content.")
+    blog_type = st.selectbox("**Content Type**", options=BLOG_TYPE_OPTIONS, help="Select the category that best describes the blog content.")
+    blog_language = handle_custom_input("Content Language", BLOG_LANGUAGE_OPTIONS, "Select the language in which the blog will be written.")
+    blog_output_format = st.selectbox("**Content Output Format**", options=BLOG_OUTPUT_FORMAT_OPTIONS, help="Select the format for the blog output.")
+    return {
+        "Blog Length": blog_length,
+        "Blog Tone": blog_tone,
+        "Blog Demographic": blog_demographic,
+        "Blog Type": blog_type,
+        "Blog Language": blog_language,
+        "Blog Output Format": blog_output_format
     }
 
-    # Writing the configuration to a file whenever a change is made
-    save_config(config)
+def configure_images_personalization():
+    """
+    Configures the image personalization settings in the sidebar.
+    
+    Returns:
+        dict: A dictionary containing the blog image details.
+    """
+    st.sidebar.expander("**🩻 Images Personalization**")
+    image_generation_model = st.selectbox("**Image Generation Model**", options=IMAGE_GENERATION_MODEL_OPTIONS, help="Select the model to generate images for the blog.")
+    number_of_blog_images = st.number_input("**Number of Blog Images**", value=1, help="Specify the number of images to include in the blog.")
+    return {
+        "Image Generation Model": image_generation_model,
+        "Number of Blog Images": number_of_blog_images
+    }
 
+def configure_llm_personalization():
+    """
+    Configures the LLM (Language Learning Model) personalization settings in the sidebar.
+    
+    Returns:
+        dict: A dictionary containing the LLM options.
+    """
+    st.sidebar.expander("**🤖 LLM Personalization**")
+    gpt_provider = st.selectbox("**GPT Provider**", options=GPT_PROVIDER_OPTIONS, help="Select the provider for the GPT model.")
+    model = st.text_input("**Model**", value="gemini-1.5-flash-latest", help="Specify the model version to use from the selected provider.")
+    temperature = st.slider("Temperature", min_value=0.1, max_value=1.0, value=0.7, step=0.1, format="%.1f", help="Temperature controls the 'creativity' or randomness of the text generated by GPT.")
+    top_p = st.slider("Top-p", min_value=0.0, max_value=1.0, value=0.9, step=0.1, format="%.1f", help="Top-p sampling controls the level of diversity in the generated text.")
+    max_tokens = st.selectbox("Max Tokens", options=MAX_TOKENS_OPTIONS, index=MAX_TOKENS_OPTIONS.index(4000), help="Max tokens determine the maximum length of the output sequence generated by a model.")
+    n = st.number_input("N", value=1, min_value=1, max_value=10, help="Defines the number of words or characters grouped together in a sequence when analyzing text.")
+    frequency_penalty = st.slider("Frequency Penalty", min_value=0.0, max_value=2.0, value=1.0, step=0.1, format="%.1f", help="Influences word selection during text generation, promoting diversity with higher values.")
+    presence_penalty = st.slider("Presence Penalty", min_value=0.0, max_value=2.0, value=1.0, step=0.1, format="%.1f", help="Encourages the use of diverse words by discouraging repetition.")
+    return {
+        "GPT Provider": gpt_provider,
+        "Model": model,
+        "Temperature": temperature,
+        "Top-p": top_p,
+        "Max Tokens": max_tokens,
+        "N": n,
+        "Frequency Penalty": frequency_penalty,
+        "Presence Penalty": presence_penalty
+    }
+
+def configure_search_engine_personalization():
+    """
+    Configures the search engine personalization settings in the sidebar.
+    
+    Returns:
+        dict: A dictionary containing the search engine parameters.
+    """
+    st.sidebar.expander("**🕵️ Search Engine Personalization**")
+    geographic_location = st.selectbox("**Geographic Location**", options=GEOGRAPHIC_LOCATION_OPTIONS, help="Select the geographic location for tailoring search results.")
+    search_language = st.selectbox("**Search Language**", options=SEARCH_LANGUAGE_OPTIONS, help="Select the language for the search results.")
+    number_of_results = st.number_input("**Number of Results**", value=10, max_value=20, min_value=1, help="Specify the number of search results to retrieve.")
+    time_range = st.selectbox("**Time Range**", options=TIME_RANGE_OPTIONS, help="Select the time range for filtering search results.")
+    include_domains = st.text_input("**Include Domains**", value="", help="List specific domains to include in search results. Leave blank to include all domains.")
+    similar_url = st.text_input("**Similar URL**", value="", help="Provide a URL to find similar results. Leave blank if not needed.")
+    return {
+        "Geographic Location": geographic_location,
+        "Search Language": search_language,
+        "Number of Results": number_of_results,
+        "Time Range": time_range,
+        "Include Domains": include_domains,
+        "Similar URL": similar_url
+    }
+
+def sidebar_configuration():
+    """
+    Configures the sidebar with various personalization and settings options for the AI Writer application.
+    
+    The function includes configurations for:
+    - Content Personalization
+    - Images Personalization
+    - LLM Personalization
+    - Search Engine Personalization
+
+    The collected inputs are stored in a dictionary and saved to a configuration file.
+    """
+    st.sidebar.title("🛠️ Personalization & Settings 🏗️")
+    
+    # Configure content personalization settings
+    blog_content_config = configure_content_personalization()
+    
+    # Configure image personalization settings
+    blog_images_config = configure_images_personalization()
+    
+    # Configure LLM personalization settings
+    llm_config = configure_llm_personalization()
+    
+    # Configure search engine personalization settings
+    search_engine_config = configure_search_engine_personalization()
+
+    # Combine all configurations into a dictionary
+    config = {
+        "Blog Content Characteristics": blog_content_config,
+        "Blog Images Details": blog_images_config,
+        "LLM Options": llm_config,
+        "Search Engine Parameters": search_engine_config
+    }
+
+    # Save the configuration whenever a change is made
+    save_config(config)
 
 
 def main():
