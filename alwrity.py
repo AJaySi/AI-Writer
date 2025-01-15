@@ -1,173 +1,72 @@
 import streamlit as st
 import os
 import json
-import base64
-from datetime import datetime
-
-from lib.utils.config_manager import save_config
-from lib.utils.ui_setup import setup_ui
-from lib.utils.api_key_manager import check_all_api_keys
 from dotenv import load_dotenv
-from lib.utils.content_generators import ai_writers, content_planning_tools, blog_from_keyword, story_input_section, essay_writer, ai_news_writer, ai_finance_ta_writer, write_ai_prod_desc, do_web_research, competitor_analysis, ai_agents_content_planner
-from lib.utils.seo_tools import ai_seo_tools
+from datetime import datetime
+from lib.utils.config_manager import save_config
 from lib.utils.ui_setup import setup_ui, setup_tabs
-from lib.utils.alwrity_utils import ai_agents_team, ai_social_writer
-from lib.utils.file_processor import load_image, read_prompts, write_prompts
-from lib.utils.voice_processing import record_voice
+from lib.utils.api_key_manager import check_all_api_keys
+from lib.utils.file_processor import read_prompts, write_prompts
 
+# Constants
+BLOG_TONE_OPTIONS = ["Casual", "Professional", "How-to", "Beginner", "Research", "Programming", "Social Media", "Customize"]
+BLOG_DEMOGRAPHIC_OPTIONS = ["Professional", "Gen-Z", "Tech-savvy", "Student", "Digital Marketing", "Customize"]
+BLOG_LANGUAGE_OPTIONS = ["English", "Spanish", "German", "Chinese", "Arabic", "Nepali", "Hindi", "Hindustani", "Customize"]
+CONTENT_TYPE_OPTIONS = ["Informational", "Commercial", "Company", "News", "Finance", "Competitor", "Programming", "Scholar"]
+OUTPUT_FORMAT_OPTIONS = ["markdown", "HTML", "plaintext"]
+IMAGE_MODEL_OPTIONS = ["stable-diffusion", "dalle2", "dalle3"]
+GPT_PROVIDER_OPTIONS = ["google", "openai", "minstral"]
+GEOGRAPHIC_LOCATION_OPTIONS = ["us", "in", "fr", "cn"]
+SEARCH_LANGUAGE_OPTIONS = ["en", "zn-cn", "de", "hi"]
+TIME_RANGE_OPTIONS = ["anytime", "past day", "past week", "past month", "past year"]
 
+def get_custom_input(label, options, help_text, placeholder=""):
+    selection = st.selectbox(f"**{label}**", options=options, help=help_text)
+    if selection == "Customize":
+        custom_input = st.text_input(f"Enter your {label.lower()}", help=f"Specify your {label.lower()}.", placeholder=placeholder)
+        if custom_input:
+            selection = custom_input
+        else:
+            st.warning(f"Please specify your {label.lower()}.")
+    return selection
 
-def process_folder_for_rag(folder_path):
-    """Placeholder for the process_folder_for_rag function."""
-    st.write(f"This is a placeholder for processing the folder: {folder_path}")
-
-
-def save_config(config):
-    """
-    Saves the provided configuration dictionary to a JSON file specified by the environment variable.
-    """
-    try:
-        with open(os.getenv("ALWRITY_CONFIG"), "w") as config_file:
-            json.dump(config, config_file, indent=4)
-    except Exception as e:
-        st.error(f"An error occurred while saving the configuration: {e}")
-
-
-# Sidebar configuration
 def sidebar_configuration():
-    st.sidebar.title("🛠️ Personalization & Settings 🏗️")
+    # Alias for sidebar
+    sb = st.sidebar
 
-    with st.sidebar.expander("**👷 Content Personalization**"):
-        blog_length = st.text_input("**Content Length (words)**", value="2000", 
-                          help="Approximate word count for blogs. Note: Actual length may vary based on GPT provider and max token count.")
-        
-        blog_tone_options = ["Casual", "Professional", "How-to", "Beginner", "Research", "Programming", "Social Media", "Customize"]
-        blog_tone = st.selectbox("**Content Tone**",
-                          options=blog_tone_options,
-                          help="Select the desired tone for the blog content.")
+    sb.title("🛠️ Personalization & Settings 🏗️")
+    
+    with sb.expander("**👷 Content Personalization**"):
+        blog_length = st.text_input("**Content Length (words)**", value="2000", help="Approximate word count for blogs.")
 
-        if blog_tone == "Customize":
-            custom_tone = st.text_input("Enter the tone of your content", help="Specify the tone of your content.")
-            if custom_tone:
-                blog_tone = custom_tone
-            else:
-                st.warning("Please specify the tone of your content.")
-        
-        blog_demographic_options = ["Professional", "Gen-Z", "Tech-savvy", "Student", "Digital Marketing", "Customize"]
-        
-        blog_demographic = st.selectbox("**Target Audience**",
-                                options=blog_demographic_options,
-                                help="Select the primary audience for the blog content.")
-        if blog_demographic == "Customize":
-            custom_demographic = st.text_input("Enter your target audience", 
-                                help="Specify your target audience.",
-                                placeholder="Eg. Domain expert, Content creator, Financial expert etc..")
-            if custom_demographic:
-                blog_demographic = custom_demographic
-            else:
-                st.warning("Please specify your target audience.")
-        
-        blog_type = st.selectbox("**Content Type**", 
-                          options=["Informational", "Commercial", "Company", "News", "Finance", "Competitor", "Programming", "Scholar"], 
-                          help="Select the category that best describes the blog content.")
+        blog_tone = get_custom_input("Content Tone", BLOG_TONE_OPTIONS, "Select the desired tone for the blog content.")
+        blog_demographic = get_custom_input("Target Audience", BLOG_DEMOGRAPHIC_OPTIONS, "Select the primary audience for the blog content.", "Eg. Domain expert, Content creator, Financial expert etc..")
+        blog_type = st.selectbox("**Content Type**", options=CONTENT_TYPE_OPTIONS, help="Select the category that best describes the blog content.")
+        blog_language = get_custom_input("Content Language", BLOG_LANGUAGE_OPTIONS, "Select the language in which the blog will be written.")
 
-        blog_language = st.selectbox("**Content Language**", 
-                          options=["English", "Spanish", "German", "Chinese", "Arabic", "Nepali", "Hindi", "Hindustani", "Customize"], 
-                          help="Select the language in which the blog will be written.")
-        if blog_language == "Customize":
-            custom_lang = st.text_input("Enter the language of your choice", help="Specify the content language.")
-            if custom_lang:
-                blog_language = custom_lang
-            else:
-                st.warning("Please specify the language of your content.")
+        blog_output_format = st.selectbox("**Content Output Format**", options=OUTPUT_FORMAT_OPTIONS, help="Select the format for the blog output.")
 
-        blog_output_format = st.selectbox("**Content Output Format**", 
-                          options=["markdown", "HTML", "plaintext"], 
-                          help="Select the format for the blog output.")
-
-    with st.sidebar.expander("**🩻 Images Personalization**"):
-        image_generation_model = st.selectbox("**Image Generation Model**", 
-                          options=["stable-diffusion", "dalle2", "dalle3"], 
-                          help="Select the model to generate images for the blog.")
+    with sb.expander("**🩻 Images Personalization**"):
+        image_generation_model = st.selectbox("**Image Generation Model**", options=IMAGE_MODEL_OPTIONS, help="Select the model to generate images for the blog.")
         number_of_blog_images = st.number_input("**Number of Blog Images**", value=1, help="Specify the number of images to include in the blog.")
 
-    with st.sidebar.expander("**🤖 LLM Personalization**"):
-        gpt_provider = st.selectbox("**GPT Provider**", 
-                          options=["google", "openai", "minstral"], 
-                          help="Select the provider for the GPT model.")
+    with sb.expander("**🤖 LLM Personalization**"):
+        gpt_provider = st.selectbox("**GPT Provider**", options=GPT_PROVIDER_OPTIONS, help="Select the provider for the GPT model.")
         model = st.text_input("**Model**", value="gemini-1.5-flash-latest", help="Specify the model version to use from the selected provider.")
-        temperature = st.slider(
-            "Temperature",
-            min_value=0.1,
-            max_value=1.0,
-            value=0.7,
-            step=0.1,
-            format="%.1f",
-            help="""Temperature controls the 'creativity' or randomness of the text generated by GPT.
-                Greater determinism with higher values indicating more randomness."""
-        )
+        temperature = st.slider("Temperature", min_value=0.1, max_value=1.0, value=0.7, step=0.1, format="%.1f", help="Controls the 'creativity' or randomness of the text generated.")
+        top_p = st.slider("Top-p", min_value=0.0, max_value=1.0, value=0.9, step=0.1, format="%.1f", help="Controls the level of diversity in the generated text.")
+        max_tokens = st.selectbox("Max Tokens", options=[500, 1000, 2000, 4000, 16000, 32000, 64000], index=3, help="Maximum length of the output sequence generated by a model.")
+        n = st.number_input("N", value=1, min_value=1, max_value=10, help="Defines the number of words or characters grouped together in a sequence.")
+        frequency_penalty = st.slider("Frequency Penalty", min_value=0.0, max_value=2.0, value=1.0, step=0.1, format="%.1f", help="Promotes diversity with higher values.")
+        presence_penalty = st.slider("Presence Penalty", min_value=0.0, max_value=2.0, value=1.0, step=0.1, format="%.1f", help="Encourages the use of diverse words by discouraging repetition.")
 
-        top_p = st.slider(
-            "Top-p",
-            min_value=0.0,
-            max_value=1.0,
-            value=0.9,
-            step=0.1,
-            format="%.1f",
-            help="Top-p sampling controls the level of diversity in the generated text."
-        )
-
-        # Selectbox for max tokens
-        max_tokens_options = [500, 1000, 2000, 4000, 16000, 32000, 64000]
-        max_tokens = st.selectbox(
-            "Max Tokens",
-            options=max_tokens_options,
-            index=max_tokens_options.index(4000),
-            help="Max tokens determine the maximum length of the output sequence generated by a model."
-        )
-        n = st.number_input("N", 
-            value=1,
-            min_value=1,
-            max_value=10,
-            help="Defines the number of words or characters grouped together in a sequence when analyzing text.")
-        frequency_penalty = st.slider(
-            "Frequency Penalty",
-            min_value=0.0,
-            max_value=2.0,
-            value=1.0,
-            step=0.1,
-            format="%.1f",
-            help="Influences word selection during text generation, promoting diversity with higher values."
-        )
-
-        presence_penalty = st.slider(
-            "Presence Penalty",
-            min_value=0.0,
-            max_value=2.0,
-            value=1.0,
-            step=0.1,
-            format="%.1f",
-            help="Encourages the use of diverse words by discouraging repetition."
-        )
-
-    with st.sidebar.expander("**🕵️ Search Engine Personalization**"):
-        geographic_location = st.selectbox("**Geographic Location**", 
-                          options=["us", "in", "fr", "cn"], 
-                          help="Select the geographic location for tailoring search results.")
-        search_language = st.selectbox("**Search Language**", 
-                          options=["en", "zn-cn", "de", "hi"], 
-                          help="Select the language for the search results.")
-        number_of_results = st.number_input("**Number of Results**", 
-                            value=10,
-                            max_value=20,
-                            min_value=1,
-                            help="Specify the number of search results to retrieve.")
-        time_range = st.selectbox("**Time Range**", 
-                          options=["anytime", "past day", "past week", "past month", "past year"], 
-                          help="Select the time range for filtering search results.")
-        include_domains = st.text_input("**Include Domains**", value="", 
-                          help="List specific domains to include in search results. Leave blank to include all domains.")
-        similar_url = st.text_input("**Similar URL**", value="", help="Provide a URL to find similar results. Leave blank if not needed.")
+    with sb.expander("**🕵️ Search Engine Personalization**"):
+        geographic_location = st.selectbox("**Geographic Location**", options=GEOGRAPHIC_LOCATION_OPTIONS, help="Select the geographic location for tailoring search results.")
+        search_language = st.selectbox("**Search Language**", options=SEARCH_LANGUAGE_OPTIONS, help="Select the language for the search results.")
+        number_of_results = st.number_input("**Number of Results**", value=10, min_value=1, max_value=20, help="Specify the number of search results to retrieve.")
+        time_range = st.selectbox("**Time Range**", options=TIME_RANGE_OPTIONS, help="Select the time range for filtering search results.")
+        include_domains = st.text_input("**Include Domains**", value="", help="List specific domains to include in search results.")
+        similar_url = st.text_input("**Similar URL**", value="", help="Provide a URL to find similar results.")
 
     # Storing collected inputs in a dictionary
     config = {
@@ -205,8 +104,6 @@ def sidebar_configuration():
 
     # Writing the configuration to a file whenever a change is made
     save_config(config)
-
-
 
 def main():
     #load_environment
