@@ -1,8 +1,14 @@
-> [!NOTE] <p><em>ALwrity is All in One Content platform for content writers, without AI tooling knowledge. WIP.
-Not just AI Writers, ALwrity is a complete content life cycle platform with **Content planning & Research, Personlized Content Generation, Content SEO audits, Content Scheduling/publishing, Analytics & monitoring & more**. We are busy building blocks for each phase of content life cycle with AI. We'd love your feedback or contributions.</em></p>
+# Alwrity: Your All-in-One Content Platform  
 
-**This library is in beta and should not be treated as a final implementation.**
-> [!NOTE] <p><em>Busy with Nextjs  SaaS: https://www.alwrity.com/post/whats-alwrity-upto</em></p>
+> **NOTE**  
+> *Alwrity is a comprehensive content lifecycle platform tailored for content creators, digital marketers, and writers — no prior AI knowledge required.*  
+
+Alwrity streamlines every phase of the content lifecycle, from **planning and research** to **personalized content generation**, **SEO audits**, **publishing**, and **analytics**. Our mission is to empower creators with AI-driven tools that simplify content creation while maintaining quality.  
+
+Explore the building blocks of Alwrity and contribute to shaping the future of AI-driven content creation.  
+Learn more about our journey: [What's Alwrity Up To?](https://www.alwrity.com/post/whats-alwrity-upto)
+
+---
 
 # How to ALwrity - Getting Started
 
