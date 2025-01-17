@@ -1,10 +1,13 @@
 import streamlit as st
 import json
 from datetime import date
+from dotenv import load_dotenv
 
 from ..ai_web_researcher.firecrawl_web_crawler import scrape_url
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
+# Load environment variables
+load_dotenv()
 
 # Define a dictionary for schema types
 schema_types = {
@@ -31,20 +34,19 @@ schema_types = {
     # ... (add more schema types as needed)
 }
 
-
 def generate_json_data(content_type, details, url):
     """Generates structured data (JSON-LD) based on user input."""
     try:
         scraped_text = scrape_url(url)
-        #logger.info(scraped_text)
     except Exception as err:
-        st.error(f"Failed to scrape web page from url-{weburl} - Error: {err}")
-        st.stop()
+        st.error(f"Failed to scrape web page from URL: {url} - Error: {err}")
+        return
 
     schema = schema_types.get(content_type)
     if not schema:
         st.error(f"Invalid content type: {content_type}")
         return
+
     data = {
         "@context": "https://schema.org",
         "@type": schema["schema_type"],
@@ -53,19 +55,16 @@ def generate_json_data(content_type, details, url):
         value = details.get(field)
         if isinstance(value, date):
             value = value.isoformat()
-        if value:
-            data[field] = value
-        else:
-            data[field] = "N/A"  # Use placeholder values if input is missing
+        data[field] = value if value else "N/A"  # Use placeholder values if input is missing
+
     if url:
         data['url'] = url
 
     llm_structured_data = get_llm_structured_data(content_type, data, scraped_text)
     return llm_structured_data
 
-
 def get_llm_structured_data(content_type, data, scraped_text):
-    """ Function to get structured data from LLM """
+    """Function to get structured data from LLM."""
     prompt = f"""Given the following information:
 
         HTML Content: <<<HTML>>> {scraped_text} <<<END_HTML>>>
@@ -89,8 +88,8 @@ def get_llm_structured_data(content_type, data, scraped_text):
         response = llm_text_gen(prompt)
         return response
     except Exception as err:
-        st.error(f"Exit: Failed to get response from LLM: {err}")
-
+        st.error(f"Failed to get response from LLM: {err}")
+        return
 
 def ai_structured_data():
     st.title("📝 Generate Structured Data for SEO 🚀")
@@ -114,6 +113,9 @@ def ai_structured_data():
                     details[field] = cols[j].text_input(field, placeholder=f"Enter {field.lower()}")
 
     if st.button("Generate Structured Data"):
+        if not url:
+            st.error("URL is required to generate structured data.")
+            return
 
         structured_data = generate_json_data(content_type, details, url)
         if structured_data:
