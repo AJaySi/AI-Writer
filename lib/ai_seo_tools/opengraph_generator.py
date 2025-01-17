@@ -1,8 +1,6 @@
 import streamlit as st
-import os
 import requests
 from bs4 import BeautifulSoup
-from ..ai_web_researcher.firecrawl_web_crawler import scrape_url
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
@@ -19,6 +17,7 @@ def generate_og_tags(url, title_hint, description_hint, platform="General"):
     Returns:
         str: The generated Open Graph tags or an error message.
     """
+    # Create a prompt for the text generation model
     prompt = (
         f"Generate Open Graph tags for the following page:\nURL: {url}\n"
         f"Title hint: {title_hint}\nDescription hint: {description_hint}"
@@ -29,6 +28,7 @@ def generate_og_tags(url, title_hint, description_hint, platform="General"):
         prompt += "\nSpecifically for Twitter"
 
     try:
+        # Generate Open Graph tags using the text generation model
         response = llm_text_gen(prompt)
         return response
     except Exception as err:
@@ -47,10 +47,14 @@ def extract_default_og_tags(url):
         tuple: A tuple containing the title, description, and image URL, or None in case of an error.
     """
     try:
+        # Fetch the HTML content of the URL
         response = requests.get(url)
         response.raise_for_status()
 
+        # Parse the HTML content using BeautifulSoup
         soup = BeautifulSoup(response.content, 'html.parser')
+
+        # Extract the title, description, and image URL
         title = soup.find('title').text if soup.find('title') else None
         description = soup.find('meta', attrs={'name': 'description'})['content'] if soup.find('meta', attrs={'name': 'description'}) else None
         image_url = soup.find('meta', attrs={'property': 'og:image'})['content'] if soup.find('meta', attrs={'property': 'og:image'}) else None
@@ -70,47 +74,56 @@ def og_tag_generator():
     """Main function to run the Streamlit app."""
     st.title("AI Open Graph Tag Generator")
 
+    # Platform selection
     platform = st.selectbox(
         "**Select the platform**",
         ["General", "Facebook", "Twitter"],
         help="Choose the platform for which you want to generate Open Graph tags."
     )
 
+    # URL input
     url = st.text_input(
-            "**Enter the URL of the page to generate Opengraph tags for:**",
+        "**Enter the URL of the page to generate Open Graph tags for:**",
         placeholder="e.g., https://example.com",
         help="Provide the URL of the page you want to generate Open Graph tags for."
     )
 
     if url:
+        # Extract default Open Graph tags
         title, description, image_url = extract_default_og_tags(url)
-        # Use firecrawl to get the metadata of webpage.
-        #existing_metadata = scrape_url(url) 
+
+        # Title hint input
         title_hint = st.text_input(
-            "**Modify existing title Or Suggest New One (optional):**",
+            "**Modify existing title or suggest a new one (optional):**",
             value=title if title else "",
             placeholder="e.g., Amazing Blog Post Title"
         )
 
+        # Description hint input
         description_hint = st.text_area(
-            "**Modifying existing description Or Suggest New One (optional):**",
+            "**Modify existing description or suggest a new one (optional):**",
             value=description if description else "",
             placeholder="e.g., This is a detailed description of the content."
         )
 
+        # Image URL hint input
         image_hint = st.text_input(
-            "**Use this image Or Suggest New URL (optional):**",
+            "**Use this image or suggest a new URL (optional):**",
             value=image_url if image_url else "",
             placeholder="e.g., https://example.com/image.jpg"
         )
 
+        # Generate Open Graph tags
         if st.button("Generate Open Graph Tags"):
             with st.spinner("Generating Open Graph tags..."):
-                og_tags = generate_og_tags(url, title_hint, description_hint, platform)
-                if og_tags:
-                    st.success("Open Graph tags generated successfully!")
-                    st.markdown(og_tags)
-                else:
-                    st.error("Failed to generate Open Graph tags.")
+                try:
+                    og_tags = generate_og_tags(url, title_hint, description_hint, platform)
+                    if og_tags:
+                        st.success("Open Graph tags generated successfully!")
+                        st.markdown(og_tags)
+                    else:
+                        st.error("Failed to generate Open Graph tags.")
+                except Exception as e:
+                    st.error(f"Failed to generate Open Graph tags: {e}")
     else:
         st.info("Please enter a URL to generate Open Graph tags.")
