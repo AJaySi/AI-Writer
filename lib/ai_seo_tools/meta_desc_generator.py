@@ -1,69 +1,93 @@
-import time #Iwish
 import os
 import json
 import streamlit as st
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_random_exponential,
-)
+from tenacity import retry, stop_after_attempt, wait_random_exponential
 import google.generativeai as genai
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
 def metadesc_generator_main():
-
-    # Title and description
+    """
+    Streamlit app for generating SEO-optimized blog meta descriptions.
+    """
     st.title("✍️ Alwrity - AI Blog Meta Description Generator")
-    
+    st.markdown(
+        "Create compelling, SEO-optimized meta descriptions in just a few clicks. Perfect for enhancing your blog's click-through rates!"
+    )
+
     # Input section
     with st.expander("**PRO-TIP** - Read the instructions below. 🚀", expanded=True):
-        col1, col2, space = st.columns([5, 5, 0.5])
+        col1, col2, _ = st.columns([5, 5, 0.5])
+
+        # Column 1: Keywords and Tone
         with col1:
-            keywords = st.text_input("🔑 Target Keywords (comma-separated):",
-                                     placeholder="e.g., content marketing, SEO, social media, online business",
-                                     help="Enter your target keywords, separated by commas. 📝")
-            
-            tone_options = ["Informative", "Engaging", "Humorous", "Intriguing", "Playful"]
-            tone = st.selectbox("🎨 Desired Tone (optional):",
-                                options=["General"] + tone_options,
-                                help="Choose the overall tone you want for your meta description. 🎭")
+            keywords = st.text_input(
+                "🔑 Target Keywords (comma-separated):",
+                placeholder="e.g., content marketing, SEO, social media, online business",
+                help="Enter your target keywords, separated by commas. 📝",
+            )
+
+            tone_options = ["General", "Informative", "Engaging", "Humorous", "Intriguing", "Playful"]
+            tone = st.selectbox(
+                "🎨 Desired Tone (optional):",
+                options=tone_options,
+                help="Choose the overall tone you want for your meta description. 🎭",
+            )
+
+        # Column 2: Search Intent and Language
         with col2:
-            search_type = st.selectbox('🔍 Search Intent:', 
-                                       ('Informational Intent', 'Commercial Intent', 'Transactional Intent', 'Navigational Intent'), 
-                                       index=0)
-            
+            search_type = st.selectbox(
+                "🔍 Search Intent:",
+                ("Informational Intent", "Commercial Intent", "Transactional Intent", "Navigational Intent"),
+                index=0,
+            )
+
             language_options = ["English", "Spanish", "French", "German", "Other"]
-            language_choice = st.selectbox("🌐 Preferred Language:", 
-                                           options=language_options,
-                                           help="Select the language for your meta description. 🗣️")
-            if language_choice == "Other":
-                language = st.text_input("Specify Other Language:",
-                                         placeholder="e.g., Italian, Chinese",
-                                         help="Enter your preferred language. 🌍")
-            else:
-                language = language_choice
+            language_choice = st.selectbox(
+                "🌐 Preferred Language:",
+                options=language_options,
+                help="Select the language for your meta description. 🗣️",
+            )
 
-    # Generate Blog Title button
-    if st.button('**✨ Generate Meta Description ✨**'):
+            language = (
+                st.text_input(
+                    "Specify Other Language:",
+                    placeholder="e.g., Italian, Chinese",
+                    help="Enter your preferred language. 🌍",
+                )
+                if language_choice == "Other"
+                else language_choice
+            )
+
+    # Generate Meta Description button
+    if st.button("**✨ Generate Meta Description ✨**"):
+        if not keywords.strip():
+            st.error("**🫣 Target Keywords are required! Please provide at least one keyword.**")
+            return
+
         with st.spinner("Crafting your Meta descriptions... ⏳"):
-
-            # Validate input fields
-            if not keywords:
-                st.error('**🫣 Blog Keywords are required!**')
+            blog_metadesc = generate_blog_metadesc(keywords, tone, search_type, language)
+            if blog_metadesc:
+                st.success("**🎉 Meta Descriptions Generated Successfully! 🚀**")
+                with st.expander("**Your SEO-Boosting Blog Meta Descriptions 🎆🎇**", expanded=True):
+                    st.markdown(blog_metadesc)
             else:
-                blog_metadesc = generate_blog_metadesc(keywords, tone, search_type, language)
-                if blog_metadesc:
-                    st.subheader('**🎉 Your SEO-Boosting Blog Meta Descriptions! 🚀**')
-                    with st.expander("**Final - Blog Meta Description Output 🎆🎇**", expanded=True):
-                        st.markdown(blog_metadesc)
-                else:
-                    st.error("💥 **Failed to generate blog meta description. Please try again!**")
+                st.error("💥 **Failed to generate blog meta description. Please try again!**")
 
 
-# Function to generate blog metadesc
 def generate_blog_metadesc(keywords, tone, search_type, language):
-    """ Function to call upon LLM to get the work done. """
+    """
+    Generate blog meta descriptions using LLM.
+
+    Args:
+        keywords (str): Comma-separated target keywords.
+        tone (str): Desired tone for the meta description.
+        search_type (str): Search intent type.
+        language (str): Preferred language for the description.
+
+    Returns:
+        str: Generated meta descriptions or error message.
+    """
     prompt = f"""
         Craft 3 engaging and SEO-friendly meta descriptions for a blog post based on the following details:
 
@@ -76,9 +100,8 @@ def generate_blog_metadesc(keywords, tone, search_type, language):
 
         Respond with 3 compelling and concise meta descriptions, approximately 155-160 characters long, that incorporate the target keywords, reflect the blog post content, resonate with the target audience, and entice users to click through to read the full article.
     """
-    with st.spinner("Calling Gemini to craft 3 Meta descriptions for you... 💫"):
-        try:    
-            response = llm_text_gen(prompt)
-            return response
-        except Exception as err:
-            st.error(f"Exit: Failed to get response from LLM: {err}")
+    try:
+        return llm_text_gen(prompt)
+    except Exception as err:
+        st.error(f"💥 Error: Failed to generate response from LLM: {err}")
+        return None
