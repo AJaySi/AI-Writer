@@ -6,14 +6,21 @@ from urllib.error import URLError
 import xml.etree.ElementTree as ET
 import requests
 
+
 def main():
+    """
+    Main function to run the Sitemap Analyzer Streamlit app.
+    """
     st.title("📊 Sitemap Analyzer")
     st.write("""
         This tool analyzes a website's sitemap to understand its content structure and publishing trends. 
         Enter a sitemap URL to start your analysis.
     """)
 
-    sitemap_url = st.text_input("Please enter the sitemap URL:", "https://www.example.com/sitemap.xml")
+    sitemap_url = st.text_input(
+        "Please enter the sitemap URL:", 
+        "https://www.example.com/sitemap.xml"
+    )
 
     if st.button("Analyze Sitemap"):
         try:
@@ -37,17 +44,32 @@ def main():
         except Exception as e:
             st.error(f"An unexpected error occurred: {e}")
 
+
 def fetch_all_sitemaps(sitemap_url):
+    """
+    Fetches all sitemaps from the provided sitemap URL and concatenates their URLs into a DataFrame.
+
+    Parameters:
+    sitemap_url (str): The URL of the sitemap.
+
+    Returns:
+    DataFrame: A DataFrame containing all URLs from the sitemaps.
+    """
     st.write(f"🚀 Fetching and analyzing the sitemap: {sitemap_url}...")
 
     try:
         sitemap_df = fetch_sitemap(sitemap_url)
         
         if sitemap_df is not None:
-            all_sitemaps = sitemap_df.loc[sitemap_df['loc'].str.contains('sitemap'), 'loc'].tolist()
+            all_sitemaps = sitemap_df.loc[
+                sitemap_df['loc'].str.contains('sitemap'), 
+                'loc'
+            ].tolist()
             
             if all_sitemaps:
-                st.write(f"🔄 Found {len(all_sitemaps)} additional sitemaps. Fetching data from them...")
+                st.write(
+                    f"🔄 Found {len(all_sitemaps)} additional sitemaps. Fetching data from them..."
+                )
                 all_urls_df = pd.DataFrame()
 
                 for sitemap in all_sitemaps:
@@ -55,11 +77,15 @@ def fetch_all_sitemaps(sitemap_url):
                         st.write(f"Fetching URLs from {sitemap}...")
                         temp_df = fetch_sitemap(sitemap)
                         if temp_df is not None:
-                            all_urls_df = pd.concat([all_urls_df, temp_df], ignore_index=True)
+                            all_urls_df = pd.concat(
+                                [all_urls_df, temp_df], ignore_index=True
+                            )
                     except Exception as e:
                         st.error(f"Error fetching {sitemap}: {e}")
 
-                st.write(f"✅ Successfully fetched {len(all_urls_df)} URLs from all sitemaps.")
+                st.write(
+                    f"✅ Successfully fetched {len(all_urls_df)} URLs from all sitemaps."
+                )
                 return all_urls_df
             
             else:
@@ -72,7 +98,17 @@ def fetch_all_sitemaps(sitemap_url):
         st.error(f"⚠️ Error fetching the sitemap: {e}")
         return None
 
+
 def fetch_sitemap(url):
+    """
+    Fetches and parses the sitemap from the provided URL.
+
+    Parameters:
+    url (str): The URL of the sitemap.
+
+    Returns:
+    DataFrame: A DataFrame containing the URLs from the sitemap.
+    """
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -89,7 +125,17 @@ def fetch_sitemap(url):
         st.error(f"⚠️ XML parsing error: {e}")
         return None
 
+
 def process_lastmod_column(sitemap_df):
+    """
+    Processes the 'lastmod' column in the sitemap DataFrame by converting it to DateTime format and setting it as the index.
+
+    Parameters:
+    sitemap_df (DataFrame): The sitemap DataFrame.
+
+    Returns:
+    DataFrame: The processed sitemap DataFrame with 'lastmod' as the index.
+    """
     st.write("📅 Converting 'lastmod' column to DateTime format and setting it as the index...")
 
     try:
@@ -104,7 +150,17 @@ def process_lastmod_column(sitemap_df):
         st.error(f"⚠️ Error processing the 'lastmod' column: {e}")
         return None
 
+
 def categorize_and_shorten_sitemaps(sitemap_df):
+    """
+    Categorizes and shortens the sitemap names in the sitemap DataFrame.
+
+    Parameters:
+    sitemap_df (DataFrame): The sitemap DataFrame.
+
+    Returns:
+    DataFrame: The sitemap DataFrame with categorized and shortened sitemap names.
+    """
     st.write("🔍 Categorizing and shortening sitemap names...")
 
     try:
@@ -124,7 +180,17 @@ def categorize_and_shorten_sitemaps(sitemap_df):
         st.error(f"⚠️ Error categorizing sitemap names: {e}")
         return sitemap_df
 
+
 def analyze_content_trends(sitemap_df):
+    """
+    Analyzes content publishing trends in the sitemap DataFrame.
+
+    Parameters:
+    sitemap_df (DataFrame): The sitemap DataFrame.
+
+    Returns:
+    Series: A Series representing the number of contents published each month.
+    """
     st.write("📅 Analyzing content publishing trends...")
     
     try:
@@ -138,7 +204,15 @@ def analyze_content_trends(sitemap_df):
         st.error(f"⚠️ Error during content trends analysis: {e}")
         return pd.Series()
 
+
 def display_key_metrics(sitemap_df, ppmonth):
+    """
+    Displays key metrics of the sitemap analysis.
+
+    Parameters:
+    sitemap_df (DataFrame): The sitemap DataFrame.
+    ppmonth (Series): The Series representing the number of contents published each month.
+    """
     st.write("### Key Metrics")
     
     total_urls = len(sitemap_df)
@@ -149,7 +223,14 @@ def display_key_metrics(sitemap_df, ppmonth):
     st.write(f"**Total Articles Published:** {total_articles:,}")
     st.write(f"**Average Monthly Publishing Frequency:** {average_frequency:.2f} articles/month")
 
+
 def plot_sitemap_content_distribution(sitemap_df):
+    """
+    Plots the content distribution by sitemap categories.
+
+    Parameters:
+    sitemap_df (DataFrame): The sitemap DataFrame.
+    """
     st.write("📊 Visualizing content amount by sitemap categories...")
 
     try:
@@ -170,7 +251,14 @@ def plot_sitemap_content_distribution(sitemap_df):
     except Exception as e:
         st.error(f"⚠️ Error during sitemap content distribution plotting: {e}")
 
+
 def plot_content_trends(ppmonth):
+    """
+    Plots the content publishing trends over time.
+
+    Parameters:
+    ppmonth (Series): The Series representing the number of contents published each month.
+    """
     st.write("📈 Plotting content publishing trends over time...")
 
     try:
@@ -187,13 +275,20 @@ def plot_content_trends(ppmonth):
     except Exception as e:
         st.error(f"⚠️ Error during content trends plotting: {e}")
 
+
 def plot_content_type_breakdown(sitemap_df):
+    """
+    Plots the content type breakdown.
+
+    Parameters:
+    sitemap_df (DataFrame): The sitemap DataFrame.
+    """
     st.write("🔍 Plotting content type breakdown...")
 
     try:
         if 'sitemap_name' in sitemap_df.columns and not sitemap_df['sitemap_name'].empty:
             content_type_counts = sitemap_df['sitemap_name'].value_counts()
-            st.write("Content Type Counts:", content_type_counts)  # Debug line
+            st.write("Content Type Counts:", content_type_counts)
             
             if not content_type_counts.empty:
                 fig = go.Figure(data=[go.Pie(labels=content_type_counts.index, values=content_type_counts.values)])
@@ -210,45 +305,20 @@ def plot_content_type_breakdown(sitemap_df):
     except Exception as e:
         st.error(f"⚠️ Error during content type breakdown plotting: {e}")
 
-def visualize_content_by_sitemap_category(sitemap_df):
-    st.write("🔍 Visualizing content amount by sitemap categories...")
-
-    try:
-        # Check if the 'sitemap_name' column exists and is non-empty
-        if 'sitemap_name' in sitemap_df.columns and not sitemap_df['sitemap_name'].empty:
-            st.write("Sitemap Data Preview:", sitemap_df['sitemap_name'].head())  # Check the data
-
-            # Group and count the number of entries per sitemap category
-            sitemap_category_counts = sitemap_df['sitemap_name'].value_counts()
-
-            # Display the grouped data
-            st.write("Sitemap Category Counts:", sitemap_category_counts)  # Debug line
-
-            # If we have valid data, plot it
-            if not sitemap_category_counts.empty:
-                fig = go.Figure()
-                fig.add_bar(x=sitemap_category_counts.index, y=sitemap_category_counts.values, name='Sitemap Names')
-                fig.update_layout(
-                    title='Content Amount by Sitemap Categories',
-                    paper_bgcolor='#E5ECF6',
-                    yaxis_title='Article Amount',
-                )
-                st.plotly_chart(fig)
-            else:
-                st.warning("⚠️ No data to display for sitemap categories.")
-        else:
-            st.warning("⚠️ The 'sitemap_name' column is missing or empty.")
-    
-    except Exception as e:
-        st.error(f"⚠️ Error during content amount visualization: {e}")
 
 def plot_publishing_frequency(sitemap_df):
+    """
+    Plots the publishing frequency by month.
+
+    Parameters:
+    sitemap_df (DataFrame): The sitemap DataFrame.
+    """
     st.write("📆 Plotting publishing frequency by month...")
 
     try:
         if not sitemap_df.empty:
             frequency_by_month = sitemap_df.index.to_period('M').value_counts().sort_index()
-            frequency_by_month.index = frequency_by_month.index.astype(str)  # Convert Period to string for Plotly
+            frequency_by_month.index = frequency_by_month.index.astype(str)
             
             fig = go.Figure()
             fig.add_bar(x=frequency_by_month.index, y=frequency_by_month.values, name='Publishing Frequency')
@@ -265,6 +335,6 @@ def plot_publishing_frequency(sitemap_df):
     except Exception as e:
         st.error(f"⚠️ Error during publishing frequency plotting: {e}")
 
+
 if __name__ == "__main__":
     main()
-
