@@ -1,4 +1,3 @@
-import time #Iwish
 import os
 import json
 import streamlit as st
@@ -7,13 +6,10 @@ from tenacity import (
     stop_after_attempt,
     wait_random_exponential,
 )
-import google.generativeai as genai
-
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
-
 def ai_title_generator():
-    """ Use AI to personalize content title generation """
+    """ UI for the AI Blog Title Generator """
     st.title("✍️ Alwrity - AI Blog Title Generator")
 
     # Input section
@@ -75,49 +71,48 @@ def ai_title_generator():
                     st.error("💥 **Failed to generate blog titles. Please try again!**")
 
 
-# Function to generate blog metadesc
+@retry(stop=stop_after_attempt(3), wait=wait_random_exponential(min=1, max=4))
 def generate_blog_titles(input_blog_keywords, input_blog_content, input_title_type, input_title_intent, input_language):
-    """ Function to call upon LLM to get the work done. """
-    # If keywords and content both are given.
+    """ Generate SEO optimized blog titles using AI """
     if input_blog_content and input_blog_keywords:
         prompt = f"""As a SEO expert, I will provide you with main 'blog keywords' and 'blog content'.
-        Your task is write 5 SEO optimised blog titles, from given blog keywords and content.
+        Your task is to write 5 SEO optimized blog titles from the given blog keywords and content.
 
         Follow the below guidelines for generating the blog titles:
-        1). As SEO expert, follow all best practises for SEO optimised blog titles.
-        2). Your response should be optimised around given keywords and content.
-        3). Optimise your response for web search intent {input_title_intent}.
-        4). Optimise your response for blog type of {input_title_type}.
-        5). Your blog titles should in {input_language} language.\n
+        1. Follow all best practices for SEO optimized blog titles.
+        2. Optimize your response around the given keywords and content.
+        3. Optimize your response for web search intent {input_title_intent}.
+        4. Optimize your response for blog type {input_title_type}.
+        5. The blog titles should be in {input_language} language.
 
-        blog keywords: '{input_blog_keywords}'\n
-        blog content: '{input_blog_content}'
+        Blog keywords: '{input_blog_keywords}'
+        Blog content: '{input_blog_content}'
         """
     elif input_blog_keywords and not input_blog_content:
-        prompt = f"""As a SEO expert, I will provide you with main 'keywords' of a blog.
-        Your task is write 5 SEO optimised blog titles from given blog keywords.
+        prompt = f"""As a SEO expert, I will provide you with the main 'keywords' of a blog.
+        Your task is to write 5 SEO optimized blog titles from the given blog keywords.
 
         Follow the below guidelines for generating the blog titles:
-        1). As SEO expert, follow all best practises for SEO optimised blog titles.
-        2). Your response should be optimised around given keywords and content.
-        3). Optimise your response for web search intent {input_title_intent}.
-        4). Optimise your response for blog type of {input_title_type}.
-        5). Your blog titles should in {input_language} language.\n
+        1. Follow all best practices for SEO optimized blog titles.
+        2. Optimize your response around the given keywords.
+        3. Optimize your response for web search intent {input_title_intent}.
+        4. Optimize your response for blog type {input_title_type}.
+        5. The blog titles should be in {input_language} language.
 
-        blog keywords: '{input_blog_keywords}'\n
+        Blog keywords: '{input_blog_keywords}'
         """
     elif input_blog_content and not input_blog_keywords:
-        prompt = f"""As a SEO expert, I will provide you with a 'blog content'.
-        Your task is write 5 SEO optimised blog titles from given blog content.
+        prompt = f"""As a SEO expert, I will provide you with the 'blog content'.
+        Your task is to write 5 SEO optimized blog titles from the given blog content.
 
         Follow the below guidelines for generating the blog titles:
-        1). As SEO expert, follow all best practises for SEO optimised blog titles.
-        2). Your response should be optimised around given keywords and content.
-        3). Optimise your response for web search intent {input_title_intent}.
-        4). Optimise your response for blog type of {input_title_type}.
-        5). Your blog titles should in {input_language} language.\n
+        1. Follow all best practices for SEO optimized blog titles.
+        2. Optimize your response around the given content.
+        3. Optimize your response for web search intent {input_title_intent}.
+        4. Optimize your response for blog type {input_title_type}.
+        5. The blog titles should be in {input_language} language.
 
-        blog content: '{input_blog_content}'\n
+        Blog content: '{input_blog_content}'
         """
 
     try:
