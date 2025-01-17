@@ -5,17 +5,41 @@ from PIL import Image
 import os
 
 
-# Function to encode the image
 def encode_image(image_path):
-    safe_root = '/safe/root/directory'  # Define your safe root directory
+    """
+    Encodes an image to base64 format.
+
+    Args:
+        image_path (str): Path to the image file.
+
+    Returns:
+        str: Base64 encoded string of the image.
+
+    Raises:
+        ValueError: If the image path is invalid.
+    """
+    safe_root = os.getenv('SAFE_ROOT_DIRECTORY', '/safe/root/directory')  # Use an environment variable for the safe root directory
     normalized_path = os.path.normpath(image_path)
     if not normalized_path.startswith(safe_root):
         raise ValueError("Invalid image path")
     with open(normalized_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
 
+
 def get_image_description(image_path):
-    safe_root = '/safe/root/directory'  # Define your safe root directory
+    """
+    Generates a description for the given image using an external API.
+
+    Args:
+        image_path (str): Path to the image file.
+
+    Returns:
+        str: Description of the image.
+
+    Raises:
+        ValueError: If the image path is invalid.
+    """
+    safe_root = os.getenv('SAFE_ROOT_DIRECTORY', '/safe/root/directory')  # Use an environment variable for the safe root directory
     normalized_path = os.path.normpath(image_path)
     if not normalized_path.startswith(safe_root):
         raise ValueError("Invalid image path")
@@ -25,25 +49,6 @@ def get_image_description(image_path):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}"
     }
- 
-#  Understand which images are informative, decorative, functional, or complex.
-#  Identify informative images, then write the text alternative for images using the essential information, describing it in detail. 
-#  Don’t forget to include the emotional implications of the image.
-#  Filter out decorative images, like a flourish or stylistic elements that lack meaningful context. 
-#  Then, write the alt text as “null” as in, <img alt=””> so that screen readers won’t waste users’ time by announcing it.
-#  Take your functional images, which describe what happens when you click an image, like the ‘download’ icon. 
-#  Then, make sure your alt text doesn’t describe those images but instead, denotes their functionality.
-#  Grab your complex infographics or diagrams, then compose alt text describing the information laid out in the images.
-#    
-#  Less is more: Ensure the length of alternative text is under 125 characters when possible, spaces included.
-#  Don’t skimp on quality: Pay close attention to the accuracy of the information and insight the image provides in that short amount of words.
-#  Don’t use images of text, whenever possible, except in logos. If used, the image alt text should include the same words as in the image.
-#  For image maps, with multiple clickable areas, a group alt text gives the overall context of the map. 
-#  Any clickable area should also have its own individual alternative text, describing the link’s destination and purpose.
-#  Don’t ever assign a random, vague, or ambiguous alternative text description to an image simply to increase your accessibility score.
-#  This could lead to confusion and frustration for a screen reader user. 
-#  Alt text accessibility is rooted in providing meaningful and functional alternative means of usability.
-#  Poor or random alt text descriptions can arguably be worse than having no alt text at all.
 
     payload = {
         "model": "gpt-4o-mini",
@@ -78,9 +83,12 @@ def get_image_description(image_path):
 
 
 def alt_text_gen():
+    """
+    Streamlit app function to generate Alt text for an uploaded image.
+    """
     st.title("Image Description Generator")
 
-    image_path = st.text_input("Enter the full path of the image file")
+    image_path = st.text_input("Enter the full path of the image file", help="Provide the full path to a .jpg, .jpeg, or .png image file")
 
     if image_path:
         if os.path.exists(image_path) and image_path.lower().endswith(('jpg', 'jpeg', 'png')):
@@ -93,7 +101,7 @@ def alt_text_gen():
                         try:
                             description = get_image_description(image_path)
                             st.success("Alt Text generated successfully!")
-                            st.write("ALt Text:", description)
+                            st.write("Alt Text:", description)
                         except Exception as e:
                             st.error(f"Error generating description: {e}")
             except Exception as e:
