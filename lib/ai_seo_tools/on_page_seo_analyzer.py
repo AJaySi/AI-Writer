@@ -7,6 +7,13 @@ from bs4 import BeautifulSoup
 import requests
 import csv
 import time
+from urllib.parse import urlparse
+import validators
+from readability import Readability
+import textstat
+import re
+from PIL import Image
+import io
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 def fetch_and_parse_html(url):
@@ -64,6 +71,121 @@ def extract_meta_data(soup):
     except Exception as e:
         st.warning(f"⚠️ Error extracting meta data: {e}")
         return {}
+
+def analyze_headings(soup):
+    """
+    Analyzes the headings on the webpage.
+
+    Args:
+        soup (BeautifulSoup): Parsed HTML content.
+
+    Returns:
+        dict: Count of each heading tag.
+    """
+    try:
+        headings = {
+            'h1': len(soup.find_all('h1')),
+            'h2': len(soup.find_all('h2')),
+            'h3': len(soup.find_all('h3')),
+            'h4': len(soup.find_all('h4')),
+            'h5': len(soup.find_all('h5')),
+            'h6': len(soup.find_all('h6'))
+        }
+        return headings
+    except Exception as e:
+        st.warning(f"⚠️ Error analyzing headings: {e}")
+        return {}
+
+def check_readability(text):
+    """
+    Checks the readability score of the text.
+
+    Args:
+        text (str): The text content of the webpage.
+
+    Returns:
+        float: Readability score.
+    """
+    try:
+        readability_score = textstat.flesch_reading_ease(text)
+        return readability_score
+    except Exception as e:
+        st.warning(f"⚠️ Error checking readability: {e}")
+        return None
+
+def analyze_images(soup, url):
+    """
+    Analyzes the images on the webpage.
+
+    Args:
+        soup (BeautifulSoup): Parsed HTML content.
+        url (str): The URL of the webpage.
+
+    Returns:
+        list: List of dictionaries containing image src and alt text.
+    """
+    try:
+        images = soup.find_all('img')
+        image_data = []
+        for img in images:
+            src = img.get('src')
+            if not src:
+                continue
+            if not validators.url(src):
+                src = urlparse(url).scheme + '://' + urlparse(url).netloc + src
+            alt_text = img.get('alt', '')
+            image_data.append({'src': src, 'alt': alt_text})
+        return image_data
+    except Exception as e:
+        st.warning(f"⚠️ Error analyzing images: {e}")
+        return []
+
+def analyze_links(soup):
+    """
+    Analyzes the links on the webpage.
+
+    Args:
+        soup (BeautifulSoup): Parsed HTML content.
+
+    Returns:
+        list: List of broken links.
+    """
+    try:
+        links = soup.find_all('a', href=True)
+        broken_links = []
+        for link in links:
+            href = link['href']
+            if not validators.url(href):
+                continue
+            try:
+                response = requests.head(href, timeout=5)
+                if response.status_code >= 400:
+                    broken_links.append(href)
+            except requests.RequestException:
+                broken_links.append(href)
+        return broken_links
+    except Exception as e:
+        st.warning(f"⚠️ Error analyzing links: {e}")
+        return []
+
+def suggest_ctas(soup):
+    """
+    Suggests call-to-action phrases present on the webpage.
+
+    Args:
+        soup (BeautifulSoup): Parsed HTML content.
+
+    Returns:
+        list: List of found CTA phrases.
+    """
+    try:
+        cta_keywords = ['buy now', 'subscribe', 'learn more', 'sign up', 'get started']
+        text = soup.get_text().lower()
+        ctas_found = [cta for cta in cta_keywords if cta in text]
+        return ctas_found
+    except Exception as e:
+        st.warning(f"⚠️ Error suggesting CTAs: {e}")
+        return []
 
 def extract_alternates_and_canonicals(soup):
     """
@@ -167,7 +289,7 @@ def extract_content_data(soup, url):
         link_insights = []
         if internal_links:
             link_insights.append("✅ Internal links are present.")
-        if external_links:
+        if external links:
             link_insights.append("✅ External links are present.")
 
         return {
@@ -313,6 +435,12 @@ def fetch_seo_data(url):
         return {}
     
     meta_data = extract_meta_data(soup)
+    headings = analyze_headings(soup)
+    text = soup.get_text()
+    readability_score = check_readability(text)
+    images = analyze_images(soup, url)
+    broken_links = analyze_links(soup)
+    ctas = suggest_ctas(soup)
     alternates_and_canonicals = extract_alternates_and_canonicals(soup)
     schema_markup = extract_schema_markup(soup)
     content_data = extract_content_data(soup, url)
@@ -320,6 +448,11 @@ def fetch_seo_data(url):
     
     return {
         "meta_data": meta_data,
+        "headings": headings,
+        "readability_score": readability_score,
+        "images": images,
+        "broken_links": broken_links,
+        "ctas": ctas,
         "alternates_and_canonicals": alternates_and_canonicals,
         "schema_markup": schema_markup,
         "content_data": content_data,
@@ -371,6 +504,21 @@ def analyze_onpage_seo():
                 st.write(f"**Language:** {results['meta_data']['html_language']}")
                 st.write(results['meta_data']['title_message'])
                 st.write(results['meta_data']['description_message'])
+
+                st.subheader("Headings")
+                st.write(results['headings'])
+
+                st.subheader("Readability Score")
+                st.write(f"**Readability Score:** {results['readability_score']}")
+
+                st.subheader("Images")
+                st.write(results['images'])
+
+                st.subheader("Broken Links")
+                st.write(results['broken_links'])
+
+                st.subheader("Suggested CTAs")
+                st.write(results['ctas'])
                 
                 st.subheader("Canonical and Hreflangs")
                 st.write(f"**Canonical:** {results['alternates_and_canonicals']['canonical']}")
