@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import yfinance as yf
-#from yahoo_fin import options, stock_info
 import pandas_ta as ta
 import matplotlib.dates as mdates
 from datetime import datetime, timedelta
@@ -10,8 +9,7 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-
-def calculate_technical_indicators(data):
+def calculate_technical_indicators(data: pd.DataFrame) -> pd.DataFrame:
     """
     Calculates a suite of technical indicators using pandas_ta.
 
@@ -47,12 +45,15 @@ def calculate_technical_indicators(data):
 
         logging.info("Technical indicators calculated successfully.")
         return data
+    except KeyError as e:
+        logging.error(f"Missing key in data: {e}")
+    except ValueError as e:
+        logging.error(f"Value error: {e}")
     except Exception as e:
         logging.error(f"Error during technical indicator calculation: {e}")
-        return None
+    return None
 
-
-def get_last_day_summary(data):
+def get_last_day_summary(data: pd.DataFrame) -> pd.Series:
     """
     Extracts and summarizes technical indicators for the last trading day.
 
@@ -73,13 +74,11 @@ def get_last_day_summary(data):
         return last_day_summary
     except KeyError as e:
         logging.error(f"Missing columns in data: {e}")
-        return None
     except Exception as e:
         logging.error(f"Error extracting last day summary: {e}")
-        return None
+    return None
 
-
-def analyze_stock(ticker_symbol, start_date, end_date):
+def analyze_stock(ticker_symbol: str, start_date: datetime, end_date: datetime) -> pd.Series:
     """
     Fetches stock data, calculates technical indicators, and provides a summary.
 
@@ -108,14 +107,20 @@ def analyze_stock(ticker_symbol, start_date, end_date):
                 return last_day_summary
         else:
             logging.error("Stock data is None, unable to calculate indicators.")
-            return None
     except Exception as e:
         logging.error(f"Error during analysis: {e}")
-        return None
+    return None
 
+def get_finance_data(symbol: str) -> pd.Series:
+    """
+    Fetches financial data for a given stock symbol.
 
-def get_finance_data(symbol):
-    # FIXME: Expose them to end users.
+    Args:
+        symbol (str): The stock symbol.
+
+    Returns:
+        pd.Series: Summary of technical indicators for the last day.
+    """
     end_date = datetime.today()
     start_date = end_date - timedelta(days=120)
 
@@ -123,9 +128,7 @@ def get_finance_data(symbol):
     last_day_summary = analyze_stock(symbol, start_date, end_date)
     return last_day_summary
 
-
-
-def analyze_options_data(ticker, expiry_date):
+def analyze_options_data(ticker: str, expiry_date: str) -> tuple:
     """
     Analyzes option data for a given ticker and expiry date.
 
@@ -136,7 +139,6 @@ def analyze_options_data(ticker, expiry_date):
     Returns:
         tuple: A tuple containing calculated metrics for call and put options.
     """
-
     call_df = options.get_calls(ticker, expiry_date)
     put_df = options.get_puts(ticker, expiry_date)
 
@@ -204,9 +206,16 @@ def analyze_options_data(ticker, expiry_date):
             total_call_volume, total_put_volume, total_call_open_interest, total_put_open_interest,
             put_call_ratio, call_iv_percentile, put_iv_percentile, implied_vol_skew, sentiment)
 
+def get_fin_options_data(ticker: str) -> list:
+    """
+    Fetches and analyzes options data for a given stock ticker.
 
-def get_fin_options_data(ticker):
-    """ Function to get information for Options & Futures Trading """
+    Args:
+        ticker (str): The stock ticker symbol.
+
+    Returns:
+        list: A list of sentences summarizing the options data.
+    """
     current_price = round(stock_info.get_live_price(ticker), 3)
     option_expiry_dates = options.get_expiration_dates(ticker)
     nearest_expiry = option_expiry_dates[0]
