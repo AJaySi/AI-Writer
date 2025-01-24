@@ -1,4 +1,3 @@
-```markdown
 # AI Agents Content Planner
 
 This document describes the `ai_agents_planner` module, a sophisticated tool for creating highly detailed and SEO-optimized content calendars. This module leverages AI agents to perform web research, trend analysis, and content planning.
@@ -112,4 +111,3 @@ This structured approach ensures a comprehensive content strategy, optimized for
 The `ai_agents_planner` module provides a robust framework for content planning and strategy. By leveraging AI agents and integrating web research, trend analysis, and content planning, it delivers a detailed content calendar tailored to your audience and optimized for search engines.
 
 For further information and detailed documentation, refer to the module's code and comments.
-```
