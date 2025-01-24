@@ -1,5 +1,5 @@
-# Alwrity: Your All-in-One Content Platform  
-### 🚀 **ALwrity: Redefining Content Lifecycle with AI** 🌟
+# Alwrity: Redefining Content Lifecycle with AI
+### 🚀 **ALwrity: Your All-in-One Content Platform** 🌟
 
 > **NOTE**  
 > *Alwrity is a comprehensive content lifecycle platform tailored for content creators, digital marketers, and writers — no prior AI knowledge required.*  
