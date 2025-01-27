@@ -33,7 +33,6 @@ def llm_text_gen(prompt):
             blog_output_format, blog_length = read_return_config_section('blog_characteristics')
 
         # Construct the system prompt with the sidebar config params.
-        #system_instructions = read_return_config_section('system_prompt')
         system_instructions = f"""You are a highly skilled content writer with a knack for creating engaging and informative content. 
             Your expertise spans various writing styles and formats.
 
@@ -55,7 +54,6 @@ def llm_text_gen(prompt):
             * **Factual Accuracy:**  Ensure your content is accurate and reliable. Back up any claims with credible sources.
             * **Unique Voice and Style:** Inject your unique voice and writing style to make the content engaging and memorable. """
         
-        #gpt_provider = check_gpt_provider(gpt_provider)
         # Check if API key is provided for the given gpt_provider
         get_api_key(gpt_provider)
 
@@ -83,6 +81,14 @@ def llm_text_gen(prompt):
                 return response
             except Exception as err:
                 logger.error(f"Failed to get response from Anthropic: {err}")
+                raise err
+        elif 'deepseek' in gpt_provider.lower():
+            try:
+                logger.info(f"Using DeepSeek Model: {model} for text Generation.")
+                response = deepseek_text_response(prompt, model, temperature, max_tokens, top_p, n, system_instructions)
+                return response
+            except Exception as err:
+                logger.error(f"Failed to get response from DeepSeek: {err}")
                 raise err
 
     except Exception as err:
@@ -132,6 +138,8 @@ def get_api_key(gpt_provider):
         api_key = os.getenv('OPENAI_API_KEY')
     elif gpt_provider.lower() == 'anthropic':
         api_key = os.getenv('ANTHROPIC_API_KEY')
+    elif gpt_provider.lower() == 'deepseek':
+        api_key = os.getenv('DEEPSEEK_API_KEY')
 
     if not api_key:
         raise ValueError(f"No API key found for the specified GPT provider: '{gpt_provider}'")
