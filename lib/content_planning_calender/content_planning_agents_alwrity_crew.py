@@ -4,7 +4,7 @@ import streamlit as st
 from crewai import Agent, Task, Crew
 from crewai_tools import SerperDevTool
 from langchain_google_genai import ChatGoogleGenerativeAI
-from crewai_tools import ScrapeWebsiteTool, tool
+from crewai_tools import ScrapeWebsiteTool
 from crewai_tools import FileReadTool
 
 from ..ai_web_researcher.google_trends_researcher import do_google_trends_analysis
