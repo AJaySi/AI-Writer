@@ -35,6 +35,7 @@ yfinance
 pandas_ta
 firecrawl-py
 gTTS
+validators
 streamlit-mic-recorder
 tinify
 cloudscraper
