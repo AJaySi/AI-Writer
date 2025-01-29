@@ -289,7 +289,7 @@ def extract_content_data(soup, url):
         link_insights = []
         if internal_links:
             link_insights.append("✅ Internal links are present.")
-        if external links:
+        if external_links:
             link_insights.append("✅ External links are present.")
 
         return {
