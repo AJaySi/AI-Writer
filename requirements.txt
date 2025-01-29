@@ -24,6 +24,7 @@ plotly
 requests_html
 pytrends
 pytube
+pytubefix
 wordcloud
 prompt_toolkit
 ipython
