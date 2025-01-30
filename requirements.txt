@@ -21,6 +21,7 @@ clint
 scikit-learn
 matplotlib
 plotly
+textstat
 requests_html
 pytrends
 pytube
