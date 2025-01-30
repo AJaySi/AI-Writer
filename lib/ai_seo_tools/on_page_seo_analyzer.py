@@ -9,7 +9,7 @@ import csv
 import time
 from urllib.parse import urlparse
 import validators
-from readability import Readability
+import readability
 import textstat
 import re
 from PIL import Image
