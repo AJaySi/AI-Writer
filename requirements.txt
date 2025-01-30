@@ -25,6 +25,7 @@ requests_html
 pytrends
 pytube
 pytubefix
+readability
 wordcloud
 prompt_toolkit
 ipython
