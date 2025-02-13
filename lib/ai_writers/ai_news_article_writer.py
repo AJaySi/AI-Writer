@@ -41,6 +41,7 @@ def ai_news_generation(news_keywords, news_country, news_language):
     except Exception as err:
         logger.error(f"Failed in Google News web research: {err}")
     logger.info("\n######### Draft1: Finished News article from Google web search: ###########\n\n")
+    return blog_markdown_str
 
 
 def write_news_google_search(news_keywords, news_country, news_language, search_results):
