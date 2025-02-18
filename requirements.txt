@@ -4,7 +4,6 @@ rich
 python-dotenv
 loguru
 openai
-python3-dev
 crewai[tools]
 crewai_tools
 python-docx
