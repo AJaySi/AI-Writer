@@ -10,6 +10,11 @@ from lib.utils.api_key_manager import check_all_api_keys
 from dotenv import load_dotenv
 from lib.utils.content_generators import ai_writers, content_planning_tools, blog_from_keyword, story_input_section, essay_writer, ai_news_writer, ai_finance_ta_writer, write_ai_prod_desc, do_web_research, competitor_analysis, ai_agents_content_planner
 from lib.utils.seo_tools import ai_seo_tools
+from lib.ai_seo_tools.dataforseo_integration import (
+    dataforseo_keyword_research,
+    dataforseo_rank_tracking,
+    dataforseo_competitor_analysis
+)
 from lib.utils.ui_setup import setup_ui, setup_tabs
 from lib.utils.alwrity_utils import ai_agents_team, ai_social_writer
 from lib.utils.file_processor import load_image, read_prompts, write_prompts
@@ -209,8 +214,13 @@ def sidebar_configuration():
 
 
 def main():
-    #load_environment
+    # Load environment and validate credentials
     load_dotenv()
+    
+    # Validate DataForSEO credentials
+    if not os.getenv("DATAFORSEO_USERNAME") or not os.getenv("DATAFORSEO_PASSWORD"):
+        st.warning("DataForSEO credentials missing - some SEO features will be disabled")
+
     setup_ui()
 
     if check_all_api_keys():

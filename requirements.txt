@@ -45,3 +45,4 @@ xmlschema
 moviepy
 googlesearch-python
 streamlit-aggrid
+dataforseo @ git+https://github.com/dataforseo/dataforseo-python-sdk.git@main
