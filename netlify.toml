@@ -1,0 +1,14 @@
+[build]
+  command = "pip install -r requirements.txt && streamlit run alwrity.py"
+  publish = "."
+  functions = "functions"
+
+[dev]
+  framework = "#static"
+  targetPort = 8501
+  autoRefresh = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
