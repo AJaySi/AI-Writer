@@ -6,7 +6,9 @@
 
 Alwrity streamlines every phase of the content lifecycle, from **planning and research** to **personalized content generation**, **SEO audits**, **publishing**, and **analytics**. Our mission is to empower creators with AI-driven tools that simplify content creation while maintaining quality.  
 
-Explore the building blocks of Alwrity and contribute to shaping the future of AI-driven content creation.  
+Explore the building blocks of Alwrity and contribute to shaping the future of AI-driven content creation.
+> **New Release**  
+> [*ALwrity AI story writer App*](https://storyme.app.io/) 
 Learn more about our journey: [What's Alwrity Up To?](https://www.alwrity.com/post/whats-alwrity-upto)
 
 ---
