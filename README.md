@@ -46,6 +46,22 @@ By bringing these powerful solutions together, Alwrity ensures a streamlined wor
 >	<details>
 >		<summary>See Details</summary>
 >
+## Prerequisites
+
+### Windows
+- Python 3.10+ (3.12 recommended)
+- Microsoft Visual C++ Build Tools 14.0 or greater
+  - Install with: `winget install Microsoft.VisualStudio.2022.BuildTools --silent --override "--wait --quiet --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"`
+- Rust Compiler
+  - Install with: `Invoke-WebRequest -Uri https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe -OutFile rustup-init.exe; ./rustup-init.exe -y`
+
+### Linux
+- Python 3.10+ (3.12 recommended)
+- C/C++ compiler and development tools
+  - Install with: `sudo apt update && sudo apt install build-essential python3-dev`
+- Rust Compiler
+  - Install with: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y; source $HOME/.cargo/env`
+
 >	```
 >	1). git clone https://github.com/AJaySi/AI-Writer.git
 >	2). pip install -r requirements.txt
