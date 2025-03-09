@@ -69,6 +69,14 @@ By bringing these powerful solutions together, Alwrity ensures a streamlined wor
 >
 >	4). Visit Alwrity UI in a Browser & Start generation AI personalized content.
 >	```
+>
+>	### System Dependencies
+>	```
+>	You can run the install_dependencies.py script to check for system dependencies and assist with installation:
+>
+>	python install_dependencies.py
+>	```
+>	This script will help verify that all necessary system dependencies are installed and guide you through the installation process.
 >	### Updating to latest Code: (Existing users)
 >	```
 >	1). Git pull

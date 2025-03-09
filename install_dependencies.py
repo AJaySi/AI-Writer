@@ -9,12 +9,51 @@ import sys
 import platform
 import subprocess
 import shutil
+import datetime
+import socket
+import traceback
+
+def log_error(error_type, details):
+    """
+    Logs installation errors to a file with timestamp and system information.
+    
+    Args:
+        error_type: Type of error (e.g., 'Python Version Check', 'Rust Installation')
+        details: Detailed error message
+    """
+    log_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'install_errors.log')
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Collect system information
+    system_info = {
+        "OS": platform.system(),
+        "OS Version": platform.version(),
+        "Architecture": platform.machine(),
+        "Python Version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+        "Hostname": socket.gethostname()
+    }
+    
+    # Format the log entry
+    log_entry = f"[{timestamp}] ERROR: {error_type}\n"
+    log_entry += f"Details: {details}\n"
+    log_entry += "System Information:\n"
+    for key, value in system_info.items():
+        log_entry += f"  {key}: {value}\n"
+    log_entry += "-" * 80 + "\n"
+    
+    # Write to log file
+    with open(log_file, 'a') as f:
+        f.write(log_entry)
+    
+    print(f"Error logged to {log_file}")
 
 def check_python_version():
     print("Checking Python version...")
     version = sys.version_info
     if version.major < 3 or (version.major == 3 and version.minor < 10):
-        print(f"Error: Python 3.10+ is required. Found Python {version.major}.{version.minor}")
+        error_msg = f"Python 3.10+ is required. Found Python {version.major}.{version.minor}"
+        print(f"Error: {error_msg}")
+        log_error("Python Version Check", error_msg)
         return False
     
     print(f"✓ Python {version.major}.{version.minor}.{version.micro} found")
@@ -31,6 +70,7 @@ def check_visual_cpp_build_tools():
         print("✓ Visual C++ Build Tools found")
         return True
     
+    error_msg = "Visual C++ Build Tools not found. Required for building certain Python packages."
     print("❌ Visual C++ Build Tools not found")
     print("\nVisual C++ Build Tools are required to build certain Python packages.")
     print("To install Visual C++ Build Tools:")
@@ -39,6 +79,7 @@ def check_visual_cpp_build_tools():
     print("\nOption 2: Download and install from the official Microsoft website:")
     print("  https://visualstudio.microsoft.com/visual-cpp-build-tools/")
     
+    log_error("Visual C++ Build Tools Check", error_msg)
     return False
 
 def check_rust_compiler():
@@ -49,6 +90,7 @@ def check_rust_compiler():
         print("✓ Rust compiler found")
         return True
     
+    error_msg = "Rust compiler not found. Required for building certain Python packages."
     print("❌ Rust compiler not found")
     if platform.system() == "Windows":
         print("\nTo install Rust on Windows, run:")
@@ -59,6 +101,7 @@ def check_rust_compiler():
         print("  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y")
         print("  source $HOME/.cargo/env")
     
+    log_error("Rust Compiler Check", error_msg)
     return False
 
 def main():
@@ -84,12 +127,26 @@ def main():
         response = input("\nWould you like to create a virtual environment and install Python dependencies? (y/n): ")
         if response.lower() == 'y':
             print("\nCreating virtual environment...")
-            if platform.system() == "Windows":
-                os.system("python -m venv venv")
-                os.system("venv\\Scripts\\activate && pip install -r requirements.txt")
-            else:
-                os.system("python3 -m venv venv")
-                os.system("source venv/bin/activate && pip install -r requirements.txt")
+            try:
+                if platform.system() == "Windows":
+                    venv_result = os.system("python -m venv venv")
+                    if venv_result != 0:
+                        raise Exception(f"Failed to create virtual environment, exit code: {venv_result}")
+                    install_result = os.system("venv\\Scripts\\activate && pip install -r requirements.txt")
+                    if install_result != 0:
+                        raise Exception(f"Failed to install dependencies, exit code: {install_result}")
+                else:
+                    venv_result = os.system("python3 -m venv venv")
+                    if venv_result != 0:
+                        raise Exception(f"Failed to create virtual environment, exit code: {venv_result}")
+                    install_result = os.system("source venv/bin/activate && pip install -r requirements.txt")
+                    if install_result != 0:
+                        raise Exception(f"Failed to install dependencies, exit code: {install_result}")
+            except Exception as e:
+                error_msg = str(e)
+                print(f"\nError during installation: {error_msg}")
+                log_error("Dependency Installation", f"{error_msg}\n{traceback.format_exc()}")
+                print("Please check the install_errors.log file for details.")
             
             print("\nInstallation complete! To run the application:")
             print("1. Activate the virtual environment:")
@@ -106,6 +163,6 @@ def main():
             print("3. Install dependencies: pip install -r requirements.txt")
     else:
         print("\nPlease install the missing dependencies and try again.")
-
+        print("Check the install_errors.log file for detailed error information.")
 if __name__ == "__main__":
     main()
