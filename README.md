@@ -98,19 +98,39 @@ Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Som
 | AI Long Form Content                  | Creates extensive and detailed articles.                                   |
 | AI Essay Writer                       | Produces lengthy essays on various topics, with room for improvement.        |
 | AI Story Writer                       | Constructs narratives and stories based on provided backstories and characters. |
-| AI Email Writer                        | Generates various types of professional letters.                            |
+| AI Professional Email Writer           | Generates various types of professional letters.                |
+| AI Business Email Writer              | Generate various types of business emails.                        |
 | AI Letter Writer                       | Crafts business letters for formal communication.                          |
 | AI LinkedIn Blog Post Generator     | Develops blog posts optimized for sharing on LinkedIn.                       |
-| AI Instagram Caption Generation      | Creates engaging captions for Instagram posts.                              |
 | AI Content Outline Generator       | Generates outlines based on keywords gathered from web research.               |
-
+| AI Product Description Generator   | Generate product description based on provided keyword.                        |
+| AI Google ADs Generator            | Generate Google ads for the provide target keyword.                            |
 ---
 **AI SEO Tools:**
 
 | Tool                                  | Description                                                                 |
 |---------------------------------------|---------------------------------------------------------------------------|
-| AI Content Outline Generator       | Generates outlines based on keywords gathered from web research.               |
 | AI SEO - Generate rich snippet from url | Creates structured data for rich snippets (e.g., reviews, recipes) |
+| AI Analyze On-Page SEO              |  Evaluate and optimize web pages for SEO best practices to improve rankings.  |
+| AI URL SEO Checker                  | Assess URL structure and SEO performance to enhance search engine rankings. |
+| AI Backlinking Tool              |   Discover and build high-quality backlinks using AI-powered analysis and recommendations.  |
+| AI OpenGraph Tags Generator     | Generate OpenGraph tags to optimize content sharing on social media platforms. |
+| AI Image Alt Text Generator         | Automatically generate descriptive alt text for images to improve accessibility and SEO.    |                    
+| AI SEO - Optimize/Resize Image   | Compress and resize images to enhance website performance without compromising quality.  |
+| AI Blog Title Generator             | Generate blog titles based on provided targeted keyword.                      |
+| AI Meta Description Generator       | Generate SEO friendly description on the provided keyword.                   |
+| AI FAQs Generator                   | Generate FAQs based on people also asked for from the web research           |
+---
+**AI Social Tools:**
+
+| Tool                                | Description                                                                 |
+|-------------------------------------|-----------------------------------------------------------------------------|
+| AI X Tweet Generator                  | Generates catchy tweets based on provided keyword.                          |
+| AI Instagram Caption Generation      | Creates engaging captions for Instagram posts.                              |
+| AI Facebook Post Generator           | Creates engaging content for Facebook posts.                                |
+| AI YouTube Title Generator           | Creates clikable titles for YouTube video.                                  |
+| AI YouTube Video Description Generator  | Generate SEO friendly description for YouTube video.                     |
+| AI YouTube Script Generator             | Generate complete YouTube video script based on target keyword and audiences |
 
 **AI Content Planning Tools:**
 
