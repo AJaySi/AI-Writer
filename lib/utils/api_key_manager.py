@@ -353,6 +353,7 @@ def check_all_api_keys():
     
     # Apply cached base styles
     st.markdown(f"<style>{get_base_styles()}</style>", unsafe_allow_html=True)
+    st.markdown(f'<style>{open("lib/workspace/alwrity_ui_styling.css").read()}</style>', unsafe_allow_html=True)
 
     # Use cached configurations
     api_keys = get_api_keys_config()

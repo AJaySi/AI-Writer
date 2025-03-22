@@ -39,29 +39,65 @@ def ai_writers():
 
 
 def content_planning_tools():
-    st.markdown("""**Alwrity content Ideation & Planning** : Provide few keywords to do comprehensive web research.
-             Provide few keywords to get Google, Neural, pytrends analysis. Know keywords, blog titles to target.
-             Generate months long content calendar around given keywords.""")
+    """Content planning tools with enhanced UI and styling"""
     
-    options = [
-        "Keywords Researcher",
-        "Competitor Analysis",
-        "Content Calender Ideator"
-    ]
-    choice = st.radio("Select a content planning tool:", options, index=0, format_func=lambda x: f"🔍 {x}")
+    # Apply custom CSS
+    st.markdown(f'<style>{open("lib/workspace/alwrity_ui_styling.css").read()}</style>', unsafe_allow_html=True)
     
-    if choice == "Keywords Researcher":
+    # Header section with improved styling
+    st.markdown("""
+        <div class="content-header">
+            <h2>🎯 Content Ideation & Planning</h2>
+            <p class="subtitle">
+                Comprehensive web research, keyword analysis, and content calendar generation tool.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Create tabs for different planning tools
+    tabs = st.tabs([
+        "🔍 Keywords Researcher",
+        "📊 Competitor Analysis",
+        "📅 Content Calendar"
+    ])
+    
+    # Keywords Researcher Tab
+    with tabs[0]:
+        st.markdown("""
+            <div class="tool-section">
+                <h3>Keywords Research</h3>
+                <p>Analyze keywords using Google Trends, Neural Analysis, and comprehensive web research.</p>
+            </div>
+        """, unsafe_allow_html=True)
         do_web_research()
-    elif choice == "Competitor Analysis":
+    
+    # Competitor Analysis Tab
+    with tabs[1]:
+        st.markdown("""
+            <div class="tool-section">
+                <h3>Competitor Analysis</h3>
+                <p>Analyze competitor content and identify opportunities in your niche.</p>
+            </div>
+        """, unsafe_allow_html=True)
         competitor_analysis()
-    elif choice == "Content Calender Ideator":
+    
+    # Content Calendar Tab
+    with tabs[2]:
+        st.markdown("""
+            <div class="tool-section">
+                <h3>Content Calendar Generator</h3>
+                <p>Generate a 2-month content calendar with researched blog titles.</p>
+            </div>
+        """, unsafe_allow_html=True)
+        
         plan_keywords = st.text_input(
-            "**Enter Your main Keywords to get 2 months content calendar:**",
-            placeholder="Enter 2-3 main keywords to generate AI content calendar with keyword researched blog titles",
-            help="The keywords are the ones where you would want to generate 50-60 blogs/articles on."
+            "**Enter Your main Keywords**",
+            placeholder="Enter 2-3 main keywords for 50-60 blogs/articles",
+            help="These keywords will be used to generate your content calendar"
         )
-        if st.button("**Ideate Content Calender**"):
+        
+        if st.button("Generate Content Calendar", type="primary", use_container_width=True):
             if plan_keywords:
                 ai_agents_content_planner(plan_keywords)
             else:
-                st.error("Come on, really, Enter some keywords to plan on..")
+                st.error("Please enter some keywords to generate your content calendar.")

@@ -35,15 +35,17 @@ body {
 /* Enhanced Tab styling with dark red gradients */
 .stTabs {
     margin-top: 1rem;
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px;
-    background: linear-gradient(135deg, #EBF8FF, #BEE3F8);
-    border-radius: 12px;
-    padding: 12px;
-    margin-bottom: 25px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    padding: 8px;
+    border-radius: 8px;
 }
 
 .stTabs [data-baseweb="tab"] {
@@ -57,6 +59,12 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
     letter-spacing: 0.3px;
+    background: white;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 600;
+    color: #475569;
+    transition: all 0.2s ease;
 }
 
 .stTabs [data-baseweb="tab"]:hover {
@@ -65,6 +73,8 @@ body {
     border-color: rgba(255, 255, 255, 0.2);
     transform: translateY(-1px);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    background: #f1f5f9;
+    color: #1e293b;
 }
 
 .stTabs [data-baseweb="tab"][aria-selected="true"] {
@@ -73,6 +83,8 @@ body {
     border-color: #DC2626;
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
     position: relative;
+    background: linear-gradient(135deg, #3182ce, #2c5282);
+    color: white;
 }
 
 .stTabs [data-baseweb="tab"][aria-selected="true"]::after {
@@ -488,5 +500,66 @@ select:focus {
 
 select option {
     padding: 10px;
+}
+
+/* Content Planning Tools Styling */
+.content-header {
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.content-header h2 {
+    color: #1e293b;
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.content-header .subtitle {
+    color: #475569;
+    font-size: 1.1rem;
+    line-height: 1.5;
+}
+
+.tool-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e2e8f0;
+}
+
+.tool-section h3 {
+    color: #1e293b;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.tool-section p {
+    color: #475569;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* Button styling */
+.stButton > button {
+    background: linear-gradient(135deg, #3182ce, #2c5282);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.stButton > button:hover {
+    background: linear-gradient(135deg, #2c5282, #1a365d);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
