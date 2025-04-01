@@ -6,6 +6,8 @@ from tenacity import (
     stop_after_attempt,
     wait_random_exponential,
 )
+import openai
+import asyncio
 
 # Configure standard logging
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s-%(levelname)s-%(module)s-%(lineno)d]- %(message)s')
@@ -67,3 +69,71 @@ def deepseek_text_response(prompt, model, temperature, max_tokens, top_p, n, sys
     except Exception as err:
         logger.error(f"DeepSeek error: {err}")
         raise SystemExit from err
+
+async def test_deepseek_api_key(api_key: str) -> tuple[bool, str]:
+    """
+    Test if the provided DeepSeek API key is valid.
+    
+    Args:
+        api_key (str): The DeepSeek API key to test
+        
+    Returns:
+        tuple[bool, str]: A tuple containing (is_valid, message)
+    """
+    try:
+        # Create OpenAI client with DeepSeek base URL
+        client = openai.OpenAI(
+            api_key=api_key,
+            base_url="https://api.deepseek.com/v1"
+        )
+        
+        # Try to list models as a simple API test
+        models = client.models.list()
+        
+        # If we get here, the key is valid
+        return True, "DeepSeek API key is valid"
+        
+    except openai.AuthenticationError:
+        return False, "Invalid DeepSeek API key"
+    except openai.RateLimitError:
+        return False, "Rate limit exceeded. Please try again later."
+    except Exception as e:
+        return False, f"Error testing DeepSeek API key: {str(e)}"
+
+def deepseek_text_gen(prompt, model="deepseek-chat", temperature=0.7, max_tokens=2048):
+    """
+    Generate text using DeepSeek's API.
+    
+    Args:
+        prompt (str): The input text to generate completion for
+        model (str, optional): Model to use. Defaults to "deepseek-chat"
+        temperature (float, optional): Controls randomness. Defaults to 0.7
+        max_tokens (int, optional): Maximum number of tokens to generate. Defaults to 2048
+        
+    Returns:
+        str: The generated text completion
+    """
+    try:
+        # Create OpenAI client with DeepSeek base URL
+        client = openai.OpenAI(
+            api_key=os.getenv('DEEPSEEK_API_KEY'),
+            base_url="https://api.deepseek.com/v1"
+        )
+        
+        # Generate chat completion
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{
+                "role": "user",
+                "content": prompt
+            }],
+            temperature=temperature,
+            max_tokens=max_tokens
+        )
+        
+        # Return the generated text
+        return response.choices[0].message.content
+        
+    except Exception as e:
+        logger.error(f"Error in DeepSeek text generation: {e}")
+        return str(e)

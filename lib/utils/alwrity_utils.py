@@ -8,7 +8,7 @@ from lib.ai_writers.keywords_to_blog_streamlit import write_blog_from_keywords
 from lib.ai_writers.speech_to_blog.main_audio_to_blog import generate_audio_blog
 from lib.ai_writers.long_form_ai_writer import long_form_generator
 from lib.ai_writers.ai_news_article_writer import ai_news_generation
-from lib.ai_writers.ai_agents_crew_writer import ai_agents_writers
+#from lib.ai_writers.ai_agents_crew_writer import ai_agents_writers
 from lib.ai_writers.ai_financial_writer import write_basic_ta_report
 from lib.ai_writers.facebook_ai_writer import facebook_post_writer
 from lib.ai_writers.linkedin_ai_writer import linked_post_writer
@@ -24,8 +24,8 @@ import tiktoken
 import openai
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from lib.utils.voice_processing import record_voice
-from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
-from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
+#from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
+from lib.gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
 def is_youtube_link(text):
@@ -292,9 +292,9 @@ def ai_agents_team():
             if plan_keywords and len(plan_keywords.split()) >= 2:
                 with st.spinner("Get Content Plan..."):
                     try:
-                        plan_content = ai_agents_content_planner(plan_keywords)
-                        st.success(f"Successfully generated content plan for: {plan_keywords}")
-                        st.markdown(plan_content)
+                        #plan_content = ai_agents_content_planner(plan_keywords)
+                        st.success(f"Coming soon: Content plan for: {plan_keywords}")
+                        #st.markdown(plan_content)
                     except Exception as err:
                         st.error(f"Failed to generate content plan: {err}")
             else:

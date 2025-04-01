@@ -1,3 +1,5 @@
+"""Webpage content analysis tool."""
+
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
@@ -7,8 +9,7 @@ from nltk.tokenize import word_tokenize
 from nltk.util import ngrams
 from langchain.llms import OpenAI
 from langchain.chains import ConversationChain
-
-st.set_page_config(layout="wide", page_title="Web Content Analyzer - Dive Deep with AI!", page_icon=":mag_right:")
+from urllib.parse import urlparse
 
 st.title("🧠 Web Content Analyzer: Uncover Hidden Insights with AI! 🧠")
 st.write("""
@@ -39,19 +40,36 @@ if st.button("Analyze with AI!"):
             st.stop()
 
         try:
+            # Validate URL
+            parsed_url = urlparse(url)
+            if not parsed_url.scheme:
+                url = "https://" + url
+            
+            # Fetch webpage content
             response = requests.get(url)
-            response.raise_for_status()  
-
-            soup = BeautifulSoup(response.content, 'html.parser')
-            body_txt = soup.find('body').text
-
-            words = [w.lower() for w in word_tokenize(body_txt)]
-            stopw = nltk.corpus.stopwords.words(language)
-
-            final_words = [w for w in words if w not in stopw and w.isalpha()]
-
+            response.raise_for_status()
+            
+            # Parse HTML
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Extract content
+            title = soup.title.string if soup.title else "No title found"
+            meta_description = soup.find('meta', {'name': 'description'})
+            description = meta_description['content'] if meta_description else "No description found"
+            
+            # Display results
+            st.subheader("Page Analysis")
+            st.metric("Title", title)
+            st.metric("Description", description)
+            
+            # Content statistics
+            text_content = soup.get_text()
+            words = text_content.split()
+            st.metric("Word Count", len(words))
+            st.metric("Unique Words", len(set(words)))
+            
             # Frequency analysis (same as before)
-            freq = nltk.FreqDist(final_words)
+            freq = nltk.FreqDist(words)
             keywords = freq.most_common(10)  
             df_keywords = pd.DataFrame(keywords, columns=("Keyword", "Frequency"))
 
@@ -60,19 +78,19 @@ if st.button("Analyze with AI!"):
             st.write("  ")
 
             st.markdown("**Main Theme:**")
-            ai_theme = conversation_chain.run(f"What is the main theme or topic of this content? \n {body_txt}")
+            ai_theme = conversation_chain.run(f"What is the main theme or topic of this content? \n {text_content}")
             st.markdown(f"  {ai_theme}")
 
             st.write("  ")
 
             st.markdown("**Suggested Keywords:**")
-            ai_keywords = conversation_chain.run(f"What other relevant keywords might be helpful to target for this content? \n {body_txt}")
+            ai_keywords = conversation_chain.run(f"What other relevant keywords might be helpful to target for this content? \n {text_content}")
             st.markdown(f"  {ai_keywords}")
 
             st.write("  ")
 
             st.markdown("**Content Improvement:**")
-            ai_improvement = conversation_chain.run(f"What could be done to improve this content for clarity, engagement, or SEO? \n {body_txt}")
+            ai_improvement = conversation_chain.run(f"What could be done to improve this content for clarity, engagement, or SEO? \n {text_content}")
             st.markdown(f"  {ai_improvement}")
 
             # --- Display Frequency Results ---
@@ -94,3 +112,5 @@ if st.button("Analyze with AI!"):
             """)
         except requests.exceptions.RequestException as e:
             st.error(f"Oops! Something went wrong fetching the URL.  Error: {e}")
+        except Exception as e:
+            st.error(f"An error occurred: {e}")

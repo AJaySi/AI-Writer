@@ -18,6 +18,12 @@ from tenacity import (
     wait_random_exponential,
 )
 
+import asyncio
+
+# Configure standard logging
+import logging
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s-%(levelname)s-%(module)s-%(lineno)d]- %(message)s')
+logger = logging.getLogger(__name__)
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
 def gemini_text_response(prompt, temperature, top_p, n, max_tokens, system_prompt):
@@ -96,3 +102,65 @@ def gemini_text_response(prompt, temperature, top_p, n, max_tokens, system_promp
 #            return response.text
 #    except Exception as err:
 #        logger.error(f"Failed to get SEO METADATA from Gemini: {err}. Retrying.")
+
+async def test_gemini_api_key(api_key: str) -> tuple[bool, str]:
+    """
+    Test if the provided Gemini API key is valid.
+    
+    Args:
+        api_key (str): The Gemini API key to test
+        
+    Returns:
+        tuple[bool, str]: A tuple containing (is_valid, message)
+    """
+    try:
+        # Configure Gemini with the provided key
+        genai.configure(api_key=api_key)
+        
+        # Try to list models as a simple API test
+        models = genai.list_models()
+        
+        # Check if Gemini Pro is available
+        if any(model.name == "gemini-pro" for model in models):
+            return True, "Gemini API key is valid"
+        else:
+            return False, "Gemini Pro model not available with this API key"
+        
+    except Exception as e:
+        return False, f"Error testing Gemini API key: {str(e)}"
+
+def gemini_pro_text_gen(prompt, temperature=0.7, top_p=0.9, top_k=40, max_tokens=2048):
+    """
+    Generate text using Google's Gemini Pro model.
+    
+    Args:
+        prompt (str): The input text to generate completion for
+        temperature (float, optional): Controls randomness. Defaults to 0.7
+        top_p (float, optional): Controls diversity. Defaults to 0.9
+        top_k (int, optional): Controls vocabulary size. Defaults to 40
+        max_tokens (int, optional): Maximum number of tokens to generate. Defaults to 2048
+        
+    Returns:
+        str: The generated text completion
+    """
+    try:
+        # Configure the model
+        model = genai.GenerativeModel('gemini-pro')
+        
+        # Generate content
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=temperature,
+                top_p=top_p,
+                top_k=top_k,
+                max_output_tokens=max_tokens,
+            )
+        )
+        
+        # Return the generated text
+        return response.text
+        
+    except Exception as e:
+        logger.error(f"Error in Gemini Pro text generation: {e}")
+        return str(e)

@@ -24,14 +24,14 @@
 #            Scrape the website for contact details (email addresses, contact forms, etc.).
 #            Use natural language processing (NLP) to understand the type of content on the website and who the contact person might be (webmaster, editor, or guest post manager).
 #        Website Content Understanding:
-#            Scrape a summary of each website’s content (e.g., their blog topics, categories, and tone) to personalize the email based on the site's focus.
+#            Scrape a summary of each website's content (e.g., their blog topics, categories, and tone) to personalize the email based on the site's focus.
 #
 #    Personalized Outreach:
 #        AI Email Composition:
 #            Compose personalized outreach emails based on:
 #                The scraped data (website content, topic focus, etc.).
 #                The user's input (what kind of guest post or content they want to contribute).
-#            Example: “Hi [Webmaster Name], I noticed that your site [Site Name] features high-quality content about [Topic]. I would love to contribute a guest post on [Proposed Topic] in exchange for a backlink.”
+#            Example: "Hi [Webmaster Name], I noticed that your site [Site Name] features high-quality content about [Topic]. I would love to contribute a guest post on [Proposed Topic] in exchange for a backlink."
 #
 #    Automated Email Sending:
 #        Review Emails (Optional HITL):
@@ -50,7 +50,7 @@
 #        Automated Responses:
 #            If a website replies positively, AI can respond with predefined follow-up emails (e.g., proposing topics, confirming submission deadlines).
 #        Follow-up Reminders:
-#            If there’s no reply, the system can send polite follow-up reminders at pre-set intervals.
+#            If there's no reply, the system can send polite follow-up reminders at pre-set intervals.
 #
 #Key Features:
 #
@@ -71,7 +71,7 @@
 #
 #    Lead Tracking and Management:
 #        Track all emails sent, monitor replies, and keep track of successful backlinks.
-#        Log each lead’s status (e.g., emailed, responded, no reply) to manage future interactions.
+#        Log each lead's status (e.g., emailed, responded, no reply) to manage future interactions.
 #
 #    Multiple Keywords/Queries:
 #        Allow users to run the same process for a batch of keywords, automatically generating relevant search queries for each.
@@ -89,13 +89,13 @@
 #        Prioritize high-authority websites to maximize the impact of backlinks.
 #
 #    Spam Detection:
-#        Use AI to detect and avoid spammy or low-quality websites that might harm the user’s SEO.
+#        Use AI to detect and avoid spammy or low-quality websites that might harm the user's SEO.
 #
 #    Contact Form Auto-Fill:
 #        If the site only offers a contact form (without email), automatically fill and submit the form with AI-generated content.
 #
 #    Dynamic Content Suggestions:
-#        Suggest guest post topics based on the website’s focus, using NLP to analyze the site's existing content.
+#        Suggest guest post topics based on the website's focus, using NLP to analyze the site's existing content.
 #
 #    Bulk Email Support:
 #        Allow users to bulk-send outreach emails while still personalizing each message for scalability.
@@ -130,7 +130,7 @@
 
 
 import sys
-from googlesearch import search
+# from googlesearch import search  # Temporarily disabled for future enhancement
 from loguru import logger
 from lib.ai_web_researcher.firecrawl_web_crawler import scrape_website
 from lib.gpt_providers.text_generation.main_text_generation import llm_text_gen
@@ -180,48 +180,32 @@ def find_backlink_opportunities(keyword):
     search_queries = generate_search_queries(keyword)
     results = []
 
-    for query in search_queries:
-        urls = search_for_urls(query)
-        for url in urls:
-            website_data = scrape_website(url)
-            logger.info(f"Scraped Website content for {url}: {website_data}")
-            if website_data:
-                contact_info = extract_contact_info(website_data)
-                logger.info(f"Contact details found for {url}: {contact_info}")
+    # Temporarily disabled Google search functionality
+    # for query in search_queries:
+    #     urls = search_for_urls(query)
+    #     for url in urls:
+    #         website_data = scrape_website(url)
+    #         logger.info(f"Scraped Website content for {url}: {website_data}")
+    #         if website_data:
+    #             contact_info = extract_contact_info(website_data)
+    #             logger.info(f"Contact details found for {url}: {contact_info}")
+    
+    # Placeholder return for now
+    return []
 
-                # AI-driven insights using website data
-                insights_prompt = f"""
-You are an expert in analyzing website content. Below is the content of a website. Please analyze it and provide actionable insights for a personalized guest post outreach:
-
-Website Content:
-{website_data.get("content_summary", "")}
-
-1. **Website Focus**: What is the primary topic, audience, and tone?
-2. **Guest Posting Guidelines**: Are there any guest post preferences (content type, length, etc.)?
-3. **Suggested Topics**: Based on the site’s content, what topics might align well?
-4. **Personalization Tips**: How can we make the outreach more tailored to this site?
-"""
-
-                insights = llm_text_gen(insights_prompt)
-
-                detailed_result = {
-                    "url": url,
-                    "metadata": {
-                        "title": website_data.get("metadata", {}).get("title", ""),
-                        "description": website_data.get("metadata", {}).get("description", ""),
-                        "keywords": website_data.get("metadata", {}).get("keywords", []),
-                    },
-                    "content_summary": website_data.get("content_summary", ""),
-                    "contact_info": contact_info,
-                    "insights": insights,
-                    "backlink_opportunity": {
-                        "query": query,
-                        "context": "Guest post opportunity"
-                    }
-                }
-                results.append(detailed_result)
-
-    return results
+def search_for_urls(query):
+    """
+    Search for URLs using Google search.
+    
+    Args:
+        query (str): The search query.
+        
+    Returns:
+        list: List of URLs found.
+    """
+    # Temporarily disabled Google search functionality
+    # return list(search(query, num_results=10))
+    return []
 
 def compose_personalized_email(website_data, insights, user_proposal):
     """
@@ -299,24 +283,6 @@ def send_email(smtp_server, smtp_port, smtp_user, smtp_password, to_email, subje
     except Exception as e:
         logger.error(f"Failed to send email to {to_email}: {e}")
         return False
-
-def search_for_urls(query):
-    """
-    Search for URLs based on a query using Firecrawl.
-
-    Args:
-        query (str): The search query.
-
-    Returns:
-        list: A list of URLs.
-    """
-    # We can use Firecrawl, which also provides AI extraction.
-    try:
-        google_search_result = search(query, max_results=5)
-        print(google_search_result)
-        return google_search_result
-    except Exception as err:
-        logger.error(f"Failed to do GoogleSearch: {err}")
 
 def extract_contact_info(website_data):
     """

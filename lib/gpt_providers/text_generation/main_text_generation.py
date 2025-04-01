@@ -1,6 +1,6 @@
 import os
 import sys
-import configparser
+import json
 from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv(Path('../.env'))
@@ -28,10 +28,20 @@ def llm_text_gen(prompt):
         str: Generated text based on the prompt.
     """
     try:
-        # Read the config param to create system instruction for the LLM.
-        gpt_provider, model, temperature, max_tokens, top_p, n, fp = read_return_config_section('llm_config')
-        blog_tone, blog_demographic, blog_type, blog_language, \
+        logger.info("[llm_text_gen] Starting text generation")
+        logger.debug(f"[llm_text_gen] Prompt length: {len(prompt)} characters")
+        
+        try:
+            # Read the config param to create system instruction for the LLM.
+            gpt_provider, model, temperature, max_tokens, top_p, n, fp = read_return_config_section('llm_config')
+            blog_tone, blog_demographic, blog_type, blog_language, \
             blog_output_format, blog_length = read_return_config_section('blog_characteristics')
+            
+            logger.debug(f"[llm_text_gen] Config loaded successfully - Provider: {gpt_provider}, Model: {model}")
+            
+        except Exception as err:
+            logger.error(f"[llm_text_gen] Error reading config params: {err}")
+            raise err
 
         # Construct the system prompt with the sidebar config params.
         system_instructions = f"""You are a highly skilled content writer with a knack for creating engaging and informative content. 
@@ -115,7 +125,6 @@ def check_gpt_provider(gpt_provider):
         gpt_provider = env_gpt_provider
 
     return gpt_provider
-
 
 
 def get_api_key(gpt_provider):

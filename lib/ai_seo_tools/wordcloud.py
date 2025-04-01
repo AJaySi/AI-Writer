@@ -1,3 +1,5 @@
+"""Word cloud generation tool."""
+
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
@@ -5,8 +7,8 @@ import pandas as pd
 import nltk
 from nltk.tokenize import word_tokenize
 from nltk.util import ngrams
-
-st.set_page_config(layout="wide", page_title="Web Content Analyzer - Dive Into Your Words!", page_icon=":mag:")
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
 
 st.title("🔎 Web Content Analyzer:  Uncover Your Words' Power! 🔎")
 st.write("""
@@ -86,3 +88,26 @@ if st.button("Analyze Your Content!"):
         
         except requests.exceptions.RequestException as e:
             st.error(f"Oops! Something went wrong fetching the URL.  Error: {e}")
+
+def generate_wordcloud(text):
+    """Generate a word cloud from the given text."""
+    if not text:
+        st.warning("Please enter some text to generate a word cloud.")
+        return
+    
+    # Create and generate a word cloud image
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
+    
+    # Display the word cloud
+    st.subheader("Word Cloud Visualization")
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.imshow(wordcloud, interpolation='bilinear')
+    ax.axis('off')
+    st.pyplot(fig)
+    
+    # Add some statistics
+    st.subheader("Text Statistics")
+    words = text.split()
+    unique_words = set(words)
+    st.metric("Total Words", len(words))
+    st.metric("Unique Words", len(unique_words))
