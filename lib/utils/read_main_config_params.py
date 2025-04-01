@@ -3,6 +3,8 @@ import sys
 import json
 from pathlib import Path
 from loguru import logger
+import yaml
+
 logger.remove()
 logger.add(sys.stdout,
         colorize=True,
@@ -30,7 +32,6 @@ def read_return_config_section(config_section):
         with open(config_path, 'r', encoding="utf-8") as file:
             config = json.load(file)
         
-
         if config_section == 'system_prompt':
             prompt_file_path = os.path.join(os.getcwd(), 'lib', 'workspace', 'alwrity_prompts', 'alwrity_system_instruction.prompts')
             with open(prompt_file_path, 'r') as file:
@@ -80,4 +81,31 @@ def read_return_config_section(config_section):
         raise
     except Exception as err:
         logger.error(f"An unexpected error occurred: {err}")
+        raise
+
+def get_personalization_settings():
+    """Get personalization settings from ALWRITY_CONFIG."""
+    try:
+        config_path = Path(os.environ["ALWRITY_CONFIG"])
+        config = yaml.safe_load(config_path.read_text())
+        return config.get('personalization', {})
+    except Exception as e:
+        logger.error(f"Error reading personalization settings: {str(e)}")
+        return {}
+
+def save_personalization_settings(settings):
+    """Save personalization settings to ALWRITY_CONFIG."""
+    try:
+        config_path = Path(os.environ["ALWRITY_CONFIG"])
+        config = yaml.safe_load(config_path.read_text())
+        
+        # Update personalization section
+        config['personalization'] = settings
+        
+        # Save back to file
+        config_path.write_text(yaml.dump(config, default_flow_style=False))
+        logger.info("Personalization settings saved successfully")
+        
+    except Exception as e:
+        logger.error(f"Error saving personalization settings: {str(e)}")
         raise

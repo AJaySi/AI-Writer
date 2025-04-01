@@ -2,7 +2,7 @@ import os
 import json
 import streamlit as st
 from tenacity import retry, stop_after_attempt, wait_random_exponential
-import cloudscraper
+import crawl4ai
 from bs4 import BeautifulSoup
 import requests
 import csv
@@ -18,7 +18,7 @@ from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 def fetch_and_parse_html(url):
     """
-    Fetches HTML content from the given URL using CloudScraper and parses it with BeautifulSoup.
+    Fetches HTML content from the given URL using crawl4ai and parses it with BeautifulSoup.
 
     Args:
         url (str): The URL of the webpage to fetch.
@@ -27,9 +27,8 @@ def fetch_and_parse_html(url):
         BeautifulSoup: Parsed HTML content.
     """
     try:
-        scraper = cloudscraper.create_scraper()
-        html = scraper.get(url)
-        soup = BeautifulSoup(html.text, 'html.parser')
+        html = crawl4ai.get(url)
+        soup = BeautifulSoup(html, 'html.parser')
         return soup
     except Exception as e:
         st.error(f"⚠️ Error fetching or parsing HTML: {e}")

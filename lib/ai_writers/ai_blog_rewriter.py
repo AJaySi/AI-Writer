@@ -1,3 +1,5 @@
+"""AI-powered blog rewriter tool."""
+
 import streamlit as st
 from bs4 import BeautifulSoup
 import requests
@@ -9,12 +11,6 @@ from exa_py import Exa
 generator = pipeline('text-generation', model='gpt-3')  # Example, adjust based on your model
 
 def main():
-    st.set_page_config(
-        page_title="AI Blog Content Refresher",
-        page_icon=":pencil2:",
-        layout="wide"
-    )
-
     st.markdown("<h1 style='text-align: center; color: #1565C0;'>AI Blog Content Refresher</h1>", unsafe_allow_html=True)
     st.markdown("<h3 style='text-align: center;'>Keep your blog fresh and engaging with AI!</h3>", unsafe_allow_html=True)
 

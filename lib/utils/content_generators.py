@@ -5,7 +5,7 @@ from lib.utils.alwrity_utils import (
 )
 from lib.ai_writers.ai_story_writer.story_writer import story_input_section
 from lib.ai_writers.ai_product_description_writer import write_ai_prod_desc
-from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
+#from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
 from lib.utils.seo_tools import ai_seo_tools
 
 
@@ -62,6 +62,7 @@ def content_planning_tools():
         )
         if st.button("**Ideate Content Calender**"):
             if plan_keywords:
-                ai_agents_content_planner(plan_keywords)
+                #ai_agents_content_planner(plan_keywords)
+                st.header("COming Soon.")
             else:
                 st.error("Come on, really, Enter some keywords to plan on..")

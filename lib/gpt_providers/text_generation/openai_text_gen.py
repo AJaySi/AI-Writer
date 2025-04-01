@@ -1,6 +1,7 @@
 import os
 import time #IWish
 import openai
+import asyncio
 
 # Configure standard logging
 import logging
@@ -12,6 +13,33 @@ from tenacity import (
     wait_random_exponential,
 )  # for exponential backoff
  
+
+async def test_openai_api_key(api_key: str) -> tuple[bool, str]:
+    """
+    Test if the provided OpenAI API key is valid.
+    
+    Args:
+        api_key (str): The OpenAI API key to test
+        
+    Returns:
+        tuple[bool, str]: A tuple containing (is_valid, message)
+    """
+    try:
+        # Create OpenAI client with the provided key
+        client = openai.OpenAI(api_key=api_key)
+        
+        # Try to list models as a simple API test
+        models = client.models.list()
+        
+        # If we get here, the key is valid
+        return True, "OpenAI API key is valid"
+        
+    except openai.AuthenticationError:
+        return False, "Invalid OpenAI API key"
+    except openai.RateLimitError:
+        return False, "Rate limit exceeded. Please try again later."
+    except Exception as e:
+        return False, f"Error testing OpenAI API key: {str(e)}"
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
 def openai_chatgpt(prompt, model, temperature, max_tokens, top_p, n, fp, system_prompt):
