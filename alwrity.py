@@ -1,9 +1,49 @@
 import streamlit as st
+
+# Set page config - must be the first Streamlit command
+st.set_page_config(
+    page_title="AI Writer - Content Generation Platform",
+    page_icon="✍️",
+    layout="wide",
+    initial_sidebar_state="collapsed",  # Start with collapsed sidebar
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': None
+    }
+)
+
+# Add CSS to hide sidebar during setup
+st.markdown("""
+    <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        .stDeployButton {display:none;}
+        /* Hide sidebar during setup */
+        [data-testid="stSidebar"] {
+            visibility: hidden !important;
+            width: 0px !important;
+            position: fixed !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 import os
 import json
 import base64
 import logging
 from datetime import datetime
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),  # Output to console
+        #logging.FileHandler('alwrity.log')  # Output to file
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Set page config - must be the first Streamlit command
 st.set_page_config(
