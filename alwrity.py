@@ -4,6 +4,7 @@ import json
 import base64
 import logging
 from datetime import datetime
+<<<<<<< HEAD
 import os
 import json
 import base64
@@ -59,13 +60,15 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+=======
+>>>>>>> b48a3b1 (Google Search Grounded results, Content Calendar Ideator, Competitor Analysis, and Keyword Researcher)
 
 # Set page config - must be the first Streamlit command
 st.set_page_config(
     page_title="AI Writer - Content Generation Platform",
     page_icon="✍️",
     layout="wide",
-    initial_sidebar_state="collapsed",  # Start with collapsed sidebar
+    initial_sidebar_state="expanded",  # Changed from collapsed to expanded
     menu_items={
         'Get Help': None,
         'Report a bug': None,
@@ -73,18 +76,29 @@ st.set_page_config(
     }
 )
 
-# Add CSS to hide sidebar during setup
-st.markdown("""
+# Load and apply custom CSS
+with open('lib/workspace/alwrity_ui_styling.css', 'r') as f:
+    css = f.read()
+    
+st.markdown(f"""
     <style>
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        .stDeployButton {display:none;}
-        /* Hide sidebar during setup */
-        [data-testid="stSidebar"] {
+        /* Hide Streamlit header elements */
+        header {{
             visibility: hidden !important;
-            width: 0px !important;
-            position: fixed !important;
-        }
+            height: 0px !important;
+        }}
+        
+        /* Hide Deploy button */
+        .stDeployButton {{
+            display: none !important;
+        }}
+        
+        /* Adjust top padding since we removed the header */
+        .main .block-container {{
+            padding-top: 1rem !important;
+        }}
+        
+        {css}
     </style>
 """, unsafe_allow_html=True)
 
@@ -111,18 +125,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from lib.utils.config_manager import save_config
 from lib.utils.ui_setup import setup_ui
-from lib.utils.alwrity_sidebar import sidebar_configuration
 from lib.utils.api_key_manager.api_key_manager import APIKeyManager, render
 from lib.utils.api_key_manager.validation import check_all_api_keys
 from dotenv import load_dotenv
-from lib.utils.content_generators import ai_writers, content_planning_tools, blog_from_keyword, story_input_section, essay_writer, ai_news_writer, ai_finance_ta_writer, write_ai_prod_desc, do_web_research, competitor_analysis
-from lib.utils.seo_tools import ai_seo_tools
-from lib.utils.ui_setup import setup_ui, setup_tabs
-from lib.utils.alwrity_utils import ai_agents_team, ai_social_writer
-from lib.utils.file_processor import load_image, read_prompts, write_prompts
-from lib.utils.voice_processing import record_voice
+from lib.utils.content_generators import blog_from_keyword, story_input_section, essay_writer, ai_news_writer, ai_finance_ta_writer, write_ai_prod_desc, do_web_research, competitor_analysis
+from lib.utils.ui_setup import setup_ui, setup_alwrity_ui
+
 
 def process_folder_for_rag(folder_path):
     """Placeholder for the process_folder_for_rag function."""
@@ -160,36 +169,110 @@ def main():
     # Check API keys and show setup if needed
     if not check_all_api_keys(api_key_manager):
         logger.info("API keys not verified")
+        # Add CSS to hide sidebar during setup
+        st.markdown("""
+        <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            .stDeployButton {display:none;}
+            /* Hide sidebar during setup */
+            [data-testid="stSidebar"] {
+                visibility: hidden !important;
+                width: 0px !important;
+                position: fixed !important;
+            }
+        </style>
+        """, unsafe_allow_html=True)
         render(api_key_manager)
         return
     else:
         logger.info("All API keys verified")
-        # Remove the CSS that hides the sidebar
+        # Remove the CSS that hides the sidebar and ensure it's expanded
         st.markdown("""
             <style>
                 #MainMenu {visibility: visible;}
                 footer {visibility: visible;}
                 .stDeployButton {display:block;}
+                
+                /* Sidebar styling */
                 [data-testid="stSidebar"] {
                     visibility: visible !important;
-                    width: 250px !important;
                     position: relative !important;
+                    transition: width 0.3s ease-in-out;
                 }
+                
+                /* Expanded state */
                 [data-testid="stSidebar"][aria-expanded="true"] {
-                    width: 250px !important;
+                    width: 288px !important;
+                    margin-left: 0 !important;
                 }
+                
+                /* Collapsed state */
                 [data-testid="stSidebar"][aria-expanded="false"] {
-                    width: 250px !important;
+                    width: 0 !important;
+                    margin-left: 0 !important;
                 }
+                
+                /* Main content area adjustments */
                 .main .block-container {
-                    padding-left: 2rem;
+                    padding-left: 2rem !important;
+                    padding-right: 2rem !important;
+                    max-width: none;
+                }
+                
+                /* Ensure content reflows when sidebar is collapsed */
+                @media (max-width: 768px) {
+                    .main .block-container {
+                        padding-left: 1rem !important;
+                        padding-right: 1rem !important;
+                    }
+                }
+            </style>
+            <script>
+                // Force sidebar to be expanded initially
+                document.addEventListener('DOMContentLoaded', function() {
+                    const sidebar = document.querySelector('[data-testid="stSidebar"]');
+                    if (sidebar) {
+                        sidebar.setAttribute('aria-expanded', 'true');
+                        sidebar.style.transition = 'width 0.3s ease-in-out';
+                        
+                        // Handle sidebar content
+                        const sidebarContent = sidebar.querySelector('.css-1d391kg');
+                        if (sidebarContent) {
+                            sidebarContent.style.width = sidebar.getAttribute('aria-expanded') === 'true' ? '288px' : '0px';
+                            sidebarContent.style.display = 'block';
+                            sidebarContent.style.transition = 'width 0.3s ease-in-out';
+                        }
+                        
+                        // Add event listener for sidebar toggle
+                        const toggleButton = document.querySelector('button[kind="header"]');
+                        if (toggleButton) {
+                            toggleButton.addEventListener('click', function() {
+                                const isExpanded = sidebar.getAttribute('aria-expanded') === 'true';
+                                if (sidebarContent) {
+                                    sidebarContent.style.width = isExpanded ? '0px' : '288px';
+                                }
+                            });
+                        }
+                    }
+                });
+            </script>
+        """, unsafe_allow_html=True)
+        
+        # Set session state to ensure sidebar stays expanded
+        if 'sidebar_expanded' not in st.session_state:
+            st.session_state.sidebar_expanded = True
+            
+        # Force sidebar state
+        st.sidebar.markdown("""
+            <style>
+                [data-testid="stSidebar"] {
+                    width: 288px !important;
                 }
             </style>
         """, unsafe_allow_html=True)
-        
-        setup_environment_paths()
-        sidebar_configuration()
-        setup_tabs()
+            
+        setup_alwrity_ui()
 
 
 def setup_environment_paths():
