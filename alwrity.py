@@ -1,11 +1,16 @@
 import streamlit as st
+import os
+import json
+import base64
+import logging
+from datetime import datetime
 
 # Set page config - must be the first Streamlit command
 st.set_page_config(
     page_title="AI Writer - Content Generation Platform",
     page_icon="✍️",
     layout="wide",
-    initial_sidebar_state="collapsed",  # Start with collapsed sidebar
+    initial_sidebar_state="expanded",  # Changed from collapsed to expanded
     menu_items={
         'Get Help': None,
         'Report a bug': None,
@@ -13,26 +18,31 @@ st.set_page_config(
     }
 )
 
-# Add CSS to hide sidebar during setup
-st.markdown("""
+# Load and apply custom CSS
+with open('lib/workspace/alwrity_ui_styling.css', 'r') as f:
+    css = f.read()
+    
+st.markdown(f"""
     <style>
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        .stDeployButton {display:none;}
-        /* Hide sidebar during setup */
-        [data-testid="stSidebar"] {
+        /* Hide Streamlit header elements */
+        header {{
             visibility: hidden !important;
-            width: 0px !important;
-            position: fixed !important;
-        }
+            height: 0px !important;
+        }}
+        
+        /* Hide Deploy button */
+        .stDeployButton {{
+            display: none !important;
+        }}
+        
+        /* Adjust top padding since we removed the header */
+        .main .block-container {{
+            padding-top: 1rem !important;
+        }}
+        
+        {css}
     </style>
 """, unsafe_allow_html=True)
-
-import os
-import json
-import base64
-import logging
-from datetime import datetime
 
 # Configure logging
 logging.basicConfig(
