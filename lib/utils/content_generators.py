@@ -101,6 +101,6 @@ def content_planning_tools():
         if st.button("**Ideate Content Calendar**"):
             if plan_keywords:
                 #ai_agents_content_planner(plan_keywords)
-                st.header("COming Soon.")
+                st.header("Coming Soon.")
             else:
                 st.error("Come on, really, Enter some keywords to plan on..")
