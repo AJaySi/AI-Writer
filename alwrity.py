@@ -64,28 +64,7 @@ from lib.utils.ui_setup import setup_ui
 from lib.utils.api_key_manager.api_key_manager import APIKeyManager, render
 from lib.utils.api_key_manager.validation import check_all_api_keys
 from dotenv import load_dotenv
-from lib.utils.content_generators import blog_from_keyword, story_input_section, essay_writer, ai_news_writer, ai_finance_ta_writer, write_ai_prod_desc, do_web_research, competitor_analysis
 from lib.utils.ui_setup import setup_ui, setup_alwrity_ui
-
-
-def process_folder_for_rag(folder_path):
-    """Placeholder for the process_folder_for_rag function."""
-    logger.info(f"Processing folder for RAG: {folder_path}")
-    st.write(f"This is a placeholder for processing the folder: {folder_path}")
-
-
-def save_config(config):
-    """
-    Saves the provided configuration dictionary to a JSON file specified by the environment variable.
-    """
-    try:
-        logger.debug(f"Saving configuration to {os.getenv('ALWRITY_CONFIG')}")
-        with open(os.getenv("ALWRITY_CONFIG"), "w") as config_file:
-            json.dump(config, config_file, indent=4)
-        logger.info("Configuration saved successfully")
-    except Exception as e:
-        logger.error(f"Error saving configuration: {str(e)}", exc_info=True)
-        st.error(f"An error occurred while saving the configuration: {e}")
 
 
 def main():
