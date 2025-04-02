@@ -1,11 +1,16 @@
 import streamlit as st
+import os
+import json
+import base64
+import logging
+from datetime import datetime
 
 # Set page config - must be the first Streamlit command
 st.set_page_config(
     page_title="AI Writer - Content Generation Platform",
     page_icon="✍️",
     layout="wide",
-    initial_sidebar_state="collapsed",  # Start with collapsed sidebar
+    initial_sidebar_state="expanded",  # Changed from collapsed to expanded
     menu_items={
         'Get Help': None,
         'Report a bug': None,
@@ -13,26 +18,31 @@ st.set_page_config(
     }
 )
 
-# Add CSS to hide sidebar during setup
-st.markdown("""
+# Load and apply custom CSS
+with open('lib/workspace/alwrity_ui_styling.css', 'r') as f:
+    css = f.read()
+    
+st.markdown(f"""
     <style>
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        .stDeployButton {display:none;}
-        /* Hide sidebar during setup */
-        [data-testid="stSidebar"] {
+        /* Hide Streamlit header elements */
+        header {{
             visibility: hidden !important;
-            width: 0px !important;
-            position: fixed !important;
-        }
+            height: 0px !important;
+        }}
+        
+        /* Hide Deploy button */
+        .stDeployButton {{
+            display: none !important;
+        }}
+        
+        /* Adjust top padding since we removed the header */
+        .main .block-container {{
+            padding-top: 1rem !important;
+        }}
+        
+        {css}
     </style>
 """, unsafe_allow_html=True)
-
-import os
-import json
-import base64
-import logging
-from datetime import datetime
 
 # Configure logging
 logging.basicConfig(
@@ -45,18 +55,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from lib.utils.config_manager import save_config
 from lib.utils.ui_setup import setup_ui
-from lib.utils.alwrity_sidebar import sidebar_configuration
 from lib.utils.api_key_manager.api_key_manager import APIKeyManager, render
 from lib.utils.api_key_manager.validation import check_all_api_keys
 from dotenv import load_dotenv
-from lib.utils.content_generators import ai_writers, content_planning_tools, blog_from_keyword, story_input_section, essay_writer, ai_news_writer, ai_finance_ta_writer, write_ai_prod_desc, do_web_research, competitor_analysis
-from lib.utils.seo_tools import ai_seo_tools
-from lib.utils.ui_setup import setup_ui, setup_tabs
-from lib.utils.alwrity_utils import ai_agents_team, ai_social_writer
-from lib.utils.file_processor import load_image, read_prompts, write_prompts
-from lib.utils.voice_processing import record_voice
+from lib.utils.content_generators import blog_from_keyword, story_input_section, essay_writer, ai_news_writer, ai_finance_ta_writer, write_ai_prod_desc, do_web_research, competitor_analysis
+from lib.utils.ui_setup import setup_ui, setup_alwrity_ui
+
 
 def process_folder_for_rag(folder_path):
     """Placeholder for the process_folder_for_rag function."""
