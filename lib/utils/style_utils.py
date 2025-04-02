@@ -267,79 +267,147 @@ def get_glassmorphic_styles() -> str:
     </style>
     """
 
+def get_test_config_styles():
+    """Returns CSS styles for the test configuration page."""
+    return """
+        <style>
+            .stApp {
+                background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            }
+            
+            .stButton > button {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 8px;
+                font-weight: 500;
+                transition: all 0.3s ease;
+            }
+            
+            .stButton > button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+            
+            .stTextInput > div > div > input {
+                border-radius: 8px;
+                border: 1px solid rgba(0,0,0,0.1);
+                padding: 0.5rem 1rem;
+            }
+            
+            .stSelectbox > div > div > select {
+                border-radius: 8px;
+                border: 1px solid rgba(0,0,0,0.1);
+                padding: 0.5rem 1rem;
+            }
+            
+            .stTextArea > div > div > textarea {
+                border-radius: 8px;
+                border: 1px solid rgba(0,0,0,0.1);
+                padding: 0.5rem 1rem;
+            }
+            
+            .stMarkdown {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
+            
+            h1, h2, h3 {
+                color: #2c3e50;
+                font-weight: 600;
+            }
+            
+            .stSuccess {
+                background: linear-gradient(135deg, #43c6ac 0%, #191654 100%);
+                padding: 1rem;
+                border-radius: 8px;
+                color: white;
+            }
+            
+            .stError {
+                background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+                padding: 1rem;
+                border-radius: 8px;
+                color: white;
+            }
+            
+            .stWarning {
+                background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+                padding: 1rem;
+                border-radius: 8px;
+                color: #2c3e50;
+            }
+        </style>
+    """
+
 def get_glass_container(content: str) -> str:
-    """Wrap content in a glass container."""
+    """Returns HTML for a glass-morphism container."""
     return f"""
-        <div class="glass-container">
+        <div style='
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        '>
             {content}
         </div>
     """
 
 def get_info_section(content: str) -> str:
-    """Wrap content in an info section."""
+    """Returns HTML for an info section."""
     return f"""
-        <div class="info-section">
+        <div style='
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        '>
             {content}
         </div>
     """
 
 def get_example_box(content: str) -> str:
-    """Wrap content in an example box."""
+    """Returns HTML for an example box."""
     return f"""
-        <div class="example-box">
+        <div style='
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        '>
             {content}
         </div>
     """
 
 def get_analysis_section(title: str, content: str) -> str:
-    """Create an analysis section with title and content."""
+    """Returns HTML for an analysis section."""
     return f"""
-        <div class="analysis-section">
+        <div style='
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        '>
             <h3>{title}</h3>
             {content}
         </div>
     """
 
 def get_style_guide_html() -> str:
-    """
-    Get the style guide HTML content.
-    
-    Returns:
-        str: HTML content for the style guide section
-    """
+    """Returns HTML for the style guide section."""
     return """
-        ### How ALwrity Discovers Your Style
-        
-        **AI-Powered Style Analysis**
-        
-        ALwrity AI analyzes your existing content to understand your unique writing style and preferences. This helps us generate content that matches your voice perfectly.
-        
-        **Step 1: Content Analysis**
-        
-        We'll analyze your website content or written samples to understand:
-        
-        - Writing tone and voice
-        - Vocabulary and language style
-        - Content structure and formatting
-        - Target audience and engagement style
-        
-        **Step 2: Style Recommendations**
-        
-        Based on the analysis, we'll provide:
-        
-        - Personalized writing guidelines
-        - Content structure templates
-        - Tone and voice recommendations
-        - Audience engagement strategies
-        
-        **Step 3: Content Generation**
-        
-        Finally, we'll use these insights to:
-        
-        - Generate content that matches your style
-        - Maintain consistency across all content
-        - Optimize for your target audience
-        - Ensure brand voice alignment
+        <div style='
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        '>
+            <h3>Style Guide</h3>
+            <p>This section will contain your style guide and brand guidelines.</p>
+        </div>
     """
 
 def get_test_config_styles() -> str:

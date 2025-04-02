@@ -21,6 +21,10 @@ __pycache__
 *.pywpz
 *.pywpzp
 
+lib/workspace/alwrity_web_research/*
+lib/workspace/alwrity_web_research_cache/*
+web_research_report*
+
 .swp
 .swo
 .swn

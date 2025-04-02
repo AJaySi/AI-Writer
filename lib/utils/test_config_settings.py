@@ -148,8 +148,8 @@ def render_test_config_settings():
                 # Set session state for navigation
                 st.session_state.current_step = 4
                 st.session_state.next_step = "personalization_setup"
-                # Navigate back to personalization setup
-                st.switch_page("pages/personalization_setup.py")
+                # Navigate back to the main page where personalization setup is rendered
+                st.switch_page("alwrity.py")
         
         # Title and description
         st.title("🎨 Find Your Style with ALwrity")
