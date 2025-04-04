@@ -7,7 +7,6 @@ from lib.alwrity_ui.keyword_web_researcher import do_web_research
 from lib.ai_writers.ai_story_writer.story_writer import story_input_section
 from lib.ai_writers.ai_product_description_writer import write_ai_prod_desc
 #from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
-from lib.utils.seo_tools import ai_seo_tools
 
 
 def ai_writers():
