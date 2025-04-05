@@ -8,11 +8,13 @@ from typing import Dict, Any
 from ..manager import APIKeyManager
 from ....web_crawlers.async_web_crawler import AsyncWebCrawlerService
 from ....personalization.style_analyzer import StyleAnalyzer
-from pages.style_utils import (
-    get_analysis_section,
+from lib.utils.style_utils import (
+    get_test_config_styles,
     get_glass_container,
     get_info_section,
-    get_example_box
+    get_example_box,
+    get_analysis_section,
+    get_style_guide_html
 )
 from .base import render_navigation_buttons
 from .alwrity_integrations import render_alwrity_integrations
@@ -618,7 +620,7 @@ def render_personalization_setup(api_key_manager: APIKeyManager) -> Dict[str, An
                     st.warning("Please provide either a website URL or content samples")
         
         with col2:
-            st.markdown("""
+            st.markdown(get_glass_container("""
                 ### How ALwrity Discovers Your Style
                 
                 **AI-Powered Style Analysis**
@@ -651,10 +653,15 @@ def render_personalization_setup(api_key_manager: APIKeyManager) -> Dict[str, An
                 - Maintain consistency across all content
                 - Optimize for your target audience
                 - Ensure brand voice alignment
-            """)
+            """))
             
             # API Configuration Form
-            st.markdown("### API Configuration")
+            st.markdown(get_glass_container("""
+                ### API Configuration
+                
+                Configure your API settings for optimal content generation.
+            """))
+            
             with st.form("ai_config_form"):
                 # API Keys
                 st.text_input("OpenAI API Key", type="password", key="openai_key")

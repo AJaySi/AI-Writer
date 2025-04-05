@@ -49,17 +49,9 @@ from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-def get_tavilyai_results(keywords, max_results=5):
+def get_tavilyai_results(keywords, max_results=5, include_domains=None, search_depth="advanced", **kwargs):
     """
     Get Tavily AI search results based on specified keywords and options.
-
-    Args:
-        keywords (str): Keywords for Tavily AI search.
-        include_urls (str): Comma-separated URLs to include in the search.
-        search_depth (str, optional): Search depth option (default is "advanced").
-
-    Returns:
-        dict: Tavily AI search results.
     """
     # Run Tavily search
     logger.info(f"Running Tavily search on: {keywords}")
@@ -74,56 +66,100 @@ def get_tavilyai_results(keywords, max_results=5):
         client = TavilyClient(api_key=api_key)
     except Exception as err:
         logger.error(f"Failed to create Tavily client. Check TAVILY_API_KEY: {err}")
-    
-    # Read search config params from the file.
-    try:
-        include_urls = cfg_search_param('tavily')
-    except Exception as err:
-        logger.error(f"Failed to read search params from main_config: {err}")
+        raise
 
     try:
-        if include_urls:
-            tavily_search_result = client.search(keywords, 
-                    search_depth="advanced", 
-                    include_answer=True,
-                    max_results=max_results,
-                    include_domains=include_urls)
-        else:
-            tavily_search_result = client.search(keywords, 
-                    search_depth = "advanced", 
-                    include_answer=True,
-                    max_results=max_results)
+        # Create search parameters exactly matching Tavily's API format
+        tavily_search_result = client.search(
+            query=keywords,
+            search_depth="advanced",
+            time_range="year",
+            include_answer="advanced",
+            include_domains=[""] if not include_domains else include_domains,
+            max_results=max_results
+        )
 
-        print_result_table(tavily_search_result)
-        streamlit_display_results(tavily_search_result)
-        return(tavily_search_result)
+        if tavily_search_result:
+            print_result_table(tavily_search_result)
+            streamlit_display_results(tavily_search_result)
+            return tavily_search_result
+        return None
+
     except Exception as err:
         logger.error(f"Failed to do Tavily Research: {err}")
+        raise
 
 
 def streamlit_display_results(output_data):
-    """Display Tavily AI search results in Streamlit UI."""
+    """Display Tavily AI search results in Streamlit UI with enhanced visualization."""
 
-    # Prepare data for display
-    table_data = []
+    # Display the 'answer' in Streamlit with enhanced styling
+    answer = output_data.get("answer", "No answer available")
+    st.markdown("### 🤖 AI-Generated Answer")
+    st.markdown(f"""
+    <div style="background-color: #f0f2f6; padding: 20px; border-radius: 10px; border-left: 5px solid #4CAF50;">
+        {answer}
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Display follow-up questions if available
+    follow_up_questions = output_data.get("follow_up_questions", [])
+    if follow_up_questions:
+        st.markdown("### ❓ Follow-up Questions")
+        for i, question in enumerate(follow_up_questions, 1):
+            st.markdown(f"**{i}.** {question}")
+    
+    # Prepare data for display with dataeditor
+    st.markdown("### 📊 Search Results")
+    
+    # Create a DataFrame for the results
+    import pandas as pd
+    results_data = []
+    
     for item in output_data.get("results", []):
         title = item.get("title", "")
         snippet = item.get("content", "")
         link = item.get("url", "")
-        table_data.append([title, snippet, link])
+        results_data.append({
+            "Title": title,
+            "Content": snippet,
+            "Link": link
+        })
+    
+    if results_data:
+        df = pd.DataFrame(results_data)
+        
+        # Display the data editor
+        st.data_editor(
+            df,
+            column_config={
+                "Title": st.column_config.TextColumn(
+                    "Title",
+                    help="Article title",
+                    width="medium",
+                ),
+                "Content": st.column_config.TextColumn(
+                    "Content",
+                    help="Click the button below to view full content",
+                    width="large",
+                ),
+                "Link": st.column_config.LinkColumn(
+                    "Link",
+                    help="Click to visit the website",
+                    width="small",
+                    display_text="Visit Site"
+                ),
+            },
+            hide_index=True,
+            use_container_width=True,
+        )
 
-    # Display the table in Streamlit
-    st.table(table_data)
-
-    # Display the 'answer' in Streamlit
-    answer = output_data.get("answer", "No answer available")
-    st.write(f"**The answer to your search query:** {answer}")
-
-    # Display follow-up questions if available
-    follow_up_questions = output_data.get("follow_up_questions", [])
-    if follow_up_questions:
-        st.write(f"**Follow-up questions for the query:** {output_data.get('query')}")
-        st.write(", ".join(follow_up_questions))
+        # Add popovers for full content display
+        for item in output_data.get("results", []):
+            with st.popover(f"View content: {item.get('title', '')[:50]}..."):
+                st.markdown(item.get("content", ""))
+    else:
+        st.info("No results found for your search query.")
 
 
 def print_result_table(output_data):
