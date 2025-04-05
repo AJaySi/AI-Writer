@@ -102,7 +102,12 @@ def validate_api_keys():
     return api_keys
 
 def do_web_research():
-    """Input keywords and do web research with advanced options."""
+    """Main function to perform web research based on user input."""
+    
+    # Reset session state variables for this research operation
+    if 'metaphor_results_displayed' in st.session_state:
+        del st.session_state.metaphor_results_displayed
+    
     logger.info("Starting do_web_research function")
     
     try:
@@ -509,7 +514,7 @@ def do_web_research():
                     status_display.success("✨ Research completed!")
                     
                     # Display results in an organized way
-                    with st.expander("📊 Research Results", expanded=True):
+                    with st.expander("📊 Research Results", expanded=False):
                         st.write(web_research_result)
                 else:
                     st.warning("No results found for your search")
