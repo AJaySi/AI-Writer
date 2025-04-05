@@ -262,285 +262,185 @@ def metaphor_search_articles(query, search_options: dict = None):
         except Exception as tavily_err:
             logger.warning(f"Error getting Tavily answer: {tavily_err}")
         
-        # Display results in Streamlit
-        streamlit_display_metaphor_results(formatted_response)
+        # Return the formatted response without displaying it
+        # The display will be handled by gpt_web_researcher
         return formatted_response
 
     except Exception as e:
         logger.error(f"Error in Exa searching articles: {e}")
         return None
 
-def streamlit_display_metaphor_results(metaphor_response: dict):
-    """
-    Display Metaphor search results in Streamlit with enhanced metrics and popovers
+def streamlit_display_metaphor_results(metaphor_response, search_keywords=None):
+    """Display Metaphor search results in Streamlit."""
     
-    Args:
-        metaphor_response (dict): Response from Metaphor search
-    """
-    if not metaphor_response or 'data' not in metaphor_response:
-        st.error("No valid Metaphor search results to display")
+    if not metaphor_response:
+        st.error("No search results found.")
         return
-
+    
+    # Add debug logging
+    logger.debug(f"Displaying Metaphor results. Type: {type(metaphor_response)}")
+    if isinstance(metaphor_response, dict):
+        logger.debug(f"Metaphor response keys: {metaphor_response.keys()}")
+    
     # Initialize session state variables if they don't exist
     if 'search_insights' not in st.session_state:
         st.session_state.search_insights = None
-    
     if 'metaphor_response' not in st.session_state:
-        st.session_state.metaphor_response = metaphor_response
-    
+        st.session_state.metaphor_response = None
     if 'insights_generated' not in st.session_state:
         st.session_state.insights_generated = False
     
-    # Update the stored metaphor_response with the latest data
+    # Store the current response in session state
     st.session_state.metaphor_response = metaphor_response
-
-    # Display metrics in columns
-    col1, col2, col3 = st.columns(3)
     
-    # Calculate metrics
-    results = metaphor_response['data']['results']
+    # Display search results
+    st.subheader("🔍 Search Results")
+    
+    # Calculate metrics - handle different data structures
+    results = []
+    if isinstance(metaphor_response, dict):
+        if 'data' in metaphor_response and 'results' in metaphor_response['data']:
+            results = metaphor_response['data']['results']
+        elif 'results' in metaphor_response:
+            results = metaphor_response['results']
+    
     total_results = len(results)
-    avg_score = sum(r['score'] for r in results if r['score']) / total_results if total_results > 0 else 0
+    avg_relevance = sum(r.get('score', 0) for r in results) / total_results if total_results > 0 else 0
     
+    # Display metrics
+    col1, col2 = st.columns(2)
     with col1:
-        st.metric(
-            label="Total Results",
-            value=total_results
-        )
+        st.metric("Total Results", total_results)
     with col2:
-        if metaphor_response['data'].get('costDollars'):
-            cost = metaphor_response['data']['costDollars']
-            st.metric(
-                label="Search Cost",
-                value=f"${cost['total']:.3f}"
-            )
-    with col3:
-        st.metric(
-            label="Average Relevance Score",
-            value=f"{avg_score:.2f}"
-        )
-
-    # Display AI-generated answers side by side
-    if 'answer' in metaphor_response or 'tavily_answer' in metaphor_response:
-        st.markdown("### 🤖 AI-Generated Research Answers")
-        
-        # Create two columns for side-by-side display
-        tavily_col, metaphor_col = st.columns(2)
-        
-        # Display Tavily answer if available
-        with tavily_col:
-            if 'tavily_answer' in metaphor_response:
-                st.markdown("#### 🔍 Tavily AI Answer")
-                st.markdown(f"""
-                <div style="background-color: #f0f2f6; padding: 20px; border-radius: 10px; border-left: 5px solid #FF4B4B;">
-                    {metaphor_response['tavily_answer']}
-                </div>
-                """, unsafe_allow_html=True)
-                
-                if metaphor_response.get('tavily_cost_dollars'):
-                    st.caption(f"Tavily Answer Cost: ${metaphor_response['tavily_cost_dollars']['total']:.3f}")
-                
-                if metaphor_response.get('tavily_citations'):
-                    with st.expander("📚 Tavily Sources"):
-                        for idx, citation in enumerate(metaphor_response['tavily_citations'], 1):
-                            st.markdown(f"**Source {idx}:** [{citation.get('title', 'Untitled')}]({citation.get('url')})")
-            else:
-                st.markdown("#### 🔍 Tavily AI Answer")
-                st.info("No Tavily answer available for this query.")
-        
-        # Display Metaphor answer if available
-        with metaphor_col:
-            if 'answer' in metaphor_response:
-                st.markdown("#### 🔍 Metaphor AI Answer")
-                st.markdown(f"""
-                <div style="background-color: #f0f2f6; padding: 20px; border-radius: 10px; border-left: 5px solid #4CAF50;">
-                    {metaphor_response['answer']}
-                </div>
-                """, unsafe_allow_html=True)
-                
-                if metaphor_response.get('answerCostDollars'):
-                    st.caption(f"Metaphor Answer Cost: ${metaphor_response['answerCostDollars']['total']:.3f}")
-                
-                if metaphor_response.get('citations'):
-                    with st.expander("📚 Metaphor Sources"):
-                        for idx, citation in enumerate(metaphor_response['citations'], 1):
-                            st.markdown(f"**Source {idx}:** [{citation.get('title', 'Untitled')}]({citation.get('url')})")
-            else:
-                st.markdown("#### 🔍 Metaphor AI Answer")
-                st.info("No Metaphor answer available for this query.")
+        st.metric("Average Relevance Score", f"{avg_relevance:.2f}")
     
-    # Add "Get Search Insights" button - moved outside the AI answers conditional
-    st.markdown("### 🔍 Search Insights")
+    # Display AI-generated answers if available
+    if 'tavily_answer' in metaphor_response or 'metaphor_answer' in metaphor_response:
+        st.subheader("🤖 AI-Generated Answers")
+        
+        if 'tavily_answer' in metaphor_response:
+            st.markdown("**Tavily AI Answer:**")
+            st.write(metaphor_response['tavily_answer'])
+        
+        if 'metaphor_answer' in metaphor_response:
+            st.markdown("**Metaphor AI Answer:**")
+            st.write(metaphor_response['metaphor_answer'])
     
-    # Create a container for the insights
-    insights_container = st.container()
-    
-    # Use a button with a callback function
-    if st.button("Generate Search Insights", type="primary"):
-        # Set a flag in session state to indicate that insights should be generated
+    # Get Search Insights button
+    if st.button("Generate Search Insights", key="metaphor_generate_insights_button"):
         st.session_state.insights_generated = True
-        
-        # Store the current metaphor_response in session state
-        st.session_state.metaphor_response = metaphor_response
-        
-        # Redirect to the same page with a query parameter to trigger insights generation
-        st.experimental_rerun()
-    
-    # If insights should be generated, do it in a separate container
-    if st.session_state.insights_generated:
-        with insights_container:
-            with st.spinner("Analyzing search results to generate insights..."):
-                # Get the stored metaphor_response from session state
-                stored_response = st.session_state.metaphor_response
-                stored_results = stored_response['data']['results']
-                
-                # Prepare data for analysis
-                analysis_data = {
-                    "metaphor_results": stored_results,
-                    "metaphor_answer": stored_response.get("answer", ""),
-                    "tavily_answer": stored_response.get("tavily_answer", ""),
-                    "metaphor_citations": stored_response.get("citations", []),
-                    "tavily_citations": stored_response.get("tavily_citations", [])
-                }
-                
-                # Create the analysis prompt
-                analysis_prompt = f"""
-                **Search Intent & User Needs Analysis**
-                
-                I have conducted research using both Tavily and Metaphor AI search engines. 
-                Below is the data from both sources:
-                
-                **Metaphor AI Answer:**
-                {analysis_data["metaphor_answer"]}
-                
-                **Tavily AI Answer:**
-                {analysis_data["tavily_answer"]}
-                
-                **Search Results:**
-                {[f"{i+1}. {r['title']} - {r['summary']}" for i, r in enumerate(analysis_data["metaphor_results"])]}
-                
-                **Citations:**
-                {[f"{i+1}. {c.get('title', 'Untitled')} - {c.get('url', 'No URL')}" for i, c in enumerate(analysis_data["metaphor_citations"] + analysis_data["tavily_citations"])]}
-                
-                Based on this research data, please provide the following insights:
-                
-                **Search Intent & User Needs**
-                ```
-                Review the research data and identify:
-                1. The distribution of search intent (categorize as Informational/Commercial/Navigational/Transactional)
-                2. Most common user questions and their patterns
-                3. Frequently mentioned pain points or challenges
-                4. Recurring solutions or approaches to addressing these challenges
-                5. Gaps between user questions and available answers
-                
-                Present findings in a structured format with percentages and specific examples.
-                ```
-                
-                Format your response as a comprehensive analysis with clear sections, bullet points, and examples from the research data.
-                """
-                
-                try:
-                    # Import the llm_text_gen function
-                    import importlib
-                    text_gen_module = importlib.import_module('lib.gpt_providers.text_generation.main_text_generation')
-                    if hasattr(text_gen_module, 'llm_text_gen'):
-                        # Generate insights using llm_text_gen
-                        insights = text_gen_module.llm_text_gen(analysis_prompt)
-                        
-                        # Store insights in session state
-                        st.session_state.search_insights = insights
-                        
-                        # Reset the flag to prevent regeneration on next rerun
-                        st.session_state.insights_generated = False
-                    else:
-                        st.error("Could not find llm_text_gen function in the text generation module.")
-                except Exception as e:
-                    st.error(f"Error generating insights: {str(e)}")
-                    logger.error(f"Error generating insights: {e}")
+        st.rerun()
     
     # Display insights if they exist in session state
     if st.session_state.search_insights:
-        with insights_container:
-            st.markdown("### 🔍 Search Intent & User Needs Analysis")
-            st.markdown(st.session_state.search_insights)
-
-    # Create DataFrame from results
-    df = pd.DataFrame(results)
+        st.subheader("🔍 Search Insights")
+        st.write(st.session_state.search_insights)
+    
+    # Display search results in a data editor
+    st.subheader("📊 Detailed Results")
     
     # Prepare data for display
-    display_df = df.copy()
-    display_df['Visit Site'] = display_df['url']
+    results_data = []
+    for result in results:
+        result_data = {
+            'Title': result.get('title', ''),
+            'URL': result.get('url', ''),
+            'Snippet': result.get('summary', ''),
+            'Relevance Score': result.get('score', 0),
+            'Published Date': result.get('publishedDate', '')
+        }
+        results_data.append(result_data)
     
-    # Format publishedDate as string if it exists
-    if 'publishedDate' in display_df.columns:
-        display_df['publishedDate'] = display_df['publishedDate'].apply(
-            lambda x: x[:10] if isinstance(x, str) else 'N/A'
+    # Create DataFrame
+    df = pd.DataFrame(results_data)
+    
+    # Display the DataFrame if it's not empty
+    if not df.empty:
+        # Configure columns
+        st.dataframe(
+            df,
+            column_config={
+                "Title": st.column_config.TextColumn(
+                    "Title",
+                    help="Title of the search result",
+                    width="large",
+                ),
+                "URL": st.column_config.LinkColumn(
+                    "URL",
+                    help="Link to the search result",
+                    width="medium",
+                    display_text="Visit Article",
+                ),
+                "Snippet": st.column_config.TextColumn(
+                    "Snippet",
+                    help="Summary of the search result",
+                    width="large",
+                ),
+                "Relevance Score": st.column_config.NumberColumn(
+                    "Relevance Score",
+                    help="Relevance score of the search result",
+                    format="%.2f",
+                    width="small",
+                ),
+                "Published Date": st.column_config.DateColumn(
+                    "Published Date",
+                    help="Publication date of the search result",
+                    width="medium",
+                ),
+            },
+            hide_index=True,
         )
-
-    # Configure columns for data editor
-    columns = {
-        'title': st.column_config.TextColumn(
-            'Title',
-            width='large',
-            required=True,
-        ),
-        'author': st.column_config.TextColumn(
-            'Author',
-            width='medium',
-        ),
-        'publishedDate': st.column_config.TextColumn(
-            'Published Date',
-            width='medium',
-        ),
-        'score': st.column_config.NumberColumn(
-            'Relevance Score',
-            width='small',
-            format="%.2f"
-        ),
-        'Visit Site': st.column_config.LinkColumn(
-            'Link',
-            width='small',
-            display_text='Visit Site',
-        ),
-        'summary': st.column_config.TextColumn(
-            'Summary',
-            width='large',
-            required=True,
-        )
-    }
-
-    # Display results in data editor
-    st.data_editor(
-        display_df,
-        column_config=columns,
-        hide_index=True,
-        num_rows='dynamic',
-        disabled=True,
-        column_order=['title', 'author', 'publishedDate', 'score', 'summary', 'Visit Site']
-    )
-
-    # Display detailed summaries with popovers
-    st.write("### Detailed Summaries")
-    for idx, result in enumerate(results, 1):
-        with st.expander(f"📄 {result['title']}", expanded=False):
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.markdown(f"**Summary**")
-                st.markdown(result['summary'])
-            with col2:
-                st.markdown("**Details**")
-                st.markdown(f"**Author:** {result['author'] if result['author'] else 'N/A'}")
-                st.markdown(f"**Published:** {result['publishedDate'][:10] if result['publishedDate'] else 'N/A'}")
-                st.markdown(f"**Score:** {result['score']:.2f}")
-                st.markdown(f"[Visit Site]({result['url']})")
-
-    # Display search metadata
-    st.divider()
-    col1, col2 = st.columns(2)
-    with col1:
-        st.caption(f"Search Type: {metaphor_response['data']['resolvedSearchType']}")
-    with col2:
-        st.caption(f"Request ID: {metaphor_response['data']['requestId']}")
+        
+        # Add popover for snippets
+        st.markdown("""
+        <style>
+        .snippet-popover {
+            position: relative;
+            display: inline-block;
+        }
+        .snippet-popover .snippet-content {
+            visibility: hidden;
+            width: 300px;
+            background-color: #f9f9f9;
+            color: #333;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -150px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .snippet-popover:hover .snippet-content {
+            visibility: visible;
+            opacity: 1;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # Display snippets with popover
+        st.subheader("📝 Snippets")
+        for i, result in enumerate(results):
+            snippet = result.get('summary', '')
+            if snippet:
+                st.markdown(f"""
+                <div class="snippet-popover">
+                    <strong>{result.get('title', '')}</strong>
+                    <div class="snippet-content">
+                        {snippet}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+    else:
+        st.info("No detailed results available.")
+    
+    # Add a collapsible section for the raw JSON data
+    with st.expander("Research Results (JSON)", expanded=False):
+        st.json(metaphor_response)
 
 
 def metaphor_news_summarizer(news_keywords):
