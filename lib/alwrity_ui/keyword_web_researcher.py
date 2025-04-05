@@ -323,7 +323,8 @@ def do_web_research():
                 "num_results": 10,
                 "time_range": "past month",
                 "include_domains": "",
-                "similar_url": ""
+                "similar_url": "",
+                "search_mode": "google"  # Default search mode
             }
 
         # Define the research options dialog function
@@ -425,6 +426,12 @@ def do_web_research():
                         horizontal=True,
                         help="Choose your preferred research method"
                     )
+                    
+                    # Map the selected option to the search_mode value
+                    for mode, label, _, _ in search_options:
+                        if label == selected_option:
+                            st.session_state.research_options["search_mode"] = mode
+                            break
                 else:
                     st.warning("No search methods available. Please configure API keys.")
 
@@ -439,7 +446,7 @@ def do_web_research():
                     st.rerun()
 
         # Main interface
-        st.title("Keyword Research Assistant")
+        st.title("ALwrity Web Researcher")
         
         # Primary search area with help popover
         with st.popover("ℹ️ Keyword Research Tips"):
@@ -450,6 +457,7 @@ def do_web_research():
                 3. **Search Depth**: Higher depth = more comprehensive but slower
                 4. **Target Audience**: Affects content recommendations
                 5. **Content Type**: Influences research focus
+                6. **Search Mode**: Choose between traditional web research(Google), AI-powered search(Tavily and Metaphor) and Deep Researcher
             """)
         
         col1, col2 = st.columns([3, 1])
@@ -484,6 +492,7 @@ def do_web_research():
                 # Execute search with all parameters
                 web_research_result = gpt_web_researcher(
                     search_keywords=st.session_state.research_options["primary_keywords"],
+                    search_mode=st.session_state.research_options["search_mode"],
                     related_keywords=st.session_state.research_options["related_keywords"],
                     target_audience=st.session_state.research_options["target_audience"],
                     content_type=st.session_state.research_options["content_type"],
