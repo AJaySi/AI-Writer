@@ -50,22 +50,10 @@ def get_metaphor_client():
 
 def metaphor_rag_search():
     """ Mainly used for researching blog sections. """
+    # FIXME: Implement this.
     metaphor = get_metaphor_client()
-    query = "blog research"  # Example query, this can be parameterized as needed
-    results = metaphor.search(query)
-    if not results:
-        logger.error("No results found for the query.")
-        st.error("No results found for the query.")
-        return None
-    
-    # Process the results (this is a placeholder, actual processing logic will depend on requirements)
-    processed_results = [result['title'] for result in results]
-    
-    # Display the results
-    st.write("Search Results:")
-    st.write(processed_results)
-    
-    return processed_results
+
+
 def metaphor_find_similar(similar_url, usecase, num_results=5, start_published_date=None, end_published_date=None, 
                          include_domains=None, exclude_domains=None, include_text=None, exclude_text=None, 
                          summary_query=None):
@@ -187,7 +175,8 @@ def metaphor_find_similar(similar_url, usecase, num_results=5, start_published_d
         # Update progress bar for each competitor
         if st.session_state.get('show_progress', True):
             progress_text = f"Processing competitor {i+1}/{len(competitors)}: {c.title[:30]}..."
-            progress_bar.progress((i / len(competitors)) * 100, text=progress_text)
+            progress_bar = st.progress(0, text=progress_text)
+        
         titles.append(c.title)
         urls.append(c.url)
         all_contents = ""
