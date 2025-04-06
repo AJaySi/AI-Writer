@@ -120,6 +120,7 @@ def metaphor_find_similar(similar_url, usecase, num_results=5, start_published_d
     titles = []
     urls = []
     contents = []
+    progress_bar = st.progress(0, text="Starting competitor analysis...")   
     
     # Extract titles, URLs, and contents from the competitors
     for i, c in enumerate(competitors):
@@ -131,6 +132,7 @@ def metaphor_find_similar(similar_url, usecase, num_results=5, start_published_d
         titles.append(c.title)
         urls.append(c.url)
         all_contents = ""
+        progress_bar.progress(25, text=f"Fetching content for {c.title[:30]}...")
         try:
             # Update progress
             if st.session_state.get('show_progress', True):
