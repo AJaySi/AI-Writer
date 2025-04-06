@@ -190,6 +190,7 @@ def metaphor_find_similar(similar_url, usecase, num_results=5, start_published_d
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             progress_bar.progress((i / len(competitors)) * 100, text=progress_text)
 =======
             progress_bar.progress((i / len(competitors)), text=progress_text)
@@ -201,6 +202,9 @@ def metaphor_find_similar(similar_url, usecase, num_results=5, start_published_d
 =======
             progress_bar.progress((i / len(competitors)), text=progress_text)
 >>>>>>> 1d77b16 (Update lib/ai_web_researcher/metaphor_basic_neural_web_search.py)
+=======
+            progress_bar.progress((i / len(competitors)), text=progress_text)
+>>>>>>> c2abb9e (Update lib/ai_web_researcher/metaphor_basic_neural_web_search.py)
         titles.append(c.title)
         urls.append(c.url)
         all_contents = ""
