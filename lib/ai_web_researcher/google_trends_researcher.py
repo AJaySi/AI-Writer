@@ -105,124 +105,55 @@ def plot_interest_by_region(kw_list):
 
 
 
-def get_related_queries_and_save_csv(keywords, hl='en-US', tz=360, cat=0, timeframe='today 12-m'):
-    """
-    Get related queries for the given search keywords and save the result to a CSV file.
-
-    Args:
-        search_keywords (list): List of search keywords.
-        hl (str): Language parameter, default is 'en-US'.
-        tz (int): Timezone parameter, default is 360.
-        cat (int): Category parameter, default is 0.
-        timeframe (str): Timeframe parameter, default is 'today 12-m'.
-
-    Returns:
-        pd.DataFrame: DataFrame containing related queries.
-    """
-    try:
-        # Build model
-        pytrends = TrendReq(hl=hl, tz=tz)
-        pytrends.build_payload(kw_list=keywords, cat=cat, timeframe=timeframe)
-
-        # Get related queries
-        data = pytrends.related_queries()
-
-        # Extract data from the result
-        top_queries = list(data.values())[0]['top']
-        rising_queries = list(data.values())[0]['rising']
-        top_rising_queries = top_queries + rising_queries
-
-        # Convert lists to DataFrames
-        df_top_queries = pd.DataFrame(top_queries)
-        df_rising_queries = pd.DataFrame(rising_queries)  # Added this line
-
-        # Rename columns to avoid duplicates
-        df_top_queries.columns = ['Top query', 'value']
-        df_rising_queries.columns = ['Rising query', 'value']
-
-        # Save to CSV
-        all_queries_df = pd.concat([df_top_queries, df_rising_queries], axis=1)
-        #all_queries_df.to_csv('related_queries.csv', index=False)
-
-        # Display additional information
-        console = Console()
-        # Display additional information with emojis and bold formatting
-        print("\n📢❗🚨 ")
-        print("\n\033[1m🔝 Top\033[0m: The most popular search queries. Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often, and a value of 0 is a query searched for less than 1% as often as the most popular query.\n")
-        print("\n\033[1m🚀 Rising\033[0m: Queries with the biggest increase in search frequency since the last time period. Results marked 'Breakout' had a tremendous increase, probably because these queries are new and had few (if any) prior searches.\n")
-        # Display the DataFrame using tabulate
-        table = tabulate(all_queries_df, headers='keys', tablefmt='fancy_grid')
-        print(table)
-        # Save the combined table to a file
-        try:
-            save_in_file(table)
-        except Exception as save_results_err:
-            logger.error(f"Failed to save search results: {save_results_err}")
-        return top_rising_queries
-
-    except Exception as e:
-        print(f"get_related_queries_and_save_csv: ERROR: An error occurred: {e}")
-    
-
 def get_related_topics_and_save_csv(search_keywords):
-    """
-    Get related topics for the given search keywords and save the result to a CSV file.
-
-    Args:
-        search_keywords (list): List of search keywords.
-
-    Returns:
-        pd.DataFrame: DataFrame containing related topics.
-    """
+    search_keywords = [f"{search_keywords}"]
     try:
-        # Build model
         pytrends = TrendReq(hl='en-US', tz=360)
+        pytrends.build_payload(kw_list=search_keywords, timeframe='today 12-m')
         
-        # Build payload
-        # FIXME: Remove hardcoding.
-        pytrends.build_payload(search_keywords, cat=0, timeframe='today 12-m')
-
-        # Get related topics
-        try:
-            data = pytrends.related_topics()
-        except Exception as err:
-            logger.error(f"Failed to get pytrends realted topics: {err}")
-            return None
-
-        # Extract data from the result
-        top_topics = list(data.values())[0]['top']
-        rising_topics = list(data.values())[0]['rising']
+        # Get related topics - this returns a dictionary
+        topics_data = pytrends.related_topics()
         
-        # Convert lists to DataFrames
-        df_top_topics = pd.DataFrame(top_topics)
-        df_rising_topics = pd.DataFrame(rising_topics)
-        
-        # FIXME:Exclude specified columns
-        columns_to_exclude = ['hasData', 'value', 'topic_mid', 'link']
-        df_top_topics = df_top_topics.drop(columns=columns_to_exclude, errors='ignore')
-        df_rising_topics = df_rising_topics.drop(columns=columns_to_exclude, errors='ignore')
-
-        # Rename columns to avoid duplicates and provide meaningful names
-        df_top_topics.columns = ['Top- ' + col if col != 'topic_title' else col for col in df_top_topics.columns]
-        df_rising_topics.columns = ['Rising- ' + col if col != 'topic_title' else col for col in df_rising_topics.columns]
-        all_topics_df = pd.concat([df_top_topics, df_rising_topics], axis=1)
-
-        print(f"\n\n 📢❗🚨 Rising and Trending Keywords for {search_keywords}\n")
-        print("\033[1m🔝 Top\033[0m: The most popular search topics.")
-        print("\033[1m🚀 Rising\033[0m: Topics experiencing a significant increase in search frequency since the last time period. Topics marked :pile_of_poop:'Breakout' had a tremendous surge, likely because they are new and had few prior searches.")
-        # Display the DataFrame using tabulate
-        pd.set_option('display.max_rows', all_topics_df.shape[0]+1)
-        print(all_topics_df.head(10))
-        table = tabulate(all_topics_df, headers='keys', tablefmt='fancy_grid')
-        try:
-            save_in_file(table)
-        except Exception as save_results_err:
-            logger.error(f"Failed to save search results: {save_results_err}")
-        return all_topics_df
-
+        # Extract data for the first keyword
+        if topics_data and search_keywords[0] in topics_data:
+            keyword_data = topics_data[search_keywords[0]]
+            
+            # Create two separate dataframes for top and rising
+            top_df = keyword_data.get('top', pd.DataFrame())
+            rising_df = keyword_data.get('rising', pd.DataFrame())
+            
+            return {
+                'top': top_df[['topic_title', 'value']] if not top_df.empty else pd.DataFrame(),
+                'rising': rising_df[['topic_title', 'value']] if not rising_df.empty else pd.DataFrame()
+            }
     except Exception as e:
-        logger.error(f"ERROR: An error occurred in related topics: {e}")
-        return pd.DataFrame()
+        logger.error(f"Error in related topics: {e}")
+        return {'top': pd.DataFrame(), 'rising': pd.DataFrame()}
+
+def get_related_queries_and_save_csv(search_keywords):
+    search_keywords = [f"{search_keywords}"]
+    try:
+        pytrends = TrendReq(hl='en-US', tz=360)
+        pytrends.build_payload(kw_list=search_keywords, timeframe='today 12-m')
+        
+        # Get related queries - this returns a dictionary
+        queries_data = pytrends.related_queries()
+        
+        # Extract data for the first keyword
+        if queries_data and search_keywords[0] in queries_data:
+            keyword_data = queries_data[search_keywords[0]]
+            
+            # Create two separate dataframes for top and rising
+            top_df = keyword_data.get('top', pd.DataFrame())
+            rising_df = keyword_data.get('rising', pd.DataFrame())
+            
+            return {
+                'top': top_df if not top_df.empty else pd.DataFrame(),
+                'rising': rising_df if not rising_df.empty else pd.DataFrame()
+            }
+    except Exception as e:
+        logger.error(f"Error in related queries: {e}")
+        return {'top': pd.DataFrame(), 'rising': pd.DataFrame()}
 
 
 def get_source(url):
@@ -507,22 +438,17 @@ def do_google_trends_analysis(search_term):
             else:
                 all_the_keywords.append(suggestions_df['Keywords'].tolist())
             all_the_keywords = ','.join([', '.join(filter(None, map(str, sublist))) for sublist in all_the_keywords])
+            
             # Generate a random sleep time between 2 and 3 seconds 
             time.sleep(random.uniform(2, 3))
-
-#        
-#        # FIXME: Get result from vision GPT. Fetch and visualize Google Trends data
-#        #trends_data = fetch_google_trends_interest_overtime("llamaindex")
-#
-#        # FIXME: Plot Interest Over time.
-#        result_df = plot_interest_by_region(search_term)
-#        
+        
         # Display additional information
         try:
             result_df = get_related_topics_and_save_csv(search_term)
+            logger.info(f"Related topics:: result_df: {result_df}")
             # Extract 'Top' topic_title
             if result_df:
-                top_topic_title = result_df['topic_title'].values.tolist()
+                top_topic_title = result_df['top']['topic_title'].values.tolist()
                 # Join each sublist into one string separated by comma
                 #top_topic_title = [','.join(filter(None, map(str, sublist))) for sublist in top_topic_title]
                 top_topic_title = ','.join([', '.join(filter(None, map(str, sublist))) for sublist in top_topic_title])
@@ -551,3 +477,24 @@ def do_google_trends_analysis(search_term):
         return(all_the_keywords)
     except Exception as e:
         logger.error(f"Error in Google Trends Analysis: {e}")
+
+
+def get_trending_searches(country='united_states'):
+    """Get trending searches for a specific country."""
+    try:
+        pytrends = TrendReq(hl='en-US', tz=360)
+        trending_searches = pytrends.trending_searches(pn=country)
+        return trending_searches
+    except Exception as e:
+        logger.error(f"Error getting trending searches: {e}")
+        return pd.DataFrame()
+
+def get_realtime_trends(country='US'):
+    """Get realtime trending searches for a specific country."""
+    try:
+        pytrends = TrendReq(hl='en-US', tz=360)
+        realtime_trends = pytrends.realtime_trending_searches(pn=country)
+        return realtime_trends
+    except Exception as e:
+        logger.error(f"Error getting realtime trends: {e}")
+        return pd.DataFrame()
