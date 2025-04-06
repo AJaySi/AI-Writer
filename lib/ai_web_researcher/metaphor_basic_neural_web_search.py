@@ -50,6 +50,7 @@ def get_metaphor_client():
 
 def metaphor_rag_search():
     """ Mainly used for researching blog sections. """
+    # FIXME: Implement this.
     metaphor = get_metaphor_client()
     query = "blog research"  # Example query, this can be parameterized as needed
     results = metaphor.search(query)
