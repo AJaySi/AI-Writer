@@ -340,6 +340,39 @@ def display_related_queries(queries_df):
         st.error(f"Error displaying related queries: {str(e)}")
         logger.error(f"Error in display_related_queries: {e}")
 
+def display_trending_searches(trending_df):
+    """Display trending searches in the UI."""
+    if trending_df.empty:
+        st.info("No trending searches data available.")
+        return
+        
+    st.subheader("📊 Trending Searches")
+    
+    # Display as numbered list with emojis
+    for idx, search in enumerate(trending_df[0].head(10), 1):
+        st.write(f"{idx}. 🔍 {search}")
+
+def display_realtime_trends(trends_df):
+    """Display realtime trending searches in the UI."""
+    if trends_df.empty:
+        st.info("No realtime trends data available.")
+        return
+        
+    st.subheader("⚡ Realtime Trends")
+    
+    # Create tabs for different categories
+    if not trends_df.empty:
+        # Display top 5 trends with their titles and articles
+        for _, row in trends_df.head(5).iterrows():
+            with st.expander(f"🔥 {row.get('title', 'Trending Topic')}"):
+                st.write(f"**Traffic:** {row.get('traffic', 'N/A')}")
+                if 'articles' in row:
+                    st.write("📰 Related Articles:")
+                    for article in row['articles'][:3]:  # Show top 3 articles
+                        st.write(f"- {article['title']}")
+
+
+
 def display_related_topics(topics_df):
     """Display related topics in a structured format."""
     if topics_df.empty:

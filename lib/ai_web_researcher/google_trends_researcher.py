@@ -489,18 +489,6 @@ def get_trending_searches(country='united_states'):
         logger.error(f"Error getting trending searches: {e}")
         return pd.DataFrame()
 
-def display_trending_searches(trending_df):
-    """Display trending searches in the UI."""
-    if trending_df.empty:
-        st.info("No trending searches data available.")
-        return
-        
-    st.subheader("📊 Trending Searches")
-    
-    # Display as numbered list with emojis
-    for idx, search in enumerate(trending_df[0].head(10), 1):
-        st.write(f"{idx}. 🔍 {search}")
-
 def get_realtime_trends(country='US'):
     """Get realtime trending searches for a specific country."""
     try:
@@ -510,44 +498,3 @@ def get_realtime_trends(country='US'):
     except Exception as e:
         logger.error(f"Error getting realtime trends: {e}")
         return pd.DataFrame()
-
-def display_realtime_trends(trends_df):
-    """Display realtime trending searches in the UI."""
-    if trends_df.empty:
-        st.info("No realtime trends data available.")
-        return
-        
-    st.subheader("⚡ Realtime Trends")
-    
-    # Create tabs for different categories
-    if not trends_df.empty:
-        # Display top 5 trends with their titles and articles
-        for _, row in trends_df.head(5).iterrows():
-            with st.expander(f"🔥 {row.get('title', 'Trending Topic')}"):
-                st.write(f"**Traffic:** {row.get('traffic', 'N/A')}")
-                if 'articles' in row:
-                    st.write("📰 Related Articles:")
-                    for article in row['articles'][:3]:  # Show top 3 articles
-                        st.write(f"- {article['title']}")
-
-def display_google_trends_data(trends_data, search_keyword):
-    # ... existing code ...
-    
-    # Create tabs for different sections
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-        "Related Keywords", 
-        "Interest Over Time", 
-        "Regional Interest", 
-        "Related Queries", 
-        "Related Topics",
-        "Trending Now"
-    ])
-    
-    # ... existing tab code ...
-    
-    with tab6:
-        col1, col2 = st.columns(2)
-        with col1:
-            display_trending_searches(trends_data.get('trending_searches', pd.DataFrame()))
-        with col2:
-            display_realtime_trends(trends_data.get('realtime_trends', pd.DataFrame()))
