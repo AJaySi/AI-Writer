@@ -187,33 +187,11 @@ def metaphor_find_similar(similar_url, usecase, num_results=5, start_published_d
         # Update progress bar for each competitor
         if st.session_state.get('show_progress', True):
             progress_text = f"Processing competitor {i+1}/{len(competitors)}: {c.title[:30]}..."
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
             progress_bar.progress((i / len(competitors)) * 100, text=progress_text)
-=======
-            progress_bar.progress((i / len(competitors)), text=progress_text)
->>>>>>> 1d77b16 (Update lib/ai_web_researcher/metaphor_basic_neural_web_search.py)
-=======
-            progress_bar = st.progress(0, text=progress_text)
-        
->>>>>>> 9ea3f37 (AI Content planning and competitor analysis.)
-=======
-            progress_bar.progress((i / len(competitors)), text=progress_text)
->>>>>>> 1d77b16 (Update lib/ai_web_researcher/metaphor_basic_neural_web_search.py)
-=======
-            progress_bar.progress((i / len(competitors)), text=progress_text)
->>>>>>> c2abb9e (Update lib/ai_web_researcher/metaphor_basic_neural_web_search.py)
         titles.append(c.title)
         urls.append(c.url)
         all_contents = ""
-        progress_bar.progress(25, text=f"Fetching content for {c.title[:30]}...")
         try:
-            # Update progress
-            if st.session_state.get('show_progress', True):
-                progress_bar.progress(25, text=f"Fetching content for {c.title[:30]}...")
-                
             # Update progress
             if st.session_state.get('show_progress', True):
                 progress_bar.progress(25, text=f"Fetching content for {c.title[:30]}...")
@@ -224,11 +202,6 @@ def metaphor_find_similar(similar_url, usecase, num_results=5, start_published_d
                 num_results=1
             )
             research_response = search_response.results
-            
-            # Update progress
-            if st.session_state.get('show_progress', True):
-                progress_bar.progress(50, text=f"Extracting text from {c.title[:30]}...")
-                
             
             # Update progress
             if st.session_state.get('show_progress', True):
@@ -257,33 +230,8 @@ def metaphor_find_similar(similar_url, usecase, num_results=5, start_published_d
             if st.session_state.get('show_progress', True):
                 progress_bar.progress(100, text=f"Completed processing {c.title[:30]}")
                 
-                
-            # Update progress
-            if st.session_state.get('show_progress', True):
-                progress_bar.progress(75, text=f"Summarizing content for {c.title[:30]}...")
-                
-            # Get the summary from the competitor content
-            summary_response = summarize_competitor_content(all_contents)
-            c.text = summary_response
-            
-            # Store the raw summary in session state for display in dialog
-            if 'competitor_summaries' not in st.session_state:
-                st.session_state.competitor_summaries = {}
-            st.session_state.competitor_summaries[c.url] = {
-                'title': c.title,
-                'summary': summary_response
-            }
-            
-            # Update progress to complete
-            if st.session_state.get('show_progress', True):
-                progress_bar.progress(100, text=f"Completed processing {c.title[:30]}")
-                
         except Exception as err:
             c.text = f"Failed to summarize content: {err}"
-            # Update progress to show error
-            if st.session_state.get('show_progress', True):
-                progress_bar.progress(100, text=f"Error processing {c.title[:30]}: {str(err)[:50]}...")
-                
             # Update progress to show error
             if st.session_state.get('show_progress', True):
                 progress_bar.progress(100, text=f"Error processing {c.title[:30]}: {str(err)[:50]}...")
