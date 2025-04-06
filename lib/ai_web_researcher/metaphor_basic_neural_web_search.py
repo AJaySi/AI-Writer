@@ -189,6 +189,7 @@ def metaphor_find_similar(similar_url, usecase, num_results=5, start_published_d
             progress_text = f"Processing competitor {i+1}/{len(competitors)}: {c.title[:30]}..."
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             progress_bar.progress((i / len(competitors)) * 100, text=progress_text)
 =======
             progress_bar.progress((i / len(competitors)), text=progress_text)
@@ -197,6 +198,9 @@ def metaphor_find_similar(similar_url, usecase, num_results=5, start_published_d
             progress_bar = st.progress(0, text=progress_text)
         
 >>>>>>> 9ea3f37 (AI Content planning and competitor analysis.)
+=======
+            progress_bar.progress((i / len(competitors)), text=progress_text)
+>>>>>>> 1d77b16 (Update lib/ai_web_researcher/metaphor_basic_neural_web_search.py)
         titles.append(c.title)
         urls.append(c.url)
         all_contents = ""
