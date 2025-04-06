@@ -1,8 +1,9 @@
 import streamlit as st
 from lib.utils.alwrity_utils import (
     blog_from_keyword, ai_agents_team, essay_writer, ai_news_writer,
-    ai_finance_ta_writer, competitor_analysis
+    ai_finance_ta_writer
 )
+from lib.alwrity_ui.similar_analysis import competitor_analysis
 from lib.alwrity_ui.keyword_web_researcher import do_web_research
 from lib.ai_writers.ai_story_writer.story_writer import story_input_section
 from lib.ai_writers.ai_product_description_writer import write_ai_prod_desc
