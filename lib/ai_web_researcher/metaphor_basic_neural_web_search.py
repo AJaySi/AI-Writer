@@ -187,7 +187,7 @@ def metaphor_find_similar(similar_url, usecase, num_results=5, start_published_d
         # Update progress bar for each competitor
         if st.session_state.get('show_progress', True):
             progress_text = f"Processing competitor {i+1}/{len(competitors)}: {c.title[:30]}..."
-            progress_bar.progress((i / len(competitors)), text=progress_text)
+            progress_bar.progress((i / len(competitors)) * 100, text=progress_text)
         titles.append(c.title)
         urls.append(c.url)
         all_contents = ""
