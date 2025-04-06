@@ -40,65 +40,142 @@ def get_metaphor_client():
     """
     METAPHOR_API_KEY = os.environ.get('METAPHOR_API_KEY')
     if not METAPHOR_API_KEY:
+        logger.error("METAPHOR_API_KEY environment variable not set!")
+        st.error("METAPHOR_API_KEY environment variable not set!")
         raise ValueError("METAPHOR_API_KEY environment variable not set!")
     return Exa(METAPHOR_API_KEY)
 
 
 def metaphor_rag_search():
     """ Mainly used for researching blog sections. """
+    # FIXME: Implement this.
     metaphor = get_metaphor_client()
 
 
-
-def metaphor_find_similar(similar_url):
+def metaphor_find_similar(similar_url, usecase, num_results=5, start_published_date=None, end_published_date=None, 
+                         include_domains=None, exclude_domains=None, include_text=None, exclude_text=None, 
+                         summary_query=None):
     """
     Find similar content using the Metaphor API.
-
     Args:
-        url (str): The URL to find similar content.
-
+        similar_url (str): The URL to find similar content.
+        usecase (str): The use case for the search (e.g., "similar companies", "listicles").
+        num_results (int): Number of results to return (default: 5).
+        start_published_date (str): Start date for filtering results in ISO format.
+        end_published_date (str): End date for filtering results in ISO format.
+        include_domains (list): List of domains to include in the search.
+        exclude_domains (list): List of domains to exclude from the search.
+        include_text (str): Text that must be included in the results.
+        exclude_text (str): Text that must be excluded from the results.
+        summary_query (dict): Custom query for summarization.
     Returns:
-        MetaphorResponse: The response from the Metaphor API.
+        tuple: (DataFrame, MetaphorResponse) - The DataFrame contains the results and the MetaphorResponse contains the raw API response.
     """
     metaphor = get_metaphor_client()
     try:
         logger.info(f"Doing similar web search for url: {similar_url}")
+        
+        # Prepare search parameters
+        search_params = {
+            "highlights": True,
+            "num_results": num_results,
+        }
+        
+        # Add date parameters if provided
+        if start_published_date:
+            search_params["start_published_date"] = start_published_date
+        if end_published_date:
+            search_params["end_published_date"] = end_published_date
+            
+        # Add domain filters if provided
+        if include_domains:
+            search_params["include_domains"] = include_domains
+        if exclude_domains:
+            search_params["exclude_domains"] = exclude_domains
+            
+        # Add text filters if provided
+        if include_text:
+            search_params["include_text"] = include_text
+        if exclude_text:
+            search_params["exclude_text"] = exclude_text
+            
+        # Add summary query if provided
+        if summary_query:
+            search_params["summary"] = summary_query
+        else:
+            # Default summary query based on usecase
+            search_params["summary"] = {"query": f"Find {usecase} similar to the given URL."}
+            
+        # Execute the search
         search_response = metaphor.find_similar_and_contents(
             similar_url,
-            highlights=True,
-            num_results=10)
+            **search_params
+        )
     except Exception as e:
         logger.error(f"Metaphor: Error in finding similar content: {e}")
         raise
 
     competitors = search_response.results
-    # Initialize lists to store titles and URLs
-    titles = []
-    urls = []
-
     # Initialize lists to store titles, URLs, and contents
     titles = []
     urls = []
     contents = []
     
     # Extract titles, URLs, and contents from the competitors
-    for c in competitors:
+    for i, c in enumerate(competitors):
+        # Update progress bar for each competitor
+        if st.session_state.get('show_progress', True):
+            progress_text = f"Processing competitor {i+1}/{len(competitors)}: {c.title[:30]}..."
+            progress_bar = st.progress(0, text=progress_text)
+        
         titles.append(c.title)
         urls.append(c.url)
-        # Simulate web content fetching and summarization (replace with actual logic)
         all_contents = ""
         try:
+            # Update progress
+            if st.session_state.get('show_progress', True):
+                progress_bar.progress(25, text=f"Fetching content for {c.title[:30]}...")
+                
             search_response = metaphor.search_and_contents(
                 c.url,
                 type="keyword",
                 num_results=1
             )
             research_response = search_response.results
+            
+            # Update progress
+            if st.session_state.get('show_progress', True):
+                progress_bar.progress(50, text=f"Extracting text from {c.title[:30]}...")
+                
             for r in research_response:
                 all_contents += r.text
-            c.text = summarize_competitor_content(all_contents)  # Replace with actual summarization function
+                
+            # Update progress
+            if st.session_state.get('show_progress', True):
+                progress_bar.progress(75, text=f"Summarizing content for {c.title[:30]}...")
+                
+            # Get the summary from the competitor content
+            summary_response = summarize_competitor_content(all_contents)
+            c.text = summary_response
+            
+            # Store the raw summary in session state for display in dialog
+            if 'competitor_summaries' not in st.session_state:
+                st.session_state.competitor_summaries = {}
+            st.session_state.competitor_summaries[c.url] = {
+                'title': c.title,
+                'summary': summary_response
+            }
+            
+            # Update progress to complete
+            if st.session_state.get('show_progress', True):
+                progress_bar.progress(100, text=f"Completed processing {c.title[:30]}")
+                
         except Exception as err:
             c.text = f"Failed to summarize content: {err}"
+            # Update progress to show error
+            if st.session_state.get('show_progress', True):
+                progress_bar.progress(100, text=f"Error processing {c.title[:30]}: {str(err)[:50]}...")
+                
         contents.append(c.text)
     
     # Create a DataFrame from the titles, URLs, and contents
@@ -107,13 +184,9 @@ def metaphor_find_similar(similar_url):
         "URL": urls,
         "Content Summary": contents
     })
-    # Display the DataFrame as a table
-    if not df.empty:
-        st.write("### Competitor Analysis Results")
-        st.table(df)
- 
-    print_search_result(competitors)
-    return search_response
+    
+    # Return the DataFrame and the search response
+    return df, search_response
 
 
 def calculate_date_range(time_range: str) -> tuple:

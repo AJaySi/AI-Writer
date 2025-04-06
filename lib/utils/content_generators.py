@@ -2,7 +2,9 @@ import streamlit as st
 from lib.utils.alwrity_utils import (
     blog_from_keyword, ai_agents_team, essay_writer, ai_news_writer,
     ai_finance_ta_writer
+    ai_finance_ta_writer
 )
+from lib.alwrity_ui.similar_analysis import competitor_analysis
 from lib.alwrity_ui.similar_analysis import competitor_analysis
 from lib.alwrity_ui.keyword_web_researcher import do_web_research
 from lib.ai_writers.ai_story_writer.story_writer import story_input_section
@@ -85,7 +87,7 @@ def content_planning_tools():
     tab_keywords, tab_competitor, tab_calendar = st.tabs([
         "🔍 Keywords Researcher",
         "📊 Competitor Analysis",
-        "📅 Content Calendar Ideator"
+        "📅 Content Calendar Ideator (Coming Soon)"
     ])
     
     # Keywords Researcher tab
@@ -98,14 +100,31 @@ def content_planning_tools():
         
     # Content Calendar Ideator tab
     with tab_calendar:
-        plan_keywords = st.text_input(
-            "**Enter Your main Keywords to get 2 months content calendar:**",
-            placeholder="Enter 2-3 main keywords to generate AI content calendar with keyword researched blog titles",
-            help="The keywords are the ones where you would want to generate 50-60 blogs/articles on."
-        )
-        if st.button("**Ideate Content Calendar**"):
-            if plan_keywords:
-                #ai_agents_content_planner(plan_keywords)
-                st.header("Coming Soon.")
-            else:
-                st.error("Come on, really, Enter some keywords to plan on..")
+        st.info("🚧 **Coming Soon!** This feature is currently under development and will be available in a future update.")
+        st.markdown("""
+        <div style='background-color: #f0f2f6; padding: 15px; border-radius: 5px; margin-bottom: 20px;'>
+            <h3 style='margin-top: 0;'>📅 Content Calendar Ideator</h3>
+            <p>The Content Calendar Ideator will help you:</p>
+            <ul>
+                <li>Generate months-long content calendars around your keywords</li>
+                <li>Get AI-suggested blog titles and topics</li>
+                <li>Plan your content strategy with data-driven insights</li>
+                <li>Organize your content creation schedule</li>
+            </ul>
+            <p><strong>Stay tuned for updates!</strong></p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Keep the original functionality but hide it behind a "Preview" button
+        with st.expander("Preview Feature (Under Development)", expanded=False):
+            plan_keywords = st.text_input(
+                "**Enter Your main Keywords to get 2 months content calendar:**",
+                placeholder="Enter 2-3 main keywords to generate AI content calendar with keyword researched blog titles",
+                help="The keywords are the ones where you would want to generate 50-60 blogs/articles on."
+            )
+            if st.button("**Ideate Content Calendar**"):
+                if plan_keywords:
+                    #ai_agents_content_planner(plan_keywords)
+                    st.header("Coming Soon.")
+                else:
+                    st.error("Come on, really, Enter some keywords to plan on..")

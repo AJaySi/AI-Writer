@@ -3,7 +3,6 @@ import streamlit as st
 import tempfile
 from loguru import logger
 from lib.ai_web_researcher.gpt_online_researcher import gpt_web_researcher
-from lib.ai_web_researcher.metaphor_basic_neural_web_search import metaphor_find_similar
 from lib.ai_writers.keywords_to_blog_streamlit import write_blog_from_keywords
 from lib.ai_writers.speech_to_blog.main_audio_to_blog import generate_audio_blog
 from lib.ai_writers.long_form_ai_writer import long_form_generator
@@ -430,31 +429,6 @@ def ai_news_writer():
                     st.error(f"Failed to generate news report: {err} ❌")
         else:
             st.error("Please enter valid keywords for the news report. 🚫")
-
-
-def competitor_analysis():
-    st.title("Competitor Analysis")
-    st.markdown("""**Use Cases:**
-        - Know similar companies and alternatives for the given URL.
-        - Write listicles, similar companies, Top tools, alternative-to, similar products, similar websites, etc.
-        [Read More Here](https://docs.exa.ai/reference/company-analyst)
-    """)
-
-    similar_url = st.text_input("👋 Enter a single valid URL for web analysis:",
-                placeholder="Provide a competitor's URL and get details of similar/alternative companies.")
-
-    if st.button("Analyze"):
-        if similar_url:
-            try:
-                st.info(f"Starting analysis for the URL: {similar_url}")
-                with st.spinner("Performing competitor analysis..."):
-                    result = metaphor_find_similar(similar_url)
-                st.success("Analysis completed successfully!")
-                st.write(result)
-            except Exception as err:
-                st.error(f"✖ 🚫 Failed to do similar search.\nError: {err}")
-        else:
-            st.error("Please enter a valid URL.")
 
 
 def ai_finance_ta_writer():
