@@ -19,11 +19,12 @@ from .deepseek_text_gen import deepseek_text_response
 from ...utils.read_main_config_params import read_return_config_section
 
 
-def llm_text_gen(prompt):
+def llm_text_gen(prompt, system_prompt=None):
     """
     Generate text using Language Model (LLM) based on the provided prompt.
     Args:
         prompt (str): The prompt to generate text from.
+        system_prompt (str, optional): Custom system prompt to use instead of the default one.
     Returns:
         str: Generated text based on the prompt.
     """
@@ -43,27 +44,31 @@ def llm_text_gen(prompt):
             logger.error(f"[llm_text_gen] Error reading config params: {err}")
             raise err
 
-        # Construct the system prompt with the sidebar config params.
-        system_instructions = f"""You are a highly skilled content writer with a knack for creating engaging and informative content. 
-            Your expertise spans various writing styles and formats.
+        # Construct the system prompt with the sidebar config params if no custom system_prompt is provided
+        if system_prompt is None:
+            system_instructions = f"""You are a highly skilled content writer with a knack for creating engaging and informative content. 
+                Your expertise spans various writing styles and formats.
 
-            Here's a breakdown of the instructions for this writing task:
+                Here's a breakdown of the instructions for this writing task:
 
-            **Content Guidelines:**
+                **Content Guidelines:**
 
-            1. **Language:** Your response must be in **{blog_language}** language. 
-            2. **Tone and Brand Alignment:** Adjust your tone, voice, and personality to be appropriate for a **{blog_tone}** audience. 
-            3. **Content Length:**  Ensure your response is approximately **{blog_length}** words in length.
-            4. **Blog Type:**  The type of blog is **{blog_type}**. Write accordingly, adhering to the conventions and expectations of this type of content.
-            5. **Target Audience:** The demographic for this content is **{blog_demographic}**. Keep their interests and needs in mind.
-            6. **Output Format:** Your response should be in **{blog_output_format}** format. This could be Markdown, HTML, or a specific structured format, depending on the user's preference.
+                1. **Language:** Your response must be in **{blog_language}** language. 
+                2. **Tone and Brand Alignment:** Adjust your tone, voice, and personality to be appropriate for a **{blog_tone}** audience. 
+                3. **Content Length:**  Ensure your response is approximately **{blog_length}** words in length.
+                4. **Blog Type:**  The type of blog is **{blog_type}**. Write accordingly, adhering to the conventions and expectations of this type of content.
+                5. **Target Audience:** The demographic for this content is **{blog_demographic}**. Keep their interests and needs in mind.
+                6. **Output Format:** Your response should be in **{blog_output_format}** format. This could be Markdown, HTML, or a specific structured format, depending on the user's preference.
 
-            **Additional Instructions:**
+                **Additional Instructions:**
 
-            *  **SEO Optimization:**  Incorporate relevant keywords naturally throughout the content to improve its search engine visibility.
-            * **Call to Action:** Include a call to action if appropriate for the blog type and target audience.
-            * **Factual Accuracy:**  Ensure your content is accurate and reliable. Back up any claims with credible sources.
-            * **Unique Voice and Style:** Inject your unique voice and writing style to make the content engaging and memorable. """
+                *  **SEO Optimization:**  Incorporate relevant keywords naturally throughout the content to improve its search engine visibility.
+                * **Call to Action:** Include a call to action if appropriate for the blog type and target audience.
+                * **Factual Accuracy:**  Ensure your content is accurate and reliable. Back up any claims with credible sources.
+                * **Unique Voice and Style:** Inject your unique voice and writing style to make the content engaging and memorable. """
+        else:
+            system_instructions = system_prompt
+            logger.info("[llm_text_gen] Using custom system prompt")
         
         # Check if API key is provided for the given gpt_provider
         get_api_key(gpt_provider)
@@ -88,7 +93,7 @@ def llm_text_gen(prompt):
         elif 'anthropic' in gpt_provider.lower():
             try:
                 logger.info(f"Using Anthropic Model: {model} for text Generation.")
-                response = anthropic_text_response(prompt)
+                response = anthropic_text_response(prompt, model, temperature, max_tokens, top_p, n, system_instructions)
                 return response
             except Exception as err:
                 logger.error(f"Failed to get response from Anthropic: {err}")

@@ -7,6 +7,7 @@ from lib.alwrity_ui.similar_analysis import competitor_analysis
 from lib.alwrity_ui.keyword_web_researcher import do_web_research
 from lib.ai_writers.ai_story_writer.story_writer import story_input_section
 from lib.ai_writers.ai_product_description_writer import write_ai_prod_desc
+from lib.ai_writers.ai_copywriter.copywriter_dashboard import copywriter_dashboard
 #from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
 
 
@@ -35,8 +36,12 @@ def ai_writers():
         ai_finance_ta_writer()
     elif choice == "AI Product Description Writer":
         write_ai_prod_desc()
+    elif choice == "AI Copywriter":
+        # Initialize the copywriter dashboard
+        copywriter_dashboard()
     elif choice == "Quit":
-        st.subheader("Exiting, Getting Lost. But.... I have nowhere to go 🥹🥹")
+        st.info("Thank you for using Alwrity. Goodbye!")
+        st.stop()
 
 
 def content_planning_tools():
