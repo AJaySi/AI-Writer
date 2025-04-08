@@ -25,7 +25,7 @@ logger.add(sys.stdout,
 from .gen_dali3_images import generate_dalle3_images
 from .gen_stabl_diff_img import generate_stable_diffusion_image
 from ..text_generation.main_text_generation import llm_text_gen
-
+from .gen_gemini_images import generate_gemini_image
 
 def generate_image(user_prompt):
     """
@@ -44,7 +44,7 @@ def generate_image(user_prompt):
     --> user (str): A unique identifier representing your end-user, which will help OpenAI to monitor and detect abuse.
     """
     # FIXME: Need to remove default value to match sidebar input.
-    image_engine = 'Stability-AI'
+    image_engine = 'Gemini-AI'
     image_stored_at = None
 
     if user_prompt:
@@ -57,6 +57,9 @@ def generate_image(user_prompt):
                 logger.info(f"Calling Stable diffusion text-to-image with prompt: \n{img_prompt}")
                 print("\n\n")
                 image_stored_at = generate_stable_diffusion_image(img_prompt)
+            elif 'Gemini-AI' in image_engine:
+                logger.info(f"Calling Gemini text-to-image with prompt: \n{img_prompt}")
+                image_stored_at = generate_gemini_image(img_prompt)
             return image_stored_at
         except Exception as err:
             logger.error(f"Failed to generate Image: {err}")

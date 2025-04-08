@@ -24,8 +24,8 @@ copywriter_modules = [
     "aida_copywriter",
     "pas_copywriter",
     "fab_copywriter",
-    "four_c_copywriter",
-    "four_r_copywriter"
+    "4c_copywriter",
+    "4r_copywriter"
 ]
 
 # Dynamically import all copywriter modules

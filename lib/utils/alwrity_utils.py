@@ -14,7 +14,7 @@ from lib.ai_writers.facebook_ai_writer import facebook_post_writer
 from lib.ai_writers.linkedin_ai_writer import linked_post_writer
 from lib.ai_writers.twitter_ai_writer import tweet_writer 
 from lib.ai_writers.insta_ai_writer import insta_writer
-from lib.ai_writers.youtube_ai_writer import write_yt_title, write_yt_description, write_yt_script
+from lib.ai_writers.youtube_writers.youtube_ai_writer import youtube_main_menu
 from lib.ai_writers.web_url_ai_writer import blog_from_url
 from lib.ai_writers.image_ai_writer import blog_from_image
 from lib.ai_writers.ai_essay_writer import ai_essay_generator
@@ -485,7 +485,7 @@ def ai_social_writer():
         ("linkedin", "LinkedIn"),
         ("twitter", "Twitter"),
         ("instagram", "Instagram"),
-        ("youtube", "YouTube")  # Add YouTube
+        ("youtube", "YouTube")
     ]
 
     # Selectbox for choosing a platform
@@ -498,13 +498,5 @@ def ai_social_writer():
         tweet_writer()
     elif "instagram" in selected_platform:
         insta_writer()
-#    elif "youtube" in selected_platform:
-#        options = ["Write YT Description", "Write YT Title", "Write YT Script"]
-#        selected_option = st.radio("", options)
-#
-#        if selected_option == "Write YT Description":
-#            write_yt_description()
-#        elif selected_option == "Write YT Title":
-#            write_yt_title()
-#        elif selected_option == "Write YT Script":
-#            write_yt_script()
+    elif "youtube" in selected_platform:
+        youtube_main_menu()

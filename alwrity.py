@@ -67,7 +67,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from lib.utils.ui_setup import setup_ui
 from lib.utils.api_key_manager.api_key_manager import APIKeyManager, render
 from lib.utils.api_key_manager.validation import check_all_api_keys
 from dotenv import load_dotenv
