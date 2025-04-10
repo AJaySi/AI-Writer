@@ -9,7 +9,7 @@ from lib.ai_writers.long_form_ai_writer import long_form_generator
 from lib.ai_writers.ai_news_article_writer import ai_news_generation
 #from lib.ai_writers.ai_agents_crew_writer import ai_agents_writers
 from lib.ai_writers.ai_financial_writer import write_basic_ta_report
-from lib.ai_writers.facebook_ai_writer import facebook_post_writer
+from lib.ai_writers.ai_facebook_writer.facebook_ai_writer import facebook_post_writer
 from lib.ai_writers.linkedin_ai_writer import linked_post_writer
 from lib.ai_writers.twitter_ai_writer import tweet_writer 
 from lib.ai_writers.insta_ai_writer import insta_writer

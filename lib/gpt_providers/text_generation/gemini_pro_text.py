@@ -3,7 +3,9 @@ import os
 import sys
 from pathlib import Path
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
+
 from dotenv import load_dotenv
 load_dotenv(Path('../../../.env'))
 from loguru import logger
@@ -30,7 +32,7 @@ def gemini_text_response(prompt, temperature, top_p, n, max_tokens, system_promp
     """ Common functiont to get response from gemini pro Text. """
     #FIXME: Include : https://github.com/google-gemini/cookbook/blob/main/quickstarts/rest/System_instructions_REST.ipynb
     try:
-        genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+        client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
     except Exception as err:
         logger.error(f"Failed to configure Gemini: {err}")
     logger.info(f"Temp: {temperature}, MaxTokens: {max_tokens}, TopP: {top_p}, N: {n}")
@@ -42,19 +44,20 @@ def gemini_text_response(prompt, temperature, top_p, n, max_tokens, system_promp
         "max_output_tokens": max_tokens,
     }
     # FIXME: Expose model_name in main_config
-    model = genai.GenerativeModel(model_name="gemini-1.5-pro-latest", 
-                                  generation_config=generation_config,
-                                  system_instruction=system_prompt)
     try:
-        # text_response = []
-        response = model.generate_content(prompt, stream=True)
-        if response:
-            for chunk in response:
-                # text_response.append(chunk.text)
-                print(chunk.text)
-        else:
-            print(response)
-        logger.info(f"Number of Token in Prompt Sent: {model.count_tokens(prompt)}")
+        response = client.models.generate_content(
+            model='gemini-2.0-flash-001',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                max_output_tokens=max_tokens,
+                temperature=temperature,
+                top_p=top_p,
+                top_k=n,
+            ),
+        )
+        
+        #logger.info(f"Number of Token in Prompt Sent: {model.count_tokens(prompt)}")
         return response.text
     except Exception as err:
         logger.error(f"Failed to get response from Gemini: {err}. Retrying.")

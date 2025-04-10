@@ -6,7 +6,7 @@ from lib.utils.alwrity_utils import ai_social_writer
 from lib.utils.seo_tools import ai_seo_tools
 from lib.utils.settings_page import render_settings_page
 # Import social media writer functions
-from lib.ai_writers.facebook_ai_writer import facebook_post_writer
+from lib.ai_writers.ai_facebook_writer.facebook_ai_writer import facebook_post_writer
 from lib.ai_writers.linkedin_ai_writer import linked_post_writer
 from lib.ai_writers.twitter_ai_writer import tweet_writer
 from lib.ai_writers.insta_ai_writer import insta_writer
