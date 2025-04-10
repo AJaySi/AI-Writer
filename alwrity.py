@@ -5,18 +5,26 @@ import base64
 import logging
 from datetime import datetime
 
-# Set page config - must be the first Streamlit command
-st.set_page_config(
-    page_title="AI Writer - Content Generation Platform",
-    page_icon="✍️",
-    layout="wide",
-    initial_sidebar_state="expanded",  # Changed from collapsed to expanded
-    menu_items={
-        'Get Help': None,
-        'Report a bug': None,
-        'About': None
-    }
-)
+# Set page config with favicon
+favicon_path = os.path.join("lib", "workspace", "alwrity_logo.png")
+if os.path.exists(favicon_path):
+    st.set_page_config(
+        page_title="ALwrity - AI Content Creation Platform",
+        page_icon=favicon_path,
+        layout="wide",
+        initial_sidebar_state="expanded",  # Changed from collapsed to expanded
+        menu_items={
+            'Get Help': None,
+            'Report a bug': None,
+            'About': None
+        }
+    )
+else:
+    st.set_page_config(
+        page_title="ALwrity - AI Content Creation Platform",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
 
 # Load and apply custom CSS
 with open('lib/workspace/alwrity_ui_styling.css', 'r') as f:

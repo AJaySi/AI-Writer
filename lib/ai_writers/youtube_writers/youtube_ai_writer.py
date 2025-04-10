@@ -14,6 +14,9 @@ from .modules.description_generator import write_yt_description
 from .modules.script_generator import write_yt_script
 from .modules.thumbnail_generator import write_yt_thumbnail
 from .modules.end_screen_generator import write_yt_end_screen
+from .modules.tags_generator import write_yt_tags
+from .modules.shorts_script_generator import write_yt_shorts
+from .modules.community_post_generator import write_yt_community_post
 
 
 def youtube_main_menu():
@@ -53,6 +56,15 @@ def youtube_main_menu():
             "function": write_yt_script,
             "status": "active"
         },
+        {
+            "name": "YT Shorts Script Generator",
+            "icon": "📱",
+            "description": "Create engaging scripts optimized for YouTube Shorts format with vertical framing and hooks.",
+            "color": "#FF0000",  # YouTube red
+            "category": "Content Creation",
+            "function": write_yt_shorts,
+            "status": "active"
+        },
         
         # Optimization Tools
         {
@@ -65,16 +77,16 @@ def youtube_main_menu():
             "status": "active"
         },
         {
-            "name": "Tags Generator",
+            "name": "YouTube Tags Generator",
             "icon": "🏷️",
             "description": "Generate optimized tags for your videos with trending tag suggestions to improve discoverability.",
-            "color": "#CC0000",  # Darker red for coming soon
+            "color": "#FF0000",  # YouTube red
             "category": "Optimization",
-            "function": None,
-            "status": "coming_soon"
+            "function": write_yt_tags,
+            "status": "active"
         },
         
-        # Engagement Tools (Coming Soon)
+        # Engagement Tools
         {
             "name": "End Screen Generator",
             "icon": "🎬",
@@ -82,6 +94,15 @@ def youtube_main_menu():
             "color": "#FF0000",  # YouTube red
             "category": "Engagement",
             "function": write_yt_end_screen,
+            "status": "active"
+        },
+        {
+            "name": "Community Post Generator",
+            "icon": "💬",
+            "description": "Generate engaging community posts with AI-powered content suggestions and timing optimization.",
+            "color": "#FF0000",  # YouTube red
+            "category": "Engagement",
+            "function": write_yt_community_post,
             "status": "active"
         },
         {
@@ -94,7 +115,7 @@ def youtube_main_menu():
             "status": "coming_soon"
         },
         
-        # Future Tools (Coming Soon)
+        # Future Tools
         {
             "name": "Analytics Insights",
             "icon": "📊",
@@ -117,24 +138,6 @@ def youtube_main_menu():
             "name": "Video Series Planner",
             "icon": "📅",
             "description": "Plan and organize your video series with content calendars and topic ideas.",
-            "color": "#990000",  # Even darker red for future
-            "category": "Future Tools",
-            "function": None,
-            "status": "future"
-        },
-        {
-            "name": "Shorts Script Generator",
-            "icon": "📱",
-            "description": "Create engaging scripts optimized for YouTube Shorts format.",
-            "color": "#990000",  # Even darker red for future
-            "category": "Future Tools",
-            "function": None,
-            "status": "future"
-        },
-        {
-            "name": "Community Post Generator",
-            "icon": "💬",
-            "description": "Generate engaging community posts to keep your audience active between videos.",
             "color": "#990000",  # Even darker red for future
             "category": "Future Tools",
             "function": None,
@@ -175,26 +178,11 @@ def youtube_main_menu():
             # Display the dashboard
             # Header
             st.markdown("""
-            <div style='background-color: #f0f2f6; padding: 20px; border-radius: 10px; margin-bottom: 20px;'>
+            <div style='background-color: #f0f2f6; padding: 10px; border-radius: 5px; margin-bottom: 10px;'>
                 <h1 style='color: #FF0000; text-align: center;'>🎥 YouTube AI Writer</h1>
-                <p style='text-align: center;'>Generate professional YouTube content with AI-powered tools</p>
+                <p style='text-align: center;'>Generate professional YouTube content with ALwrity's AI-powered tools</p>
             </div>
             """, unsafe_allow_html=True)
-            
-            # Introduction
-            st.markdown("""
-            ## Welcome to the YouTube AI Writer Suite
-            
-            This dashboard provides access to a variety of tools for creating and optimizing YouTube content. 
-            Select a tool below to get started with generating professional content for your channel.
-            
-            ### How to Use This Dashboard
-            
-            1. Browse the available tools below
-            2. Click on a tool card to access its specific functionality
-            3. Fill in the required information
-            4. Generate high-quality content for your YouTube channel
-            """)
             
             # Group tools by category
             categories = {}

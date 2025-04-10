@@ -451,4 +451,3 @@ To update to the latest version:
 1. Download the latest release
 2. Run `install.bat` again
 3. Follow the on-screen instructions
-
