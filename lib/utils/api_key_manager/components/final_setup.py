@@ -91,18 +91,15 @@ def render_final_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
             logger.info("[render_final_setup] User clicked complete setup")
             try:
                 # Verify all required API keys are present and valid
-                is_valid, missing_keys, impact_messages = check_all_api_keys(api_key_manager)
+                is_valid = check_all_api_keys(api_key_manager)
                 
                 if not is_valid:
                     st.error("⚠️ Some required API keys are missing")
                     st.markdown("### Missing API Keys and Impact")
                     
-                    # Display impact messages in a structured way
-                    for message in impact_messages:
-                        if message.startswith("⚠️"):
-                            st.error(message)
-                        else:
-                            st.warning(message)
+                    # Display impact messages
+                    st.warning("⚠️ Missing AI Provider: At least one AI provider (OpenAI, Google Gemini, Anthropic Claude, or Mistral) is required.")
+                    st.warning("⚠️ Missing Research Provider: At least one research provider (SerpAPI, Tavily, Metaphor, or Firecrawl) is required.")
                     
                     st.markdown("""
                         <div style='background-color: #fff3cd; color: #856404; padding: 1rem; border-radius: 0.25rem; margin-top: 1rem;'>

@@ -6,8 +6,8 @@ and optimization options.
 """
 
 import streamlit as st
-from ...gpt_providers.text_generation.main_text_generation import llm_text_gen
-from ...gpt_providers.image_generation.main_image_generation import generate_image
+from ....gpt_providers.text_generation.main_text_generation import llm_text_gen
+from ....gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 
 
 def write_fb_post():

@@ -19,6 +19,17 @@ def render_ai_providers(api_key_manager: APIKeyManager) -> Dict[str, Any]:
     """Render the AI providers setup step."""
     logger.info("[render_ai_providers] Starting AI providers setup")
     try:
+        # Initialize wizard state if not already initialized
+        if 'wizard_state' not in st.session_state:
+            st.session_state.wizard_state = {
+                'current_step': 1,
+                'total_steps': 6,
+                'progress': 0,
+                'completed_steps': set(),
+                'last_updated': datetime.now()
+            }
+            logger.info("[render_ai_providers] Initialized wizard state")
+        
         # Store API key manager in session state for update_progress
         st.session_state['api_key_manager'] = api_key_manager
         
@@ -208,6 +219,15 @@ def render_ai_providers(api_key_manager: APIKeyManager) -> Dict[str, Any]:
                     'openai': openai_key if validate_api_key(openai_key) else None,
                     'google': google_key if validate_api_key(google_key) else None
                 }
+                
+                # Save API keys to .env file
+                if validate_api_key(openai_key):
+                    api_key_manager.save_api_key("openai", openai_key)
+                    logger.info("[render_ai_providers] OpenAI API key saved to .env file")
+                
+                if validate_api_key(google_key):
+                    api_key_manager.save_api_key("gemini", google_key)
+                    logger.info("[render_ai_providers] Google Gemini API key saved to .env file")
                 
                 # Update progress and move to next step
                 st.session_state['current_step'] = 2  # Set the next step explicitly

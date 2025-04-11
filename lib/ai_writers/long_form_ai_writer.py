@@ -15,8 +15,6 @@ from dotenv import load_dotenv
 from configparser import ConfigParser
 import streamlit as st
 
-from google.api_core import retry
-import google.generativeai as genai
 from pprint import pprint
 from textwrap import dedent
 
@@ -32,22 +30,23 @@ from ..ai_web_researcher.gpt_online_researcher import do_metaphor_ai_research
 from ..ai_web_researcher.gpt_online_researcher import do_google_serp_search, do_tavily_ai_search
 from ..blog_metadata.get_blog_metadata import get_blog_metadata_longform
 from ..blog_postprocessing.save_blog_to_file import save_blog_to_file
+from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
-def generate_with_retry(model, prompt):
+def generate_with_retry(prompt, system_prompt=None):
     """
     Generates content from the model with retry handling for errors.
 
     Parameters:
-        model (GenerativeModel): The generative model to use for content generation.
         prompt (str): The prompt to generate content from.
+        system_prompt (str, optional): Custom system prompt to use instead of the default one.
 
     Returns:
         str: The generated content.
     """
     try:
         # FIXME: Need a progress bar here.
-        return model.generate_content(prompt, request_options={'retry':retry.Retry()})
+        return llm_text_gen(prompt, system_prompt)
     except Exception as e:
         logger.error(f"Error generating content: {e}")
         st.error(f"Error generating content: {e}")
@@ -57,7 +56,12 @@ def generate_with_retry(model, prompt):
 def long_form_generator(content_keywords):
     """
     Write long form content using prompt chaining and iterative generation.
+    
     Parameters:
+        content_keywords (str): The main keywords or topic for the long-form content.
+        
+    Returns:
+        str: The generated long-form content.
     """
     with st.status("Start Writing Long Form Article, Hold my Beer..", expanded=True) as status:
         # Read the main_config to define tone, character, personality of the content to be generated.
@@ -122,39 +126,27 @@ def long_form_generator(content_keywords):
             writing_guidelines=writing_guidelines
         )
     
-        # Configure generative AI
-        load_dotenv(Path('../.env'))
-        generation_config = {
-           "temperature": 0.7,
-           "top_p": 1,
-           "max_output_tokens": 8096,
-        }
-        
-        genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-        # Initialize the generative model
-        model_flash = genai.GenerativeModel('gemini-1.5-flash', generation_config=generation_config)
-        model_pro = genai.GenerativeModel('gemini-pro', generation_config=generation_config)
-        
         # Do SERP web research for given keywords to generate title and outline.
         web_research_result, g_titles = do_google_serp_search(content_keywords)
     
         # Generate prompts
         try:
-            content_title = generate_with_retry(model_pro, content_title.format(web_research_result=web_research_result)).text
+            content_title = generate_with_retry(content_title.format(web_research_result=web_research_result))
             logger.info(f"The title of the content is: {content_title}")
             status.update(label=f"The title of the content is: {content_title}")
         except Exception as err:
             logger.error(f"Content title Generation Error: {err}")
-            return
+            return False
         
         try:
-            content_outline = generate_with_retry(model_flash, content_outline.format(
+            content_outline = generate_with_retry(content_outline.format(
                 content_title=content_title, 
-                web_research_result=web_research_result)).text
+                web_research_result=web_research_result))
             logger.info(f"The content Outline is: {content_outline}\n\n")
             status.update(label=f"Completed with Content Outline.")
         except Exception as err:
             logger.error(f"Failed to generate content outline: {err}")
+            return False
     
         try:
             status.update(label=f"Do web research with Tavily to provide context for content creation.")
@@ -170,36 +162,38 @@ def long_form_generator(content_keywords):
         except Exception as err:
             logger.error(f"Failed to do Tavily AI search: {err}")
             st.error(f"Failed to do Tavily AI search: {err}")
-            return
+            return False
     
         try:
-            starting_draft = generate_with_retry(model_pro, starting_prompt.format(
+            starting_draft = generate_with_retry(starting_prompt.format(
                     content_title=content_title, 
                     content_outline=content_outline,
                     web_research_result=web_research_result,
-                    writing_guidelines=writing_guidelines)).text
+                    writing_guidelines=writing_guidelines))
         except Exception as err:
             st.error(f"Failed to Generate Starting draft: {err}")
             logger.error(f"Failed to Generate Starting draft: {err}")
-            return
+            return False
         
         try:
             logger.info(f"Starting to write on the outline introduction.")
             draft = starting_draft
-            continuation = generate_with_retry(model_pro, continuation_prompt.format(
+            continuation = generate_with_retry(continuation_prompt.format(
                     content_title=content_title,
                     content_outline=content_outline,
                     content_text=draft,
                     web_research_result=web_research_result,
-                    writing_guidelines=writing_guidelines)).text
+                    writing_guidelines=writing_guidelines))
         except Exception as err:
             logger.error(f"Failed to write the initial draft: {err}")
+            return False
     
         # Add the continuation to the initial draft, keep building the story until we see 'IAMDONE'
         try:
             draft += '\n\n' + continuation
         except Exception as err:
             logger.error(f"Failed as: {err} and {continuation}")
+            return False
     
         logger.info(f"Writing in progress... Current draft length: {len(draft)} characters")
         status.update(label=f"Writing in progress... Current draft length: {len(draft)} characters")
@@ -211,7 +205,7 @@ def long_form_generator(content_keywords):
             Content Outline:\n
             '{content_outline}'
             """
-        search_words = generate_with_retry(model_flash, search_terms).text
+        search_words = generate_with_retry(search_terms)
         status.update(label=f"Search terms from written draft: {search_words}")
         
         while 'IAMDONE' not in continuation:
@@ -230,12 +224,12 @@ def long_form_generator(content_keywords):
 #                web_research_result = table_data
 
             try:
-                continuation = generate_with_retry(model_pro, continuation_prompt.format(
+                continuation = generate_with_retry(continuation_prompt.format(
                             content_title=content_title,
                             content_outline=content_outline, 
                             content_text=draft, 
                             web_research_result=web_research_result,
-                            writing_guidelines=writing_guidelines)).text
+                            writing_guidelines=writing_guidelines))
         
                 draft += '\n\n' + continuation
                 logger.info(f"Writing in progress... Current draft length: {len(draft)} characters")
@@ -245,7 +239,7 @@ def long_form_generator(content_keywords):
             except Exception as err:
                 st.error(f"Failed to continually write long-form content: {err}")
                 logger.error(f"Failed to continually write the Essay: {err}")
-                return
+                return False
         
         # Remove 'IAMDONE' and print the final story
         final = draft.replace('IAMDONE', '').strip()
@@ -267,3 +261,26 @@ def long_form_generator(content_keywords):
         logger.info(f"\n\n ################ Finished writing Blog for : {content_keywords} #################### \n")
     with st.expander("**Click to View the final content draft:**"):
         st.markdown(f"\n{final}\n\n")
+    
+    return final
+
+
+def generate_long_form_content(content_keywords):
+    """
+    Main function to generate long-form content based on the provided keywords.
+    
+    Parameters:
+        content_keywords (str): The main keywords or topic for the long-form content.
+        
+    Returns:
+        str: The generated long-form content.
+    """
+    return long_form_generator(content_keywords)
+
+
+# Example usage
+if __name__ == "__main__":
+    # Example usage of the function
+    content_keywords = "artificial intelligence in healthcare"
+    generated_content = generate_long_form_content(content_keywords)
+    print(f"Generated content: {generated_content[:100]}...")

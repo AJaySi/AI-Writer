@@ -2,7 +2,9 @@ import os
 import json
 import streamlit as st
 from tenacity import retry, stop_after_attempt, wait_random_exponential
-import google.generativeai as genai
+from loguru import logger
+import sys
+
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
@@ -103,5 +105,6 @@ def generate_blog_metadesc(keywords, tone, search_type, language):
     try:
         return llm_text_gen(prompt)
     except Exception as err:
+        logger.error(f"Error generating meta description: {err}")
         st.error(f"💥 Error: Failed to generate response from LLM: {err}")
         return None

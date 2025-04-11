@@ -2,7 +2,6 @@ import sys
 import os
 
 from textwrap import dedent
-from PIL import Image
 import json
 import asyncio
 from pathlib import Path
@@ -23,8 +22,7 @@ from ..blog_metadata.get_blog_metadata import blog_metadata
 from ..blog_postprocessing.save_blog_to_file import save_blog_to_file
 from ..gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
-
-import google.generativeai as genai
+from ..gpt_providers.image_to_text_gen.gemini_image_describe import describe_image, analyze_image_with_prompt
 
 
 def blog_from_image(prompt, uploaded_img):
@@ -97,17 +95,15 @@ def write_blog_from_image(prompt, uploaded_img):
             2). Tone and Brand Alignment: Adjust your tone, voice, personality for {blog_characteristics['Blog Tone']} audience.
             3). Make sure your response content length is of {blog_characteristics['Blog Length']} words.
         """
-    logger.info("Generating blog and FAQs from Google web search results.")
+    logger.info("Generating blog and FAQs from image analysis.")
     
     try:
-        #response = llm_text_gen(prompt)
-        genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-        version = 'models/gemini-1.5-flash'
-        model = genai.GenerativeModel(version)
-        model_info = genai.get_model(version)
-        print(f'{version} - input limit: {model_info.input_token_limit}, output limit: {model_info.output_token_limit}')
-        response = model.generate_content([prompt, Image.open(uploaded_img)])
-        return response.text
+        # Use the gemini_image_describe function to analyze the image with the custom prompt
+        response = analyze_image_with_prompt(uploaded_img, prompt)
+        if not response:
+            logger.error("Failed to get response from image analysis")
+            return "Failed to generate content from image."
+        return response
     except Exception as err:
-        logger.error(f"Exit: Failed to get response from LLM: {err}")
+        logger.error(f"Exit: Failed to get response from image analysis: {err}")
         exit(1)

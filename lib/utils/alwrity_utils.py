@@ -1,7 +1,12 @@
 import re
+import os
+import PyPDF2
+import tiktoken
+import openai
 import streamlit as st
 import tempfile
 from loguru import logger
+
 from lib.ai_web_researcher.gpt_online_researcher import gpt_web_researcher
 from lib.ai_writers.keywords_to_blog_streamlit import write_blog_from_keywords
 from lib.ai_writers.speech_to_blog.main_audio_to_blog import generate_audio_blog
@@ -9,7 +14,7 @@ from lib.ai_writers.long_form_ai_writer import long_form_generator
 from lib.ai_writers.ai_news_article_writer import ai_news_generation
 #from lib.ai_writers.ai_agents_crew_writer import ai_agents_writers
 from lib.ai_writers.ai_financial_writer import write_basic_ta_report
-from lib.ai_writers.ai_facebook_writer.facebook_ai_writer import facebook_post_writer
+from lib.ai_writers.ai_facebook_writer.facebook_ai_writer import facebook_main_menu
 from lib.ai_writers.linkedin_ai_writer import linked_post_writer
 from lib.ai_writers.twitter_ai_writer import tweet_writer 
 from lib.ai_writers.insta_ai_writer import insta_writer
@@ -17,10 +22,6 @@ from lib.ai_writers.youtube_writers.youtube_ai_writer import youtube_main_menu
 from lib.ai_writers.web_url_ai_writer import blog_from_url
 from lib.ai_writers.image_ai_writer import blog_from_image
 from lib.ai_writers.ai_essay_writer import ai_essay_generator
-import os
-import PyPDF2
-import tiktoken
-import openai
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from lib.utils.voice_processing import record_voice
 #from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
@@ -465,7 +466,7 @@ def ai_social_writer():
     # Selectbox for choosing a platform
     selected_platform = st.radio("Choose a Social Media Platform:", social_media_options, format_func=lambda x: x[1])
     if "facebook" in selected_platform:
-        facebook_post_writer()
+        facebook_main_menu()
     elif "linkedin" in selected_platform:
         linked_post_writer()
     elif "twitter" in selected_platform:

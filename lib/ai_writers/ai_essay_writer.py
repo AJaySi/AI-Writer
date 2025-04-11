@@ -7,27 +7,29 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from google.api_core import retry
-import google.generativeai as genai
 from pprint import pprint
+from loguru import logger
+import sys
+
+from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
-def generate_with_retry(model, prompt):
+def generate_with_retry(prompt, system_prompt=None):
     """
-    Generates content from the model with retry handling for errors.
+    Generates content using the llm_text_gen function with retry handling for errors.
 
     Parameters:
-        model (GenerativeModel): The generative model to use for content generation.
         prompt (str): The prompt to generate content from.
+        system_prompt (str, optional): Custom system prompt to use instead of the default one.
 
     Returns:
         str: The generated content.
     """
     try:
-        # FIXME: Need a progress bar here.
-        return model.generate_content(prompt, request_options={'retry':retry.Retry()})
+        # Use llm_text_gen instead of directly calling the model
+        return llm_text_gen(prompt, system_prompt)
     except Exception as e:
-        print(f"Error generating content: {e}")
+        logger.error(f"Error generating content: {e}")
         return ""
 
 
@@ -36,11 +38,12 @@ def ai_essay_generator(essay_title, selected_essay_type, selected_education_leve
     Write an Essay using prompt chaining and iterative generation.
 
     Parameters:
-        persona (str): The persona statement for the author.
-        story_genre (str): The genre of the story.
-        characters (str): The characters in the story.
+        essay_title (str): The title or topic of the essay.
+        selected_essay_type (str): The type of essay to write.
+        selected_education_level (str): The education level of the target audience.
+        selected_num_pages (int): The number of pages or words for the essay.
     """
-    print(f"Starting to write Essay on {essay_title}..")
+    logger.info(f"Starting to write Essay on {essay_title}..")
     try:
         # Define persona and writing guidelines
         guidelines = f'''\
@@ -127,59 +130,55 @@ def ai_essay_generator(essay_title, selected_essay_type, selected_education_leve
         {guidelines}
         '''
 
-        # Configure generative AI
-        load_dotenv(Path('../.env'))
-        genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-        # Initialize the generative model
-        model = genai.GenerativeModel('gemini-pro')
-
         # Generate prompts
         try:
-            premise = generate_with_retry(model, premise_prompt).text
-            print(f"The title of the Essay is: {premise}")
+            premise = generate_with_retry(premise_prompt)
+            logger.info(f"The title of the Essay is: {premise}")
         except Exception as err:
-            print(f"Essay title Generation Error: {err}")
+            logger.error(f"Essay title Generation Error: {err}")
             return
 
-        outline = generate_with_retry(model, outline_prompt.format(premise=premise)).text
-        print(f"The Outline of the essay is: {outline}\n\n")
+        outline = generate_with_retry(outline_prompt.format(premise=premise))
+        logger.info(f"The Outline of the essay is: {outline}\n\n")
         if not outline:
-            print("Failed to generate Essay outline. Exiting...")
+            logger.error("Failed to generate Essay outline. Exiting...")
             return
 
         try:
-            starting_draft = generate_with_retry(model, 
-                    starting_prompt.format(premise=premise, outline=outline)).text
+            starting_draft = generate_with_retry(
+                    starting_prompt.format(premise=premise, outline=outline))
             pprint(starting_draft)
         except Exception as err:
-            print(f"Failed to Generate Essay draft: {err}")
+            logger.error(f"Failed to Generate Essay draft: {err}")
             return
 
         try:
             draft = starting_draft
-            continuation = generate_with_retry(model, 
-                    continuation_prompt.format(premise=premise, outline=outline, story_text=draft)).text
+            continuation = generate_with_retry(
+                    continuation_prompt.format(premise=premise, outline=outline, story_text=draft))
             pprint(continuation)
         except Exception as err:
-            print(f"Failed to write the initial draft: {err}")
+            logger.error(f"Failed to write the initial draft: {err}")
 
         # Add the continuation to the initial draft, keep building the story until we see 'IAMDONE'
         try:
             draft += '\n\n' + continuation
         except Exception as err:
-            print(f"Failed as: {err} and {continuation}")
+            logger.error(f"Failed as: {err} and {continuation}")
         while 'IAMDONE' not in continuation:
             try:
-                continuation = generate_with_retry(model, 
-                        continuation_prompt.format(premise=premise, outline=outline, story_text=draft)).text
+                continuation = generate_with_retry(
+                        continuation_prompt.format(premise=premise, outline=outline, story_text=draft))
                 draft += '\n\n' + continuation
             except Exception as err:
-                print(f"Failed to continually write the Essay: {err}")
+                logger.error(f"Failed to continually write the Essay: {err}")
                 return
 
         # Remove 'IAMDONE' and print the final story
         final = draft.replace('IAMDONE', '').strip()
         pprint(final)
+        return final
 
     except Exception as e:
-        print(f"Main Essay writing: An error occurred: {e}")
+        logger.error(f"Main Essay writing: An error occurred: {e}")
+        return ""

@@ -133,16 +133,74 @@ class APIKeyManager:
         except Exception as e:
             logger.error(f"[APIKeyManager.load_api_keys] Error loading API keys: {str(e)}")
     
-    def save_api_key(self, provider: str, key: str):
-        """Save an API key."""
-        logger.info(f"[APIKeyManager.save_api_key] Saving API key for provider: {provider}")
+    def save_api_key(self, provider: str, api_key: str) -> bool:
+        """
+        Save an API key for a provider.
+        
+        Args:
+            provider: The provider name (e.g., 'openai', 'gemini')
+            api_key: The API key value
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
         try:
-            self.api_keys[provider] = key
-            # Save to environment variable
-            os.environ[f"{provider.upper()}_API_KEY"] = key
-            logger.info(f"[APIKeyManager.save_api_key] Successfully saved API key for {provider}")
+            logger.info(f"[APIKeyManager] Saving API key for {provider}")
+            
+            # Map provider to environment variable name
+            env_var_map = {
+                'openai': 'OPENAI_API_KEY',
+                'gemini': 'GEMINI_API_KEY',
+                'mistral': 'MISTRAL_API_KEY',
+                'anthropic': 'ANTHROPIC_API_KEY',
+                'serpapi': 'SERPAPI_API_KEY',
+                'tavily': 'TAVILY_API_KEY',
+                'metaphor': 'METAPHOR_API_KEY',
+                'firecrawl': 'FIRECRAWL_API_KEY'
+            }
+            
+            env_var = env_var_map.get(provider)
+            if not env_var:
+                logger.error(f"[APIKeyManager] Unknown provider: {provider}")
+                return False
+            
+            # Update the in-memory dictionary
+            self.api_keys[provider] = api_key
+            
+            # Update environment variable
+            os.environ[env_var] = api_key
+            
+            # Read existing .env file content
+            env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), '.env')
+            try:
+                with open(env_path, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+            except FileNotFoundError:
+                lines = []
+            
+            # Update or add the API key
+            key_found = False
+            updated_lines = []
+            for line in lines:
+                if line.startswith(f"{env_var}="):
+                    updated_lines.append(f"{env_var}={api_key}\n")
+                    key_found = True
+                else:
+                    updated_lines.append(line)
+            
+            if not key_found:
+                updated_lines.append(f"{env_var}={api_key}\n")
+            
+            # Write back to .env file
+            with open(env_path, 'w', encoding='utf-8') as f:
+                f.writelines(updated_lines)
+            
+            logger.info(f"[APIKeyManager] Successfully saved API key for {provider}")
+            return True
+            
         except Exception as e:
-            logger.error(f"[APIKeyManager.save_api_key] Error saving API key: {str(e)}")
+            logger.error(f"[APIKeyManager] Error saving API key for {provider}: {str(e)}")
+            return False
     
     def get_api_key(self, provider: str) -> Optional[str]:
         """Get an API key."""
