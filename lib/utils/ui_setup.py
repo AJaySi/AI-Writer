@@ -5,6 +5,7 @@ from lib.utils.content_generators import content_planning_tools, ai_writers
 from lib.utils.alwrity_utils import ai_social_writer
 from lib.utils.seo_tools import ai_seo_tools
 from lib.utils.settings_page import render_settings_page
+
 # Import social media writer functions
 from lib.ai_writers.ai_facebook_writer.facebook_ai_writer import facebook_main_menu
 from lib.ai_writers.linkedin_ai_writer import linked_post_writer
@@ -319,7 +320,7 @@ def setup_alwrity_ui():
     
     # Define sub-menu items for AI Social Tools
     social_tools_submenu = {
-        "Facebook": ("📘", lambda: facebook_post_writer()),
+        "Facebook": ("📘", lambda: facebook_main_menu()),
         "LinkedIn": ("💼", lambda: linked_post_writer()),
         "Twitter": ("🐦", lambda: tweet_writer()),
         "Instagram": ("📸", lambda: insta_writer()),
