@@ -8,6 +8,7 @@ from lib.alwrity_ui.keyword_web_researcher import do_web_research
 from lib.ai_writers.ai_story_writer.story_writer import story_input_section
 from lib.ai_writers.ai_product_description_writer import write_ai_prod_desc
 from lib.ai_writers.ai_copywriter.copywriter_dashboard import copywriter_dashboard
+from lib.ai_writers.linkedin_writer import LinkedInAIWriter
 #from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
 
 
@@ -20,6 +21,7 @@ def ai_writers():
         "Write Financial TA report",
         "AI Product Description Writer",
         "AI Copywriter",
+        "LinkedIn AI Writer",
         "Quit"
     ]
     choice = st.selectbox("**👇Select a content creation type:**", options, index=0, format_func=lambda x: f"📝 {x}")
@@ -39,6 +41,10 @@ def ai_writers():
     elif choice == "AI Copywriter":
         # Initialize the copywriter dashboard
         copywriter_dashboard()
+    elif choice == "LinkedIn AI Writer":
+        # Initialize the LinkedIn AI Writer
+        linkedin_writer = LinkedInAIWriter()
+        linkedin_writer.run()
     elif choice == "Quit":
         st.info("Thank you for using Alwrity. Goodbye!")
         st.stop()

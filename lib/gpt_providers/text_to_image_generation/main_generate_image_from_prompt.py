@@ -55,7 +55,6 @@ def generate_image(user_prompt):
                 image_stored_at = generate_dalle3_images(img_prompt)
             elif 'Stability-AI' in image_engine:
                 logger.info(f"Calling Stable diffusion text-to-image with prompt: \n{img_prompt}")
-                print("\n\n")
                 image_stored_at = generate_stable_diffusion_image(img_prompt)
             elif 'Gemini-AI' in image_engine:
                 logger.info(f"Calling Gemini text-to-image with prompt: \n{img_prompt}")

@@ -38,7 +38,7 @@ from lib.alwrity_ui.display_google_serp_results import (
 )
 from lib.alwrity_ui.google_trends_ui import display_google_trends_data, process_trends_data
 
-from .tavily_ai_search import get_tavilyai_results
+from .tavily_ai_search import do_tavily_ai_search
 from .metaphor_basic_neural_web_search import metaphor_search_articles, streamlit_display_metaphor_results
 from .google_serp_search import google_search
 from .google_trends_researcher import do_google_trends_analysis
@@ -148,8 +148,8 @@ def gpt_web_researcher(search_keywords, search_mode, **kwargs):
                 include_domains = kwargs.pop('include_domains', None)
                 search_depth = kwargs.pop('search_depth', 'advanced')
                 
-                # Pass the parameters to get_tavilyai_results
-                t_results = get_tavilyai_results(
+                # Pass the parameters to do_tavily_ai_search
+                t_results = do_tavily_ai_search(
                     keywords=search_keywords, 
                     max_results=kwargs.get('num_results', 10),
                     include_domains=include_domains,
@@ -343,8 +343,8 @@ def do_tavily_ai_search(search_keywords, max_results=10, **kwargs):
             'include_domains': kwargs.get('include_domains', [""]) if kwargs.get('include_domains') else [""]
         }
         
-        # Pass the parameters to get_tavilyai_results
-        t_results = get_tavilyai_results(
+        # Pass the parameters to do_tavily_ai_search
+        t_results = do_tavily_ai_search(
             keywords=search_keywords,
             **tavily_params
         )

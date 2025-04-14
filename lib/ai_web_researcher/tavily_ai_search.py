@@ -16,7 +16,7 @@ Usage:
 
 Modifications:
 - To modify the script, update the environment variables in the .env file with the required API keys.
-- Adjust the search parameters, such as keywords and search depth, in the `get_tavilyai_results` function as needed.
+- Adjust the search parameters, such as keywords and search depth, in the `do_tavily_ai_search` function as needed.
 - Customize logging configurations and table formatting according to preferences.
 
 To-Do (TBD):
@@ -49,7 +49,7 @@ from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-def get_tavilyai_results(keywords, max_results=5, include_domains=None, search_depth="advanced", **kwargs):
+def do_tavily_ai_search(keywords, max_results=5, include_domains=None, search_depth="advanced", **kwargs):
     """
     Get Tavily AI search results based on specified keywords and options.
     """
