@@ -19,12 +19,13 @@ from .deepseek_text_gen import deepseek_text_response
 from ...utils.read_main_config_params import read_return_config_section
 
 
-def llm_text_gen(prompt, system_prompt=None):
+def llm_text_gen(prompt, system_prompt=None, json_struct=None):
     """
     Generate text using Language Model (LLM) based on the provided prompt.
     Args:
         prompt (str): The prompt to generate text from.
         system_prompt (str, optional): Custom system prompt to use instead of the default one.
+        json_struct (dict, optional): JSON schema structure for structured responses.
     Returns:
         str: Generated text based on the prompt.
     """
@@ -77,7 +78,10 @@ def llm_text_gen(prompt, system_prompt=None):
         if 'google' in gpt_provider.lower():
             try:
                 logger.info("Using Google Gemini Pro text generation model.")
-                response = gemini_text_response(prompt, temperature, top_p, n, max_tokens, system_instructions)
+                if json_struct:
+                    response = gemini_structured_json_response(prompt, json_struct, temperature, top_p, n, max_tokens, system_instructions)
+                else:
+                    response = gemini_text_response(prompt, temperature, top_p, n, max_tokens, system_instructions)
                 return response
             except Exception as err:
                 logger.error(f"Failed to get response from gemini: {err}")

@@ -21,6 +21,8 @@ from tenacity import (
 )
 
 import asyncio
+import json
+import re
 
 # Configure standard logging
 import logging
@@ -167,3 +169,64 @@ def gemini_pro_text_gen(prompt, temperature=0.7, top_p=0.9, top_k=40, max_tokens
     except Exception as e:
         logger.error(f"Error in Gemini Pro text generation: {e}")
         return str(e)
+
+def gemini_structured_json_response(prompt, schema, temperature=0.7, top_p=0.9, top_k=40, max_tokens=2048, system_prompt=None):
+    """
+    Generate structured JSON response using Google's Gemini Pro model.
+    
+    Args:
+        prompt (str): The input text to generate completion for
+        schema (dict): The JSON schema to follow for the response
+        temperature (float, optional): Controls randomness. Defaults to 0.7
+        top_p (float, optional): Controls diversity. Defaults to 0.9
+        top_k (int, optional): Controls vocabulary size. Defaults to 40
+        max_tokens (int, optional): Maximum number of tokens to generate. Defaults to 2048
+        system_prompt (str, optional): System instructions for the model
+        
+    Returns:
+        dict: The generated structured JSON response
+    """
+    try:
+        # Configure the model
+        client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+        
+        # Set up generation config
+        generation_config = {
+            "temperature": temperature,
+            "top_p": top_p,
+            "top_k": top_k,
+            "max_output_tokens": max_tokens,
+        }
+        
+        # Generate content with structured response
+        response = client.models.generate_content(
+            model='gemini-2.0-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                max_output_tokens=max_tokens,
+                temperature=temperature,
+                top_p=top_p,
+                top_k=top_k,
+                response_mime_type='application/json',
+                response_schema=schema
+            ),
+        )
+        
+        # Parse the response
+        try:
+            # First try to get the parsed response
+            if hasattr(response, 'parsed'):
+                return response.parsed
+            
+            # If parsed is not available, try to parse the text
+            response_text = response.text
+            return json.loads(response_text)
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing JSON response: {e}")
+            return {"error": f"Failed to parse JSON response: {e}", "raw_response": response_text}
+            
+    except Exception as e:
+        logger.error(f"Error in Gemini Pro structured JSON generation: {e}")
+        return {"error": str(e)}

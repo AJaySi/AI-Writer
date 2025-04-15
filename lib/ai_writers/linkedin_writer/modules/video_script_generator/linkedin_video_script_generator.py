@@ -11,6 +11,7 @@ from typing import Dict, List, Optional, Union
 from loguru import logger
 
 from .....gpt_providers.text_generation.main_text_generation import llm_text_gen
+from .....gpt_providers.text_generation.gemini_pro_text import gemini_structured_json_response
 from .....ai_web_researcher.gpt_online_researcher import do_google_serp_search
 from .....ai_web_researcher.metaphor_basic_neural_web_search import metaphor_search_articles
 from .....ai_web_researcher.tavily_ai_search import do_tavily_ai_search
@@ -103,19 +104,38 @@ class LinkedInVideoScriptGenerator:
         """Extract key insights and trends from research articles."""
         try:
             prompt = f"""
-            Based on the following articles, extract:
-            1. Key insights relevant for a video script
-            2. Current trends in the industry
+            Analyze these articles and extract key insights and trends:
             
             Articles:
             {json.dumps(articles, indent=2)}
             
-            Return a JSON with two lists: 'insights' and 'trends'
+            Identify the most valuable insights and emerging trends from these articles.
             """
             
-            response = llm_text_gen(prompt)
-            result = json.loads(response)
+            # Define the schema for insights and trends
+            schema = {
+                "type": "object",
+                "properties": {
+                    "insights": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "trends": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    }
+                },
+                "required": ["insights", "trends"]
+            }
             
+            # Use the structured JSON response function
+            result = gemini_structured_json_response(prompt, schema)
+            
+            # Check if there was an error
+            if "error" in result:
+                logger.error(f"Error extracting insights and trends: {result['error']}")
+                return [], []
+                
             return result.get("insights", []), result.get("trends", [])
             
         except Exception as e:
@@ -159,35 +179,65 @@ class LinkedInVideoScriptGenerator:
             return ""
 
     def generate_story_structure(self, topic: str, video_type: str, length: str, insights: List[str]) -> Dict:
-        """
-        Generate a structured outline for the video.
-        
-        Args:
-            topic: Main topic of the video
-            video_type: Type of video content
-            length: Target video length
-            insights: Research insights to incorporate
-            
-        Returns:
-            Dict containing the story structure
-        """
+        """Generate a structured story for the video."""
         try:
             prompt = f"""
-            Create a professional video script structure for LinkedIn with:
+            Create a story structure for a LinkedIn video:
             - Topic: {topic}
             - Video Type: {self.video_types[video_type]}
             - Length: {self.video_lengths[length]}
             - Key Insights: {json.dumps(insights)}
             
-            Return a JSON with:
-            1. sections: List of sections with timing and content
-            2. transitions: List of smooth transitions
-            3. key_points: Main points to emphasize
-            4. pacing_notes: Guidance on pacing and delivery
+            Create a well-structured story with clear sections, transitions, and key points.
+            Include guidance on pacing and delivery.
             """
             
-            response = llm_text_gen(prompt)
-            return json.loads(response)
+            # Define the schema for the story structure
+            schema = {
+                "type": "object",
+                "properties": {
+                    "sections": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {"type": "string"},
+                                "content": {"type": "string"},
+                                "duration": {"type": "string"}
+                            },
+                            "required": ["title", "content", "duration"]
+                        }
+                    },
+                    "transitions": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "key_points": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "pacing_notes": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    }
+                },
+                "required": ["sections", "transitions", "key_points", "pacing_notes"]
+            }
+            
+            # Use the structured JSON response function
+            result = gemini_structured_json_response(prompt, schema)
+            
+            # Check if there was an error
+            if "error" in result:
+                logger.error(f"Error generating story structure: {result['error']}")
+                return {
+                    "sections": [],
+                    "transitions": [],
+                    "key_points": [],
+                    "pacing_notes": []
+                }
+                
+            return result
             
         except Exception as e:
             logger.error(f"Error generating story structure: {str(e)}")
@@ -199,33 +249,46 @@ class LinkedInVideoScriptGenerator:
             }
 
     def generate_visual_cues(self, script_sections: List[Dict]) -> List[Dict]:
-        """
-        Generate visual suggestions for each section of the script.
-        
-        Args:
-            script_sections: List of script sections
-            
-        Returns:
-            List of visual cue suggestions
-        """
+        """Generate visual cues for the video script."""
         try:
             prompt = f"""
-            For each section of the LinkedIn video script, suggest visual elements:
+            Create visual cues for this video script:
             
             Script Sections:
             {json.dumps(script_sections, indent=2)}
             
-            For each section, provide:
+            For each section, suggest:
             1. Visual type (b-roll, graphics, text overlay, etc.)
             2. Description of visual content
             3. Timing and duration
             4. Visual transitions
-            
-            Return a JSON array of visual suggestions.
             """
             
-            response = llm_text_gen(prompt)
-            return json.loads(response)
+            # Define the schema for visual cues
+            schema = {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "section_title": {"type": "string"},
+                        "visual_type": {"type": "string"},
+                        "description": {"type": "string"},
+                        "timing": {"type": "string"},
+                        "transitions": {"type": "string"}
+                    },
+                    "required": ["section_title", "visual_type", "description", "timing", "transitions"]
+                }
+            }
+            
+            # Use the structured JSON response function
+            result = gemini_structured_json_response(prompt, schema)
+            
+            # Check if there was an error
+            if "error" in result:
+                logger.error(f"Error generating visual cues: {result['error']}")
+                return []
+                
+            return result
             
         except Exception as e:
             logger.error(f"Error generating visual cues: {str(e)}")
@@ -282,26 +345,66 @@ class LinkedInVideoScriptGenerator:
             return {}
 
     def generate_cta(self, topic: str, video_type: str, target_audience: str) -> Dict:
-        """Generate an effective call-to-action."""
+        """Generate a compelling call-to-action for the video."""
         try:
             prompt = f"""
-            Create an effective call-to-action for a LinkedIn video:
+            Create a compelling call-to-action for a LinkedIn video:
             - Topic: {topic}
             - Video Type: {self.video_types[video_type]}
-            - Target Audience: {self.target_audiences[target_audience]}
+            - Target Audience: {target_audience}
             
-            Return a JSON with:
-            1. primary_cta: Main call-to-action text
-            2. secondary_cta: Optional follow-up action
-            3. engagement_prompts: Questions or prompts for comments
+            Generate a clear, engaging call-to-action that encourages viewer engagement.
             """
             
-            response = llm_text_gen(prompt)
-            return json.loads(response)
+            # Define the schema for the CTA
+            schema = {
+                "type": "object",
+                "properties": {
+                    "primary_cta": {
+                        "type": "string",
+                        "description": "Main call-to-action text"
+                    },
+                    "secondary_cta": {
+                        "type": "string",
+                        "description": "Optional secondary call-to-action"
+                    },
+                    "engagement_hooks": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Additional engagement prompts"
+                    },
+                    "hashtag_suggestions": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Relevant hashtags for the CTA"
+                    }
+                },
+                "required": ["primary_cta", "secondary_cta", "engagement_hooks", "hashtag_suggestions"]
+            }
+            
+            # Use the structured JSON response function
+            result = gemini_structured_json_response(prompt, schema)
+            
+            # Check if there was an error
+            if "error" in result:
+                logger.error(f"Error generating CTA: {result['error']}")
+                return {
+                    "primary_cta": "Thanks for watching!",
+                    "secondary_cta": "Let me know your thoughts in the comments.",
+                    "engagement_hooks": ["What did you think about this topic?"],
+                    "hashtag_suggestions": ["#LinkedInVideo"]
+                }
+                
+            return result
             
         except Exception as e:
             logger.error(f"Error generating CTA: {str(e)}")
-            return {}
+            return {
+                "primary_cta": "Thanks for watching!",
+                "secondary_cta": "Let me know your thoughts in the comments.",
+                "engagement_hooks": ["What did you think about this topic?"],
+                "hashtag_suggestions": ["#LinkedInVideo"]
+            }
 
 def linkedin_video_script_generator_ui():
     """Streamlit UI for the LinkedIn Video Script Generator."""
@@ -447,10 +550,16 @@ def linkedin_video_script_generator_ui():
                             st.write(f"**Secondary CTA:** {script['cta']['secondary_cta']}")
                         
                         # Display engagement prompts
-                        if script['cta'].get('engagement_prompts'):
+                        if script['cta'].get('engagement_hooks'):
                             st.subheader("Engagement Prompts")
-                            for prompt in script['cta']['engagement_prompts']:
+                            for prompt in script['cta']['engagement_hooks']:
                                 st.markdown(f"- {prompt}")
+                        
+                        # Display hashtag suggestions
+                        if script['cta'].get('hashtag_suggestions'):
+                            st.subheader("Hashtag Suggestions")
+                            for hashtag in script['cta']['hashtag_suggestions']:
+                                st.markdown(f"- {hashtag}")
                         
                         # Display pacing notes
                         st.subheader("Pacing & Delivery Notes")

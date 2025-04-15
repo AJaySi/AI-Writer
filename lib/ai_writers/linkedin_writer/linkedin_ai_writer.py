@@ -28,6 +28,7 @@ from .modules.post_generator.linkedin_post_generator import linkedin_post_genera
 from .modules.article_generator.linkedin_article_generator import linkedin_article_generator_ui
 from .modules.carousel_generator.linkedin_carousel_generator import linkedin_carousel_generator_ui
 from .modules.video_script_generator.linkedin_video_script_generator import linkedin_video_script_generator_ui
+from .modules.comment_response_generator.linkedin_comment_response_generator_ui import linkedin_comment_response_generator_ui
 
 # Import image generation
 from ...gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
@@ -129,6 +130,27 @@ def linkedin_main_menu():
                 "Thumbnail text suggestions",
                 "Video description optimization",
                 "Hashtag strategy"
+            ]
+        },
+        {
+            "name": "LinkedIn Comment Response Generator",
+            "icon": "💬",
+            "description": "Generate professional and engaging responses to LinkedIn comments with AI-powered analysis and optimization.",
+            "color": "#0A66C2",
+            "category": "Engagement",
+            "function": linkedin_comment_response_generator_ui,
+            "status": "active",
+            "features": [
+                "Comment analysis and categorization",
+                "Multiple response types (general, disagreement, value-add)",
+                "Brand voice customization",
+                "Engagement goal targeting",
+                "Resource suggestion generation",
+                "Follow-up question generation",
+                "Tone optimization",
+                "Response strategy recommendations",
+                "Context-aware responses",
+                "Professional formatting"
             ]
         },
         

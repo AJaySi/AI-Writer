@@ -9,37 +9,70 @@ import streamlit as st
 from typing import Dict, List, Optional
 from loguru import logger
 import json
+from pydantic import BaseModel
 
 from .....gpt_providers.text_generation.main_text_generation import llm_text_gen
+from .....gpt_providers.text_generation.gemini_pro_text import gemini_structured_json_response
 from .....gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 from .....ai_web_researcher.gpt_online_researcher import do_google_serp_search
 from .....ai_web_researcher.metaphor_basic_neural_web_search import metaphor_search_articles
 from .....ai_web_researcher.tavily_ai_search import do_tavily_ai_search
 
 
-class CarouselSlide:
+class CarouselSlide(BaseModel):
     """Represents a single slide in the carousel."""
-    
-    def __init__(self, index: int, slide_type: str = "text_and_image"):
-        self.index = index
-        self.slide_type = slide_type
-        self.content = ""
-        self.image_prompt = ""
-        self.image_path = None
-        self.heading = ""
-        self.subheading = ""
-    
-    def to_dict(self) -> Dict:
-        """Convert slide to dictionary format."""
-        return {
-            "index": self.index,
-            "type": self.slide_type,
-            "content": self.content,
-            "image_prompt": self.image_prompt,
-            "image_path": self.image_path,
-            "heading": self.heading,
-            "subheading": self.subheading
+    index: int
+    heading: str
+    subheading: str
+    content: str
+    image_prompt: str
+    image_path: Optional[str] = None
+
+
+class CarouselStructure(BaseModel):
+    """Represents the complete carousel structure."""
+    slides: List[CarouselSlide]
+
+
+def generate_structured_content(prompt: str, model: str = 'gemini-pro') -> Optional[Dict]:
+    """Generate structured content using Gemini's structured output feature."""
+    try:
+        # Define the schema for the carousel structure
+        schema = {
+            "type": "object",
+            "properties": {
+                "slides": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "index": {"type": "integer"},
+                            "heading": {"type": "string"},
+                            "subheading": {"type": "string"},
+                            "content": {"type": "string"},
+                            "image_prompt": {"type": "string"}
+                        },
+                        "required": ["index", "heading", "subheading", "content", "image_prompt"]
+                    }
+                }
+            },
+            "required": ["slides"]
         }
+        
+        # Use the new function to generate structured content
+        result = gemini_structured_json_response(prompt, schema)
+        
+        # Check if there was an error
+        if "error" in result:
+            logger.error(f"Error generating structured content: {result['error']}")
+            return None
+            
+        logger.debug(f"Structured response: {json.dumps(result, indent=2)}")
+        return result
+    except Exception as e:
+        logger.error(f"Error generating structured content: {e}")
+        logger.exception("Full traceback:")
+        return None
 
 
 class LinkedInCarouselGenerator:
@@ -86,75 +119,83 @@ class LinkedInCarouselGenerator:
             logger.error(f"Error researching topic: {e}")
             return {}
     
-    def generate_slide_content(self, topic: str, industry: str, tone: str, content_type: str, num_slides: int) -> List[CarouselSlide]:
+    def generate_slide_content(self, topic: str, num_slides: int = 5) -> bool:
         """Generate content for carousel slides."""
         try:
-            # Store parameters
-            self.topic = topic
-            self.industry = industry
-            self.tone = tone
-            self.content_type = content_type
-            self.num_slides = num_slides
+            logger.info(f"Generating carousel outline for topic: {topic}")
             
-            # Generate content structure
-            structure_prompt = f"""
-            Create a {num_slides}-slide carousel post about '{topic}' for {industry} industry.
-            Style: {content_type} (e.g., How-to, List, Story)
-            Tone: {tone}
-
-            For each slide, provide:
-            1. Heading (short, attention-grabbing)
-            2. Subheading (supporting context)
-            3. Main content (clear, concise points)
-            4. Image prompt (visual representation)
-
-            Format as JSON:
-            {{
-                "slides": [
-                    {{
-                        "index": 1,
-                        "heading": "Attention-grabbing title",
-                        "subheading": "Supporting context",
-                        "content": "Main slide content",
-                        "image_prompt": "Detailed image generation prompt"
-                    }}
-                ]
-            }}
-
-            Requirements:
-            - First slide should hook the audience
-            - Maintain clear progression of ideas
-            - Each slide should be self-contained but connected
-            - Last slide should have clear call-to-action
-            - Keep text concise and impactful
-            - Ensure all content is professional and LinkedIn-appropriate
+            # Step 1: Generate detailed outline
+            outline_prompt = f"""
+            Create a detailed outline for a LinkedIn carousel about {topic}.
+            The outline should include:
+            1. Main topic and key message
+            2. {num_slides} main points to cover
+            3. Supporting details for each point
+            4. Key takeaways and call-to-action
+            
+            Format the outline in a clear, structured way.
             """
             
-            # Generate structure using LLM
-            carousel_structure = llm_text_gen(structure_prompt)
+            outline = llm_text_gen(outline_prompt)
+            logger.debug(f"Generated outline: {outline}")
             
-            try:
-                structure_data = json.loads(carousel_structure)
+            # Step 2: Generate structured carousel content
+            carousel_prompt = f"""
+            Based on this outline:
+            {outline}
+            
+            Create a LinkedIn carousel with {num_slides} slides.
+            Each slide should have:
+            - A compelling heading
+            - A brief subheading
+            - Concise, engaging content
+            - A detailed image prompt for visual content
+            
+            The content should be informative, engaging, and valuable for LinkedIn professionals.
+            """
+            
+            logger.info("Generating structured carousel content")
+            carousel_structure = generate_structured_content(carousel_prompt)
+            
+            if not carousel_structure:
+                logger.error("Failed to generate structured carousel content")
+                return False
                 
-                # Create slides from structure
-                self.slides = []
-                for slide_data in structure_data["slides"]:
-                    slide = CarouselSlide(slide_data["index"])
-                    slide.heading = slide_data["heading"]
-                    slide.subheading = slide_data["subheading"]
-                    slide.content = slide_data["content"]
-                    slide.image_prompt = slide_data["image_prompt"]
+            logger.debug(f"Generated carousel structure: {json.dumps(carousel_structure, indent=2)}")
+            
+            # Validate and process the structure
+            if "slides" not in carousel_structure:
+                logger.error("Invalid carousel structure: missing 'slides' key")
+                return False
+                
+            self.slides = []
+            for slide_data in carousel_structure["slides"]:
+                try:
+                    slide = CarouselSlide(
+                        index=slide_data["index"],
+                        heading=slide_data["heading"],
+                        subheading=slide_data["subheading"],
+                        content=slide_data["content"],
+                        image_prompt=slide_data["image_prompt"]
+                    )
                     self.slides.append(slide)
+                    logger.debug(f"Created slide {slide.index}: {slide.heading}")
+                except Exception as e:
+                    logger.error(f"Error processing slide data: {e}")
+                    logger.debug(f"Problematic slide data: {slide_data}")
+                    continue
+                    
+            if not self.slides:
+                logger.error("No valid slides were created")
+                return False
                 
-                return self.slides
-                
-            except json.JSONDecodeError:
-                logger.error("Failed to parse carousel structure")
-                return []
+            logger.info(f"Successfully generated {len(self.slides)} slides")
+            return True
             
         except Exception as e:
             logger.error(f"Error generating slide content: {e}")
-            return []
+            logger.exception("Full traceback:")
+            return False
     
     def generate_slide_image(self, slide: CarouselSlide) -> Optional[str]:
         """Generate an image for a carousel slide."""
@@ -277,8 +318,20 @@ def linkedin_carousel_generator_ui():
                 # Content generation phase
                 status_container.text("✍️ Phase 2: Creating carousel content...")
                 slides = generator.generate_slide_content(
-                    topic, industry, tone.lower(), content_type.lower(), num_slides
+                    topic, num_slides
                 )
+                
+                if not slides:
+                    status_container.error("❌ Failed to generate carousel content. Please try again with different parameters.")
+                    st.error("""
+                    Tips to resolve this issue:
+                    1. Try a different topic or industry
+                    2. Adjust the number of slides
+                    3. Change the content type or tone
+                    4. Try a different research source
+                    """)
+                    return
+                
                 st.session_state.carousel_data["slides"] = slides
                 
                 # Image generation phase
@@ -291,6 +344,13 @@ def linkedin_carousel_generator_ui():
                 status_container.text("✅ Carousel generation complete!")
             else:
                 status_container.error("❌ No research results found. Please try a different topic or research source.")
+                st.error("""
+                Tips to resolve this issue:
+                1. Try a more specific topic
+                2. Use a different research source
+                3. Check if your topic is too niche or too broad
+                4. Ensure your industry selection is accurate
+                """)
     
     # Display carousel if we have slides
     if st.session_state.carousel_data["slides"]:
