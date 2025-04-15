@@ -3,16 +3,17 @@
 import streamlit as st
 from typing import Dict, Any
 from loguru import logger
-from ..styles import API_KEY_MANAGER_STYLES
+from ..styles import API_KEY_MANAGER_STYLES # Assuming styles are correctly imported
 from ..wizard_state import (
-    get_current_step,
-    next_step,
-    previous_step,
-    can_proceed_to_next_step
+    get_current_step, # Keep if used elsewhere
+    next_step,        # Keep if used elsewhere
+    previous_step,    # Keep if used elsewhere
+    can_proceed_to_next_step # Keep if used elsewhere
 )
 
 def render_step_indicator(current_step: int, total_steps: int) -> None:
     """Render the step indicator."""
+    # Existing step indicator code... (Keep as is)
     try:
         st.markdown("""
             <style>
@@ -67,11 +68,11 @@ def render_step_indicator(current_step: int, total_steps: int) -> None:
         """, unsafe_allow_html=True)
 
         steps = [
-            ("🔑", "AI LLM", 1),
-            ("🤖", "Website Setup", 2),
-            ("👤", "AI Research", 3),
+            ("🔑", "AI Providers", 1),
+            ("🌐", "Website Setup", 2),
+            ("🔍", "AI Research", 3),
             ("🎨", "Personalization", 4),
-            ("🔄", "Integrations", 5),
+            ("🔗", "Integrations", 5),
             ("✅", "Complete", 6)
         ]
 
@@ -97,19 +98,11 @@ def render_step_indicator(current_step: int, total_steps: int) -> None:
         logger.error(f"Error rendering step indicator: {str(e)}")
         st.error("Error displaying step indicator")
 
-def render_navigation_buttons(current_step: int, total_steps: int, changes_made: bool = False) -> bool:
-    """Render the navigation buttons with modern glassmorphic styling.
-    
-    Args:
-        current_step (int): Current step number
-        total_steps (int): Total number of steps
-        changes_made (bool): Whether changes were made in the current step
-        
-    Returns:
-        bool: True if next/complete button was clicked, False otherwise
-    """
+def render_navigation_buttons(current_step: int, total_steps: int) -> None:
+    """Render the navigation buttons with validation logic for steps 1 and 3."""
     col1, col2, col3 = st.columns([1, 2, 1])
-    
+    proceed_error_placeholder = col2.empty() # Placeholder for error message
+
     with col1:
         if current_step > 1:
             if st.button("**← Back**", use_container_width=True, key="back_button"):
@@ -119,18 +112,72 @@ def render_navigation_buttons(current_step: int, total_steps: int, changes_made:
     with col3:
         if current_step < total_steps:
             next_text = "**Continue →**"
-            if st.button(next_text, use_container_width=True, disabled=not changes_made, key="next_button"):
-                return True
-        else:
-            if st.button("**Complete Setup ✓**", use_container_width=True, type="primary", key="complete_button"):
-                # Save the configuration
-                st.success("✅ Setup completed successfully!")
-                return True
-    
-    return False
+            button_disabled = False
+            error_message = ""
+
+            if current_step == 1:
+                # --- Step 1 Specific Validation --- 
+                openai_valid = st.session_state.get("openai_status") == "valid"
+                gemini_valid = st.session_state.get("gemini_status") == "valid"
+                if not (openai_valid or gemini_valid):
+                    button_disabled = True
+                    error_message = "Please ensure at least one required AI provider (OpenAI or Gemini) has a valid API key to continue."
+                logger.debug(f"Step 1 validation: OpenAI Valid={openai_valid}, Gemini Valid={gemini_valid}, Proceed={not button_disabled}")
+            
+            elif current_step == 3:
+                # --- Step 3 Specific Validation --- 
+                research_providers = ["serpapi", "tavily", "metaphor", "firecrawl"]
+                invalid_key_found = False
+                for provider in research_providers:
+                    status = st.session_state.get(f"{provider}_status")
+                    # Disable if any *entered* key is invalid or in error state
+                    if status in ["invalid", "error"]:
+                        invalid_key_found = True
+                        break
+                if invalid_key_found:
+                    button_disabled = True
+                    error_message = f"Please ensure any entered research API keys are valid before continuing. Check {provider.capitalize()} key."
+                logger.debug(f"Step 3 validation: Invalid Key Found={invalid_key_found}, Proceed={not button_disabled}")
+            
+            # --- Default Logic for Other Steps --- 
+            # else: # No specific validation for other steps currently
+            #     button_disabled = False 
+
+            # --- Render Button --- 
+            if st.button(next_text, use_container_width=True, disabled=button_disabled, key="next_button"):
+                if button_disabled:
+                     # Should not happen if disabled, but safeguard
+                    proceed_error_placeholder.error(error_message if error_message else "Cannot proceed.", icon="⚠️")
+                    logger.warning(f"Continue button clicked on Step {current_step} while disabled.")
+                else:
+                    # Proceed to next step
+                    logger.info(f"Proceeding from step {current_step} to {current_step + 1}")
+                    st.session_state['current_step'] = current_step + 1
+                    st.rerun()
+            
+            # Show error persistently if button is disabled
+            elif button_disabled:
+                 proceed_error_placeholder.error(error_message, icon="⚠️")
+
+        elif current_step == total_steps:
+            # --- Final Step Logic --- 
+            final_step_can_complete = True # Replace with actual final validation logic
+            if st.button("**Complete Setup ✓**", use_container_width=True, type="primary", disabled=not final_step_can_complete, key="complete_button"):
+                if final_step_can_complete:
+                    logger.info("Setup completed successfully!")
+                    st.session_state['setup_complete'] = True 
+                    st.success("✅ Setup completed successfully!") 
+                    st.balloons()
+                    st.rerun() 
+                else:
+                    proceed_error_placeholder.error("Please complete all required steps before finishing.", icon="⚠️")
+                    logger.warning("Complete Setup clicked but final validation failed.")
+            elif not final_step_can_complete:
+                 proceed_error_placeholder.error("Please complete all required steps before finishing.", icon="⚠️")
 
 def render_tab_style() -> None:
     """Render enhanced tab styling."""
+    # Existing tab style code... (Keep as is)
     st.markdown("""
         <style>
             .stTabs [data-baseweb="tab-list"] {
@@ -175,6 +222,7 @@ def render_tab_style() -> None:
 
 def render_success_message():
     """Render the success message with glassmorphic design."""
+    # Existing success message code... (Keep as is)
     st.markdown("""
         <div class="success-message">
             <h3 style='color: white; margin-bottom: 12px; font-size: 1.4em;'>✅ API keys saved successfully!</h3>
