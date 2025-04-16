@@ -9,7 +9,7 @@ from lib.utils.settings_page import render_settings_page
 # Import social media writer functions
 from lib.ai_writers.ai_facebook_writer.facebook_ai_writer import facebook_main_menu
 from lib.ai_writers.linkedin_writer.linkedin_ai_writer import linkedin_main_menu
-from lib.ai_writers.twitter_ai_writer import tweet_writer
+from lib.ai_writers.twitter_writers import run_dashboard
 from lib.ai_writers.insta_ai_writer import insta_writer
 from lib.ai_writers.youtube_writers.youtube_ai_writer import youtube_main_menu
 
@@ -322,7 +322,7 @@ def setup_alwrity_ui():
     social_tools_submenu = {
         "Facebook": ("📘", lambda: facebook_main_menu()),
         "LinkedIn": ("💼", lambda: linkedin_main_menu()),
-        "Twitter": ("🐦", lambda: tweet_writer()),
+        "Twitter": ("🐦", lambda: run_dashboard()),
         "Instagram": ("📸", lambda: insta_writer()),
         "YouTube": ("🎥", lambda: youtube_main_menu())
     }

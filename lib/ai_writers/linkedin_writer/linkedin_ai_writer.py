@@ -29,10 +29,24 @@ from .modules.article_generator.linkedin_article_generator import linkedin_artic
 from .modules.carousel_generator.linkedin_carousel_generator import linkedin_carousel_generator_ui
 from .modules.video_script_generator.linkedin_video_script_generator import linkedin_video_script_generator_ui
 from .modules.comment_response_generator.linkedin_comment_response_generator_ui import linkedin_comment_response_generator_ui
+from .modules.profile_optimizer.linkedin_profile_optimizer_ui import linkedin_profile_optimizer_ui
+from .modules.poll_generator import linkedin_poll_generator_ui
+from .modules.company_page_generator import linkedin_company_page_generator_ui
 
 # Import image generation
 from ...gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
 
+# Create a wrapper for the async profile optimizer UI
+def linkedin_profile_optimizer_ui_wrapper():
+    """Wrapper function to call the async LinkedIn Profile Optimizer UI."""
+    import asyncio
+    asyncio.run(linkedin_profile_optimizer_ui())
+
+# Create a wrapper for the async company page generator UI
+def linkedin_company_page_generator_ui_wrapper():
+    """Wrapper function to call the async LinkedIn Company Page Generator UI."""
+    import asyncio
+    asyncio.run(linkedin_company_page_generator_ui())
 
 def linkedin_main_menu():
     """Main function for the LinkedIn AI Writer."""
@@ -161,8 +175,8 @@ def linkedin_main_menu():
             "description": "Enhance LinkedIn profiles to improve visibility and professional appeal.",
             "color": "#0A66C2",
             "category": "Profile & Personal Branding",
-            "function": None,
-            "status": "coming_soon",
+            "function": linkedin_profile_optimizer_ui_wrapper,
+            "status": "active",
             "features": [
                 "Headline optimization",
                 "About section generation",
@@ -182,8 +196,8 @@ def linkedin_main_menu():
             "description": "Create engaging polls that drive interaction and gather insights.",
             "color": "#0A66C2",
             "category": "Profile & Personal Branding",
-            "function": None,
-            "status": "coming_soon",
+            "function": linkedin_poll_generator_ui,
+            "status": "active",
             "features": [
                 "Question formulation optimization",
                 "Option generation based on topic",
@@ -205,8 +219,8 @@ def linkedin_main_menu():
             "description": "Create content for company pages that builds brand awareness and engagement.",
             "color": "#0A66C2",
             "category": "Business & Marketing",
-            "function": None,
-            "status": "coming_soon",
+            "function": linkedin_company_page_generator_ui_wrapper,
+            "status": "active",
             "features": [
                 "Company culture post generation",
                 "Product/service announcement templates",
@@ -516,7 +530,7 @@ def linkedin_main_menu():
                         """, unsafe_allow_html=True)
                         
                         # Add a button to access the tool
-                        if st.button(f"Use {tool['name']}", key=f"btn_{tool['name']}"):
+                        if st.button(f"Use {tool['name']}", key=f"btn_{tool['category']}_{tool['name']}"):
                             # Store the selected tool in session state
                             st.session_state.selected_tool = tool
                             st.rerun()
