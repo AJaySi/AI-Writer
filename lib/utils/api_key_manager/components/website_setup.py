@@ -199,7 +199,7 @@ def render_website_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
 
     # --- Removed Analysis Section ---
     # The detailed website analysis should be a separate feature, not part of the initial setup validation.
-    st.markdown("--- ---“)
+    st.markdown("---")
     st.markdown("ℹ️ *The detailed Website Analyzer tool is available separately in the main application.*")
     st.info("Entering your website URL is optional. Click Continue to proceed.")
 

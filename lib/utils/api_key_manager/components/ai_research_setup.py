@@ -7,14 +7,6 @@ from ..manager import APIKeyManager
 import os
 from dotenv import load_dotenv # Keep if api_key_manager uses it
 import sys
-# Corrected import: Assuming validation functions are in validation.py in the parent directory
-from ..validation import (
-    test_serpapi_key,
-    test_tavily_key,
-    test_metaphor_key,
-    test_firecrawl_key
-    # Add others if needed later, e.g., test_bing_key, test_google_search_key
-)
 
 # Configure logger (assuming configured elsewhere or keep minimal here)
 logger.add(sys.stderr, level="INFO") # Keep simple example if needed
