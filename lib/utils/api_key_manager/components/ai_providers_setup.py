@@ -5,12 +5,12 @@ from loguru import logger
 import streamlit as st
 import os
 import sys
-# Assuming api_key_tests are in the parent directory relative to this component
-from ..api_key_tests import (
+# Corrected import: Assuming validation functions are in validation.py in the parent directory
+from ..validation import (
     test_openai_api_key,
     test_gemini_api_key,
-    test_anthropic_api_key, # Keep if needed elsewhere, not used in this step currently
-    test_deepseek_api_key,  # Keep if needed elsewhere
+    # test_anthropic_api_key, # Keep commented if not used or add if needed
+    # test_deepseek_api_key,  # Keep commented if not used or add if needed
     test_mistral_api_key
 )
 
@@ -23,11 +23,24 @@ def _validate_provider_key(provider_name: str, key_value: str) -> bool:
     try:
         logger.debug(f"Validating key for {provider_name}...")
         if provider_name == "openai":
-            is_valid = test_openai_api_key(key_value)
+            # Ensure the function exists in validation.py
+            if callable(getattr(sys.modules[__name__], 'test_openai_api_key', None)):
+                 is_valid = test_openai_api_key(key_value)
+            else:
+                 logger.error("test_openai_api_key not found in validation module")
+                 is_valid = False # Assume invalid if test func missing
         elif provider_name == "gemini":
-            is_valid = test_gemini_api_key(key_value)
+            if callable(getattr(sys.modules[__name__], 'test_gemini_api_key', None)):
+                 is_valid = test_gemini_api_key(key_value)
+            else:
+                 logger.error("test_gemini_api_key not found in validation module")
+                 is_valid = False
         elif provider_name == "mistral":
-            is_valid = test_mistral_api_key(key_value)
+            if callable(getattr(sys.modules[__name__], 'test_mistral_api_key', None)):
+                 is_valid = test_mistral_api_key(key_value)
+            else:
+                 logger.error("test_mistral_api_key not found in validation module")
+                 is_valid = False
         else:
             logger.warning(f"Validation not implemented for provider: {provider_name}")
             return False # Or True if unknown providers are allowed without validation
@@ -134,14 +147,15 @@ def render_ai_providers_setup(api_key_manager) -> Dict[str, Any]:
         )
         # Feedback Area for OpenAI
         openai_status = st.session_state.get("openai_status", "unsaved")
+        feedback_placeholder_openai = st.empty()
         if openai_status == "saving":
-            st.spinner("Validating OpenAI key...")
+            feedback_placeholder_openai.info("Validating OpenAI key...", icon="⏳")
         elif openai_status == "valid":
-            st.success("OpenAI key saved and valid!", icon="✅")
+            feedback_placeholder_openai.success("OpenAI key saved and valid!", icon="✅")
         elif openai_status == "invalid":
-            st.error("Invalid OpenAI key. Please check and try again.", icon="❌")
+            feedback_placeholder_openai.error("Invalid OpenAI key. Please check and try again.", icon="❌")
         elif openai_status == "error":
-            st.error("Error saving/validating OpenAI key.", icon="⚠️")
+            feedback_placeholder_openai.error("Error saving/validating OpenAI key.", icon="⚠️")
         
         # --- Google Gemini --- 
         st.subheader("Google Gemini (Required)")
@@ -157,14 +171,15 @@ def render_ai_providers_setup(api_key_manager) -> Dict[str, Any]:
         )
         # Feedback Area for Gemini
         gemini_status = st.session_state.get("gemini_status", "unsaved")
+        feedback_placeholder_gemini = st.empty()
         if gemini_status == "saving":
-            st.spinner("Validating Gemini key...")
+            feedback_placeholder_gemini.info("Validating Gemini key...", icon="⏳")
         elif gemini_status == "valid":
-            st.success("Gemini key saved and valid!", icon="✅")
+            feedback_placeholder_gemini.success("Gemini key saved and valid!", icon="✅")
         elif gemini_status == "invalid":
-            st.error("Invalid Gemini key. Please check and try again.", icon="❌")
+            feedback_placeholder_gemini.error("Invalid Gemini key. Please check and try again.", icon="❌")
         elif gemini_status == "error":
-            st.error("Error saving/validating Gemini key.", icon="⚠️")
+            feedback_placeholder_gemini.error("Error saving/validating Gemini key.", icon="⚠️")
 
         # --- Mistral AI (Optional) ---
         st.subheader("Mistral AI (Optional)")
@@ -180,19 +195,18 @@ def render_ai_providers_setup(api_key_manager) -> Dict[str, Any]:
         )
         # Feedback Area for Mistral
         mistral_status = st.session_state.get("mistral_status", "unsaved")
+        feedback_placeholder_mistral = st.empty()
         if mistral_status == "saving":
-            st.spinner("Validating Mistral key...")
+            feedback_placeholder_mistral.info("Validating Mistral key...", icon="⏳")
         elif mistral_status == "valid":
-            st.success("Mistral key saved and valid!", icon="✅")
+            feedback_placeholder_mistral.success("Mistral key saved and valid!", icon="✅")
         elif mistral_status == "invalid":
-            st.error("Invalid Mistral key. Please check and try again.", icon="❌")
+            feedback_placeholder_mistral.error("Invalid Mistral key. Please check and try again.", icon="❌")
         elif mistral_status == "error":
-            st.error("Error saving/validating Mistral key.", icon="⚠️")
+            feedback_placeholder_mistral.error("Error saving/validating Mistral key.", icon="⚠️")
 
         # --- Final Notes --- 
         st.info("Note: At least one AI provider (OpenAI or Google Gemini) must have a valid API key to proceed.")
-        
-        # REMOVED the old saving logic block here
         
         # Return value is not strictly needed if navigation relies on session state status
         return {}

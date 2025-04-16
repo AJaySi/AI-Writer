@@ -4,12 +4,11 @@ import streamlit as st
 from loguru import logger
 from typing import Dict, Any
 from ..manager import APIKeyManager
-# Removed import of render_navigation_buttons as it's handled in base
 import os
 from dotenv import load_dotenv # Keep if api_key_manager uses it
 import sys
-# Import test functions (adjust path if needed)
-from ..api_key_tests import (
+# Corrected import: Assuming validation functions are in validation.py in the parent directory
+from ..validation import (
     test_serpapi_key,
     test_tavily_key,
     test_metaphor_key,
@@ -28,14 +27,31 @@ def _validate_research_key(provider_name: str, key_value: str) -> bool:
         return False
     try:
         logger.debug(f"Validating key for {provider_name}...")
+        # Ensure the function exists in validation.py before calling
         if provider_name == "serpapi":
-            is_valid = test_serpapi_key(key_value)
+            if callable(getattr(sys.modules[__name__], 'test_serpapi_key', None)):
+                is_valid = test_serpapi_key(key_value)
+            else:
+                 logger.error("test_serpapi_key not found in validation module")
+                 is_valid = False
         elif provider_name == "tavily":
-            is_valid = test_tavily_key(key_value)
+            if callable(getattr(sys.modules[__name__], 'test_tavily_key', None)):
+                is_valid = test_tavily_key(key_value)
+            else:
+                 logger.error("test_tavily_key not found in validation module")
+                 is_valid = False
         elif provider_name == "metaphor":
-            is_valid = test_metaphor_key(key_value)
+            if callable(getattr(sys.modules[__name__], 'test_metaphor_key', None)):
+                is_valid = test_metaphor_key(key_value)
+            else:
+                 logger.error("test_metaphor_key not found in validation module")
+                 is_valid = False
         elif provider_name == "firecrawl":
-            is_valid = test_firecrawl_key(key_value)
+             if callable(getattr(sys.modules[__name__], 'test_firecrawl_key', None)):
+                is_valid = test_firecrawl_key(key_value)
+             else:
+                 logger.error("test_firecrawl_key not found in validation module")
+                 is_valid = False
         else:
             logger.warning(f"Validation not implemented for research provider: {provider_name}")
             return False # Default to False for unknown providers
@@ -219,7 +235,5 @@ def render_ai_research_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
         st.info("Integrations for Bing Search and Google Search APIs are planned.")
 
     st.info("You can skip this step if you don't need these research tools. Click Continue to proceed.")
-    
-    # Removed the old saving logic block here
-    
+        
     return {}
