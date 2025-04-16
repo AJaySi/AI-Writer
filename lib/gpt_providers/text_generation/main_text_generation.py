@@ -13,7 +13,7 @@ logger.add(sys.stdout,
     )
 
 from .openai_text_gen import openai_chatgpt
-from .gemini_pro_text import gemini_text_response
+from .gemini_pro_text import gemini_text_response, gemini_structured_json_response
 from .anthropic_text_gen import anthropic_text_response
 from .deepseek_text_gen import deepseek_text_response 
 from ...utils.read_main_config_params import read_return_config_section

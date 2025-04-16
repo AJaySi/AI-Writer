@@ -16,7 +16,7 @@ from lib.ai_writers.ai_news_article_writer import ai_news_generation
 from lib.ai_writers.ai_financial_writer import write_basic_ta_report
 from lib.ai_writers.ai_facebook_writer.facebook_ai_writer import facebook_main_menu
 from lib.ai_writers.linkedin_writer.linkedin_ai_writer import linkedin_main_menu
-from lib.ai_writers.twitter_ai_writer import tweet_writer
+from lib.ai_writers.twitter_writers.twitter_dashboard import run_dashboard
 from lib.ai_writers.insta_ai_writer import insta_writer
 from lib.ai_writers.youtube_writers.youtube_ai_writer import youtube_main_menu
 from lib.ai_writers.web_url_ai_writer import blog_from_url
@@ -468,9 +468,9 @@ def ai_social_writer():
     if "facebook" in selected_platform:
         facebook_main_menu()
     elif "linkedin" in selected_platform:
-        linked_post_writer()
+        linkedin_main_menu()
     elif "twitter" in selected_platform:
-        tweet_writer()
+        run_dashboard()
     elif "instagram" in selected_platform:
         insta_writer()
     elif "youtube" in selected_platform:

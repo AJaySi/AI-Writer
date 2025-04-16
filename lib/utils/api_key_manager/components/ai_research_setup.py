@@ -4,346 +4,236 @@ import streamlit as st
 from loguru import logger
 from typing import Dict, Any
 from ..manager import APIKeyManager
-from .base import render_navigation_buttons
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv # Keep if api_key_manager uses it
 import sys
+# Corrected import: Assuming validation functions are in validation.py in the parent directory
+from ..validation import (
+    test_serpapi_key,
+    test_tavily_key,
+    test_metaphor_key,
+    test_firecrawl_key
+    # Add others if needed later, e.g., test_bing_key, test_google_search_key
+)
 
-# Configure logger
-logger.remove()  # Remove default handler
-logger.add(
-    "logs/ai_research_setup.log",
-    rotation="500 MB",
-    retention="10 days",
-    level="DEBUG",
-    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
-)
-logger.add(
-    sys.stdout,
-    level="INFO",
-    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>"
-)
+# Configure logger (assuming configured elsewhere or keep minimal here)
+logger.add(sys.stderr, level="INFO") # Keep simple example if needed
+
+# Helper function to validate a specific research provider's key
+def _validate_research_key(provider_name: str, key_value: str) -> bool:
+    """Validate the API key for a given research provider."""
+    if not key_value:
+        logger.debug(f"Validation: Key for {provider_name} is empty.")
+        return False
+    try:
+        logger.debug(f"Validating key for {provider_name}...")
+        # Ensure the function exists in validation.py before calling
+        if provider_name == "serpapi":
+            if callable(getattr(sys.modules[__name__], 'test_serpapi_key', None)):
+                is_valid = test_serpapi_key(key_value)
+            else:
+                 logger.error("test_serpapi_key not found in validation module")
+                 is_valid = False
+        elif provider_name == "tavily":
+            if callable(getattr(sys.modules[__name__], 'test_tavily_key', None)):
+                is_valid = test_tavily_key(key_value)
+            else:
+                 logger.error("test_tavily_key not found in validation module")
+                 is_valid = False
+        elif provider_name == "metaphor":
+            if callable(getattr(sys.modules[__name__], 'test_metaphor_key', None)):
+                is_valid = test_metaphor_key(key_value)
+            else:
+                 logger.error("test_metaphor_key not found in validation module")
+                 is_valid = False
+        elif provider_name == "firecrawl":
+             if callable(getattr(sys.modules[__name__], 'test_firecrawl_key', None)):
+                is_valid = test_firecrawl_key(key_value)
+             else:
+                 logger.error("test_firecrawl_key not found in validation module")
+                 is_valid = False
+        else:
+            logger.warning(f"Validation not implemented for research provider: {provider_name}")
+            return False # Default to False for unknown providers
+        
+        logger.info(f"Validation result for {provider_name}: {'Valid' if is_valid else 'Invalid'}")
+        return is_valid
+    except Exception as e:
+        logger.error(f"Error validating key for {provider_name}: {e}", exc_info=True)
+        return False
+
+# Callback function for handling API key input changes
+def _handle_research_key_change(provider_name: str, api_key_manager):
+    """Save and validate research API key when input changes."""
+    key_input_widget_key = f"{provider_name}_key_input"
+    status_widget_key = f"{provider_name}_status"
+    
+    if key_input_widget_key not in st.session_state:
+        logger.warning(f"Input widget key '{key_input_widget_key}' not found in session state.")
+        return
+        
+    key_value = st.session_state[key_input_widget_key]
+    current_status = st.session_state.get(status_widget_key)
+    
+    logger.debug(f"Handling research key change for {provider_name}. Key: {'***' if key_value else 'Empty'}. Current status: {current_status}")
+
+    if not key_value:
+        api_key_manager.save_api_key(provider_name, "")
+        st.session_state[status_widget_key] = "unsaved"
+        logger.info(f"Cleared API key for {provider_name}.")
+        return
+
+    st.session_state[status_widget_key] = "saving"
+    st.rerun()
+    
+    try:
+        logger.debug(f"Saving key for {provider_name}...")
+        api_key_manager.save_api_key(provider_name, key_value)
+        logger.info(f"Saved API key for {provider_name}.")
+
+        is_valid = _validate_research_key(provider_name, key_value)
+
+        if is_valid:
+            st.session_state[status_widget_key] = "valid"
+        else:
+            st.session_state[status_widget_key] = "invalid"
+            
+    except Exception as e:
+        logger.error(f"Error during saving/validation for {provider_name}: {e}", exc_info=True)
+        st.session_state[status_widget_key] = "error"
 
 def render_ai_research_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
-    """Render the AI research setup step."""
+    """Render the AI research setup step with immediate feedback."""
     logger.info("[render_ai_research_setup] Rendering AI research setup component")
     
+    research_providers = ["serpapi", "tavily", "metaphor", "firecrawl"]
+    
+    # Initialize statuses
+    for provider in research_providers:
+        status_key = f"{provider}_status"
+        if status_key not in st.session_state:
+            existing_key = api_key_manager.get_api_key(provider)
+            if existing_key:
+                if _validate_research_key(provider, existing_key):
+                    st.session_state[status_key] = "valid"
+                else:
+                     st.session_state[status_key] = "invalid" 
+            else:
+                 st.session_state[status_key] = "unsaved"
+
     st.markdown("""
         <div class='setup-header'>
-            <h2>🔍 AI Research Setup</h2>
-            <p>Configure your AI research providers for content analysis and research</p>
+            <h2>Step 3: Configure AI Research Tools (Optional)</h2>
+            <p>Set up API keys for enhanced web research, crawling, and analysis. These are optional but recommended.</p>
         </div>
     """, unsafe_allow_html=True)
     
-    # Create two columns for different search types
     col1, col2 = st.columns(2)
     
+    # --- SerpAPI --- 
     with col1:
-        st.markdown("### The Usual")
-        
-        # SerpAPI Card
-        st.markdown("""
-            <div class="ai-provider-card">
-                <div class="ai-provider-header">
-                    <div class="ai-provider-icon">🔎</div>
-                    <div class="ai-provider-title">SerpAPI</div>
-                </div>
-                <div class="ai-provider-description">
-                    Access search engine results for research
-                </div>
-                <div class="ai-provider-input">
-        """, unsafe_allow_html=True)
-        
-        serpapi_key = st.text_input(
+        st.subheader("SerpAPI")
+        st.markdown("Access real-time search engine results. Get key: [SerpAPI](https://serpapi.com)")
+        serpapi_key_val = api_key_manager.get_api_key("serpapi")
+        st.text_input(
             "SerpAPI Key",
+            value=serpapi_key_val if serpapi_key_val else "",
             type="password",
-            key="serpapi_key",
-            help="Enter your SerpAPI key"
+            key="serpapi_key_input",
+            on_change=_handle_research_key_change,
+            args=("serpapi", api_key_manager)
         )
-        
-        if serpapi_key:
-            st.markdown("""
-                <div class="ai-provider-status status-valid">
-                    ✓ API key configured
-                </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown("""
-            <div class="api-info-section">
-                <details>
-                    <summary>📋 How to get your SerpAPI key</summary>
-                    <div class="api-info-content">
-                        <p><strong>Step-by-step guide:</strong></p>
-                        <ol>
-                            <li>Visit <a href="https://serpapi.com" target="_blank">SerpAPI</a></li>
-                            <li>Create an account</li>
-                            <li>Go to your dashboard</li>
-                            <li>Copy your API key</li>
-                            <li>Paste it here</li>
-                        </ol>
-                        <p><strong>Note:</strong> SerpAPI provides real-time search results from multiple engines.</p>
-                    </div>
-                </details>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("</div></div>", unsafe_allow_html=True)
+        # Feedback Area
+        serpapi_status = st.session_state.get("serpapi_status", "unsaved")
+        feedback_placeholder_serpapi = st.empty()
+        if serpapi_status == "saving":
+            feedback_placeholder_serpapi.info("Validating SerpAPI key...", icon="⏳")
+        elif serpapi_status == "valid":
+            feedback_placeholder_serpapi.success("SerpAPI key saved and valid!", icon="✅")
+        elif serpapi_status == "invalid":
+            feedback_placeholder_serpapi.error("Invalid SerpAPI key.", icon="❌")
+        elif serpapi_status == "error":
+            feedback_placeholder_serpapi.error("Error saving/validating SerpAPI key.", icon="⚠️")
 
-        # Firecrawl Card
-        st.markdown("""
-            <div class="ai-provider-card">
-                <div class="ai-provider-header">
-                    <div class="ai-provider-icon">🕷️</div>
-                    <div class="ai-provider-title">Firecrawl</div>
-                </div>
-                <div class="ai-provider-description">
-                    Web content extraction and analysis
-                </div>
-                <div class="ai-provider-input">
-        """, unsafe_allow_html=True)
-        
-        firecrawl_key = st.text_input(
+    # --- Firecrawl --- 
+    with col1:
+        st.subheader("Firecrawl")
+        st.markdown("Web content extraction and crawling. Get key: [Firecrawl](https://www.firecrawl.dev/account)")
+        firecrawl_key_val = api_key_manager.get_api_key("firecrawl")
+        st.text_input(
             "Firecrawl API Key",
+            value=firecrawl_key_val if firecrawl_key_val else "",
             type="password",
-            key="firecrawl_key",
-            help="Enter your Firecrawl API key"
+            key="firecrawl_key_input",
+            on_change=_handle_research_key_change,
+            args=("firecrawl", api_key_manager)
         )
-        
-        if firecrawl_key:
-            st.markdown("""
-                <div class="ai-provider-status status-valid">
-                    ✓ API key configured
-                </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown("""
-            <div class="api-info-section">
-                <details>
-                    <summary>📋 How to get your Firecrawl API key</summary>
-                    <div class="api-info-content">
-                        <p><strong>Step-by-step guide:</strong></p>
-                        <ol>
-                            <li>Visit <a href="https://www.firecrawl.dev/account" target="_blank">Firecrawl</a></li>
-                            <li>Create an account</li>
-                            <li>Go to your dashboard</li>
-                            <li>Generate your API key</li>
-                            <li>Copy and paste it here</li>
-                        </ol>
-                        <p><strong>Note:</strong> Firecrawl provides powerful web content extraction and analysis capabilities.</p>
-                    </div>
-                </details>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("</div></div>", unsafe_allow_html=True)
-    
+        # Feedback Area
+        firecrawl_status = st.session_state.get("firecrawl_status", "unsaved")
+        feedback_placeholder_firecrawl = st.empty()
+        if firecrawl_status == "saving":
+            feedback_placeholder_firecrawl.info("Validating Firecrawl key...", icon="⏳")
+        elif firecrawl_status == "valid":
+            feedback_placeholder_firecrawl.success("Firecrawl key saved and valid!", icon="✅")
+        elif firecrawl_status == "invalid":
+            feedback_placeholder_firecrawl.error("Invalid Firecrawl key.", icon="❌")
+        elif firecrawl_status == "error":
+            feedback_placeholder_firecrawl.error("Error saving/validating Firecrawl key.", icon="⚠️")
+            
+    # --- Tavily --- 
     with col2:
-        st.markdown("### AI Deep Research")
-        
-        # Tavily Card
-        st.markdown("""
-            <div class="ai-provider-card">
-                <div class="ai-provider-header">
-                    <div class="ai-provider-icon">🤖</div>
-                    <div class="ai-provider-title">Tavily AI</div>
-                </div>
-                <div class="ai-provider-description">
-                    AI-powered search with semantic understanding
-                </div>
-                <div class="ai-provider-input">
-        """, unsafe_allow_html=True)
-        
-        tavily_key = st.text_input(
+        st.subheader("Tavily AI")
+        st.markdown("AI-powered search & summarization. Get key: [Tavily](https://tavily.com)")
+        tavily_key_val = api_key_manager.get_api_key("tavily")
+        st.text_input(
             "Tavily API Key",
+            value=tavily_key_val if tavily_key_val else "",
             type="password",
-            key="tavily_key",
-            help="Enter your Tavily API key"
+            key="tavily_key_input",
+            on_change=_handle_research_key_change,
+            args=("tavily", api_key_manager)
         )
-        
-        if tavily_key:
-            st.markdown("""
-                <div class="ai-provider-status status-valid">
-                    ✓ API key configured
-                </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown("""
-            <div class="api-info-section">
-                <details>
-                    <summary>📋 How to get your Tavily API key</summary>
-                    <div class="api-info-content">
-                        <p><strong>Step-by-step guide:</strong></p>
-                        <ol>
-                            <li>Visit <a href="https://tavily.com" target="_blank">Tavily</a></li>
-                            <li>Create an account</li>
-                            <li>Go to API settings</li>
-                            <li>Generate a new API key</li>
-                            <li>Copy and paste it here</li>
-                        </ol>
-                        <p><strong>Note:</strong> Tavily provides AI-powered semantic search capabilities.</p>
-                    </div>
-                </details>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("</div></div>", unsafe_allow_html=True)
-        
-        # Metaphor/Exa Card
-        st.markdown("""
-            <div class="ai-provider-card">
-                <div class="ai-provider-header">
-                    <div class="ai-provider-icon">🧠</div>
-                    <div class="ai-provider-title">Metaphor/Exa</div>
-                </div>
-                <div class="ai-provider-description">
-                    Neural search engine for deep research
-                </div>
-                <div class="ai-provider-input">
-        """, unsafe_allow_html=True)
-        
-        metaphor_key = st.text_input(
+        # Feedback Area
+        tavily_status = st.session_state.get("tavily_status", "unsaved")
+        feedback_placeholder_tavily = st.empty()
+        if tavily_status == "saving":
+            feedback_placeholder_tavily.info("Validating Tavily key...", icon="⏳")
+        elif tavily_status == "valid":
+            feedback_placeholder_tavily.success("Tavily key saved and valid!", icon="✅")
+        elif tavily_status == "invalid":
+            feedback_placeholder_tavily.error("Invalid Tavily key.", icon="❌")
+        elif tavily_status == "error":
+            feedback_placeholder_tavily.error("Error saving/validating Tavily key.", icon="⚠️")
+
+    # --- Metaphor/Exa --- 
+    with col2:
+        st.subheader("Metaphor/Exa")
+        st.markdown("Neural search for deep research. Get key: [Metaphor/Exa](https://metaphor.systems)")
+        metaphor_key_val = api_key_manager.get_api_key("metaphor")
+        st.text_input(
             "Metaphor/Exa API Key",
+            value=metaphor_key_val if metaphor_key_val else "",
             type="password",
-            key="metaphor_key",
-            help="Enter your Metaphor/Exa API key"
+            key="metaphor_key_input",
+            on_change=_handle_research_key_change,
+            args=("metaphor", api_key_manager)
         )
-        
-        if metaphor_key:
-            st.markdown("""
-                <div class="ai-provider-status status-valid">
-                    ✓ API key configured
-                </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown("""
-            <div class="api-info-section">
-                <details>
-                    <summary>📋 How to get your Metaphor/Exa API key</summary>
-                    <div class="api-info-content">
-                        <p><strong>Step-by-step guide:</strong></p>
-                        <ol>
-                            <li>Visit <a href="https://metaphor.systems" target="_blank">Metaphor/Exa</a></li>
-                            <li>Create an account</li>
-                            <li>Navigate to API settings</li>
-                            <li>Generate your API key</li>
-                            <li>Copy and paste it here</li>
-                        </ol>
-                        <p><strong>Note:</strong> Metaphor/Exa provides neural search capabilities for deep research.</p>
-                    </div>
-                </details>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("</div></div>", unsafe_allow_html=True)
-    
-    # Disabled Options Expander
+        # Feedback Area
+        metaphor_status = st.session_state.get("metaphor_status", "unsaved")
+        feedback_placeholder_metaphor = st.empty()
+        if metaphor_status == "saving":
+            feedback_placeholder_metaphor.info("Validating Metaphor/Exa key...", icon="⏳")
+        elif metaphor_status == "valid":
+            feedback_placeholder_metaphor.success("Metaphor/Exa key saved and valid!", icon="✅")
+        elif metaphor_status == "invalid":
+            feedback_placeholder_metaphor.error("Invalid Metaphor/Exa key.", icon="❌")
+        elif metaphor_status == "error":
+            feedback_placeholder_metaphor.error("Error saving/validating Metaphor/Exa key.", icon="⚠️")
+
+    # --- Coming Soon --- 
     with st.expander("🔜 Coming Soon - More Search Options", expanded=False):
-        st.markdown("""
-            <div style='opacity: 0.7;'>
-                <h4>Bing Search API</h4>
-                <p>Microsoft's powerful search API with web, news, and image search capabilities.</p>
-                
-                <h4>Google Search API</h4>
-                <p>Google's programmable search engine with customizable search parameters.</p>
-                
-                <p><em>These integrations are under development and will be available soon!</em></p>
-            </div>
-        """, unsafe_allow_html=True)
-    
-    # Track changes
-    changes_made = bool(serpapi_key or tavily_key or metaphor_key or firecrawl_key)
-    
-    # Navigation buttons with correct arguments
-    if render_navigation_buttons(3, 5, changes_made):
-        if changes_made:
-            try:
-                # Load existing .env file if it exists
-                load_dotenv()
-                
-                # Create or update .env file with new API keys
-                with open('.env', 'a') as f:
-                    if serpapi_key:
-                        f.write(f"\nSERPAPI_KEY={serpapi_key}")
-                        logger.info("[render_ai_research_setup] Saved SerpAPI key")
-                    if tavily_key:
-                        f.write(f"\nTAVILY_API_KEY={tavily_key}")
-                        logger.info("[render_ai_research_setup] Saved Tavily API key")
-                    if metaphor_key:
-                        f.write(f"\nMETAPHOR_API_KEY={metaphor_key}")
-                        logger.info("[render_ai_research_setup] Saved Metaphor API key")
-                    if firecrawl_key:
-                        f.write(f"\nFIRECRAWL_API_KEY={firecrawl_key}")
-                        logger.info("[render_ai_research_setup] Saved Firecrawl API key")
-                
-                # Store the API keys in session state
-                st.session_state['api_keys'] = {
-                    'serpapi': serpapi_key,
-                    'tavily': tavily_key,
-                    'metaphor': metaphor_key,
-                    'firecrawl': firecrawl_key
-                }
-                
-                # Update progress and move to next step
-                st.session_state['current_step'] = 4
-                st.rerun()
-            except Exception as e:
-                error_msg = f"Error saving API keys: {str(e)}"
-                logger.error(f"[render_ai_research_setup] {error_msg}")
-                st.error(error_msg)
-        else:
-            st.error("Please configure at least one research provider to continue")
-    
-    # Detailed Information Section
-    st.markdown("""
-    ---
-    ### Understanding Your Research Options
-    
-    #### The Usual: Traditional Search
-    **SerpAPI**
-    - Real-time search results from multiple search engines
-    - Access to structured data from search results
-    - Great for gathering general information and market research
-    - Includes features like:
-        - Web search results
-        - News articles
-        - Knowledge graphs
-        - Related questions
-    
-    #### AI Deep Research: Advanced Search Capabilities
-    
-    **Tavily AI**
-    - AI-powered search with semantic understanding
-    - Automatically summarizes and analyzes search results
-    - Perfect for:
-        - Deep research tasks
-        - Academic research
-        - Fact-checking
-        - Real-time information gathering
-    
-    **Metaphor/Exa**
-    - Neural search engine that understands context and meaning
-    - Specialized in finding highly relevant content
-    - Ideal for:
-        - Technical research
-        - Finding similar content
-        - Discovering patterns in research
-        - Understanding topic landscapes
-    
-    #### Choosing the Right Tool
-    
-    1. **For General Research:**
-       - Start with SerpAPI for broad coverage and structured data
-    
-    2. **For Deep Analysis:**
-       - Use Tavily AI when you need AI-powered insights
-       - Choose Metaphor/Exa for neural search and pattern discovery
-    
-    3. **For Comprehensive Research:**
-       - Combine multiple tools to get the most complete picture
-       - Use SerpAPI for initial research
-       - Follow up with AI tools for deeper insights
-    
-    > **Pro Tip:** Configure multiple providers to ensure you have backup options and can cross-reference results for better accuracy.
-    """)
-    
-    return {"current_step": 3, "changes_made": changes_made}
+        st.info("Integrations for Bing Search and Google Search APIs are planned.")
+
+    st.info("You can skip this step if you don't need these research tools. Click Continue to proceed.")
+        
+    return {}

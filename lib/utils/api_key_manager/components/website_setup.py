@@ -2,265 +2,208 @@
 
 import streamlit as st
 from loguru import logger
-from ...website_analyzer import analyze_website
-from ...website_analyzer.seo_analyzer import analyze_seo
+# Removed website_analyzer imports as analysis is separate now
+# from ...website_analyzer import analyze_website
+# from ...website_analyzer.seo_analyzer import analyze_seo
 import asyncio
 import sys
 from typing import Dict, Any
-from ..manager import APIKeyManager
-from .base import render_navigation_buttons
+import requests
+import ssl
+import socket
+from urllib.parse import urlparse
 
-# Configure logger to output to both file and stdout
-logger.remove()  # Remove default handler
-logger.add(
-    "logs/website_setup.log",
-    rotation="500 MB",
-    retention="10 days",
-    level="DEBUG",
-    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
-)
-logger.add(
-    sys.stdout,
-    level="INFO",
-    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>"
-)
+from ..manager import APIKeyManager
+# Navigation is handled in base.py now
+# from .base import render_navigation_buttons 
+
+# Configure logger (minimal example)
+logger.add(sys.stderr, level="INFO") 
+
+# --- Validation Helpers ---
+def _is_valid_url_format(url: str) -> bool:
+    """Checks if the URL has a valid basic format (scheme and netloc)."""
+    try:
+        result = urlparse(url)
+        return all([result.scheme in ['http', 'https'], result.netloc])
+    except ValueError:
+        return False
+
+def _check_url_reachability(url: str) -> tuple[bool, str]:
+    """Checks if the URL is reachable and returns status code or error."""
+    try:
+        response = requests.head(url, allow_redirects=True, timeout=5) # HEAD request is faster
+        response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+        logger.info(f"URL {url} reachable, status code: {response.status_code}")
+        return True, f"Reachable (Status: {response.status_code})"
+    except requests.exceptions.Timeout:
+        logger.warning(f"URL {url} timed out.")
+        return False, "Timeout: Server did not respond in time."
+    except requests.exceptions.RequestException as e:
+        logger.warning(f"URL {url} not reachable: {e}")
+        # Provide a more user-friendly message for common errors
+        if isinstance(e, requests.exceptions.ConnectionError):
+             return False, "Connection Error: Could not connect to the server."
+        elif isinstance(e, requests.exceptions.HTTPError):
+             return False, f"HTTP Error: {e.response.status_code}"
+        return False, f"Error: {type(e).__name__}"
+
+def _check_ssl_certificate(url: str) -> tuple[bool, str]:
+    """Checks if the URL has a valid SSL certificate (for https)."""
+    parsed_url = urlparse(url)
+    if parsed_url.scheme != 'https':
+        return True, "(HTTP URL)" # Not applicable for http
+        
+    hostname = parsed_url.netloc
+    port = 443
+    context = ssl.create_default_context()
+    try:
+        with socket.create_connection((hostname, port), timeout=3) as sock:
+            with context.wrap_socket(sock, server_hostname=hostname) as ssock:
+                cert = ssock.getpeercert()
+                # Basic check: does it exist? More thorough checks (expiry, chain) are possible
+                if cert:
+                    logger.info(f"SSL certificate found for {hostname}")
+                    return True, "Valid SSL Certificate"
+                else:
+                    logger.warning(f"No SSL certificate found for {hostname}")
+                    return False, "No SSL Certificate found"
+    except ssl.SSLCertVerificationError as e:
+        logger.warning(f"SSL Verification Error for {hostname}: {e}")
+        return False, f"SSL Verification Error: {e.verify_message}"
+    except socket.timeout:
+        logger.warning(f"SSL check timed out for {hostname}")
+        return False, "SSL Check Timeout"
+    except Exception as e:
+        logger.error(f"Error checking SSL for {hostname}: {e}", exc_info=True)
+        return False, f"SSL Check Error: {type(e).__name__}"
+
+
+# --- Main Component Logic ---
+
+def _validate_website_url(url: str) -> tuple[str, str]:
+    """Performs quick validation (format, reachability, basic SSL)."""
+    if not url:
+        return "unsaved", ""
+
+    # 1. Format Check
+    if not _is_valid_url_format(url):
+        logger.warning(f"Invalid URL format: {url}")
+        return "invalid_format", "Invalid URL format. Please include http:// or https://"
+
+    # 2. Reachability Check
+    reachable, reach_status = _check_url_reachability(url)
+    if not reachable:
+        logger.warning(f"URL not reachable: {url} ({reach_status})")
+        return "unreachable", reach_status # Return specific error message
+
+    # 3. Basic SSL Check (only if reachable and HTTPS)
+    if urlparse(url).scheme == 'https':
+        ssl_valid, ssl_status = _check_ssl_certificate(url)
+        if not ssl_valid:
+            logger.warning(f"SSL check failed for {url} ({ssl_status})")
+            return "ssl_error", ssl_status # Return specific error message
+
+    logger.info(f"URL validation successful for: {url}")
+    return "valid", "URL is valid and reachable."
+
+
+def _handle_website_url_change(api_key_manager: APIKeyManager):
+    """Save and validate website URL when input changes."""
+    url_input_widget_key = "website_url_input"
+    status_widget_key = "website_url_status"
+    
+    if url_input_widget_key not in st.session_state:
+        logger.warning(f"Input widget key '{url_input_widget_key}' not found.")
+        return
+
+    url_value = st.session_state[url_input_widget_key]
+    logger.debug(f"Handling website URL change. URL: {url_value}")
+
+    # Save the URL regardless of validity for now (maybe refine later)
+    # api_key_manager might not be the right place, consider storing directly in session state
+    # or a dedicated config manager if this isn't an API key.
+    # Let's store in session_state for now.
+    st.session_state['configured_website_url'] = url_value
+    logger.info(f"Saved website URL to session state: {url_value}")
+
+    if not url_value:
+        st.session_state[status_widget_key] = ("unsaved", "")
+        logger.info("Cleared website URL.")
+        return
+
+    st.session_state[status_widget_key] = ("saving", "") # Indicate validation is running
+    st.rerun()
+
+    try:
+        validation_status, message = _validate_website_url(url_value)
+        st.session_state[status_widget_key] = (validation_status, message)
+        logger.info(f"Website URL validation complete. Status: {validation_status}, Msg: {message}")
+
+    except Exception as e:
+        logger.error(f"Error during website URL validation: {e}", exc_info=True)
+        st.session_state[status_widget_key] = ("error", "An unexpected error occurred during validation.")
+
 
 def render_website_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
-    """Render the website setup step.
-    
-    Args:
-        api_key_manager (APIKeyManager): The API key manager instance
-        
-    Returns:
-        Dict[str, Any]: Current state
-    """
+    """Render the website setup step with immediate feedback."""
     logger.info("[render_website_setup] Rendering website setup component")
     
-    st.markdown("### Step 2: Website Setup")
+    status_key = "website_url_status"
+
+    # Initialize status
+    if status_key not in st.session_state:
+         st.session_state[status_key] = ("unsaved", "")
+         # Optionally pre-validate if a URL exists from previous session/config
+         # pre_existing_url = api_key_manager.get_config("website_url") # Example
+         # if pre_existing_url:
+         #    st.session_state[status_key] = _validate_website_url(pre_existing_url)
+
+    st.markdown("""
+        <div class='setup-header'>
+            <h2>Step 2: Website Setup (Optional)</h2>
+            <p>Enter your primary website URL. This helps Alwrity personalize suggestions and analyze your content.</p>
+        </div>
+    """, unsafe_allow_html=True)
     
-    # Create two columns for input and results
-    col1, col2 = st.columns([1, 1])
+    # Get current value from session state if available, otherwise empty
+    current_url = st.session_state.get('configured_website_url', "")
     
-    with col1:
-        st.markdown("#### Enter Website URL")
-        url = st.text_input("Website URL", placeholder="https://example.com")
-        logger.debug(f"[render_website_setup] URL input value: {url}")
-        
-        analyze_type = st.radio(
-            "Analysis Type",
-            ["Basic Analysis", "Full Analysis with SEO"],
-            help="Choose between basic website analysis or comprehensive SEO analysis"
-        )
-        
-        if st.button("Analyze Website"):
-            if url:
-                with st.spinner("Analyzing website..."):
-                    try:
-                        logger.info(f"[render_website_setup] Starting website analysis for URL: {url}")
-                        
-                        # Call the analyze_website function
-                        results = analyze_website(url)
-                        
-                        # If full analysis is selected, add SEO analysis
-                        if analyze_type == "Full Analysis with SEO":
-                            seo_results = analyze_seo(url)
-                            if seo_results.success:
-                                results['data']['seo_analysis'] = {
-                                    'overall_score': seo_results.overall_score,
-                                    'meta_tags': {
-                                        'title': seo_results.meta_tags.title,
-                                        'description': seo_results.meta_tags.description,
-                                        'keywords': seo_results.meta_tags.keywords,
-                                        'has_robots': seo_results.meta_tags.has_robots,
-                                        'has_sitemap': seo_results.meta_tags.has_sitemap
-                                    },
-                                    'content': {
-                                        'word_count': seo_results.content.word_count,
-                                        'readability_score': seo_results.content.readability_score,
-                                        'content_quality_score': seo_results.content.content_quality_score,
-                                        'headings_structure': seo_results.content.headings_structure,
-                                        'keyword_density': seo_results.content.keyword_density
-                                    },
-                                    'recommendations': [
-                                        {
-                                            'priority': rec.priority,
-                                            'category': rec.category,
-                                            'issue': rec.issue,
-                                            'recommendation': rec.recommendation,
-                                            'impact': rec.impact
-                                        }
-                                        for rec in seo_results.recommendations
-                                    ]
-                                }
-                        
-                        logger.debug(f"[render_website_setup] Analysis results received: {results.get('success', False)}")
-                        
-                        # Store results in session state
-                        st.session_state.website_analysis = results
-                        logger.info("[render_website_setup] Results stored in session state")
-                        
-                        if not results.get('success', False):
-                            error_msg = results.get('error', 'Analysis failed')
-                            logger.error(f"[render_website_setup] Analysis failed: {error_msg}")
-                            st.error(error_msg)
-                        else:
-                            logger.info("[render_website_setup] Analysis completed successfully")
-                            st.success("✅ Website analysis completed successfully!")
-                    except Exception as e:
-                        error_msg = f"Analysis failed: {str(e)}"
-                        logger.error(f"[render_website_setup] {error_msg}")
-                        st.error(error_msg)
-            else:
-                logger.warning("[render_website_setup] No URL provided")
-                st.warning("Please enter a valid URL")
+    st.text_input(
+        "Website URL", 
+        value=current_url,
+        placeholder="https://example.com", 
+        key="website_url_input",
+        on_change=_handle_website_url_change,
+        args=(api_key_manager,) # Pass manager if needed by save logic
+    )
     
-    with col2:
-        st.markdown("#### Analysis Results")
-        
-        # Check if we have analysis results
-        if 'website_analysis' in st.session_state:
-            results = st.session_state.website_analysis
-            
-            if results.get('success', False):
-                data = results.get('data', {})
-                analysis = data.get('analysis', {})
-                
-                # Create tabs for different sections
-                if analyze_type == "Full Analysis with SEO":
-                    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-                        "Basic Metrics",
-                        "Content Analysis",
-                        "SEO Analysis",
-                        "Technical SEO",
-                        "Strategy"
-                    ])
-                else:
-                    tab1, tab2, tab3, tab4 = st.tabs([
-                        "Basic Metrics",
-                        "Content Analysis",
-                        "Technical Info",
-                        "Strategy"
-                    ])
-                
-                with tab1:
-                    st.markdown("##### Basic Metrics")
-                    basic_info = analysis.get('basic_info', {})
-                    st.write(f"Status Code: {basic_info.get('status_code')}")
-                    st.write(f"Content Type: {basic_info.get('content_type')}")
-                    st.write(f"Title: {basic_info.get('title')}")
-                    st.write(f"Meta Description: {basic_info.get('meta_description')}")
-                    
-                    # SSL Info
-                    ssl_info = analysis.get('ssl_info', {})
-                    if ssl_info.get('has_ssl'):
-                        st.success("SSL Certificate is valid")
-                        st.write(f"Expiry: {ssl_info.get('expiry')}")
-                    else:
-                        st.error("No valid SSL certificate found")
-                
-                with tab2:
-                    st.markdown("##### Content Analysis")
-                    content_info = analysis.get('content_info', {})
-                    
-                    # Content Overview
-                    st.markdown("###### 📊 Content Overview")
-                    col1, col2, col3, col4 = st.columns(4)
-                    with col1:
-                        st.metric("Word Count", content_info.get('word_count', 0))
-                    with col2:
-                        st.metric("Headings", content_info.get('heading_count', 0))
-                    with col3:
-                        st.metric("Images", content_info.get('image_count', 0))
-                    with col4:
-                        st.metric("Links", content_info.get('link_count', 0))
-                
-                if analyze_type == "Full Analysis with SEO":
-                    with tab3:
-                        st.markdown("##### SEO Analysis")
-                        seo_data = data.get('seo_analysis', {})
-                        
-                        # Display SEO Score
-                        seo_score = seo_data.get('overall_score', 0)
-                        st.markdown(f"### SEO Score: {seo_score}/100")
-                        st.progress(seo_score / 100)
-                        
-                        # Meta Tags Analysis
-                        st.markdown("#### Meta Tags Analysis")
-                        meta_analysis = seo_data.get('meta_tags', {})
-                        for key, value in meta_analysis.items():
-                            if isinstance(value, bool):
-                                st.write(f"{'✅' if value else '❌'} {key.replace('_', ' ').title()}")
-                            elif isinstance(value, dict):
-                                st.write(f"**{key.replace('_', ' ').title()}:**")
-                                st.write(f"Status: {value.get('status', 'N/A')}")
-                                st.write(f"Value: {value.get('value', 'N/A')}")
-                                if value.get('recommendation'):
-                                    st.write(f"Recommendation: {value['recommendation']}")
-                            else:
-                                st.write(f"**{key.replace('_', ' ').title()}:** {value}")
-                        
-                        # Content Analysis
-                        st.markdown("#### AI Content Analysis")
-                        content_analysis = seo_data.get('content', {})
-                        st.write(f"**Word Count:** {content_analysis.get('word_count', 0)}")
-                        st.write(f"**Readability Score:** {content_analysis.get('readability_score', 0)}/100")
-                        st.write(f"**Content Quality Score:** {content_analysis.get('content_quality_score', 0)}/100")
-                        
-                        # Recommendations
-                        st.markdown("#### SEO Recommendations")
-                        recommendations = seo_data.get('recommendations', [])
-                        for rec in recommendations:
-                            st.write(f"**{rec.get('priority', '').upper()} Priority - {rec.get('category', '')}**")
-                            st.write(f"Issue: {rec.get('issue', '')}")
-                            st.write(f"Recommendation: {rec.get('recommendation', '')}")
-                            st.write(f"Impact: {rec.get('impact', '')}")
-                            st.write("---")
-                    
-                    with tab4:
-                        st.markdown("##### Technical SEO")
-                        technical_seo = seo_data.get('technical_analysis', {})
-                        
-                        # Mobile Friendliness
-                        st.markdown("#### Mobile Friendliness")
-                        mobile_friendly = technical_seo.get('mobile_friendly', False)
-                        st.write(f"{'✅' if mobile_friendly else '❌'} Mobile Friendly")
-                        
-                        # Page Speed
-                        st.markdown("#### Page Speed")
-                        speed_metrics = technical_seo.get('speed_metrics', {})
-                        for metric, value in speed_metrics.items():
-                            st.write(f"**{metric.replace('_', ' ').title()}:** {value}")
-                        
-                        # Technical Issues
-                        st.markdown("#### Technical Issues")
-                        issues = technical_seo.get('issues', [])
-                        for issue in issues:
-                            st.write(f"• {issue}")
-                
-                with tab4 if analyze_type == "Basic Analysis" else tab5:
-                    st.markdown("##### Strategy Recommendations")
-                    strategy_info = analysis.get('strategy', {})
-                    
-                    if strategy_info:
-                        for category, recommendations in strategy_info.items():
-                            st.markdown(f"###### {category.replace('_', ' ').title()}")
-                            for rec in recommendations:
-                                st.write(f"• {rec}")
-                    else:
-                        st.info("No strategy recommendations available")
-            else:
-                error_msg = results.get('error', 'Analysis failed')
-                logger.error(f"[render_website_setup] Displaying error: {error_msg}")
-                st.error(error_msg)
-        else:
-            logger.debug("[render_website_setup] No analysis results in session state")
-            st.info("Enter a URL and click 'Analyze Website' to see results")
+    # --- Feedback Area ---
+    status, message = st.session_state.get(status_key, ("unsaved", ""))
+    feedback_placeholder = st.empty()
     
-    # Navigation buttons
-    if render_navigation_buttons(2, 5, True):
-        # Move to next step (AI Research Setup)
-        st.session_state.current_step = 3
-        st.session_state.next_step = "ai_research_setup"
-        st.rerun()
-    
-    return {"current_step": 2, "changes_made": True}
+    if status == "saving":
+        feedback_placeholder.info("Validating URL...", icon="⏳")
+    elif status == "valid":
+        feedback_placeholder.success(message, icon="✅")
+    elif status == "invalid_format":
+        feedback_placeholder.error(f"Format Error: {message}", icon="❌")
+    elif status == "unreachable":
+        feedback_placeholder.error(f"Reachability Error: {message}", icon="❌")
+    elif status == "ssl_error":
+         feedback_placeholder.warning(f"SSL Warning: {message}", icon="⚠️") # Warning for SSL
+    elif status == "error":
+         feedback_placeholder.error(f"Validation Error: {message}", icon="⚠️")
+    elif status == "unsaved" and current_url: # Show warning if field has text but isn't validated yet
+         feedback_placeholder.warning("URL not yet validated.", icon="⚠️")
+
+    # --- Removed Analysis Section ---
+    # The detailed website analysis should be a separate feature, not part of the initial setup validation.
+    st.markdown("--- ---“)
+    st.markdown("ℹ️ *The detailed Website Analyzer tool is available separately in the main application.*")
+    st.info("Entering your website URL is optional. Click Continue to proceed.")
+
+    # Return value is not strictly needed if navigation relies on session state status
+    return {}
+
+# Removed old analysis logic and button handling as it's handled in base.py

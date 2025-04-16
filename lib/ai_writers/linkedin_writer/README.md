@@ -333,7 +333,7 @@ To use the LinkedIn AI Writer:
 
 ## Requirements
 
-- Python 3.11
+- Python 3.8+
 - Streamlit
 - OpenAI API key (for GPT models)
 - Optional: LinkedIn API credentials (for future integration)
