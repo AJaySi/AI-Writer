@@ -68,11 +68,10 @@ def render_step_indicator(current_step: int, total_steps: int) -> None:
 
         steps = [
             ("🔑", "AI LLM", 1),
-            ("🤖", "Website Setup", 2),
-            ("👤", "AI Research", 3),
-            ("🎨", "Personalization", 4),
-            ("🔄", "Integrations", 5),
-            ("✅", "Complete", 6)
+            ("👤", "AI Research", 2),
+            ("🎨", "Personalization", 3),
+            ("🔄", "Integrations", 4),
+            ("✅", "Complete", 5)
         ]
 
         html = '<div class="step-indicator">'
@@ -97,7 +96,7 @@ def render_step_indicator(current_step: int, total_steps: int) -> None:
         logger.error(f"Error rendering step indicator: {str(e)}")
         st.error("Error displaying step indicator")
 
-def render_navigation_buttons(current_step: int, total_steps: int, changes_made: bool = False) -> bool:
+def render_navigation_buttons(current_step: int, total_steps: int, changes_made: bool = True) -> bool:
     """Render the navigation buttons with modern glassmorphic styling.
     
     Args:
@@ -113,13 +112,15 @@ def render_navigation_buttons(current_step: int, total_steps: int, changes_made:
     with col1:
         if current_step > 1:
             if st.button("**← Back**", use_container_width=True, key="back_button"):
-                st.session_state['current_step'] = current_step - 1
+                from ..wizard_state import previous_step
+                previous_step()
                 st.rerun()
     
     with col3:
         if current_step < total_steps:
             next_text = "**Continue →**"
             if st.button(next_text, use_container_width=True, disabled=not changes_made, key="next_button"):
+                # Don't call next_step() here, let the component handle it
                 return True
         else:
             if st.button("**Complete Setup ✓**", use_container_width=True, type="primary", key="complete_button"):

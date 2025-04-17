@@ -702,8 +702,8 @@ def render_personalization_setup(api_key_manager: APIKeyManager) -> Dict[str, An
                     st.success("Configuration saved successfully!")
     
     # Navigation buttons with correct arguments
-    if render_navigation_buttons(4, 5, changes_made=True):
-        st.session_state.current_step = 5
+    if render_navigation_buttons(3, 4, changes_made=True):
+        st.session_state.current_step = 4
         st.rerun()
     
-    return {"current_step": 4, "changes_made": True}
+    return {"current_step": 3, "changes_made": True}

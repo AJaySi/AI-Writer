@@ -41,24 +41,12 @@ def render_ai_research_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
     with col1:
         st.markdown("### The Usual")
         
-        # SerpAPI Card
-        st.markdown("""
-            <div class="ai-provider-card">
-                <div class="ai-provider-header">
-                    <div class="ai-provider-icon">🔎</div>
-                    <div class="ai-provider-title">SerpAPI</div>
-                </div>
-                <div class="ai-provider-description">
-                    Access search engine results for research
-                </div>
-                <div class="ai-provider-input">
-        """, unsafe_allow_html=True)
-        
         serpapi_key = st.text_input(
-            "SerpAPI Key",
+            "## Enter 🔎 SerpAPI",
             type="password",
             key="serpapi_key",
-            help="Enter your SerpAPI key"
+            help="Enter your SerpAPI key",
+            placeholder="Access search engine results for research"
         )
         
         if serpapi_key:
@@ -88,31 +76,19 @@ def render_ai_research_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
         """, unsafe_allow_html=True)
         
         st.markdown("</div></div>", unsafe_allow_html=True)
-
-        # Firecrawl Card
-        st.markdown("""
-            <div class="ai-provider-card">
-                <div class="ai-provider-header">
-                    <div class="ai-provider-icon">🕷️</div>
-                    <div class="ai-provider-title">Firecrawl</div>
-                </div>
-                <div class="ai-provider-description">
-                    Web content extraction and analysis
-                </div>
-                <div class="ai-provider-input">
-        """, unsafe_allow_html=True)
         
         firecrawl_key = st.text_input(
-            "Firecrawl API Key",
+            "Enter 🕷️ Firecrawl API Key",
             type="password",
             key="firecrawl_key",
-            help="Enter your Firecrawl API key"
+            help="Enter your Firecrawl API key",
+            placeholder="Web content extraction and analysis"
         )
         
         if firecrawl_key:
             st.markdown("""
                 <div class="ai-provider-status status-valid">
-                    ✓ API key configured
+                    ✓ Firecrawl API key configured
                 </div>
             """, unsafe_allow_html=True)
         
@@ -140,30 +116,18 @@ def render_ai_research_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
     with col2:
         st.markdown("### AI Deep Research")
         
-        # Tavily Card
-        st.markdown("""
-            <div class="ai-provider-card">
-                <div class="ai-provider-header">
-                    <div class="ai-provider-icon">🤖</div>
-                    <div class="ai-provider-title">Tavily AI</div>
-                </div>
-                <div class="ai-provider-description">
-                    AI-powered search with semantic understanding
-                </div>
-                <div class="ai-provider-input">
-        """, unsafe_allow_html=True)
-        
         tavily_key = st.text_input(
-            "Tavily API Key",
+            "Enter 🤖 Tavily API Key",
             type="password",
             key="tavily_key",
-            help="Enter your Tavily API key"
+            help="Enter your Tavily API key",
+            placeholder="AI-powered search with semantic understanding"
         )
         
         if tavily_key:
             st.markdown("""
                 <div class="ai-provider-status status-valid">
-                    ✓ API key configured
+                    ✓ Tavily API key configured
                 </div>
             """, unsafe_allow_html=True)
         
@@ -188,24 +152,12 @@ def render_ai_research_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
         
         st.markdown("</div></div>", unsafe_allow_html=True)
         
-        # Metaphor/Exa Card
-        st.markdown("""
-            <div class="ai-provider-card">
-                <div class="ai-provider-header">
-                    <div class="ai-provider-icon">🧠</div>
-                    <div class="ai-provider-title">Metaphor/Exa</div>
-                </div>
-                <div class="ai-provider-description">
-                    Neural search engine for deep research
-                </div>
-                <div class="ai-provider-input">
-        """, unsafe_allow_html=True)
-        
         metaphor_key = st.text_input(
-            "Metaphor/Exa API Key",
+            "Enter 🧠 Metaphor/Exa API Key",
             type="password",
             key="metaphor_key",
-            help="Enter your Metaphor/Exa API key"
+            help="Enter your Metaphor/Exa API key",
+            placeholder="Neural search engine for deep research"
         )
         
         if metaphor_key:
