@@ -36,19 +36,20 @@ def render_website_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
     """
     logger.info("[render_website_setup] Rendering website setup component")
     
-    st.markdown("### Step 2: Website Setup")
+    st.markdown("### Step 2: Enter Your Website URL for Analysis (Optional)")
     
     # Create two columns for input and results
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        st.markdown("#### Enter Website URL")
-        url = st.text_input("Website URL", placeholder="https://example.com")
-        logger.debug(f"[render_website_setup] URL input value: {url}")
+        url = st.text_input("Enter your website URL, if you own one", placeholder="https://example.com")
+        logger.info(f"[render_website_setup] URL input value: {url}")
         
         analyze_type = st.radio(
             "Analysis Type",
-            ["Basic Analysis", "Full Analysis with SEO"],
+            ["Basic Website Analysis", "Full Website Analysis with SEO"],
+            horizontal=True,
+            label_visibility="hidden",
             help="Choose between basic website analysis or comprehensive SEO analysis"
         )
         
@@ -115,8 +116,6 @@ def render_website_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
                 st.warning("Please enter a valid URL")
     
     with col2:
-        st.markdown("#### Analysis Results")
-        
         # Check if we have analysis results
         if 'website_analysis' in st.session_state:
             results = st.session_state.website_analysis
@@ -126,7 +125,7 @@ def render_website_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
                 analysis = data.get('analysis', {})
                 
                 # Create tabs for different sections
-                if analyze_type == "Full Analysis with SEO":
+                if analyze_type == "Full Website Analysis with SEO":
                     tab1, tab2, tab3, tab4, tab5 = st.tabs([
                         "Basic Metrics",
                         "Content Analysis",
@@ -237,7 +236,7 @@ def render_website_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
                         for issue in issues:
                             st.write(f"• {issue}")
                 
-                with tab4 if analyze_type == "Basic Analysis" else tab5:
+                with tab4 if analyze_type == "Basic Website Analysis" else tab5:
                     st.markdown("##### Strategy Recommendations")
                     strategy_info = analysis.get('strategy', {})
                     

@@ -4,12 +4,6 @@ import streamlit as st
 from typing import Dict, Any
 from loguru import logger
 from ..styles import API_KEY_MANAGER_STYLES
-from ..wizard_state import (
-    get_current_step,
-    next_step,
-    previous_step,
-    can_proceed_to_next_step
-)
 
 def render_step_indicator(current_step: int, total_steps: int) -> None:
     """Render the step indicator."""

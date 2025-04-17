@@ -29,10 +29,7 @@ def render_ai_research_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
     logger.info("[render_ai_research_setup] Rendering AI research setup component")
     
     st.markdown("""
-        <div class='setup-header'>
-            <h2>🔍 AI Research Setup</h2>
-            <p>Configure your AI research providers for content analysis and research</p>
-        </div>
+        <div class='setup-header'><h2>🔍 AI Web Research API Setup</h2></div>
     """, unsafe_allow_html=True)
     
     # Create two columns for different search types
@@ -188,19 +185,7 @@ def render_ai_research_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
         
         st.markdown("</div></div>", unsafe_allow_html=True)
     
-    # Disabled Options Expander
-    with st.expander("🔜 Coming Soon - More Search Options", expanded=False):
-        st.markdown("""
-            <div style='opacity: 0.7;'>
-                <h4>Bing Search API</h4>
-                <p>Microsoft's powerful search API with web, news, and image search capabilities.</p>
-                
-                <h4>Google Search API</h4>
-                <p>Google's programmable search engine with customizable search parameters.</p>
-                
-                <p><em>These integrations are under development and will be available soon!</em></p>
-            </div>
-        """, unsafe_allow_html=True)
+    
     
     # Track changes
     changes_made = bool(serpapi_key or tavily_key or metaphor_key or firecrawl_key)
@@ -246,56 +231,97 @@ def render_ai_research_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
             st.error("Please configure at least one research provider to continue")
     
     # Detailed Information Section
-    st.markdown("""
-    ---
-    ### Understanding Your Research Options
+    st.markdown("---")
+    st.markdown("### Understanding Your Research Options")
     
-    #### The Usual: Traditional Search
-    **SerpAPI**
-    - Real-time search results from multiple search engines
-    - Access to structured data from search results
-    - Great for gathering general information and market research
-    - Includes features like:
-        - Web search results
-        - News articles
-        - Knowledge graphs
-        - Related questions
+    # Create four columns for the information popovers
+    info_col1, info_col2, info_col3, info_col4 = st.columns(4)
     
-    #### AI Deep Research: Advanced Search Capabilities
+    # The Usual: Traditional Search Popover
+    with info_col1:
+        with st.popover("#### The Usual: Traditional Search"):
+            st.markdown("""
+            **SerpAPI**
+            - Real-time search results from multiple search engines
+            - Access to structured data from search results
+            - Great for gathering general information and market research
+            - Includes features like:
+                - Web search results
+                - News articles
+                - Knowledge graphs
+                - Related questions
+            """)
     
-    **Tavily AI**
-    - AI-powered search with semantic understanding
-    - Automatically summarizes and analyzes search results
-    - Perfect for:
-        - Deep research tasks
-        - Academic research
-        - Fact-checking
-        - Real-time information gathering
+    # AI Deep Research Popover
+    with info_col2:
+        with st.popover("#### AI Deep Research: Advanced Search Capabilities"):
+            st.markdown("""
+            **Tavily AI**
+            - AI-powered search with semantic understanding
+            - Automatically summarizes and analyzes search results
+            - Perfect for:
+                - Deep research tasks
+                - Academic research
+                - Fact-checking
+                - Real-time information gathering
+            
+            **Metaphor/Exa**
+            - Neural search engine that understands context and meaning
+            - Specialized in finding highly relevant content
+            - Ideal for:
+                - Technical research
+                - Finding similar content
+                - Discovering patterns in research
+                - Understanding topic landscapes
+            """)
     
-    **Metaphor/Exa**
-    - Neural search engine that understands context and meaning
-    - Specialized in finding highly relevant content
-    - Ideal for:
-        - Technical research
-        - Finding similar content
-        - Discovering patterns in research
-        - Understanding topic landscapes
+    # Choosing the Right Tool Popover
+    with info_col3:
+        with st.popover("#### Choosing the Right Tool"):
+            st.markdown("""
+            1. **For General Research:**
+               - Start with SerpAPI for broad coverage and structured data
+            
+            2. **For Deep Analysis:**
+               - Use Tavily AI when you need AI-powered insights
+               - Choose Metaphor/Exa for neural search and pattern discovery
+            
+            3. **For Comprehensive Research:**
+               - Combine multiple tools to get the most complete picture
+               - Use SerpAPI for initial research
+               - Follow up with AI tools for deeper insights
+            
+            > **Pro Tip:** Configure multiple providers to ensure you have backup options and can cross-reference results for better accuracy.
+            """)
     
-    #### Choosing the Right Tool
-    
-    1. **For General Research:**
-       - Start with SerpAPI for broad coverage and structured data
-    
-    2. **For Deep Analysis:**
-       - Use Tavily AI when you need AI-powered insights
-       - Choose Metaphor/Exa for neural search and pattern discovery
-    
-    3. **For Comprehensive Research:**
-       - Combine multiple tools to get the most complete picture
-       - Use SerpAPI for initial research
-       - Follow up with AI tools for deeper insights
-    
-    > **Pro Tip:** Configure multiple providers to ensure you have backup options and can cross-reference results for better accuracy.
-    """)
+    # Coming Soon Popover
+    with info_col4:
+        with st.popover("#### 🔜 Coming Soon - More Search Options"):
+            st.markdown("""
+            **Bing Search API**
+            - Microsoft's powerful search API with comprehensive capabilities
+            - Features include:
+                - Web search with advanced filtering
+                - News articles with sentiment analysis
+                - Image search with visual recognition
+                - Video search with content understanding
+                - Custom search parameters for targeted results
+            
+            **Google Search API**
+            - Google's programmable search engine with extensive features
+            - Capabilities include:
+                - Custom search engine creation
+                - Site-specific search
+                - Image and video search
+                - News search with time-based filtering
+                - Knowledge graph integration
+            
+            **Additional Planned Integrations:**
+            - **DuckDuckGo API**: Privacy-focused search with no tracking
+            - **Brave Search API**: Independent search engine with unique features
+            - **Perplexity API**: AI-powered research assistant with real-time data
+            
+            > **Note:** These integrations are under active development and will be available in future updates.
+            """)
     
     return {"current_step": 3, "changes_made": changes_made}
