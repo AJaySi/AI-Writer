@@ -119,17 +119,48 @@ class APIKeyManager:
     
     def load_api_keys(self):
         """Load API keys from environment variables."""
-        logger.info("[APIKeyManager.load_api_keys] Loading API keys from environment")
         try:
-            # Load from environment variables
-            self.api_keys = {
-                "openai": os.getenv("OPENAI_API_KEY", ""),
-                "google": os.getenv("GOOGLE_API_KEY", ""),
-                "tavily": os.getenv("TAVILY_API_KEY", ""),
-                "metaphor": os.getenv("METAPHOR_API_KEY", ""),
-                "mistral": os.getenv("MISTRAL_API_KEY", "")
-            }
-            logger.info("[APIKeyManager.load_api_keys] Successfully loaded API keys")
+            logger.info("[APIKeyManager.load_api_keys] Loading API keys from environment")
+            
+            # Get the current working directory and .env file path
+            current_dir = os.getcwd()
+            env_path = os.path.join(current_dir, '.env')
+            logger.info(f"[APIKeyManager.load_api_keys] Looking for .env file at: {env_path}")
+            
+            # Check if .env file exists
+            if not os.path.exists(env_path):
+                logger.warning(f"[APIKeyManager.load_api_keys] .env file not found at {env_path}")
+                return
+                
+            # Load environment variables
+            load_dotenv(env_path, override=True)
+            logger.debug("[APIKeyManager.load_api_keys] Environment variables loaded")
+            
+            # Define all possible API key providers
+            all_providers = [
+                # AI Providers
+                'OPENAI_API_KEY',
+                'GEMINI_API_KEY',
+                'ANTHROPIC_API_KEY',
+                'MISTRAL_API_KEY',
+                # Research Providers
+                'SERPAPI_KEY',
+                'TAVILY_API_KEY',
+                'METAPHOR_API_KEY',
+                'FIRECRAWL_API_KEY'
+            ]
+            
+            # Load API keys from environment variables
+            for provider in all_providers:
+                value = os.getenv(provider)
+                if value:
+                    self.api_keys[provider] = value
+                    logger.info(f"[APIKeyManager.load_api_keys] Loaded {provider} from environment")
+                else:
+                    logger.debug(f"[APIKeyManager.load_api_keys] {provider} not found in environment")
+            
+            logger.info(f"[APIKeyManager.load_api_keys] Loaded {len(self.api_keys)} API keys")
+            
         except Exception as e:
             logger.error(f"[APIKeyManager.load_api_keys] Error loading API keys: {str(e)}")
     

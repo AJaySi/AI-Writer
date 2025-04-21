@@ -4,6 +4,7 @@ import streamlit as st
 from loguru import logger
 import sys
 import json
+import os
 from typing import Dict, Any
 from ..manager import APIKeyManager
 from ....web_crawlers.async_web_crawler import AsyncWebCrawlerService
@@ -495,6 +496,15 @@ def render_personalization_setup(api_key_manager: APIKeyManager) -> Dict[str, An
             }
             
             if save_main_config(main_config):
+                # Set PERSONALIZATION_DONE to True in .env file and environment
+                try:
+                    with open('.env', 'a') as f:
+                        f.write("\nPERSONALIZATION_DONE=True")
+                    os.environ['PERSONALIZATION_DONE'] = "True"
+                    logger.info("Set PERSONALIZATION_DONE=True in .env and environment")
+                except Exception as e:
+                    logger.error(f"Failed to set PERSONALIZATION_DONE: {str(e)}")
+                
                 st.success("✅ Your personalization settings have been saved successfully!")
             else:
                 st.error("Unable to save settings. Please try again.")
@@ -702,8 +712,20 @@ def render_personalization_setup(api_key_manager: APIKeyManager) -> Dict[str, An
                     st.success("Configuration saved successfully!")
     
     # Navigation buttons with correct arguments
-    if render_navigation_buttons(3, 4, changes_made=True):
-        st.session_state.current_step = 4
+    if render_navigation_buttons(4, 6, changes_made=True):
+        # Set PERSONALIZATION_DONE to False if not already set to True
+        if 'PERSONALIZATION_DONE' not in os.environ or os.environ['PERSONALIZATION_DONE'] != "True":
+            try:
+                with open('.env', 'a') as f:
+                    f.write("\nPERSONALIZATION_DONE=False")
+                os.environ['PERSONALIZATION_DONE'] = "False"
+                logger.info("Set PERSONALIZATION_DONE=False in .env and environment")
+            except Exception as e:
+                logger.error(f"Failed to set PERSONALIZATION_DONE: {str(e)}")
+        
+        # Update the current step to 5 (ALwrity integrations)
+        st.session_state.current_step = 5
+        logger.info("Moving to step 5: ALwrity integrations")
         st.rerun()
     
-    return {"current_step": 3, "changes_made": True}
+    return {"current_step": 4, "changes_made": True}

@@ -30,7 +30,7 @@ def check_all_api_keys(api_key_manager: APIKeyManager) -> bool:
             return False
             
         # Load environment variables
-        load_dotenv(env_path)
+        load_dotenv(env_path, override=True)  # Add override=True to ensure variables are reloaded
         logger.debug("Environment variables loaded")
         
         # Log all environment variables (without their values)
@@ -59,7 +59,17 @@ def check_all_api_keys(api_key_manager: APIKeyManager) -> bool:
         has_ai_provider = any(os.getenv(key) for key in ai_providers)
         if not has_ai_provider:
             logger.warning("No AI provider API key found")
-            return False
+            # Check if keys are in the API key manager
+            if hasattr(api_key_manager, 'get_api_key'):
+                for provider in ai_providers:
+                    key = api_key_manager.get_api_key(provider)
+                    if key:
+                        logger.info(f"Found {provider} in API key manager")
+                        has_ai_provider = True
+                        break
+            
+            if not has_ai_provider:
+                return False
         else:
             logger.success("✓ At least one AI provider key found")
         
@@ -83,11 +93,59 @@ def check_all_api_keys(api_key_manager: APIKeyManager) -> bool:
         has_research_provider = any(os.getenv(key) for key in research_providers)
         if not has_research_provider:
             logger.warning("No research provider API key found")
-            return False
+            # Check if keys are in the API key manager
+            if hasattr(api_key_manager, 'get_api_key'):
+                for provider in research_providers:
+                    key = api_key_manager.get_api_key(provider)
+                    if key:
+                        logger.info(f"Found {provider} in API key manager")
+                        has_research_provider = True
+                        break
+                        
+            if not has_research_provider:
+                return False
         else:
             logger.success("✓ At least one research provider key found")
         
-        logger.success("All required API keys validated successfully!")
+        # Step 3: Check for website URL
+        logger.info("Checking website URL...")
+        website_url = os.getenv('WEBSITE_URL')
+        if not website_url:
+            logger.warning("No website URL found in environment variables")
+            return False
+        else:
+            logger.success(f"✓ Website URL found: {website_url}")
+        
+        # Step 4: Check for personalization status
+        logger.info("Checking personalization status...")
+        if 'PERSONALIZATION_DONE' not in os.environ:
+            logger.warning("PERSONALIZATION_DONE environment variable is not defined")
+            return False
+        else:
+            logger.success(f"✓ Personalization status: {os.environ['PERSONALIZATION_DONE']}")
+        
+        # Step 5: Check for integration status
+        logger.info("Checking integration status...")
+        if 'INTEGRATION_DONE' not in os.environ:
+            logger.warning("INTEGRATION_DONE environment variable is not defined")
+            return False
+        else:
+            logger.success(f"✓ Integration status: {os.environ['INTEGRATION_DONE']}")
+        
+        # Step 6: Check for final setup status
+        logger.info("Checking final setup status...")
+        if 'FINAL_SETUP_COMPLETE' not in os.environ:
+            logger.warning("FINAL_SETUP_COMPLETE environment variable is not defined")
+            return False
+        else:
+            final_setup_status = os.environ['FINAL_SETUP_COMPLETE']
+            if final_setup_status.lower() == 'true':
+                logger.success("✓ Final setup completed successfully")
+            else:
+                logger.warning("Final setup validation failed")
+                return False
+        
+        logger.success("All required API keys and setup steps validated successfully!")
         return True
         
     except Exception as e:

@@ -138,7 +138,7 @@ def do_web_research():
                         placeholder="Enter your Serper API key",
                         help="Get your key at https://serper.dev"
                     )
-                    test_key = st.checkbox("Test API key before saving", value=False, help="Validate the API key before saving")
+                    test_key = st.checkbox("Test API key before saving", value=False, help="Validate the API key before saving", key="test_serper_key")
                 with serper_col2:
                     if st.button("Save Serper", use_container_width=True):
                         if serper_key:
@@ -183,7 +183,7 @@ def do_web_research():
                             placeholder="Enter your Metaphor API key",
                             help="Get your key at https://metaphor.systems"
                         )
-                        test_metaphor = st.checkbox("Test API key before saving", value=False, help="Validate the API key before saving")
+                        test_metaphor = st.checkbox("Test API key before saving", value=False, help="Validate the API key before saving", key="test_metaphor_key")
                     with metaphor_col2:
                         if st.button("Save Metaphor", use_container_width=True):
                             if metaphor_key:
@@ -227,7 +227,7 @@ def do_web_research():
                             placeholder="Enter your Tavily API key",
                             help="Get your key at https://tavily.com"
                         )
-                        test_tavily = st.checkbox("Test API key before saving", value=False, help="Validate the API key before saving")
+                        test_tavily = st.checkbox("Test API key before saving", value=False, help="Validate the API key before saving", key="test_tavily_key")
                     with tavily_col2:
                         if st.button("Save Tavily", use_container_width=True):
                             if tavily_key:
@@ -271,7 +271,7 @@ def do_web_research():
                             placeholder="Enter your Firecrawl API key",
                             help="Get your key at https://firecrawl.co"
                         )
-                        test_firecrawl = st.checkbox("Test API key before saving", value=False, help="Validate the API key before saving")
+                        test_firecrawl = st.checkbox("Test API key before saving", value=False, help="Validate the API key before saving", key="test_firecrawl_key")
                     with firecrawl_col2:
                         if st.button("Save Firecrawl", use_container_width=True):
                             if firecrawl_key:

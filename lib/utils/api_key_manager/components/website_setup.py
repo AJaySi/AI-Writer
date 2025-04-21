@@ -9,6 +9,7 @@ import sys
 from typing import Dict, Any
 from ..manager import APIKeyManager
 from .base import render_navigation_buttons
+import os
 
 # Configure logger to output to both file and stdout
 logger.remove()  # Remove default handler
@@ -44,6 +45,24 @@ def render_website_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
     with col1:
         url = st.text_input("Enter your website URL, if you own one", placeholder="https://example.com")
         logger.info(f"[render_website_setup] URL input value: {url}")
+        
+        # Save URL to .env file
+        try:
+            if url:
+                # Save to .env file
+                with open('.env', 'a') as f:
+                    f.write(f"\nWEBSITE_URL={url}")
+                # Set environment variable
+                os.environ['WEBSITE_URL'] = url
+                logger.info(f"[render_website_setup] Saved website URL to .env: {url}")
+            else:
+                # Set default value if no URL provided
+                with open('.env', 'a') as f:
+                    f.write("\nWEBSITE_URL=no_website_provided")
+                os.environ['WEBSITE_URL'] = "no_website_provided"
+                logger.info("[render_website_setup] Set default website URL: no_website_provided")
+        except Exception as e:
+            logger.error(f"[render_website_setup] Failed to save website URL: {str(e)}")
         
         analyze_type = st.radio(
             "Analysis Type",

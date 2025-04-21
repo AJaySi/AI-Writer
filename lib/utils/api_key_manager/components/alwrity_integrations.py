@@ -2,6 +2,7 @@
 
 import streamlit as st
 from loguru import logger
+import os
 from typing import Dict, Any
 from ..manager import APIKeyManager
 from .base import render_navigation_buttons, render_step_indicator, render_tab_style
@@ -160,6 +161,15 @@ def render_alwrity_integrations(api_key_manager: APIKeyManager) -> Dict[str, Any
                         'google_search_console': True
                     }
                 }
+                
+                # Set INTEGRATION_DONE to True in .env file and environment
+                try:
+                    with open('.env', 'a') as f:
+                        f.write("\nINTEGRATION_DONE=True")
+                    os.environ['INTEGRATION_DONE'] = "True"
+                    logger.info("Set INTEGRATION_DONE=True in .env and environment")
+                except Exception as e:
+                    logger.error(f"Failed to set INTEGRATION_DONE: {str(e)}")
                 
                 # Update progress and move to next step
                 st.session_state['current_step'] = 6

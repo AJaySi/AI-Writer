@@ -62,10 +62,11 @@ def render_step_indicator(current_step: int, total_steps: int) -> None:
 
         steps = [
             ("🔑", "AI LLM", 1),
-            ("👤", "AI Research", 2),
-            ("🎨", "Personalization", 3),
-            ("🔄", "Integrations", 4),
-            ("✅", "Complete", 5)
+            ("🔍", "Website Analysis", 2),
+            ("👤", "AI Research", 3),
+            ("🎨", "Personalization", 4),
+            ("🔄", "Integrations", 5),
+            ("✅", "Complete", 6)
         ]
 
         html = '<div class="step-indicator">'
