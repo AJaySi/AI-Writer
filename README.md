@@ -1,30 +1,104 @@
 # Alwrity: Redefining Content Lifecycle with AI
 ### 🚀 **ALwrity: Your All-in-One Content Platform** 🌟
 
+![Alwrity Logo](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/alwrity_logo.png)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)](https://streamlit.io/)
+
 > **NOTE**  
-> *Alwrity is a comprehensive content lifecycle platform tailored for content creators, digital marketers, and writers — no prior AI knowledge required.*  
+> *Alwrity is a comprehensive content lifecycle platform tailored for content creators, digital marketers, and writers — no prior AI knowledge required.*    
 
-Alwrity streamlines every phase of the content lifecycle, from **planning and research** to **personalized content generation**, **SEO audits**, **publishing**, and **analytics**. Our mission is to empower creators with AI-driven tools that simplify content creation while maintaining quality.  
+## 📋 Table of Contents
 
-Explore the building blocks of Alwrity and contribute to shaping the future of AI-driven content creation.
-> **New Release**  
-> [*ALwrity AI story writer App*](https://storyme.app.io/) 
-Learn more about our journey: [What's Alwrity Up To?](https://www.alwrity.com/post/whats-alwrity-upto)
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [System Architecture](#system-architecture)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+- [Usage Guide](#usage-guide)
+  - [AI Writers](#ai-writers)
+  - [SEO Tools](#seo-tools)
+  - [Social Media Tools](#social-media-tools)
+  - [Content Planning](#content-planning)
+- [API Documentation](#api-documentation)
+- [Contributing](#contributing)
+- [Roadmap](#roadmap)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
+---
+
+## 🌟 Overview
+
+Alwrity streamlines every phase of the content lifecycle, from **planning and research** to **personalized content generation**, **SEO audits**, **publishing**, and **analytics**. Our mission is to empower creators with AI-driven tools that simplify content creation while maintaining quality.
+
+The platform integrates state-of-the-art AI technologies to provide a seamless content creation experience:
+
+| **Content Category**     | **Technologies/Models**                   |
+|--------------------------|-------------------------------------------|
+| Text Generation Models   | OpenAI, Gemini, Anthropic                 |
+| Image Creation Tools     | Stability.ai                              |
+| Speech-to-Text Systems   | Whisper, AssemblyAI                       |
+| AI-Powered Web Research  | Tavily AI, exa AI, Serper.dev             |
 
 ---
+
+## 🚀 Key Features
+
+### AI Writer Tools
+
+- **AI Blog Writer**: Generate blog content based on web research
+- **AI YouTube to Content Writer**: Transform YouTube videos into written content
+- **AI Long Form Content**: Create detailed articles with proper structure
+- **AI Story Writer**: Craft engaging narratives and stories
+- **AI Email Writer**: Generate professional and business emails
+- **AI LinkedIn Post Generator**: Create optimized LinkedIn content
+- **AI Product Description Generator**: Write compelling product descriptions
+
+### SEO Tools
+
+- **Rich Snippet Generator**: Create structured data for better SERP visibility
+- **On-Page SEO Analyzer**: Evaluate and optimize web pages
+- **URL SEO Checker**: Assess URL structure and performance
+- **Backlinking Tool**: Discover high-quality backlink opportunities
+- **Image Alt Text Generator**: Create accessible image descriptions
+- **Meta Description Generator**: Generate SEO-friendly meta descriptions
+
+### Social Media Tools
+
+- **X Tweet Generator**: Create engaging tweets
+- **Instagram Caption Generator**: Write compelling Instagram captions
+- **Facebook Post Generator**: Develop Facebook-optimized content
+- **YouTube Content Tools**: Generate titles, descriptions, and scripts
+
+### Content Planning
+
+- **Content Calendar**: Plan content for weeks or months ahead
+- **Blog Image Creation**: Generate images to complement your content
+- **Agentic Content Creation**: Use AI agents for specialized content tasks
+- **Web Research Integration**: Gather factual information for your content
+
+## 🏗️ System Architecture
+
+Alwrity is built with a modular architecture that enables flexibility and extensibility:
+
+![Architecture Diagram](https://github.com/AJaySi/AI-Writer/docs/architecture/diagrams/high_level_architecture.png)
+
+The platform consists of several key components:
+
+1. **User Interface Layer**: Streamlit-based web interface
+2. **Core Services Layer**: AI Writers, Web Research, SEO Tools, Analytics
+3. **Data Storage Layer**: Vector Database (ChromaDB), Relational Database (SQLite)
+4. **External Integrations Layer**: LLM Providers, Search Providers, Image Generation, Publishing Platforms
+
+For more detailed architecture information, see the [Architecture Documentation](docs/architecture/index.rst).
+
 ## Getting Started with ALwrity: "AI at Every Stage of Content Lifecycle."
 
 Alwrity empowers content creators, solopreneurs and digital marketers with cutting-edge tools for keyword research, AI-driven writing, and social media content generation. From creating high-quality copywriting frameworks to crafting engaging YouTube scripts, our platform simplifies every step of your content creation journey.
-
-We seamlessly integrate state-of-the-art AI technologies, including:
-| **Content Category**            | **Technologies/Models**                   |
-|--------------------------|-------------------------------------------|
-| Text Generation Models  | OpenAI, Gemini, Anthropic                |
-| Image Creation Tools    | Stability.ai                             |
-| Speech-to-Text Systems  | Whisper, AssemblyAI                      |
-| AI-Powered Web Research | Tavily AI, exa AI, Serper.dev            |
-
-By bringing these powerful solutions together, Alwrity ensures a streamlined workflow and exceptional output with minimal effort. Get ready to supercharge your content creation process!
 
 ---
 > ![](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
@@ -46,48 +120,6 @@ By bringing these powerful solutions together, Alwrity ensures a streamlined wor
 >	<details>
 >		<summary>See Details</summary>
 >
-## Prerequisites
-
-### Windows
-- Python 3.10+ (3.12 recommended)
-- Microsoft Visual C++ Build Tools 14.0 or greater
-  - Install with: `winget install Microsoft.VisualStudio.2022.BuildTools --silent --override "--wait --quiet --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"`
-- Rust Compiler
-  - Install with: `Invoke-WebRequest -Uri https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe -OutFile rustup-init.exe; ./rustup-init.exe -y`
-
-### Linux
-- Python 3.10+ (3.12 recommended)
-- C/C++ compiler and development tools
-  - Install with: `sudo apt update && sudo apt install build-essential python3-dev`
-- Rust Compiler
-  - Install with: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y; source $HOME/.cargo/env`
-
->	```
->	1). git clone https://github.com/AJaySi/AI-Writer.git
->	2). pip install -r requirements.txt
->	3). streamlit run alwrity.py
->
->	4). Visit Alwrity UI in a Browser & Start generation AI personalized content.
->	```
->
->	### System Dependencies
->	```
->	You can run the install_dependencies.py script to check for system dependencies and assist with installation:
->
->	python install_dependencies.py
->	```
->	This script will help verify that all necessary system dependencies are installed and guide you through the installation process.
->	### Updating to latest Code: (Existing users)
->	```
->	1). Git pull
->	2). pip install -U -r requirements.txt
->	3). streamlit run alwrity.py
->	```
->	</details>
-> </p>
----
-Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Someone will bail you out.
-> ![Alwrity Documentation is here for more details](https://github.com/AJaySi/AI-Writer/wiki)
 
 ### ![List of all AI Tools & Features of Alwrity](https://github.com/AJaySi/AI-Writer/wiki/Features-of-ALwrity-AI-writer)
 ---
@@ -96,8 +128,74 @@ Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Som
 - ![Specilized AI writers for every need & platform](https://github.com/AJaySi/AI-Writer/wiki/Features-of-ALwrity-AI-writer)
 - ![ALwrity AI SEO Tools](https://github.com/AJaySi/AI-Writer/wiki/ALwrity-AI-SEO-Tools)
 - ![ALwrity Web Researcher](https://github.com/AJaySi/AI-Writer/wiki/Alwrity-AI-Web-Research-Details-for-content-writing)
-- RoadMap - Coming Soon..
-- <em>Present Focus: Nextjs react Alwrity App - Coming Soon..</em>
+
+---
+
+## 📝 Usage Guide
+
+### AI Writers
+
+1. **Blog Writer**:
+   - Enter your target keywords
+   - Select blog type and length
+   - Choose whether to include web research
+   - Generate and edit your blog content
+
+   ![Blog Writer Demo](https://github.com/AJaySi/AI-Writer/blob/main/lib/workspace/keyword_blog.gif)
+
+2. **Long Form Content**:
+   - Provide a detailed topic
+   - Select content structure
+   - Generate comprehensive content with proper sections
+   - Edit and refine as needed
+
+3. **Email Writer**:
+   - Select email type (professional, business, etc.)
+   - Enter recipient and purpose
+   - Generate appropriate email content
+   - Customize tone and style
+
+### SEO Tools
+
+1. **Rich Snippet Generator**:
+   - Enter your URL or content
+   - Select snippet type (FAQ, Product, etc.)
+   - Generate structured data
+   - Copy and implement on your website
+
+2. **On-Page SEO Analyzer**:
+   - Enter your URL
+   - Receive comprehensive SEO analysis
+   - Get actionable recommendations
+   - Implement suggested changes
+
+### Social Media Tools
+
+1. **X Tweet Generator**:
+   - Enter topic or keywords
+   - Select tweet style
+   - Generate engaging tweets
+   - Schedule or post directly
+
+2. **YouTube Script Generator**:
+   - Enter video topic
+   - Select video length and style
+   - Generate complete script with sections
+   - Export for recording
+
+### Content Planning
+
+1. **Content Calendar**:
+   - Enter your niche or industry
+   - Select timeframe (weeks/months)
+   - Generate content ideas with titles
+   - Export to your preferred format
+
+2. **Web Research**:
+   - Enter research topic
+   - Select research depth
+   - Receive comprehensive research results
+   - Use in your content generation
 
 ---
 
@@ -238,216 +336,68 @@ Still stuck, [Open issue here](https://github.com/AJaySi/AI-Writer/issues) & Som
 
 ---
 
-<details><summary><h3>Notes from underground:</h3></summary>
-	1). Focus is on writing/generating highly unique, SEO optimized blog content.
-	2). Models: Openai, gemini, ollama are interesting. Minstral API is also worth exploring. Cohere API is purpose made.
-	Focus is getting the prompts right. Shit in, shit out, irrespective of dollars and cutting edge models.
-	Pydantically speakng, Due to experimental nature of prompting, its getting expensive soon enough. Gemini is free for now.
-	3). Missing frontend: A smart backend will enable a good frontend. WIP, backend. So, frontend; coming soon.
-	4).Getting AI agents to 'brainstrom' blog ideas seems more pressing. CrewAI seems more straightforward than autogen.
-	5). Too Many APIs floating around: The implementation is using tools that dont depend on API keys and rather scrape them.
-	Duh, scraping wont scale, that is GPT vision based scraping will come in handy.
-	6). firecrawl is interesting, gpt-researcher is providing local docsqa.
-	7). Had to provide streamlit UI as Alwrity's audience arent comfortable with commandline.
-	8). Local folder RAG and Chat with your content, website is on the cards.
-	9). AI models are better, not sure until when 'Free' APIs will be "Free".
-	10). The code is always a mess, lot of changes happening.. 
-	11). Focus is to stop making any more AI content tools, but rather revisit & improve user experience & content quality.
-	12). To Err is Human & AI....
-	13). ....
-</details>
+## 📚 API Documentation
+
+Alwrity provides a comprehensive API for programmatic access to its features. The API documentation is available at:
+
+- [API Reference](docs/api/index.rst)
+- [API Examples](docs/api/examples.rst)
+
+## 🤝 Contributing
+
+We welcome contributions to Alwrity! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to get started.
+
+## 🗺️ Roadmap
+
+- [Read Detailed Roadmap Here](Roadmap TBDs/ROADMAP.md)
+- [ALwrity Roadmap](docs/roadmap.rst) 
+
+Our development roadmap includes:
+
+- **Short-term (0-3 months)**:
+  - Enhanced multi-language support
+  - Improved image generation capabilities
+  - Additional AI model integrations
+
+- **Medium-term (3-6 months)**:
+  - Advanced analytics dashboard
+  - Content performance tracking
+  - Collaborative editing features
+
+- **Long-term (6+ months)**:
+  - NextJS React Alwrity App
+  - API-first architecture
+  - Enterprise features for teams
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgements
+
+Alwrity stands on the shoulders of giants:
+
+- **APIs**:
+  - [Exa API](https://exa.ai/): Semantic search capabilities
+  - [Tavily API](https://tavily.com/): AI-powered web search
+  - [SerperDev API](https://serper.dev/): Search engine results
+  - [YOU.com](https://you.com/): Enhanced web search
+  - [Stability AI](https://stability.ai/): Image generation
+  - [OpenAI API](https://openai.com/): LLM capabilities
+  - [Gemini API](https://gemini.google.com/app): Google's LLM
+  - [Ollama](https://ollama.com/): Local LLM provider
+  - [CrewAI](https://www.crewai.com/): Collaborative AI agents
+
+## 📞 Support
+
+If you encounter any issues or have questions, please [open an issue](https://github.com/AJaySi/AI-Writer/issues) on GitHub.
 
 ---
 
-#### LICENSE
-> [!NOTE]<p><em>
-> MIT License
->
-> Copyright (c) 2024 Alwrity
-> 
-> Permission is hereby granted, free of charge, to any person obtaining a copy
-> of this software and associated documentation files (the "Software"), to deal
-> in the Software without restriction, including without limitation the rights
-> to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-> copies of the Software, and to permit persons to whom the Software is
-> furnished to do so, subject to the following conditions:
->
-> The above copyright notice and this permission notice shall be included in all
-> copies or substantial portions of the Software.
-> 
-> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-> IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-> FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-> AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-> LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-> OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-> SOFTWARE.
-> </em></p>
+<p align="center">
+  <a href="https://www.alwrity.com">Visit Alwrity.com</a> •
+  <a href="https://www.alwrity.com/ai-writing-tools">Try Free Tools</a> •
+  <a href="https://github.com/AJaySi/AI-Writer/wiki">Wiki</a>
+</p>
 
-## Easy Installation Guide for Content Creators
-
-### Step 1: Install Python 3.11
-1. Download Python 3.11 installer:
-   - Visit [Python 3.11.6 Download Page](https://www.python.org/downloads/release/python-3116/)
-   - Scroll down and click on "Windows installer (64-bit)" 
-   - Save the file to your computer
-
-2. Run the installer:
-   - Double click the downloaded file
-   - ✅ IMPORTANT: Check "Add Python 3.11 to PATH"
-   - Click "Install Now"
-   - Wait for installation to complete
-   - Click "Close"
-
-### Step 2: Install ALwrity
-1. Download this project:
-   - Click the green "Code" button above
-   - Select "Download ZIP"
-   - Extract the ZIP file to your desired location
-
-2. Open Command Prompt:
-   - Press Windows + R
-   - Type "cmd" and press Enter
-   - Navigate to the extracted folder:
-     ```
-     cd path\to\ALwrity
-     ```
-
-3. Run the automatic installer:
-   ```
-   python setup.py install
-   ```
-
-### Troubleshooting
-If you encounter any issues:
-1. Make sure Python 3.11 is installed correctly:
-   - Open Command Prompt
-   - Type: `python --version`
-   - Should show: `Python 3.11.x`
-
-2. Common Issues:
-   - If you see "Python is not recognized": Restart your computer
-   - If you get package errors: Run `pip install --upgrade pip` first
-
-Need help? [Open an issue](../../issues) and we'll assist you!
-
-## For Developers
-If you're a developer or want to contribute:
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/ALwrity.git
-
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-# On Windows:
-.\venv\Scripts\activate
-# On Mac/Linux:
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-# ALwrity - AI Content Writing Assistant
-
-## Quick Start Guide for Non-Technical Users
-
-### Option 1: One-Click Installation (Recommended)
-1. Download this project:
-   - Click the green "Code" button above
-   - Select "Download ZIP"
-   - Extract the ZIP file to your desired location (e.g., Desktop)
-
-2. Run the installer:
-   - Double-click `install.bat` in the extracted folder
-   - If Windows asks for permission, click "Yes"
-   - Follow the on-screen instructions
-   - Wait for the installation to complete
-
-3. Start ALwrity:
-   - Open Command Prompt (Windows + R, type "cmd", press Enter)
-   - Navigate to the ALwrity folder:
-     ```
-     cd path\to\ALwrity
-     ```
-   - Type `alwrity` and press Enter
-
-### Option 2: Manual Installation
-If the one-click installer doesn't work, follow these steps:
-
-1. Install Python 3.11:
-   - Visit [Python 3.11.6 Download Page](https://www.python.org/downloads/release/python-3116/)
-   - Click "Windows installer (64-bit)"
-   - Run the installer
-   - ✅ IMPORTANT: Check "Add Python 3.11 to PATH"
-   - Click "Install Now"
-   - Wait for installation to complete
-
-2. Install ALwrity:
-   - Open Command Prompt (Windows + R, type "cmd", press Enter)
-   - Navigate to the ALwrity folder:
-     ```
-     cd path\to\ALwrity
-     ```
-   - Run the installation:
-     ```
-     python setup.py install
-     ```
-   - Follow any on-screen instructions
-
-3. Start ALwrity:
-   - In the same Command Prompt window, type:
-     ```
-     alwrity
-     ```
-   - Press Enter
-
-### Troubleshooting Guide
-
-#### Common Issues and Solutions:
-
-1. "Python is not recognized"
-   - Solution: Restart your computer after installing Python
-   - Make sure you checked "Add Python 3.11 to PATH" during installation
-
-2. "Visual C++ Build Tools not found"
-   - Solution: Run this command in an administrative PowerShell:
-     ```
-     winget install Microsoft.VisualStudio.2022.BuildTools --silent --override "--wait --quiet --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
-     ```
-
-3. "Rust compiler not found"
-   - Solution: Run these commands in PowerShell:
-     ```
-     Invoke-WebRequest -Uri https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe -OutFile rustup-init.exe
-     ./rustup-init.exe -y
-     ```
-
-4. Installation Errors
-   - Check the `install_errors.log` file in the ALwrity folder
-   - Share the error message with our support team
-
-#### Need Help?
-- Open an issue on GitHub
-- Join our support community
-- Contact our support team
-
-### System Requirements
-- Windows 10 or later
-- Python 3.11.x
-- At least 4GB RAM
-- 2GB free disk space
-
-### First-Time Setup
-After installation:
-1. The first time you run ALwrity, it will ask for your API keys
-2. Follow the on-screen instructions to enter your keys
-3. Your keys will be saved securely for future use
-
-### Updating ALwrity
-To update to the latest version:
-1. Download the latest release
-2. Run `install.bat` again
-3. Follow the on-screen instructions
+---
