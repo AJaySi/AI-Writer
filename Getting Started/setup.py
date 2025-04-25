@@ -41,6 +41,11 @@ def check_system_dependencies():
     print("Checking system dependencies...")
     all_checks_passed = True
 
+    # User message about system dependencies
+    print("\nNOTE: Some dependencies like Rust, Visual C++ Build Tools, or Python itself cannot be installed automatically by this script.")
+    print("This is because installing system-level packages requires admin rights and can differ across operating systems.")
+    print("For your safety and system stability, please follow the on-screen instructions to install any missing prerequisites manually.\n")
+
     # Check Python version
     print("Checking Python version...")
     if sys.version_info < (3, 11) or sys.version_info >= (3, 12):
@@ -124,6 +129,13 @@ def main():
             log_error("Virtual Environment Creation", error_msg)
             sys.exit(1)
 
+    # Activate virtual environment automatically (Linux/macOS only)
+    if platform.system() != "Windows":
+        activate_script = os.path.join("venv", "bin", "activate_this.py")
+        if os.path.exists(activate_script):
+            with open(activate_script) as f:
+                exec(f.read(), {'__file__': activate_script})
+
     # Install requirements
     requirements = get_requirements()
     install_requirements(requirements)
@@ -152,6 +164,7 @@ def main():
         print("   source venv/bin/activate")
     print("2. Run the application:")
     print("   streamlit run alwrity.py")
+    print("\nYou can now use the 'alwrity' command as well.")
 
 if __name__ == '__main__':
     main()

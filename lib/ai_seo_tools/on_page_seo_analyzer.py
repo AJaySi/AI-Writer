@@ -157,10 +157,12 @@ def analyze_links(soup):
             if not validators.url(href):
                 continue
             try:
-                response = requests.head(href, timeout=5)
+                response = requests.head(href, timeout=5, allow_redirects=True)
                 if response.status_code >= 400:
                     broken_links.append(href)
-            except requests.RequestException:
+            except requests.RequestException as e:
+                # Log the exception for debugging purposes
+                print(f"Error checking link {href}: {e}")
                 broken_links.append(href)
         return broken_links
     except Exception as e:
