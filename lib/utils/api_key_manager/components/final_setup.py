@@ -192,6 +192,49 @@ def render_final_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
         if st.button("Complete Setup →"):
             logger.info("[render_final_setup] User clicked complete setup")
             try:
+                # First set FINAL_SETUP_COMPLETE to True
+                try:
+                    # Read existing .env content
+                    env_lines = []
+                    if os.path.exists('.env'):
+                        with open('.env', 'r') as f:
+                            env_lines = f.readlines()
+                    
+                    # Remove any existing FINAL_SETUP_COMPLETE entries
+                    env_lines = [line for line in env_lines if not line.startswith('FINAL_SETUP_COMPLETE=')]
+                    
+                    # Add the new FINAL_SETUP_COMPLETE entry
+                    env_lines.append("FINAL_SETUP_COMPLETE=True\n")
+                    
+                    # Write back to .env file
+                    with open('.env', 'w') as f:
+                        f.writelines(env_lines)
+                    
+                    # Set environment variable
+                    os.environ['FINAL_SETUP_COMPLETE'] = "True"
+                    logger.info("[render_final_setup] Set FINAL_SETUP_COMPLETE=True")
+                except Exception as e:
+                    logger.error(f"[render_final_setup] Error setting FINAL_SETUP_COMPLETE: {str(e)}")
+                    st.error("Error updating setup status. Please try again.")
+                    return {"current_step": 6, "changes_made": False}
+
+                # Now validate all steps
+                validation_result = check_all_api_keys(api_key_manager)
+                if not validation_result:
+                    # If validation fails, revert FINAL_SETUP_COMPLETE
+                    try:
+                        env_lines = [line for line in env_lines if not line.startswith('FINAL_SETUP_COMPLETE=')]
+                        env_lines.append("FINAL_SETUP_COMPLETE=False\n")
+                        with open('.env', 'w') as f:
+                            f.writelines(env_lines)
+                        os.environ['FINAL_SETUP_COMPLETE'] = "False"
+                    except Exception:
+                        pass  # Ignore reversion errors
+                    
+                    st.error("Setup validation failed. Please ensure all required steps are completed.")
+                    logger.error("[render_final_setup] Validation failed")
+                    return {"current_step": 6, "changes_made": False}
+
                 # Log the current API keys in the manager
                 logger.info("[render_final_setup] Current API keys in manager:")
                 for key, value in api_key_manager.api_keys.items():
@@ -200,46 +243,30 @@ def render_final_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
                     else:
                         logger.info(f"  - {key}: Not set")
                 
-                # Log environment variables
-                logger.info("[render_final_setup] Checking environment variables:")
-                for key in os.environ.keys():
-                    if any(provider in key for provider in ['API_KEY', 'SERPAPI', 'TAVILY', 'METAPHOR', 'FIRECRAWL']):
-                        value = os.getenv(key)
-                        if value:
-                            logger.info(f"  - {key}: {'*' * 8}{value[-4:]}")
-                        else:
-                            logger.error(f"  - {key}: Not set")
-
+                # Save main configuration
                 config_path = os.path.join("lib", "workspace", "alwrity_config", "main_config.json")
                 with open(config_path, 'w') as f:
                     json.dump(main_config, f, indent=4)
+                logger.info("[render_final_setup] Saved main configuration")
                 
-                # Set FINAL_SETUP_COMPLETE to True in .env file and environment
-                try:
-                    with open('.env', 'a') as f:
-                        f.write("\nFINAL_SETUP_COMPLETE=True")
-                    os.environ['FINAL_SETUP_COMPLETE'] = "True"
-                    logger.info("Set FINAL_SETUP_COMPLETE=True in .env and environment")
-                except Exception as e:
-                    logger.error(f"Failed to set FINAL_SETUP_COMPLETE: {str(e)}")
-                
-                # Show success message with HTML formatting
-                st.markdown("""
-                    <div style='background-color: #d4edda; color: #155724; padding: 1rem; border-radius: 0.25rem;'>
-                        <h4 style='margin: 0;'>✅ Setup Completed Successfully!</h4>
-                        <p style='margin: 0.5rem 0 0;'>Your configuration has been saved and you're ready to use ALwrity.</p>
-                    </div>
-                """, unsafe_allow_html=True)
+                # Show success message
+                st.success("✅ Setup completed successfully! Redirecting to main application...")
                 
                 # Set setup completion flag in session state
                 st.session_state['setup_completed'] = True
+                st.session_state['redirect_to_main'] = True
                 
-                # Redirect to main application
+                # Clear the current step to ensure proper redirection
+                if 'current_step' in st.session_state:
+                    del st.session_state['current_step']
+                
+                # Rerun to trigger redirection
                 st.rerun()
                 
             except Exception as e:
                 error_msg = f"Error completing setup: {str(e)}"
                 logger.error(f"[render_final_setup] {error_msg}")
                 st.error(error_msg)
+                return {"current_step": 6, "changes_made": False}
     
     return {"current_step": 6, "changes_made": True}
