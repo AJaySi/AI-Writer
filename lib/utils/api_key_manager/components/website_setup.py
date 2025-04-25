@@ -15,7 +15,7 @@ import os
 logger.remove()  # Remove default handler
 logger.add(
     "logs/website_setup.log",
-    rotation="500 MB",
+    rotation="50 MB",
     retention="10 days",
     level="DEBUG",
     format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
@@ -25,6 +25,9 @@ logger.add(
     level="INFO",
     format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>"
 )
+
+# Ensure logs directory exists
+os.makedirs("logs", exist_ok=True)
 
 def render_website_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
     """Render the website setup step.
@@ -43,24 +46,67 @@ def render_website_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        url = st.text_input("Enter your website URL, if you own one", placeholder="https://example.com")
+        # Get existing website URL from environment or .env file
+        existing_url = os.getenv('WEBSITE_URL', None)
+        if not existing_url and os.path.exists('.env'):
+            try:
+                with open('.env', 'r') as f:
+                    for line in f:
+                        if line.strip().startswith('WEBSITE_URL='):
+                            existing_url = line.strip().split('=')[1]
+                            break
+            except Exception as e:
+                logger.error(f"[render_website_setup] Failed to read existing URL from .env: {str(e)}")
+        
+        # If existing_url is 'no_website_provided', set it to empty for better UX
+        if existing_url == 'no_website_provided':
+            existing_url = ''
+        
+        url = st.text_input(
+            "Enter your website URL, if you own one",
+            value=existing_url if existing_url else "",
+            placeholder="https://example.com"
+        )
         logger.info(f"[render_website_setup] URL input value: {url}")
         
         # Save URL to .env file
         try:
+            # Check if WEBSITE_URL already exists in .env file
+            website_url_exists = False
+            env_lines = []
+            
+            if os.path.exists('.env'):
+                with open('.env', 'r') as f:
+                    for line in f:
+                        if line.strip().startswith('WEBSITE_URL='):
+                            website_url_exists = True
+                            # Replace the existing WEBSITE_URL line with the new value
+                            if url:
+                                env_lines.append(f"WEBSITE_URL={url}\n")
+                            else:
+                                env_lines.append("WEBSITE_URL=no_website_provided\n")
+                        else:
+                            env_lines.append(line)
+            
+            # If WEBSITE_URL doesn't exist, add it
+            if not website_url_exists:
+                if url:
+                    env_lines.append(f"WEBSITE_URL={url}\n")
+                else:
+                    env_lines.append("WEBSITE_URL=no_website_provided\n")
+            
+            # Write all lines back to the .env file
+            with open('.env', 'w') as f:
+                f.writelines(env_lines)
+            
+            # Set environment variable
             if url:
-                # Save to .env file
-                with open('.env', 'a') as f:
-                    f.write(f"\nWEBSITE_URL={url}")
-                # Set environment variable
                 os.environ['WEBSITE_URL'] = url
                 logger.info(f"[render_website_setup] Saved website URL to .env: {url}")
             else:
-                # Set default value if no URL provided
-                with open('.env', 'a') as f:
-                    f.write("\nWEBSITE_URL=no_website_provided")
                 os.environ['WEBSITE_URL'] = "no_website_provided"
                 logger.info("[render_website_setup] Set default website URL: no_website_provided")
+                
         except Exception as e:
             logger.error(f"[render_website_setup] Failed to save website URL: {str(e)}")
         

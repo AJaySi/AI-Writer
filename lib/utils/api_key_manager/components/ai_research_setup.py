@@ -24,6 +24,67 @@ logger.add(
     format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>"
 )
 
+def get_existing_api_key(key_name: str) -> str:
+    """Get existing API key from environment or .env file.
+    
+    Args:
+        key_name (str): Name of the API key to retrieve
+        
+    Returns:
+        str: The API key value if found, empty string otherwise
+    """
+    # First try to get from environment
+    api_key = os.getenv(key_name)
+    
+    # If not in environment, try to get from .env file
+    if not api_key and os.path.exists('.env'):
+        try:
+            with open('.env', 'r') as f:
+                for line in f:
+                    if line.strip().startswith(f"{key_name}="):
+                        api_key = line.strip().split('=')[1]
+                        break
+        except Exception as e:
+            logger.error(f"[get_existing_api_key] Failed to read {key_name} from .env: {str(e)}")
+    
+    return api_key if api_key else ""
+
+def update_env_file(api_keys: Dict[str, str]) -> None:
+    """Update the .env file with new API keys, avoiding duplicates.
+    
+    Args:
+        api_keys (Dict[str, str]): Dictionary of API keys to update
+    """
+    try:
+        # Read existing .env file content
+        env_content = []
+        if os.path.exists('.env'):
+            with open('.env', 'r') as f:
+                env_content = f.readlines()
+        
+        # Remove trailing newlines and empty lines
+        env_content = [line.strip() for line in env_content if line.strip()]
+        
+        # Create a dictionary of existing variables
+        env_dict = {}
+        for line in env_content:
+            if '=' in line:
+                key, value = line.split('=', 1)
+                env_dict[key.strip()] = value.strip()
+        
+        # Update with new values
+        env_dict.update(api_keys)
+        
+        # Write back to .env file
+        with open('.env', 'w') as f:
+            for key, value in env_dict.items():
+                f.write(f"{key}={value}\n")
+        
+        logger.info("[update_env_file] Successfully updated .env file with API keys")
+    except Exception as e:
+        logger.error(f"[update_env_file] Error updating .env file: {str(e)}")
+        raise
+
 def render_ai_research_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
     """Render the AI research setup step."""
     logger.info("[render_ai_research_setup] Rendering AI research setup component")
@@ -38,15 +99,20 @@ def render_ai_research_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
     with col1:
         st.markdown("### The Usual")
         
+        # Get existing API keys
+        existing_serpapi_key = get_existing_api_key("SERPAPI_KEY")
+        existing_firecrawl_key = get_existing_api_key("FIRECRAWL_API_KEY")
+        
         serpapi_key = st.text_input(
             "## Enter 🔎 SerpAPI",
+            value=existing_serpapi_key,
             type="password",
             key="serpapi_key",
             help="Enter your SerpAPI key",
             placeholder="Access search engine results for research"
         )
         
-        if serpapi_key:
+        if serpapi_key or existing_serpapi_key:
             st.markdown("""
                 <div class="ai-provider-status status-valid">
                     ✓ API key configured
@@ -76,13 +142,14 @@ def render_ai_research_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
         
         firecrawl_key = st.text_input(
             "Enter 🕷️ Firecrawl API Key",
+            value=existing_firecrawl_key,
             type="password",
             key="firecrawl_key",
             help="Enter your Firecrawl API key",
             placeholder="Web content extraction and analysis"
         )
         
-        if firecrawl_key:
+        if firecrawl_key or existing_firecrawl_key:
             st.markdown("""
                 <div class="ai-provider-status status-valid">
                     ✓ Firecrawl API key configured
@@ -113,15 +180,20 @@ def render_ai_research_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
     with col2:
         st.markdown("### AI Deep Research")
         
+        # Get existing API keys
+        existing_tavily_key = get_existing_api_key("TAVILY_API_KEY")
+        existing_metaphor_key = get_existing_api_key("METAPHOR_API_KEY")
+        
         tavily_key = st.text_input(
             "Enter 🤖 Tavily API Key",
+            value=existing_tavily_key,
             type="password",
             key="tavily_key",
             help="Enter your Tavily API key",
             placeholder="AI-powered search with semantic understanding"
         )
         
-        if tavily_key:
+        if tavily_key or existing_tavily_key:
             st.markdown("""
                 <div class="ai-provider-status status-valid">
                     ✓ Tavily API key configured
@@ -151,13 +223,14 @@ def render_ai_research_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
         
         metaphor_key = st.text_input(
             "Enter 🧠 Metaphor/Exa API Key",
+            value=existing_metaphor_key,
             type="password",
             key="metaphor_key",
             help="Enter your Metaphor/Exa API key",
             placeholder="Neural search engine for deep research"
         )
         
-        if metaphor_key:
+        if metaphor_key or existing_metaphor_key:
             st.markdown("""
                 <div class="ai-provider-status status-valid">
                     ✓ API key configured
@@ -194,23 +267,23 @@ def render_ai_research_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
     if render_navigation_buttons(3, 5, changes_made):
         if changes_made:
             try:
-                # Load existing .env file if it exists
-                load_dotenv()
+                # Prepare API keys dictionary with only non-empty values
+                api_keys = {}
+                if serpapi_key:
+                    api_keys['SERPAPI_KEY'] = serpapi_key
+                if tavily_key:
+                    api_keys['TAVILY_API_KEY'] = tavily_key
+                if metaphor_key:
+                    api_keys['METAPHOR_API_KEY'] = metaphor_key
+                if firecrawl_key:
+                    api_keys['FIRECRAWL_API_KEY'] = firecrawl_key
                 
-                # Create or update .env file with new API keys
-                with open('.env', 'a') as f:
-                    if serpapi_key:
-                        f.write(f"\nSERPAPI_KEY={serpapi_key}")
-                        logger.info("[render_ai_research_setup] Saved SerpAPI key")
-                    if tavily_key:
-                        f.write(f"\nTAVILY_API_KEY={tavily_key}")
-                        logger.info("[render_ai_research_setup] Saved Tavily API key")
-                    if metaphor_key:
-                        f.write(f"\nMETAPHOR_API_KEY={metaphor_key}")
-                        logger.info("[render_ai_research_setup] Saved Metaphor API key")
-                    if firecrawl_key:
-                        f.write(f"\nFIRECRAWL_API_KEY={firecrawl_key}")
-                        logger.info("[render_ai_research_setup] Saved Firecrawl API key")
+                # Update .env file with new API keys
+                update_env_file(api_keys)
+                
+                # Update environment variables
+                for key, value in api_keys.items():
+                    os.environ[key] = value
                 
                 # Store the API keys in session state
                 st.session_state['api_keys'] = {

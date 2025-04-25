@@ -7,6 +7,42 @@ from typing import Dict, Any
 from ..manager import APIKeyManager
 from .base import render_navigation_buttons, render_step_indicator, render_tab_style
 
+def update_env_file(env_vars: Dict[str, str]) -> None:
+    """Update the .env file with new environment variables, avoiding duplicates.
+    
+    Args:
+        env_vars (Dict[str, str]): Dictionary of environment variables to update
+    """
+    try:
+        # Read existing .env file content
+        env_content = []
+        if os.path.exists('.env'):
+            with open('.env', 'r') as f:
+                env_content = f.readlines()
+        
+        # Remove trailing newlines and empty lines
+        env_content = [line.strip() for line in env_content if line.strip()]
+        
+        # Create a dictionary of existing variables
+        env_dict = {}
+        for line in env_content:
+            if '=' in line:
+                key, value = line.split('=', 1)
+                env_dict[key.strip()] = value.strip()
+        
+        # Update with new values
+        env_dict.update(env_vars)
+        
+        # Write back to .env file
+        with open('.env', 'w') as f:
+            for key, value in env_dict.items():
+                f.write(f"{key}={value}\n")
+        
+        logger.info("[update_env_file] Successfully updated .env file")
+    except Exception as e:
+        logger.error(f"[update_env_file] Error updating .env file: {str(e)}")
+        raise
+
 def render_alwrity_integrations(api_key_manager: APIKeyManager) -> Dict[str, Any]:
     """Render the ALwrity integrations setup step."""
     try:
@@ -151,29 +187,33 @@ def render_alwrity_integrations(api_key_manager: APIKeyManager) -> Dict[str, Any
         # Navigation buttons
         if render_navigation_buttons(5, 6, changes_made):
             if has_valid_integrations:
-                # Store integration settings in session state
-                st.session_state['integrations'] = {
-                    'coming_soon': {
-                        'wordpress': True,
-                        'wix': True,
-                        'facebook': True,
-                        'instagram': True,
-                        'google_search_console': True
-                    }
-                }
-                
-                # Set INTEGRATION_DONE to True in .env file and environment
                 try:
-                    with open('.env', 'a') as f:
-                        f.write("\nINTEGRATION_DONE=True")
-                    os.environ['INTEGRATION_DONE'] = "True"
-                    logger.info("Set INTEGRATION_DONE=True in .env and environment")
+                    # Store integration settings in session state
+                    st.session_state['integrations'] = {
+                        'coming_soon': {
+                            'wordpress': True,
+                            'wix': True,
+                            'facebook': True,
+                            'instagram': True,
+                            'google_search_console': True
+                        }
+                    }
+                    
+                    # Update INTEGRATION_DONE in .env file and environment
+                    env_vars = {'INTEGRATION_DONE': 'True'}
+                    update_env_file(env_vars)
+                    
+                    # Update environment variable
+                    os.environ['INTEGRATION_DONE'] = 'True'
+                    logger.info("Updated INTEGRATION_DONE status")
+                    
+                    # Update progress and move to next step
+                    st.session_state['current_step'] = 6
+                    st.rerun()
                 except Exception as e:
-                    logger.error(f"Failed to set INTEGRATION_DONE: {str(e)}")
-                
-                # Update progress and move to next step
-                st.session_state['current_step'] = 6
-                st.rerun()
+                    error_msg = f"Failed to update integration status: {str(e)}"
+                    logger.error(error_msg)
+                    st.error(error_msg)
             else:
                 st.error("Please configure at least one integration to continue")
 
