@@ -28,7 +28,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler('website_analyzer.log')
+        logging.FileHandler('logs/website_analyzer.log')
     ]
 )
 logger = logging.getLogger(__name__)
@@ -320,4 +320,4 @@ class WebsiteAnalyzer:
                 return response.text
         except Exception as e:
             logger.warning(f"Error fetching sitemap.xml: {str(e)}")
-        return None 
+        return None
