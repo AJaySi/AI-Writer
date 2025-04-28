@@ -6,7 +6,7 @@
 # =====================================================================
 
 # 1. Use official Python 3.11 image (builder stage)
-FROM python:3.11-slim AS builder
+FROM python:3.12
 
 # 2. Set environment variables for Python
 ENV PYTHONDONTWRITEBYTECODE=1 \
