@@ -6,7 +6,7 @@
 # =====================================================================
 
 # 1. Use official Python 3.11 image (builder stage)
-FROM python:3.11-slim AS builder
+FROM python:3.12
 
 # 2. Set environment variables for Python
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -30,40 +30,46 @@ RUN apt-get update && \
 WORKDIR /app
 
 # 5. Copy only requirements.txt first (for better caching)
-COPY ../../requirements.txt ./
+COPY ../requirements.txt ./
 
 # 6. Install Python dependencies in builder
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# 7. Clone the latest ALwrity code from GitHub (after dependencies for cache efficiency)
-RUN git clone https://github.com/AJaySi/AI-Writer.git .
-
-# 8. Copy only necessary files to the final image (runtime stage)
+# === Start runtime stage ===
 FROM python:3.11-slim AS runtime
 
-# 9. Set environment variables for Python
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+# 7. Copy app source code and requirements.txt to runtime image
+COPY ../requirements.txt ./
+COPY ../alwrity.py /app/
+COPY ../lib /app/lib
 
-# 10. Create a non-root user for security
+# 8. Install Python dependencies in runtime as root
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# 9. Create a non-root user for security
 RUN useradd -m alwrityuser
-USER alwrityuser
+
+# 10. Set environment variable for Streamlit (optional: disables telemetry)
+ENV STREAMLIT_TELEMETRY=0
 
 # 11. Set work directory
 WORKDIR /app
 
-# 12. Copy installed packages and app from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /app /app
+# 12. Create logs directory and set permissions
+RUN mkdir -p /app/logs && chown -R alwrityuser:alwrityuser /app/logs
 
 # 13. Expose Streamlit's default port
 EXPOSE 8501
 
-# 14. Set environment variable for Streamlit (optional: disables telemetry)
-ENV STREAMLIT_TELEMETRY=0
+# 14. Switch to non-root user
+USER alwrityuser
 
-# 15. Default command: run ALwrity with Streamlit
+# 15. Add user local bin to PATH
+ENV PATH="/home/alwrityuser/.local/bin:$PATH"
+
+# 16. Default command: run ALwrity with Streamlit
 CMD ["streamlit", "run", "alwrity.py", "--server.port=8501", "--server.address=0.0.0.0"]
 
 # =====================================================================

@@ -17,18 +17,18 @@ Docker lets you run ALwrity in a safe, isolated environment on any computer (Win
 
 ### Step 2: Build the ALwrity Docker Image (No Manual Download Needed!)
 1. Open a terminal.
-2. Navigate to the `Getting Started` folder in your workspace:
+2. Navigate to the **root folder** of your workspace (where `requirements.txt` and `lib/` are located):
    ```
-   cd /workspaces/AI-Writer/Getting\ Started
+   cd /workspaces/AI-Writer
    ```
-3. Build the Docker image (this will automatically download the latest ALwrity code from GitHub):
+3. Build the Docker image:
    ```
-   docker build -t alwrity .
+   docker build -t alwrity -f "Getting Started/Dockerfile" .
    ```
    > **Note:** You do NOT need to manually download or clone the project. The Dockerfile will do this for you!
 
 ### Step 3: Run ALwrity in Docker
-1. Start the app with this command:
+1. Start the app with this command (from the root folder):
    ```
    docker run -p 8501:8501 alwrity
    ```
@@ -49,6 +49,8 @@ Docker lets you run ALwrity in a safe, isolated environment on any computer (Win
   docker run -p 8501:8501 -v $(pwd)/alwrity_data:/app/your_data_folder alwrity
   ```
   Replace `your_data_folder` with the folder ALwrity uses for output (see documentation).
+
+ALwrity UI will guide the first time about required API keys and how to & where to get them. We have selected most of API which are free Or provide generous free API per month. For more details read this blog: https://www.alwrity.com/post/personalization-for-alwrity-ai-content-writer
 
 ### Troubleshooting
 - If you see errors about missing ports or permissions, make sure Docker Desktop is running.
