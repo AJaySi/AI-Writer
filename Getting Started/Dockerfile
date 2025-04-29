@@ -49,7 +49,9 @@ WORKDIR /app
 COPY ../requirements.txt ./
 COPY ../alwrity.py /app/
 COPY ../lib /app/lib
-COPY ../.env /app/.env
+
+# Create the .env file with default values
+RUN echo "# Default environment variables for ALwrity\n" > /app/.env
 
 # 10. Install Python dependencies
 RUN pip install --upgrade pip && \
