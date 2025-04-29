@@ -34,16 +34,53 @@ def llm_text_gen(prompt, system_prompt=None, json_struct=None):
         logger.debug(f"[llm_text_gen] Prompt length: {len(prompt)} characters")
         
         try:
-            # Read the config param to create system instruction for the LLM.
-            gpt_provider, model, temperature, max_tokens, top_p, n, fp = read_return_config_section('llm_config')
-            blog_tone, blog_demographic, blog_type, blog_language, \
-            blog_output_format, blog_length = read_return_config_section('blog_characteristics')
+            # Set default values for LLM parameters
+            gpt_provider = "google"
+            model = "gemini-1.5-flash-latest"
+            temperature = 0.7
+            max_tokens = 4000
+            top_p = 0.9
+            n = 1
+            fp = 16
             
-            logger.debug(f"[llm_text_gen] Config loaded successfully - Provider: {gpt_provider}, Model: {model}")
+            # Default blog characteristics
+            blog_tone = "Professional"
+            blog_demographic = "Professional"
+            blog_type = "Informational"
+            blog_language = "English"
+            blog_output_format = "markdown"
+            blog_length = 2000
+            
+            # Try to read values from config, but keep defaults if any key is missing
+            try:
+                # Read LLM config
+                llm_config = read_return_config_section('llm_config')
+                if llm_config and len(llm_config) >= 4:
+                    gpt_provider = llm_config[0] if llm_config[0] else gpt_provider
+                    model = llm_config[1] if llm_config[1] else model
+                    temperature = llm_config[2] if llm_config[2] else temperature
+                    max_tokens = llm_config[3] if llm_config[3] else max_tokens
+                    # Use default values for top_p, n, fp if they're not in the config
+                logger.debug(f"[llm_text_gen] LLM Config loaded: Provider={gpt_provider}, Model={model}, Temp={temperature}")
+            except Exception as err:
+                logger.warning(f"[llm_text_gen] Couldn't load LLM config completely, using defaults where needed: {err}")
+                
+            try:
+                # Read blog characteristics
+                blog_chars = read_return_config_section('blog_characteristics')
+                if blog_chars and len(blog_chars) >= 6:
+                    blog_tone = blog_chars[0] if blog_chars[0] else blog_tone
+                    blog_demographic = blog_chars[1] if blog_chars[1] else blog_demographic
+                    blog_type = blog_chars[2] if blog_chars[2] else blog_type
+                    blog_language = blog_chars[3] if blog_chars[3] else blog_language
+                    blog_output_format = blog_chars[4] if blog_chars[4] else blog_output_format
+                    blog_length = blog_chars[5] if blog_chars[5] else blog_length
+                logger.debug(f"[llm_text_gen] Blog characteristics loaded: Tone={blog_tone}, Type={blog_type}")
+            except Exception as err:
+                logger.warning(f"[llm_text_gen] Couldn't load blog characteristics completely, using defaults where needed: {err}")
             
         except Exception as err:
-            logger.error(f"[llm_text_gen] Error reading config params: {err}")
-            raise err
+            logger.warning(f"[llm_text_gen] Using default settings due to config read error: {err}")
 
         # Construct the system prompt with the sidebar config params if no custom system_prompt is provided
         if system_prompt is None:
@@ -110,9 +147,13 @@ def llm_text_gen(prompt, system_prompt=None, json_struct=None):
             except Exception as err:
                 logger.error(f"Failed to get response from DeepSeek: {err}")
                 raise err
+        else:
+            logger.warning(f"Unknown provider '{gpt_provider}', falling back to Google Gemini")
+            response = gemini_text_response(prompt, temperature, top_p, n, max_tokens, system_instructions)
+            return response
 
     except Exception as err:
-        logger.error(f"Failed to read LLM parameters: {err}")
+        logger.error(f"Failed to generate text: {err}")
         raise
 
 

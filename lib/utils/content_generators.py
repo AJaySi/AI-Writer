@@ -1,57 +1,11 @@
 import streamlit as st
-from lib.utils.alwrity_utils import (
-    blog_from_keyword, ai_agents_team, essay_writer, ai_news_writer,
-    ai_finance_ta_writer
-)
+
 from lib.alwrity_ui.similar_analysis import competitor_analysis
 from lib.alwrity_ui.keyword_web_researcher import do_web_research
-from lib.ai_writers.ai_story_writer.story_writer import story_input_section
-from lib.ai_writers.ai_product_description_writer import write_ai_prod_desc
-from lib.ai_writers.ai_copywriter.copywriter_dashboard import copywriter_dashboard
-from lib.ai_writers.linkedin_writer import LinkedInAIWriter
-#from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
-
-
-def ai_writers():
-    options = [
-        "AI Blog Writer",
-        "Story Writer",
-        "Essay writer",
-        "Write News reports",
-        "Write Financial TA report",
-        "AI Product Description Writer",
-        "AI Copywriter",
-        "LinkedIn AI Writer",
-        "Quit"
-    ]
-    choice = st.selectbox("**👇Select a content creation type:**", options, index=0, format_func=lambda x: f"📝 {x}")
-
-    if choice == "AI Blog Writer":
-        blog_from_keyword()
-    elif choice == "Story Writer":
-        story_input_section()
-    elif choice == "Essay writer":
-        essay_writer()
-    elif choice == "Write News reports":
-        ai_news_writer()
-    elif choice == "Write Financial TA report":
-        ai_finance_ta_writer()
-    elif choice == "AI Product Description Writer":
-        write_ai_prod_desc()
-    elif choice == "AI Copywriter":
-        # Initialize the copywriter dashboard
-        copywriter_dashboard()
-    elif choice == "LinkedIn AI Writer":
-        # Initialize the LinkedIn AI Writer
-        linkedin_writer = LinkedInAIWriter()
-        linkedin_writer.run()
-    elif choice == "Quit":
-        st.info("Thank you for using Alwrity. Goodbye!")
-        st.stop()
 
 
 def content_planning_tools():
-    # Add custom CSS for compact layout
+    # A custom CSS for compact layout
     st.markdown("""
         <style>
             /* Reduce top padding of main container */

@@ -16,7 +16,10 @@
         "GPT Provider": "google",
         "Model": "gemini-1.5-flash-latest",
         "Temperature": 0.7,
-        "Max Tokens": 4000
+        "Max Tokens": 4000,
+        "Top-p": 0.9,
+        "n": 1,
+        "fp": 16
     },
     "Search Engine Parameters": {
         "Geographic Location": "us",

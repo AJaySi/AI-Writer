@@ -10,6 +10,13 @@
 pycache
 __pycache__
 *.pyc
+gemini-native-image*
+*.mp4
+*.mp3
+*.wav
+*.avi
+*.mov
+*.flv
 *.pyo
 *.pyd
 *.pyw

@@ -1,270 +1,23 @@
 import re
 import os
 import PyPDF2
-import tiktoken
 import openai
 import streamlit as st
 import tempfile
 from loguru import logger
 
-from lib.ai_web_researcher.gpt_online_researcher import gpt_web_researcher
-from lib.ai_writers.keywords_to_blog_streamlit import write_blog_from_keywords
-from lib.ai_writers.speech_to_blog.main_audio_to_blog import generate_audio_blog
-from lib.ai_writers.long_form_ai_writer import long_form_generator
+
 from lib.ai_writers.ai_news_article_writer import ai_news_generation
-#from lib.ai_writers.ai_agents_crew_writer import ai_agents_writers
 from lib.ai_writers.ai_financial_writer import write_basic_ta_report
 from lib.ai_writers.ai_facebook_writer.facebook_ai_writer import facebook_main_menu
 from lib.ai_writers.linkedin_writer.linkedin_ai_writer import linkedin_main_menu
 from lib.ai_writers.twitter_writers.twitter_dashboard import run_dashboard
 from lib.ai_writers.insta_ai_writer import insta_writer
 from lib.ai_writers.youtube_writers.youtube_ai_writer import youtube_main_menu
-from lib.ai_writers.web_url_ai_writer import blog_from_url
-from lib.ai_writers.image_ai_writer import blog_from_image
 from lib.ai_writers.ai_essay_writer import ai_essay_generator
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
-from lib.utils.voice_processing import record_voice
 #from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
 from lib.gpt_providers.text_generation.main_text_generation import llm_text_gen
-
-
-def is_youtube_link(text):
-    if text is not None:
-        youtube_regex = re.compile(r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?([^&=%\?]{11})')
-        return youtube_regex.match(text)
-
-
-def is_web_link(text):
-    if text is not None:
-        web_regex = re.compile(r'(https?://)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)')
-        return web_regex.match(text)
-
-
-def process_input(input_text, uploaded_file):
-    if input_text and is_youtube_link(input_text):
-        if input_text.startswith("https://www.youtube.com/") or input_text.startswith("http://www.youtube.com/"):
-            return "youtube_url"
-        else:
-            st.error("Invalid YouTube URL. Please enter a valid URL.")
-            return None
-
-    elif input_text and is_web_link(input_text):
-        return "web_url"
-    
-    elif input_text:
-        return "keywords"
-    
-    if uploaded_file is not None:
-        file_details = {"filename": uploaded_file.name, "filetype": uploaded_file.type}
-        st.write(file_details)
-        if uploaded_file.type.startswith("text/"):
-            content = uploaded_file.read().decode("utf-8")
-            st.text(content)
-
-        elif uploaded_file.type == "application/pdf":
-            return "PDF_file"
-
-        elif uploaded_file.type in ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword"]:
-            st.write("Word document uploaded. Add your DOCX processing logic here.")
-        elif uploaded_file.type.startswith("image/"):
-            st.image(uploaded_file)
-            return "image_file"
-        elif uploaded_file.type.startswith("audio/"):
-            st.audio(uploaded_file)
-            return "audio_file"
-        elif uploaded_file.type.startswith("video/"):
-            st.video(uploaded_file)
-            return "video_file"
-    return None
-
-
-def blog_from_keyword():
-    """ Input blog keywords, research and write a factual blog."""
-    st.header("Blog Content Writer")
-    col1, col2, col3 = st.columns([2, 1.5, 0.5])
-    with col1:
-        user_input = st.text_area('**👇Enter Keywords/Title/YouTube Link/Web URLs**',
-                                  help='Provide keywords, titles, YouTube links, or web URLs to generate content.',
-                                  placeholder="""Write Blog From:
-        - Keywords/Blog Title: Provide keywords to web research & write blog.
-        - Attach file: Attach Text, Audio, Video, Image file to blog on.
-        - YouTube Link: Provide a YouTube video link to convert into blog.
-        - Web URLs: Provide web URL to write similar blog on.
-        - Provide Local folder location with your documents to use for content creation.""")
-        
-    with col2:
-        uploaded_file = st.file_uploader("**👇Attach files (Audio, Video, Image, Document)**",
-                                         type=["txt", "pdf", "docx", "jpg", "jpeg", "png", "mp3", "wav", "mp4", "mkv", "avi"],
-                                         help='Attach files such as audio, video, images, or documents.')
-    with col3:
-        audio_input = record_voice()
-        if audio_input:
-            st.info(audio_input)
-
-    # Validate the provided folder path
-    #st.info("🚨 Currently supported file formats are: PDF, plain text, CSV, Excel, Markdown, PowerPoint, and Word documents.")
-
-    temp_file_path = None
-    if uploaded_file is not None:
-        # Save the uploaded file to a temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=uploaded_file.name) as temp_file:
-            temp_file.write(uploaded_file.read())
-            temp_file_path = temp_file.name
-
-    content_type = st.radio("**👇Select content type:**", ["Normal-length content", "Long-form content", "Experimental - AI Agents team"])
-
-    # Add an expandable section for advanced writing options
-    with st.expander("Advanced Writing Options", expanded=False):
-        # Option 1: Select content type
-        content_type = st.radio("**👇 Select content type:**", 
-                            ["Normal-length content", "Long-form content", "Experimental - AI Agents team"])
-
-        # Option 2: Checkbox for 'Create SEO tags' (Checked by default)
-        create_seo_tags = st.checkbox('Create SEO tags', value=True, 
-                                  help='Generate json-ld schema, Twitter, and Facebook tags.')
-
-        # Option 3: Checkbox for 'Generate Social Media content' (Unchecked by default)
-        generate_social_media = st.checkbox('Generate Social Media content', value=False,
-                                help="Write Facebook, Instagram posts & tweets for generated blog. Needed for marketing your blogs.")
-
-        # Option 4: Checkbox for 'Do Content Analysis & Critique' (Unchecked by default)
-        content_analysis = st.checkbox('Do Content Analysis & Critique', value=False,
-                                       help="Blog Proof reading, Critique generated blog. Provide actionable changes & Editing options.")
-
-        # Display a message at the bottom for user guidance
-        st.info("🚨 Make sure to personalize content from the sidebar. Important.")
-
-    if st.button("Write Blog"):
-        # Clear the previous results from the screen
-        st.empty()
-        if user_input == "":
-            user_input = None
-        if not uploaded_file and not user_input and not audio_input:
-            st.error("🤬🤬 Either Enter/Type/Attach, can't read your mind.(yet..)")
-            st.stop()
-        else:
-            input_type = process_input(user_input, uploaded_file)
-        
-        if input_type == "keywords":
-            if user_input and len(user_input.split()) >= 2:
-                if content_type == "Normal-length content":
-                    try:
-                        short_blog = write_blog_from_keywords(user_input)
-                        st.markdown(short_blog)
-                    except Exception as err:
-                        st.error(f"🚫 Failed to write blog on {user_input}, Error: {err}")
-                elif content_type == "Long-form content":
-                    try:
-                        long_form_generator(user_input)
-                        st.success(f"Successfully wrote long-form blog on: {user_input}")
-                    except Exception as err:
-                        st.error(f"🚫 Failed to write blog on {user_input}, Error: {err}")
-                elif content_type == "Experimental - AI Agents team":
-                    try:
-                        ai_agents_writers(user_input)
-                        st.success(f"Successfully wrote content with AI agents on: {user_input}")
-                    except Exception as err:
-                        st.error(f"🚫 Failed to Write content with AI agents: {err}")
-            else:
-                st.error('🚫 Blog keywords should be at least two words long. Please try again.')
-        
-        elif input_type == "youtube_url" or input_type == "audio_file":
-            if not generate_audio_blog(user_input):
-                st.stop()
-        
-        elif input_type == "web_url":
-            blog_from_url(user_input)
-        
-        elif input_type == "image_file":
-            blog_from_image(user_input, temp_file_path)
-
-        elif input_type == "PDF_file":
-            pdf_reader = PyPDF2.PdfReader(uploaded_file)
-            text = ""
-            combined_result = ""
-            # Create a placeholder for the progress bar
-            progress_bar = st.progress(0)
-
-            # Loop through each page with a progress bar
-            for page_num, page in enumerate(pdf_reader.pages):
-                text += page.extract_text()
-                # Replace newlines with spaces
-                text = text.replace("\n", " ")
-                # Use regex to add a space between words that are combined
-                text = re.sub(r"(\w)([A-Z])", r"\1 \2", text)
-
-                results = blog_from_pdf(text)
-                # Update the progress bar
-                progress_bar.progress((page_num + 1) / len(pdf_reader.pages))
-                combined_result += str(results[-1])
-
-            # Clear progress bar at the end
-            progress_bar.empty()
-
-            st.markdown(combined_result)
-
-
-def blog_from_pdf(pdf_text):
-    """ Load in a long PDF and pull the text out. Create a prompt to be used to extract key bits of information.
-        Chunk up our document and process each chunk to pull any answers out. Combine them at the end. 
-        This simple approach will then be extended to three more difficult questions.
-    """
-    # FixME: 
-    document = '<document>'
-    template_prompt=f'''Extract key pieces of information from the given document.
-
-        When you extract a key piece of information, include the closest page number.
-        Ex: Extracted Information (Page number)
-        \n\nDocument: \"\"\"<document>\"\"\"\n\n'''
-
-    # Initialise tokenizer
-    tokenizer = tiktoken.get_encoding("cl100k_base")
-    results = []
-    
-    chunks = create_chunks(pdf_text, 1000, tokenizer)
-    text_chunks = [tokenizer.decode(chunk) for chunk in chunks]
-
-    for chunk in text_chunks:
-        results.append(extract_chunk(chunk, template_prompt))
-
-    #zipped = list(zip(*groups))
-    #zipped = [x for y in zipped for x in y if "Not specified" not in x and "__" not in x]
-    return results
-
-
-# Split a text into smaller chunks of size n, preferably ending at the end of a sentence
-def create_chunks(text, n, tokenizer):
-    tokens = tokenizer.encode(text)
-    """Yield successive n-sized chunks from text."""
-    i = 0
-    while i < len(tokens):
-        # Find the nearest end of sentence within a range of 0.5 * n and 1.5 * n tokens
-        j = min(i + int(1.5 * n), len(tokens))
-        while j > i + int(0.5 * n):
-            # Decode the tokens and check for full stop or newline
-            chunk = tokenizer.decode(tokens[i:j])
-            if chunk.endswith(".") or chunk.endswith("\n"):
-                break
-            j -= 1
-        # If no end of sentence found, use n tokens as the chunk size
-        if j == i + int(0.5 * n):
-            j = min(i + n, len(tokens))
-        yield tokens[i:j]
-        i = j
-
-
-def extract_chunk(document, template_prompt):
-    """ Chunking for large documents, exceed context window"""
-    client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-    prompt = template_prompt.replace('<document>', document)
-
-    try:
-        response = llm_text_gen(prompt)
-        return response
-    except Exception as err:
-        logger.error(f"Exit: Failed to get response from LLM: {err}")
-        exit(1)
-
 
 
 def ai_agents_team():
@@ -316,9 +69,9 @@ def content_agents():
         if content_keywords and len(content_keywords.split()) >= 2:
             with st.spinner("Generating Content..."):
                 try:
-                    calendar_content = ai_agents_writers(content_keywords)
-                    st.success(f"Successfully generated content for: {content_keywords}")
-                    st.markdown(calendar_content)
+                    #calendar_content = ai_agents_writers(content_keywords)
+                    st.success(f"🚫 Not implemented yet: {content_keywords}")
+                    #st.markdown(calendar_content)
                 except Exception as err:
                     st.error(f"🚫 Failed to generate content with AI Agents: {err}")
         else:

@@ -53,216 +53,177 @@ def generate_with_retry(prompt, system_prompt=None):
         return False
 
 
-def long_form_generator(content_keywords):
+def long_form_generator(keywords, search_params=None, blog_params=None):
     """
-    Write long form content using prompt chaining and iterative generation.
+    Generate a long-form blog post based on the given keywords
     
-    Parameters:
-        content_keywords (str): The main keywords or topic for the long-form content.
+    Args:
+        keywords (str): Topic or keywords for the blog post
+        search_params (dict, optional): Search parameters for research
+        blog_params (dict, optional): Blog content characteristics
+    """
+    
+    # Initialize default parameters if not provided
+    if blog_params is None:
+        blog_params = {
+            "blog_length": 3000,  # Default longer for long-form content
+            "blog_tone": "Professional",
+            "blog_demographic": "Professional",
+            "blog_type": "Informational",
+            "blog_language": "English"
+        }
+    else:
+        # Ensure we have a higher word count for long-form content
+        if blog_params.get("blog_length", 0) < 2500:
+            blog_params["blog_length"] = max(3000, blog_params.get("blog_length", 0))
+    
+    # Extract parameters with defaults
+    blog_length = blog_params.get("blog_length", 3000)
+    blog_tone = blog_params.get("blog_tone", "Professional")
+    blog_demographic = blog_params.get("blog_demographic", "Professional")
+    blog_type = blog_params.get("blog_type", "Informational")
+    blog_language = blog_params.get("blog_language", "English")
+    
+    st.subheader(f"Long-form {blog_type} Blog ({blog_length}+ words)")
+    
+    with st.status("Generating comprehensive long-form content...", expanded=True) as status:
+        # Step 1: Generate outline
+        status.update(label="Creating detailed content outline...")
+        
+        # Use a customized prompt based on the blog parameters
+        outline_prompt = f"""
+        As an expert content strategist writing in a {blog_tone} tone for {blog_demographic} audience,
+        create a detailed outline for a comprehensive {blog_type} blog post about "{keywords}" 
+        that will be approximately {blog_length} words in {blog_language}.
+        
+        The outline should include:
+        1. An engaging headline
+        2. 5-7 main sections with descriptive headings
+        3. 2-3 subsections under each main section
+        4. Key points to cover in each section
+        5. Ideas for relevant examples or case studies
+        6. Suggestions for data points or statistics to include
+        
+        Format the outline in markdown with proper headings and bullet points.
+        """
+        
+        try:
+            outline = llm_text_gen(outline_prompt)
+            st.markdown("### Content Outline")
+            st.markdown(outline)
+            status.update(label="Outline created successfully ✓")
+            
+            # Step 2: Research the topic using the search parameters
+            status.update(label="Researching topic details...")
+            research_results = research_topic(keywords, search_params)
+            status.update(label="Research completed ✓")
+            
+            # Step 3: Generate the full content
+            status.update(label=f"Writing {blog_length}+ word {blog_tone} {blog_type} content...")
+            
+            full_content_prompt = f"""
+            You are a professional content writer who specializes in {blog_type} content with a {blog_tone} tone 
+            for {blog_demographic} audiences. Write a comprehensive, in-depth blog post in {blog_language} about:
+            
+            "{keywords}"
+            
+            Use this outline as your structure:
+            {outline}
+            
+            And incorporate these research findings where relevant:
+            {research_results}
+            
+            The blog post should:
+            - Be approximately {blog_length} words
+            - Include an engaging introduction and strong conclusion
+            - Use appropriate subheadings for all sections in the outline
+            - Include examples, data points, and actionable insights
+            - Be formatted in markdown with proper headings, bullet points, and emphasis
+            - Maintain a {blog_tone} tone throughout
+            - Address the needs and interests of a {blog_demographic} audience
+            
+            Do not include phrases like "according to research" or "based on the outline" in your content.
+            """
+            
+            full_content = llm_text_gen(full_content_prompt)
+            status.update(label="Long-form content generated successfully! ✓", state="complete")
+            
+            # Display the full content
+            st.markdown("### Your Complete Long-form Blog Post")
+            st.markdown(full_content)
+            
+            return full_content
+            
+        except Exception as e:
+            status.update(label=f"Error generating long-form content: {str(e)}", state="error")
+            st.error(f"Failed to generate long-form content: {str(e)}")
+            return None
+    
+def research_topic(keywords, search_params=None):
+    """
+    Research a topic using search parameters and return a summary
+    
+    Args:
+        keywords (str): Topic to research
+        search_params (dict, optional): Search parameters
         
     Returns:
-        str: The generated long-form content.
+        str: Research summary
     """
-    with st.status("Start Writing Long Form Article, Hold my Beer..", expanded=True) as status:
-        # Read the main_config to define tone, character, personality of the content to be generated.
-        try:
-            status.update(label=f"Starting to write content on {content_keywords}.")
-            logger.info(f"Starting to write content on {content_keywords}.")
-            # Define persona and writing guidelines
-            content_tone, target_audience, content_type, content_language, output_format, content_length = read_return_config_section('blog_characteristics')
-        except Exception as err:
-            logger.error(f"Failed to Read config params from main_config: {err}")
-            st.error(f"Failed to Read config params from main_config: {err}")
-            return False
+    # Display a placeholder for research results
+    placeholder = st.empty()
+    placeholder.info("Researching topic... Please wait.")
     
-        try:
-            filepath = os.path.join(os.environ["PROMPTS_DIR"], "long_form_ai_writer.prompts")
-            status.update(label=f"Reading Prompts from {filepath}.")
-            # Check if file exists
-            if not os.path.exists(filepath):
-                raise FileNotFoundError(f"File {filepath} does not exist")
-            with open(filepath, 'r') as file:
-                prompts = yaml.safe_load(file)
-        except Exception as err:
-            st.error(f"Exit: Failed to read prompts from {filepath}: {err}")
-            logger.error(f"Exit: Failed to read prompts from {filepath}: {err}")
-            exit(1)
-    
-        writing_guidelines = prompts.get('writing_guidelines').format(
-            content_language=content_language,
-            content_tone=content_tone,
-            content_type=content_type,
-            output_format=output_format,
-            content_keywords=content_keywords,
-            target_audience=target_audience
-        )
-    
-        content_title = prompts.get('content_title').format(
-            content_language=content_language,
-            content_keywords=content_keywords,
-            target_audience=target_audience
+    try:
+        from .keywords_to_blog_streamlit import do_tavily_ai_search
+        
+        # Use provided search params or defaults
+        if search_params is None:
+            search_params = {
+                "max_results": 10, 
+                "search_depth": "advanced",
+                "time_range": "year"
+            }
+        
+        # Conduct research using Tavily
+        tavily_results = do_tavily_ai_search(
+            keywords,
+            max_results=search_params.get("max_results", 10),
+            search_depth=search_params.get("search_depth", "advanced"),
+            include_domains=search_params.get("include_domains", []),
+            time_range=search_params.get("time_range", "year")
         )
         
-        content_outline = prompts.get('content_outline').format(
-            content_language=content_language,
-            content_title='{content_title}',
-            content_type=content_type,
-            target_audience=target_audience
-        )
+        # Extract research data
+        research_data = ""
+        if tavily_results and len(tavily_results) == 3:
+            results, titles, answer = tavily_results
+            
+            if answer and len(answer) > 50:
+                research_data += f"Summary: {answer}\n\n"
+            
+            if results and 'results' in results and len(results['results']) > 0:
+                research_data += "Key Sources:\n"
+                for i, result in enumerate(results['results'][:7], 1):
+                    title = result.get('title', 'Untitled Source')
+                    content_snippet = result.get('content', '')[:300] + "..."
+                    research_data += f"{i}. {title}\n{content_snippet}\n\n"
         
-        starting_prompt = prompts.get('starting_prompt').format(
-            content_language=content_language,
-            content_title='{content_title}',
-            content_outline='{content_outline}',
-            writing_guidelines=writing_guidelines
-        )
+        # If research data is empty or too short, provide a generic response
+        if not research_data or len(research_data) < 100:
+            research_data = f"No specific research data found for '{keywords}'. Please provide more specific information in your content."
         
-        continuation_prompt = prompts.get('continuation_prompt').format(
-            content_language=content_language,
-            content_title='{content_title}',
-            content_outline='{content_outline}',
-            content_text='{content_text}',
-            web_research_result='{web_research_result}',
-            writing_guidelines=writing_guidelines
-        )
-    
-        # Do SERP web research for given keywords to generate title and outline.
-        web_research_result, g_titles = do_google_serp_search(content_keywords)
-    
-        # Generate prompts
-        try:
-            content_title = generate_with_retry(content_title.format(web_research_result=web_research_result))
-            logger.info(f"The title of the content is: {content_title}")
-            status.update(label=f"The title of the content is: {content_title}")
-        except Exception as err:
-            logger.error(f"Content title Generation Error: {err}")
-            return False
+        placeholder.success("Research completed successfully!")
+        return research_data
         
-        try:
-            content_outline = generate_with_retry(content_outline.format(
-                content_title=content_title, 
-                web_research_result=web_research_result))
-            logger.info(f"The content Outline is: {content_outline}\n\n")
-            status.update(label=f"Completed with Content Outline.")
-        except Exception as err:
-            logger.error(f"Failed to generate content outline: {err}")
-            return False
-    
-        try:
-            status.update(label=f"Do web research with Tavily to provide context for content creation.")
-            logger.info("Do web research with Tavily to provide context for content creation.")
-            # Do Metaphor/Exa AI search.
-            table_data = []
-            web_research_result, m_titles, t_titles = do_tavily_ai_search(content_keywords, max_results=5)
-            for item in web_research_result.get("results"):
-                title = item.get("title", "")
-                snippet = item.get("content", "")
-                table_data.append([title, snippet])
-            web_research_result = table_data
-        except Exception as err:
-            logger.error(f"Failed to do Tavily AI search: {err}")
-            st.error(f"Failed to do Tavily AI search: {err}")
-            return False
-    
-        try:
-            starting_draft = generate_with_retry(starting_prompt.format(
-                    content_title=content_title, 
-                    content_outline=content_outline,
-                    web_research_result=web_research_result,
-                    writing_guidelines=writing_guidelines))
-        except Exception as err:
-            st.error(f"Failed to Generate Starting draft: {err}")
-            logger.error(f"Failed to Generate Starting draft: {err}")
-            return False
-        
-        try:
-            logger.info(f"Starting to write on the outline introduction.")
-            draft = starting_draft
-            continuation = generate_with_retry(continuation_prompt.format(
-                    content_title=content_title,
-                    content_outline=content_outline,
-                    content_text=draft,
-                    web_research_result=web_research_result,
-                    writing_guidelines=writing_guidelines))
-        except Exception as err:
-            logger.error(f"Failed to write the initial draft: {err}")
-            return False
-    
-        # Add the continuation to the initial draft, keep building the story until we see 'IAMDONE'
-        try:
-            draft += '\n\n' + continuation
-        except Exception as err:
-            logger.error(f"Failed as: {err} and {continuation}")
-            return False
-    
-        logger.info(f"Writing in progress... Current draft length: {len(draft)} characters")
-        status.update(label=f"Writing in progress... Current draft length: {len(draft)} characters")
-        search_terms = f"""
-            I will provide you with content outline below, your task is to read the outline & return 8 google search keywords.
-            Your response will be used to do web research for writing on the given outline.
-            Do not explain your response, provide 8 google search sentences encompassing the given content outline.
-            Important: Provide the search term results as comma separated values.\n\n
-            Content Outline:\n
-            '{content_outline}'
-            """
-        search_words = generate_with_retry(search_terms)
-        status.update(label=f"Search terms from written draft: {search_words}")
-        
-        while 'IAMDONE' not in continuation:
-            #web_research_result, m_titles = do_metaphor_ai_research(content_keywords)
-            str_list = re.split(r',\s*', search_words)
-            # Strip quotes from each element 
-            str_list = [s.strip('\'"') for s in str_list]
-
-#            for search_term in str_list:
-#                web_research_result, m_titles, t_titles = do_tavily_ai_search(search_term, max_results=5)
-#                status.update(label=f"Search terms from written draft: {search_term}")
-#                for item in web_research_result.get("results"):
-#                    title = item.get("title", "")
-#                    snippet = item.get("content", "")
-#                    table_data.append([title, snippet])
-#                web_research_result = table_data
-
-            try:
-                continuation = generate_with_retry(continuation_prompt.format(
-                            content_title=content_title,
-                            content_outline=content_outline, 
-                            content_text=draft, 
-                            web_research_result=web_research_result,
-                            writing_guidelines=writing_guidelines))
-        
-                draft += '\n\n' + continuation
-                logger.info(f"Writing in progress... Current draft length: {len(draft)} characters")
-                status.update(label=f"Writing in progress... Current draft length: {len(draft)} characters")
-                # At this point, the context is little stale. We should more web research on
-                # related queries as per the content outline, to augment the LLM context.
-            except Exception as err:
-                st.error(f"Failed to continually write long-form content: {err}")
-                logger.error(f"Failed to continually write the Essay: {err}")
-                return False
-        
-        # Remove 'IAMDONE' and print the final story
-        final = draft.replace('IAMDONE', '').strip()
-        status.update(label="Success: Finished writing Long form content.")
-
-#        # In long content sending the whole content for each content metadata is expensive.
-#        # https://ai.google.dev/gemini-api/docs/caching?lang=python
-#        #blog_title, blog_meta_desc, blog_tags, blog_categories = get_blog_metadata_longform(final)
-#        blog_categories = get_blog_metadata_longform(final)
-#        print("\n\n-----{blog_categories}------\n\n")
-#
-#        status.update(label="Success: Finished with Title, Meta Description, Tags, categories")
-#        generated_image_filepath = None
-#        # TBD: Save the blog content as a .md file. Markdown or HTML ?
-#        save_blog_to_file(final, blog_title, blog_meta_desc, blog_tags, blog_categories, generated_image_filepath)
-        
-        logger.info(f"\n{final}\n\n")
-
-        logger.info(f"\n\n ################ Finished writing Blog for : {content_keywords} #################### \n")
-    with st.expander("**Click to View the final content draft:**"):
-        st.markdown(f"\n{final}\n\n")
-    
-    return final
+    except Exception as e:
+        placeholder.error(f"Research failed: {str(e)}")
+        return f"Unable to gather research for '{keywords}'. Please continue with the content based on your knowledge."
+    finally:
+        # Remove the placeholder after a short delay
+        import time
+        time.sleep(1)
+        placeholder.empty()
 
 
 def generate_long_form_content(content_keywords):

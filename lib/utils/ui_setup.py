@@ -1,10 +1,11 @@
 import os
 import streamlit as st
 from lib.utils.file_processor import load_image
-from lib.utils.content_generators import content_planning_tools, ai_writers
+from lib.utils.content_generators import content_planning_tools
 from lib.utils.alwrity_utils import ai_social_writer
 from lib.utils.seo_tools import ai_seo_tools
 from lib.utils.settings_page import render_settings_page
+from loguru import logger
 
 # Import social media writer functions
 from lib.ai_writers.ai_facebook_writer.facebook_ai_writer import facebook_main_menu
@@ -12,6 +13,7 @@ from lib.ai_writers.linkedin_writer.linkedin_ai_writer import linkedin_main_menu
 from lib.ai_writers.twitter_writers import run_dashboard
 from lib.ai_writers.insta_ai_writer import insta_writer
 from lib.ai_writers.youtube_writers.youtube_ai_writer import youtube_main_menu
+from lib.ai_writers.ai_writer_dashboard import get_ai_writers, list_ai_writers
 
 
 def setup_ui():
@@ -295,22 +297,26 @@ def setup_ui():
 
 def setup_alwrity_ui():
     """Sets up the main navigation in the sidebar."""
+    logger.info("Setting up ALwrity UI")
+    
     # Initialize session state for active tab if not exists
     if 'active_tab' not in st.session_state:
         st.session_state.active_tab = "Content Planning"
+        logger.info(f"Initialized active_tab to: {st.session_state.active_tab}")
     
     # Initialize session state for active sub-tab if not exists
     if 'active_sub_tab' not in st.session_state:
         st.session_state.active_sub_tab = None
+        logger.info("Initialized active_sub_tab to None")
 
     # Define the navigation items with their icons and functions
     nav_items = {
+        "AI Writers": ("📝", get_ai_writers),
         "Content Planning": ("📅", content_planning_tools),
-        "AI Writers": ("📝", ai_writers),
-        "Agents Teams": ("🤝", lambda: st.subheader("Agents Teams - Coming Soon!")),
         "AI SEO Tools": ("🔍", ai_seo_tools),
         "AI Social Tools": ("📱", None),  # Set to None as we'll handle this separately
-        "Ask Alwrity": ("💬", lambda: (
+        "Agents Teams(TBD)": ("🤝", lambda: st.subheader("Agents Teams - Coming Soon!")),
+        "Ask Alwrity(TBD)": ("💬", lambda: (
             st.subheader("Chat with your Data, Chat with any Data.. COMING SOON !"),
             st.markdown("Create a collection by uploading files (PDF, MD, CSV, etc), or crawl a data source (Websites, more sources coming soon."),
             st.markdown("One can ask/chat, summarize and do semantic search over the uploaded data")
@@ -318,6 +324,8 @@ def setup_alwrity_ui():
         "ALwrity Settings": ("⚙️", render_settings_page)
     }
     
+    logger.info(f"Defined {len(nav_items)} navigation items")
+
     # Define sub-menu items for AI Social Tools
     social_tools_submenu = {
         "Facebook": ("📘", lambda: facebook_main_menu()),
@@ -326,6 +334,8 @@ def setup_alwrity_ui():
         "Instagram": ("📸", lambda: insta_writer()),
         "YouTube": ("🎥", lambda: youtube_main_menu())
     }
+    
+    logger.info(f"Defined {len(social_tools_submenu)} social tools submenu items")
 
     # Create sidebar navigation
     st.sidebar.markdown("### ALwrity Options")
@@ -342,6 +352,7 @@ def setup_alwrity_ui():
                 st.session_state.active_tab = name
                 # Reset sub-tab when main tab changes
                 st.session_state.active_sub_tab = None
+                logger.info(f"Selected main tab: {name}")
             
             # If AI Social Tools is active, show the sub-menu
             if st.session_state.active_tab == "AI Social Tools":
@@ -367,6 +378,7 @@ def setup_alwrity_ui():
                     if st.sidebar.button(f"{sub_icon} {sub_name}", key=button_key, 
                                        help=f"Navigate to {sub_name}", use_container_width=True):
                         st.session_state.active_sub_tab = sub_name
+                        logger.info(f"Selected social tool: {sub_name}")
                     
                     # Close the div
                     st.sidebar.markdown('</div>', unsafe_allow_html=True)
@@ -379,6 +391,7 @@ def setup_alwrity_ui():
                 st.session_state.active_tab = name
                 # Reset sub-tab when main tab changes
                 st.session_state.active_sub_tab = None
+                logger.info(f"Selected main tab: {name}")
 
     st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
@@ -427,13 +440,47 @@ def setup_alwrity_ui():
             # Call the function directly without any title
             social_tools_submenu[st.session_state.active_sub_tab][1]()
     else:
-        st.markdown("""
-            <style>
-                .main .block-container {
-                    padding-top: 0.25rem !important;
-                    padding-bottom: 0;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-        st.title(f"{nav_items[st.session_state.active_tab][0]} {st.session_state.active_tab}")
-        nav_items[st.session_state.active_tab][1]()
+        # Check if we're in the AI Writers section and handle writer selection
+        if st.session_state.active_tab == "AI Writers":
+            # Get the writer parameter from the URL using st.query_params
+            writer = st.query_params.get("writer")
+            logger.info(f"Current writer from query params: {writer}")
+            
+            if writer:
+                # Get the list of writers without rendering the dashboard
+                writers = list_ai_writers()
+                logger.info(f"Found {len(writers)} writers")
+                
+                writer_found = False
+                for w in writers:
+                    logger.info(f"Checking writer: {w['name']} with path: {w['path']}")
+                    if w["path"] == writer:
+                        writer_found = True
+                        logger.info(f"Found matching writer: {w['name']}, executing function")
+                        # Clear any existing content
+                        st.empty()
+                        # Execute the writer function
+                        w["function"]()
+                        break
+                
+                if not writer_found:
+                    logger.error(f"No writer found with path: {writer}")
+                    st.error(f"No writer found with path: {writer}")
+            else:
+                # If no writer selected, show the dashboard
+                logger.info("No writer selected, showing dashboard")
+                get_ai_writers()
+        else:
+            # For all other tabs, show the title
+            st.markdown("""
+                <style>
+                    .main .block-container {
+                        padding-top: 0.25rem !important;
+                        padding-bottom: 0;
+                    }
+                </style>
+            """, unsafe_allow_html=True)
+            st.title(f"{nav_items[st.session_state.active_tab][0]} {st.session_state.active_tab}")
+            nav_items[st.session_state.active_tab][1]()
+    
+    logger.info("Finished setting up ALwrity UI")

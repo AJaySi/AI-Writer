@@ -2,8 +2,115 @@ import streamlit as st
 import streamlit.components.v1 as components
 from typing import Dict, List
 import json
+import base64
 
 from .tweet_generator import smart_tweet_generator
+
+def add_bg_from_base64(base64_string):
+    """Add background image using base64 string."""
+    return f'''
+    <style>
+        .stApp {{
+            background-image: url("data:image/png;base64,{base64_string}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+        
+        /* Enhanced styling for containers */
+        .element-container, .stMarkdown, .stButton {{
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px 0;
+            backdrop-filter: blur(10px);
+        }}
+        
+        /* Typography enhancements */
+        h1, h2, h3 {{
+            color: #ffffff !important;
+            font-family: 'Helvetica Neue', sans-serif;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }}
+        
+        p, li {{
+            color: #e0e0e0 !important;
+            font-family: 'Helvetica Neue', sans-serif;
+        }}
+        
+        /* Button styling */
+        .stButton > button {{
+            background: linear-gradient(45deg, #1DA1F2, #0C85D0);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }}
+        
+        .stButton > button:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+        }}
+        
+        /* Tab styling */
+        .stTabs [data-baseweb="tab-list"] {{
+            gap: 8px;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 10px;
+        }}
+        
+        .stTabs [data-baseweb="tab"] {{
+            background-color: transparent;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }}
+        
+        .stTabs [data-baseweb="tab"]:hover {{
+            background-color: rgba(29, 161, 242, 0.2);
+        }}
+        
+        /* Feature card styling */
+        .feature-card {{
+            background: linear-gradient(135deg, rgba(29, 161, 242, 0.1), rgba(0, 0, 0, 0.3));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }}
+        
+        .feature-card:hover {{
+            transform: translateY(-5px);
+        }}
+        
+        /* Status badge styling */
+        .status-badge {{
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }}
+        
+        .status-active {{
+            background: linear-gradient(45deg, #00C853, #69F0AE);
+            color: #000000;
+        }}
+        
+        .status-coming-soon {{
+            background: linear-gradient(45deg, #FFD700, #FFA000);
+            color: #000000;
+        }}
+    </style>
+    '''
 
 def load_feature_data() -> Dict:
     """Load feature data from a structured format."""
@@ -127,13 +234,13 @@ def load_feature_data() -> Dict:
 
 def render_feature_card(feature: Dict) -> None:
     """Render a single feature card with its details."""
+    status_class = "status-active" if feature['status'] == 'active' else "status-coming-soon"
     with st.container():
         st.markdown(f"""
-            <div style='padding: 20px; border-radius: 10px; background-color: #f0f2f6; margin-bottom: 20px;'>
-                <h3 style='margin: 0;'>{feature['icon']} {feature['name']}</h3>
-                <p style='margin: 10px 0;'>{feature['description']}</p>
-                <span style='background-color: {'#4CAF50' if feature['status'] == 'active' else '#ffd700'}; 
-                            padding: 5px 10px; border-radius: 15px; font-size: 0.8em;'>
+            <div class='feature-card'>
+                <h3 style='color: #ffffff; margin: 0;'>{feature['icon']} {feature['name']}</h3>
+                <p style='color: #e0e0e0; margin: 10px 0;'>{feature['description']}</p>
+                <span class='status-badge {status_class}'>
                     {feature['status'].title()}
                 </span>
             </div>
@@ -150,23 +257,43 @@ def render_category_section(category: Dict) -> None:
     with col2:
         render_feature_card(category['features'][1])
 
+def get_space_background() -> str:
+    """Return base64 encoded space-themed background."""
+    return """iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/+F9PQAJYgN4hWvGzQAAAABJRU5ErkJggg==""" # This is a placeholder. You'll need to replace with actual base64 image
+
 def run_dashboard():
     """Main function to run the Twitter dashboard."""
-    # Header
-    st.title("🐦 Twitter AI Writer Dashboard")
+    # Add space-themed background
+    st.markdown(add_bg_from_base64(get_space_background()), unsafe_allow_html=True)
+    
+    # Enhanced Header with gradient text
     st.markdown("""
-        Welcome to your all-in-one Twitter content creation and management platform. 
-        Explore our AI-powered tools to enhance your Twitter marketing strategy.
-    """)
+        <div style='text-align: center; padding: 40px 0;'>
+            <h1 style='
+                font-size: 3em;
+                background: linear-gradient(45deg, #1DA1F2, #ffffff);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                margin-bottom: 10px;
+            '>🐦 Twitter AI Writer</h1>
+            <p style='
+                font-size: 1.2em;
+                color: #e0e0e0;
+                max-width: 600px;
+                margin: 0 auto;
+            '>Your all-in-one Twitter content creation and management platform. 
+            Harness the power of AI to enhance your Twitter marketing strategy.</p>
+        </div>
+    """, unsafe_allow_html=True)
 
     # Load feature data
     features = load_feature_data()
 
-    # Create tabs for different sections
+    # Create tabs with enhanced styling
     tab1, tab2, tab3 = st.tabs(["🎯 Quick Actions", "📊 Analytics", "⚙️ Settings"])
 
     with tab1:
-        st.markdown("### 🚀 Quick Actions")
+        st.markdown("<h2 style='color: #ffffff;'>🚀 Quick Actions</h2>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
         
         with col1:
@@ -199,11 +326,29 @@ def run_dashboard():
             if st.button(f"🚀 Launch {category['features'][0]['name']}", use_container_width=True):
                 category["features"][0]["function"]()
 
-    # Footer
+    # Enhanced Footer
     st.markdown("---")
     st.markdown("""
-        <div style='text-align: center;'>
-            <p>Need help? Check out our <a href='#'>documentation</a> or <a href='#'>contact support</a></p>
+        <div style='text-align: center; padding: 20px; background: rgba(0, 0, 0, 0.5); border-radius: 10px;'>
+            <p style='color: #ffffff; margin-bottom: 10px;'>Need assistance? We're here to help!</p>
+            <div style='display: flex; justify-content: center; gap: 20px;'>
+                <a href='#' style='
+                    text-decoration: none;
+                    color: #1DA1F2;
+                    background: rgba(255, 255, 255, 0.1);
+                    padding: 8px 20px;
+                    border-radius: 20px;
+                    transition: all 0.3s ease;
+                '>📚 Documentation</a>
+                <a href='#' style='
+                    text-decoration: none;
+                    color: #1DA1F2;
+                    background: rgba(255, 255, 255, 0.1);
+                    padding: 8px 20px;
+                    border-radius: 20px;
+                    transition: all 0.3s ease;
+                '>💬 Contact Support</a>
+            </div>
         </div>
     """, unsafe_allow_html=True)
 
