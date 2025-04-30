@@ -8,18 +8,21 @@
         "Blog Output Format": "markdown"
     },
     "Blog Images Details": {
-        "Image Generation Model": "stable-diffusion",
+        "Image Generation Model": "Gemini-AI",
         "Number of Blog Images": 1,
         "Image Style": "Realistic"
     },
     "LLM Options": {
         "GPT Provider": "google",
-        "Model": "gemini-1.5-flash-latest",
+        "Model": "gemini-2.0-flash",
         "Temperature": 0.7,
         "Max Tokens": 4000,
         "Top-p": 0.9,
+        "N": 1,
         "n": 1,
-        "fp": 16
+        "fp": 16,
+        "Frequency Penalty": 0.0,
+        "Presence Penalty": 0.0
     },
     "Search Engine Parameters": {
         "Geographic Location": "us",

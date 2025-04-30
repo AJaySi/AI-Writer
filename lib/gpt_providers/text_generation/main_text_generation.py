@@ -42,6 +42,8 @@ def llm_text_gen(prompt, system_prompt=None, json_struct=None):
             top_p = 0.9
             n = 1
             fp = 16
+            frequency_penalty = 0.0
+            presence_penalty = 0.0
             
             # Default blog characteristics
             blog_tone = "Professional"
@@ -60,7 +62,16 @@ def llm_text_gen(prompt, system_prompt=None, json_struct=None):
                     model = llm_config[1] if llm_config[1] else model
                     temperature = llm_config[2] if llm_config[2] else temperature
                     max_tokens = llm_config[3] if llm_config[3] else max_tokens
-                    # Use default values for top_p, n, fp if they're not in the config
+                    
+                    # Handle additional parameters with defaults if they're missing
+                    if len(llm_config) > 4:
+                        top_p = llm_config[4] if llm_config[4] else top_p
+                    if len(llm_config) > 5:
+                        # Try to get n parameter (could be either 'N' or 'n' in config)
+                        n = llm_config[5] if llm_config[5] else n
+                    if len(llm_config) > 6:
+                        frequency_penalty = llm_config[6] if llm_config[6] else frequency_penalty
+                        
                 logger.debug(f"[llm_text_gen] LLM Config loaded: Provider={gpt_provider}, Model={model}, Temp={temperature}")
             except Exception as err:
                 logger.warning(f"[llm_text_gen] Couldn't load LLM config completely, using defaults where needed: {err}")

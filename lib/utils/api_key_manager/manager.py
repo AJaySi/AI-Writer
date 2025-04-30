@@ -144,7 +144,7 @@ class APIKeyManager:
                 'ANTHROPIC_API_KEY',
                 'MISTRAL_API_KEY',
                 # Research Providers
-                'SERPAPI_KEY',
+                'SERPER_API_KEY',
                 'TAVILY_API_KEY',
                 'METAPHOR_API_KEY',
                 'FIRECRAWL_API_KEY'
