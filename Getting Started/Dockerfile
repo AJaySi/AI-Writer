@@ -5,7 +5,7 @@
 # It uses multi-stage builds for smaller images and leverages Docker layer caching.
 # =====================================================================
 
-# 1. Use official Python 3.11 image (builder stage)
+# 1. Use official Python 3.12 image (builder stage)
 FROM python:3.12
 
 # 2. Set environment variables for Python
@@ -39,37 +39,43 @@ RUN pip install --upgrade pip && \
 # === Start runtime stage ===
 FROM python:3.11-slim AS runtime
 
-# 7. Copy app source code and requirements.txt to runtime image
+# 7. Install build tools needed for wordcloud
+RUN apt-get update && apt-get install -y --no-install-recommends gcc build-essential && rm -rf /var/lib/apt/lists/*
+
+# 8. Set work directory
+WORKDIR /app
+
+# 9. Copy app source code, requirements, and .env to runtime image
 COPY ../requirements.txt ./
 COPY ../alwrity.py /app/
 COPY ../lib /app/lib
 
-# 8. Install Python dependencies in runtime as root
+# Create the .env file with default values
+RUN echo "# Default environment variables for ALwrity\n" > /app/.env
+
+# 10. Install Python dependencies
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# 9. Create a non-root user for security
+# 11. Create a non-root user for security
 RUN useradd -m alwrityuser
 
-# 10. Set environment variable for Streamlit (optional: disables telemetry)
+# 12. Change ownership of /app and .env to the non-root user
+RUN chown -R alwrityuser:alwrityuser /app
+
+# 13. Set environment variable for Streamlit (optional: disables telemetry)
 ENV STREAMLIT_TELEMETRY=0
 
-# 11. Set work directory
-WORKDIR /app
-
-# 12. Create logs directory and set permissions
-RUN mkdir -p /app/logs && chown -R alwrityuser:alwrityuser /app/logs
-
-# 13. Expose Streamlit's default port
+# 14. Expose Streamlit's default port
 EXPOSE 8501
 
-# 14. Switch to non-root user
+# 15. Switch to non-root user
 USER alwrityuser
 
-# 15. Add user local bin to PATH
+# 16. Add user local bin to PATH
 ENV PATH="/home/alwrityuser/.local/bin:$PATH"
 
-# 16. Default command: run ALwrity with Streamlit
+# 17. Default command: run ALwrity with Streamlit
 CMD ["streamlit", "run", "alwrity.py", "--server.port=8501", "--server.address=0.0.0.0"]
 
 # =====================================================================
