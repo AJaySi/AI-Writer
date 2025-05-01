@@ -27,7 +27,7 @@ from .gen_stabl_diff_img import generate_stable_diffusion_image
 from ..text_generation.main_text_generation import llm_text_gen
 from .gen_gemini_images import generate_gemini_image
 
-def generate_image(user_prompt):
+def generate_image(user_prompt, title=None, description=None, tags=None, content=None):
     """
     The generation API endpoint creates an image based on a text prompt.
 
@@ -49,7 +49,8 @@ def generate_image(user_prompt):
 
     if user_prompt:
         try:
-            img_prompt = generate_img_prompt(user_prompt)
+            # Use enhanced prompt generator with all available parameters
+            img_prompt = generate_enhanced_img_prompt(user_prompt, title, description, tags, content)
             if 'Dalle3' in image_engine:
                 logger.info(f"Calling Dalle3 text-to-image with prompt: {img_prompt}")
                 image_stored_at = generate_dalle3_images(img_prompt)
@@ -85,3 +86,72 @@ def generate_img_prompt(user_prompt):
 
     response = llm_text_gen(prompt)
     return response
+
+
+def generate_enhanced_img_prompt(user_prompt, title=None, description=None, tags=None, content=None):
+    """
+    Given user prompt and additional context (title, description, tags, content),
+    this function generates an enhanced prompt for better image generation.
+    
+    Args:
+        user_prompt (str): Base prompt from the user
+        title (str, optional): Blog title or content title
+        description (str, optional): Blog or content description/summary
+        tags (list, optional): List of tags related to the content
+        content (str, optional): Actual content or excerpt
+        
+    Returns:
+        str: Enhanced prompt for image generation
+    """
+    # Start with the base prompt
+    context_parts = [user_prompt]
+    
+    # Add relevant context if available
+    if title:
+        context_parts.append(f"Title: {title}")
+    
+    if description:
+        context_parts.append(f"Description: {description}")
+    
+    if tags and len(tags) > 0:
+        tag_text = ", ".join(tags[:5])  # Limit to 5 tags to avoid too much noise
+        context_parts.append(f"Tags: {tag_text}")
+    
+    # Create a combined context
+    combined_context = "\n".join(context_parts)
+    
+    # Add some content excerpt if available (limited to avoid token limits)
+    content_excerpt = ""
+    if content:
+        # Just use the first few hundred characters as excerpt
+        content_excerpt = content[:300] + "..." if len(content) > 300 else content
+    
+    # Create the prompt for LLM
+    prompt = f"""
+        As an expert prompt engineer for AI image generation models, create a detailed, creative prompt
+        for generating a high-quality, relevant image based on the following context:
+        
+        {combined_context}
+        
+        Additional content excerpt:
+        {content_excerpt}
+        
+        Your task is to:
+        1. Analyze the context and content to understand the main theme and subject
+        2. Create a rich, detailed prompt for image generation (50-75 words)
+        3. Include specific visual details, art style, mood, lighting, composition
+        4. Make sure the prompt is highly relevant to the original context
+        5. Avoid prohibited content or anything that violates image generation guidelines
+        
+        Reply with ONLY the final prompt. No explanations or other text.
+    """
+    
+    # Generate the enhanced prompt
+    try:
+        enhanced_prompt = llm_text_gen(prompt)
+        logger.info(f"Generated enhanced image prompt: {enhanced_prompt[:100]}...")
+        return enhanced_prompt
+    except Exception as e:
+        logger.error(f"Error generating enhanced prompt: {e}")
+        # Fall back to the simple prompt generation if enhanced fails
+        return generate_img_prompt(user_prompt)

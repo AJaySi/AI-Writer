@@ -2,8 +2,8 @@ import sys
 import os
 import json
 
-from ..gpt_providers.openai_chat_completion import openai_chatgpt
-from ..gpt_providers.gemini_pro_text import gemini_text_response
+from ..gpt_providers.text_generation.openai_text_gen import openai_text_generation
+from ..gpt_providers.text_generation.gemini_pro_text import gemini_text_generation
 
 from loguru import logger
 logger.remove()

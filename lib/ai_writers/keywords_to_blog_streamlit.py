@@ -25,25 +25,12 @@ from ..ai_web_researcher.gpt_online_researcher import (
         do_tavily_ai_search as gpt_do_tavily_ai_search,
         do_metaphor_ai_research, do_google_pytrends_analysis)
 from .blog_from_google_serp import write_blog_google_serp, blog_with_research
-from ..ai_web_researcher.you_web_reseacher import get_rag_results, search_ydc_index
 from ..blog_metadata.get_blog_metadata import blog_metadata
 from ..blog_postprocessing.save_blog_to_file import save_blog_to_file
 from ..gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
-
-
-# Function to convert text to speech and save as an audio file
-def text_to_speech(text, lang='en'):
-    tts = gTTS(text=text, lang=lang)
-    tts.save("output.mp3")
-    return "output.mp3"
-
-
-# Function to get audio file as a downloadable link
-def get_audio_file(audio_file):
-    with open(audio_file, "rb") as file:
-        data = file.read()
-        b64_data = base64.b64encode(data).decode()
-        return f'<a href="data:audio/mp3;base64,{b64_data}" download="output.mp3">Download audio file</a>'
+from ..ai_seo_tools.content_title_generator import generate_blog_titles
+from ..ai_seo_tools.meta_desc_generator import generate_blog_metadesc
+from ..ai_seo_tools.seo_structured_data import ai_structured_data
 
 
 def initialize_parameters(search_params=None, blog_params=None):
@@ -285,21 +272,22 @@ def generate_blog_metadata(blog_markdown_str, search_keywords, status):
         status: Streamlit status object
         
     Returns:
-        tuple: (blog_title, blog_meta_desc, blog_tags, blog_categories)
+        tuple: (blog_title, blog_meta_desc, blog_tags, blog_categories, blog_hashtags, blog_slug)
     """
-    status.update(label="🔍 Generating title, meta description, tags, and categories...")
+    status.update(label="🔍 Generating title, meta description, tags, categories, hashtags, and slug...")
     try:
-        blog_title, blog_meta_desc, blog_tags, blog_categories = asyncio.run(blog_metadata(blog_markdown_str))
+        # Get all 6 metadata values from blog_metadata
+        blog_title, blog_meta_desc, blog_tags, blog_categories, blog_hashtags, blog_slug = asyncio.run(blog_metadata(blog_markdown_str))
         status.update(label="✅ Generated blog metadata successfully")
-        return blog_title, blog_meta_desc, blog_tags, blog_categories
+        return blog_title, blog_meta_desc, blog_tags, blog_categories, blog_hashtags, blog_slug
     except Exception as err:
         st.error(f"Failed to get blog metadata: {err}")
         logger.error(f"Failed to get blog metadata: {err}")
         status.update(label="❌ Failed to get blog metadata", state="error")
-        return None, None, None, None
+        return None, None, None, None, None, None
     
 
-def generate_blog_image(blog_title, blog_meta_desc, blog_markdown_str, status):
+def generate_blog_image(blog_title, blog_meta_desc, blog_markdown_str, status, blog_tags=None):
     """
     Generate a featured image for the blog.
     
@@ -308,6 +296,7 @@ def generate_blog_image(blog_title, blog_meta_desc, blog_markdown_str, status):
         blog_meta_desc (str): Blog meta description
         blog_markdown_str (str): Blog content
         status: Streamlit status object
+        blog_tags (list, optional): Blog tags to use for image prompt enhancement
         
     Returns:
         str: Path to the generated image or None if generation failed
@@ -337,8 +326,17 @@ def generate_blog_image(blog_title, blog_meta_desc, blog_markdown_str, status):
         logger.info(f"Generating image with prompt: {text_to_image}")
         status.update(label=f"🖼️ Creating image with prompt: \"{text_to_image[:50]}...\"")
         
-        # Attempt image generation
-        generated_image_filepath = generate_image(text_to_image)
+        # Extract blog tags if available
+        blog_tags_list = blog_tags if isinstance(blog_tags, list) else []
+        
+        # Attempt image generation with all available parameters
+        generated_image_filepath = generate_image(
+            user_prompt=text_to_image,
+            title=blog_title,
+            description=blog_meta_desc,
+            tags=blog_tags_list,
+            content=blog_markdown_str[:2000]  # Limit content length to avoid too large payloads
+        )
         
         # If first attempt failed, try with a simplified prompt
         if not generated_image_filepath:
@@ -347,7 +345,13 @@ def generate_blog_image(blog_title, blog_meta_desc, blog_markdown_str, status):
             
             # Create a simpler prompt
             simplified_prompt = " ".join(text_to_image.split()[:10])
-            generated_image_filepath = generate_image(simplified_prompt)
+            generated_image_filepath = generate_image(
+                user_prompt=simplified_prompt,
+                title=blog_title,
+                description=blog_meta_desc,
+                tags=blog_tags_list,
+                content=blog_markdown_str[:1000]  # Use even shorter content for the retry
+            )
         
         if generated_image_filepath:
             status.update(label="✅ Successfully generated featured image")
@@ -363,7 +367,7 @@ def generate_blog_image(blog_title, blog_meta_desc, blog_markdown_str, status):
         return None
 
 
-def regenerate_blog_image(blog_title, blog_meta_desc, blog_markdown_str):
+def regenerate_blog_image(blog_title, blog_meta_desc, blog_markdown_str, blog_tags=None):
     """
     Regenerate a blog image on demand.
     
@@ -371,6 +375,7 @@ def regenerate_blog_image(blog_title, blog_meta_desc, blog_markdown_str):
         blog_title (str): Blog title
         blog_meta_desc (str): Blog meta description
         blog_markdown_str (str): Blog content
+        blog_tags (list, optional): Blog tags to use for image prompt enhancement
         
     Returns:
         str: Path to the generated image or None if generation failed
@@ -390,8 +395,17 @@ def regenerate_blog_image(blog_title, blog_meta_desc, blog_markdown_str):
                 
             status.update(label=f"🖼️ Generating new image with prompt: \"{prompt}\"")
             
-            # Generate the image
-            generated_image_filepath = generate_image(prompt)
+            # Extract any tags if available - will be passed as empty list otherwise
+            blog_tags_list = blog_tags if isinstance(blog_tags, list) else []
+            
+            # Generate the image with all parameters
+            generated_image_filepath = generate_image(
+                user_prompt=prompt,
+                title=blog_title,
+                description=blog_meta_desc,
+                tags=blog_tags_list,
+                content=blog_markdown_str[:2000]  # Limit content length to avoid too large payloads
+            )
             
             if generated_image_filepath:
                 status.update(label="✅ Successfully generated new image", state="complete")
@@ -407,7 +421,7 @@ def regenerate_blog_image(blog_title, blog_meta_desc, blog_markdown_str):
             return None
 
 
-def save_blog_content(blog_markdown_str, blog_title, blog_meta_desc, blog_tags, blog_categories, generated_image_filepath, status):
+def save_blog_content(blog_markdown_str, blog_title, blog_meta_desc, blog_tags, blog_categories, generated_image_filepath, status, blog_hashtags=None, blog_slug=None):
     """
     Save the blog content to a file.
     
@@ -419,6 +433,8 @@ def save_blog_content(blog_markdown_str, blog_title, blog_meta_desc, blog_tags, 
         blog_categories (list): Blog categories
         generated_image_filepath (str): Path to the generated image
         status: Streamlit status object
+        blog_hashtags (str, optional): Social media hashtags
+        blog_slug (str, optional): SEO-friendly URL slug
         
     Returns:
         str: Path to the saved file or None if saving failed
@@ -632,9 +648,18 @@ def write_blog_from_keywords(search_keywords, url=None, search_params=None, blog
         with st.status("Enhancing content...", expanded=True) as status:
             # Generate metadata
             status.update(label="🏷️ Generating SEO metadata (title, description, tags)...")
-            blog_title, blog_meta_desc, blog_tags, blog_categories = generate_blog_metadata(
+            blog_title, blog_meta_desc, blog_tags, blog_categories, blog_hashtags, blog_slug = generate_blog_metadata(
                 blog_markdown_str, search_keywords, status
             )
+            
+            # Check if there are updated values in session state
+            if 'blog_title' in st.session_state:
+                blog_title = st.session_state.blog_title
+                status.update(label=f"✅ Using refined title: \"{blog_title}\"")
+                
+            if 'blog_meta_desc' in st.session_state:
+                blog_meta_desc = st.session_state.blog_meta_desc
+                status.update(label=f"✅ Using refined meta description")
             
             if blog_title and blog_meta_desc:
                 status.update(label=f"✅ Generated metadata: \"{blog_title}\"")
@@ -642,41 +667,153 @@ def write_blog_from_keywords(search_keywords, url=None, search_params=None, blog
                 # Generate featured image
                 status.update(label="🖼️ Creating featured image...")
                 generated_image_filepath = generate_blog_image(
-                    blog_title, blog_meta_desc, blog_markdown_str, status
+                    blog_title, blog_meta_desc, blog_markdown_str, status, blog_tags
                 )
                 
                 # Save blog content to file
                 status.update(label="💾 Saving blog content...")
                 saved_blog_to_file = save_blog_content(
                     blog_markdown_str, blog_title, blog_meta_desc, blog_tags, 
-                    blog_categories, generated_image_filepath, status
+                    blog_categories, generated_image_filepath, status, blog_hashtags, blog_slug
                 )
                 
                 status.update(label="✅ Content enhancement complete", state="complete")
             else:
                 status.update(label="⚠️ Metadata generation had issues, using simplified format", state="warning")
-    
-    # STEP 4: Final presentation
-    update_progress(4, 5, "Preparing final blog presentation")
-    
-    # Now display the final blog content
-    with final_content_placeholder.container():
-        st.markdown("---")
-        st.header("📝 Generated Blog Content")
-        
-        # Display metadata
-        if blog_title:
-            st.title(blog_title)
-        
-        if blog_meta_desc:
-            st.markdown(f"*{blog_meta_desc}*")
             
-        if blog_tags:
-            st.markdown(f"**Tags:** {', '.join(blog_tags)}")
+            # Add buttons in columns for refining metadata
+            col1, col2 = st.columns(2)
+            with col1:
+                refine_title_button = st.button("🔄 Refine Blog Title", use_container_width=True)
+            with col2:
+                refine_meta_button = st.button("🔄 Refine Meta Description", use_container_width=True)
             
-        if blog_categories:
-            st.markdown(f"**Categories:** {', '.join(blog_categories)}")
+            # Add a row for structured data
+            st.markdown("---")
+            structured_data_col1, structured_data_col2 = st.columns([3, 1])
             
+            with structured_data_col1:
+                # Educational popover explaining why rich snippets are important
+                with st.expander("ℹ️ Why Rich Snippets Are Important for SEO"):
+                    st.markdown("""
+                    ### Rich Snippets: Boosting Your SEO and Click-Through Rates
+                    
+                    **What are Rich Snippets?**
+                    
+                    Rich snippets are enhanced search results that display additional information directly in search engine results pages (SERPs). They're created using structured data markup (JSON-LD) that helps search engines understand your content better.
+                    
+                    **Why are they important?**
+                    
+                    1. **Increased Visibility**: Rich snippets stand out in search results with stars, images, and additional information
+                    
+                    2. **Higher Click-Through Rates (CTR)**: Studies show rich snippets can increase CTR by 30-150%
+                    
+                    3. **Improved SEO**: They help search engines understand your content better, potentially improving rankings
+                    
+                    4. **Enhanced User Experience**: Users can see key information before clicking, leading to more qualified traffic
+                    
+                    5. **Mobile-Friendly**: Rich snippets are especially effective on mobile searches
+                    
+                    **Common types of rich snippets include:**
+                    - Articles/Blogs (with author, date, image)
+                    - Products (with ratings, price, availability)
+                    - Recipes (with cooking time, ratings, calories)
+                    - Events (with date, location, ticket info)
+                    - Local Business (with address, hours, ratings)
+                    
+                    Adding structured data to your content is a powerful SEO technique that requires minimal effort but provides significant benefits.
+                    """)
+            
+            with structured_data_col2:
+                # Button to generate rich snippet
+                generate_snippet_button = st.button("📊 Generate Rich Snippet", use_container_width=True)
+            
+            # Dialog for generating structured data
+            if generate_snippet_button:
+                with st.expander("Structured Data Generation Tool", expanded=True):
+                    st.subheader("Generate Structured Data (Rich Snippets)")
+                    
+                    # Simplified blog URL input
+                    blog_url = st.text_input(
+                        "Blog URL:",
+                        placeholder="https://yourblog.com/your-article",
+                        help="Enter the URL where this blog will be published"
+                    )
+                    
+                    # Auto-fill content type to "Article" since we're working with a blog
+                    content_type = "Article"
+                    st.info(f"Content Type: {content_type} (Auto-selected for blog content)")
+                    
+                    # Create details dictionary with blog metadata
+                    today = datetime.now().strftime("%Y-%m-%d")
+                    
+                    # Form for additional article details
+                    with st.form(key="structured_data_form"):
+                        st.markdown("#### Article Details")
+                        
+                        # Pre-fill with blog title and other metadata
+                        article_title = st.text_input("Headline:", value=blog_title if blog_title else "")
+                        article_author = st.text_input("Author:", value="")
+                        article_date = st.date_input("Date Published:", value=datetime.now())
+                        article_keywords = st.text_input("Keywords:", value=blog_tags if blog_tags else "")
+                        
+                        submit_structured_data = st.form_submit_button("Generate JSON-LD")
+                    
+                    if submit_structured_data:
+                        if not blog_url:
+                            st.error("Please enter a blog URL to generate structured data.")
+                        else:
+                            # Create details dictionary
+                            details = {
+                                "Headline": article_title,
+                                "Author": article_author,
+                                "Date Published": article_date,
+                                "Keywords": article_keywords
+                            }
+                            
+                            # Call the imported ai_structured_data function or recreate its functionality
+                            with st.spinner("Generating structured data..."):
+                                # Import and use the function from the module directly
+                                from ..ai_seo_tools.seo_structured_data import generate_json_data
+                                
+                                # Generate the structured data
+                                structured_data = generate_json_data(content_type, details, blog_url)
+                                
+                                if structured_data:
+                                    st.success("✅ Structured data generated successfully!")
+                                    st.markdown("### Generated JSON-LD Code")
+                                    st.code(structured_data, language="json")
+                                    
+                                    # Download button
+                                    st.download_button(
+                                        label="📥 Download JSON-LD",
+                                        data=structured_data,
+                                        file_name=f"{content_type}_structured_data.json",
+                                        mime="application/json",
+                                    )
+                                    
+                                    # Implementation instructions
+                                    with st.expander("How to Implement This Code"):
+                                        st.markdown("""
+                                        ### Adding this JSON-LD to your website:
+                                        
+                                        1. **Copy the generated JSON-LD code** above
+                                        
+                                        2. **Add it to the `<head>` section of your HTML** like this:
+                                        ```html
+                                        <script type="application/ld+json">
+                                        [PASTE YOUR JSON-LD CODE HERE]
+                                        </script>
+                                        ```
+                                        
+                                        3. **Verify the implementation** using Google's Rich Results Test tool:
+                                        [https://search.google.com/test/rich-results](https://search.google.com/test/rich-results)
+                                        
+                                        4. **Monitor your search appearance** in Google Search Console
+                                        """)
+                                else:
+                                    st.error("Failed to generate structured data. Please check your inputs and try again.")
+
         # Image section with regeneration option
         st.subheader("🖼️ Featured Image")
         image_container = st.container()
@@ -688,14 +825,14 @@ def write_blog_from_keywords(search_keywords, url=None, search_params=None, blog
                 
                 # Add regenerate button
                 if st.button("🔄 Regenerate Image", key="regenerate_image"):
-                    new_image_path = regenerate_blog_image(blog_title, blog_meta_desc, blog_markdown_str)
+                    new_image_path = regenerate_blog_image(blog_title, blog_meta_desc, blog_markdown_str, blog_tags)
                     if new_image_path:
                         generated_image_filepath = new_image_path
                         st.rerun()  # Refresh the page to show the new image
             else:
                 st.info("No featured image was generated. Click below to generate one.")
                 if st.button("🖼️ Generate Image", key="generate_image"):
-                    new_image_path = regenerate_blog_image(blog_title, blog_meta_desc, blog_markdown_str)
+                    new_image_path = regenerate_blog_image(blog_title, blog_meta_desc, blog_markdown_str, blog_tags)
                     if new_image_path:
                         generated_image_filepath = new_image_path
                         st.rerun()  # Refresh the page to show the new image
@@ -718,6 +855,303 @@ def write_blog_from_keywords(search_keywords, url=None, search_params=None, blog
             if generate_audio_button:
                 generate_audio_version(blog_markdown_str)
     
+    # STEP 4: Final presentation
+    update_progress(4, 5, "Preparing final blog presentation")
+    
+    # Now display the final blog content
+    with final_content_placeholder.container():
+        st.markdown("---")
+        # Display tabular data of metadata
+        st.subheader("🏷️ Metadata")
+        metadata_container = st.container()
+        with metadata_container:
+            st.table({
+                "Metadata": ["Blog Title", "Meta Description", "Tags", "Categories", "Hashtags", "Slug"],
+                "Value": [blog_title, blog_meta_desc, blog_tags, blog_categories, blog_hashtags, blog_slug]
+            })
+
+            # Add buttons in columns for refining metadata
+            col1, col2 = st.columns(2)
+            with col1:
+                refine_title_button = st.button("🔄 Refine Blog Title", use_container_width=True)
+            with col2:
+                refine_meta_button = st.button("🔄 Refine Meta Description", use_container_width=True)
+            
+            # Add a row for structured data with a "Generate Rich Snippet" button
+            st.markdown("---")
+            st.markdown("### Get Structured Data")
+            
+            structured_data_col1, structured_data_col2 = st.columns([3, 1])
+            
+            with structured_data_col1:
+                # Educational popover explaining why rich snippets are important
+                with st.expander("ℹ️ Why Rich Snippets Are Important for SEO"):
+                    st.markdown("""
+                    ### Rich Snippets: Boosting Your SEO and Click-Through Rates
+                    
+                    **What are Rich Snippets?**
+                    
+                    Rich snippets are enhanced search results that display additional information directly in search engine results pages (SERPs). They're created using structured data markup (JSON-LD) that helps search engines understand your content better.
+                    
+                    **Why are they important?**
+                    
+                    1. **Increased Visibility**: Rich snippets stand out in search results with stars, images, and additional information
+                    
+                    2. **Higher Click-Through Rates (CTR)**: Studies show rich snippets can increase CTR by 30-150%
+                    
+                    3. **Improved SEO**: They help search engines understand your content better, potentially improving rankings
+                    
+                    4. **Enhanced User Experience**: Users can see key information before clicking, leading to more qualified traffic
+                    
+                    5. **Mobile-Friendly**: Rich snippets are especially effective on mobile searches
+                    
+                    **Common types of rich snippets include:**
+                    - Articles/Blogs (with author, date, image)
+                    - Products (with ratings, price, availability)
+                    - Recipes (with cooking time, ratings, calories)
+                    - Events (with date, location, ticket info)
+                    - Local Business (with address, hours, ratings)
+                    
+                    Adding structured data to your content is a powerful SEO technique that requires minimal effort but provides significant benefits.
+                    """)
+            
+            with structured_data_col2:
+                # Button to generate rich snippet
+                generate_snippet_button = st.button("📊 Generate Rich Snippet", use_container_width=True)
+            
+            # Dialog for generating structured data
+            if generate_snippet_button:
+                with st.expander("Structured Data Generation Tool", expanded=True):
+                    st.subheader("Generate Structured Data (Rich Snippets)")
+                    
+                    # Simplified blog URL input
+                    blog_url = st.text_input(
+                        "Blog URL:",
+                        placeholder="https://yourblog.com/your-article",
+                        help="Enter the URL where this blog will be published"
+                    )
+                    
+                    # Auto-fill content type to "Article" since we're working with a blog
+                    content_type = "Article"
+                    st.info(f"Content Type: {content_type} (Auto-selected for blog content)")
+                    
+                    # Form for additional article details
+                    with st.form(key="structured_data_form"):
+                        st.markdown("#### Article Details")
+                        
+                        # Pre-fill with blog title and other metadata
+                        article_title = st.text_input("Headline:", value=blog_title if blog_title else "")
+                        article_author = st.text_input("Author:", value="")
+                        article_date = st.date_input("Date Published:", value=datetime.now())
+                        article_keywords = st.text_input("Keywords:", value=blog_tags if blog_tags else "")
+                        
+                        submit_structured_data = st.form_submit_button("Generate JSON-LD")
+                    
+                    if submit_structured_data:
+                        if not blog_url:
+                            st.error("Please enter a blog URL to generate structured data.")
+                        else:
+                            # Create details dictionary
+                            details = {
+                                "Headline": article_title,
+                                "Author": article_author,
+                                "Date Published": article_date,
+                                "Keywords": article_keywords
+                            }
+                            
+                            # Call the imported ai_structured_data function or recreate its functionality
+                            with st.spinner("Generating structured data..."):
+                                # Import and use the function from the module directly
+                                from ..ai_seo_tools.seo_structured_data import generate_json_data
+                                
+                                # Generate the structured data
+                                structured_data = generate_json_data(content_type, details, blog_url)
+                                
+                                if structured_data:
+                                    st.success("✅ Structured data generated successfully!")
+                                    st.markdown("### Generated JSON-LD Code")
+                                    st.code(structured_data, language="json")
+                                    
+                                    # Download button
+                                    st.download_button(
+                                        label="📥 Download JSON-LD",
+                                        data=structured_data,
+                                        file_name=f"{content_type}_structured_data.json",
+                                        mime="application/json",
+                                    )
+                                    
+                                    # Implementation instructions
+                                    with st.expander("How to Implement This Code"):
+                                        st.markdown("""
+                                        ### Adding this JSON-LD to your website:
+                                        
+                                        1. **Copy the generated JSON-LD code** above
+                                        
+                                        2. **Add it to the `<head>` section of your HTML** like this:
+                                        ```html
+                                        <script type="application/ld+json">
+                                        [PASTE YOUR JSON-LD CODE HERE]
+                                        </script>
+                                        ```
+                                        
+                                        3. **Verify the implementation** using Google's Rich Results Test tool:
+                                        [https://search.google.com/test/rich-results](https://search.google.com/test/rich-results)
+                                        
+                                        4. **Monitor your search appearance** in Google Search Console
+                                        """)
+                                else:
+                                    st.error("Failed to generate structured data. Please check your inputs and try again.")
+
+            # Dialog for refining blog title
+            if refine_title_button:
+                with st.expander("Blog Title Refinement Tool", expanded=True):
+                    st.subheader("Refine Your Blog Title")
+                    
+                    # Store the current title in session state for later reference
+                    if 'current_title' not in st.session_state:
+                        st.session_state.current_title = blog_title
+                    
+                    # Extract keywords from tags and content
+                    keywords_from_tags = blog_tags if blog_tags else ""
+                    blog_content_sample = blog_markdown_str[:3000] if blog_markdown_str else ""
+                    
+                    # Title generation form
+                    with st.form(key="title_form"):
+                        st.markdown("#### Provide information to generate new title suggestions")
+                        title_keywords = st.text_input(
+                            "Main Keywords:", 
+                            value=keywords_from_tags,
+                            help="Enter main keywords separated by commas"
+                        )
+                        
+                        title_type = st.selectbox(
+                            "Blog Type:", 
+                            options=['General', 'How-to Guides', 'Tutorials', 'Listicles', 'Newsworthy Posts', 'FAQs', 'Checklists/Cheat Sheets'],
+                            index=0
+                        )
+                        
+                        intent_type = st.selectbox(
+                            "Search Intent:", 
+                            options=['Informational Intent', 'Commercial Intent', 'Transactional Intent', 'Navigational Intent'],
+                            index=0
+                        )
+                        
+                        language = st.selectbox(
+                            "Language:", 
+                            options=["English", "Spanish", "French", "German", "Chinese", "Japanese", "Other"],
+                            index=0
+                        )
+                        
+                        if language == "Other":
+                            language = st.text_input("Specify Language:", placeholder="e.g., Italian, Dutch")
+                        
+                        submit_title = st.form_submit_button("Generate Title Suggestions")
+                    
+                    if submit_title:
+                        with st.spinner("Generating title suggestions..."):
+                            # Use the imported generate_blog_titles function
+                            title_suggestions = generate_blog_titles(
+                                title_keywords, 
+                                blog_content_sample, 
+                                title_type, 
+                                intent_type, 
+                                language
+                            )
+                            
+                            if title_suggestions:
+                                st.success("✅ Title suggestions generated!")
+                                st.markdown("### Title Suggestions")
+                                st.markdown(title_suggestions)
+                                
+                                # Allow selecting a title
+                                st.markdown("#### Select or enter a new title")
+                                new_title = st.text_input("New Blog Title", value=st.session_state.current_title)
+                                
+                                if st.button("Apply New Title"):
+                                    # Store the new title in the session state
+                                    st.session_state.blog_title = new_title
+                                    st.success(f"✅ Title updated to: {new_title}")
+                                    # Return to main page with updated title
+                                    st.experimental_rerun()
+                            else:
+                                st.error("Failed to generate title suggestions.")
+
+            # Dialog for refining meta description
+            if refine_meta_button:
+                with st.expander("Meta Description Refinement Tool", expanded=True):
+                    st.subheader("Refine Your Meta Description")
+                    
+                    # Store the current meta description in session state
+                    if 'current_meta_desc' not in st.session_state:
+                        st.session_state.current_meta_desc = blog_meta_desc
+                    
+                    # Extract keywords from tags and content
+                    keywords_from_tags = blog_tags if blog_tags else ""
+                    
+                    # Meta description generation form
+                    with st.form(key="meta_desc_form"):
+                        st.markdown("#### Provide information to generate new meta description suggestions")
+                        meta_keywords = st.text_input(
+                            "Target Keywords:", 
+                            value=keywords_from_tags,
+                            help="Enter target keywords separated by commas"
+                        )
+                        
+                        tone_options = ["General", "Informative", "Engaging", "Humorous", "Intriguing", "Playful"]
+                        tone = st.selectbox(
+                            "Desired Tone:", 
+                            options=tone_options,
+                            index=0
+                        )
+                        
+                        search_type = st.selectbox(
+                            "Search Intent:", 
+                            options=['Informational Intent', 'Commercial Intent', 'Transactional Intent', 'Navigational Intent'],
+                            index=0
+                        )
+                        
+                        language_options = ["English", "Spanish", "French", "German", "Other"]
+                        language_choice = st.selectbox(
+                            "Preferred Language:", 
+                            options=language_options,
+                            index=0
+                        )
+                        
+                        if language_choice == "Other":
+                            language = st.text_input("Specify Language:", placeholder="e.g., Italian, Chinese")
+                        else:
+                            language = language_choice
+                        
+                        submit_meta = st.form_submit_button("Generate Meta Description Suggestions")
+                    
+                    if submit_meta:
+                        with st.spinner("Generating meta description suggestions..."):
+                            # Use the imported generate_blog_metadesc function
+                            meta_suggestions = generate_blog_metadesc(
+                                meta_keywords,
+                                tone,
+                                search_type,
+                                language
+                            )
+                            
+                            if meta_suggestions:
+                                st.success("✅ Meta description suggestions generated!")
+                                st.markdown("### Meta Description Suggestions")
+                                st.markdown(meta_suggestions)
+                                
+                                # Allow selecting a meta description
+                                st.markdown("#### Select or enter a new meta description")
+                                new_meta_desc = st.text_area("New Meta Description", value=st.session_state.current_meta_desc)
+                                
+                                if st.button("Apply New Meta Description"):
+                                    # Store the new meta description in the session state
+                                    st.session_state.blog_meta_desc = new_meta_desc
+                                    st.success(f"✅ Meta description updated!")
+                                    # Return to main page with updated meta description
+                                    st.experimental_rerun()
+                            else:
+                                st.error("Failed to generate meta description suggestions.")
+
     # Final progress update
     update_progress(5, 5, "Blog generation complete!")
     

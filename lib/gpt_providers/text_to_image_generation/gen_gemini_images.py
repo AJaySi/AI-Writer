@@ -190,6 +190,14 @@ def generate_gemini_image(prompt, keywords=None, style=None, focus=None, enhance
     """
     logger.info(f"Generating image with prompt: '{prompt[:100]}...'")
     
+    # Check if the GEMINI_API_KEY is available
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        error_msg = "GEMINI_API_KEY is missing. Please set it in your environment variables."
+        logger.error(error_msg)
+        st.error(f"🔑 {error_msg}")
+        return None
+    
     # Enhance the prompt if requested
     if enhance_prompt and keywords:
         prompt_generator = AIPromptGenerator()
@@ -209,7 +217,7 @@ def generate_gemini_image(prompt, keywords=None, style=None, focus=None, enhance
     
     while retry_count <= max_retries:
         try:
-            client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+            client = genai.Client(api_key=api_key)
             contents = (prompt)
 
             logger.info("Sending request to Gemini API")
