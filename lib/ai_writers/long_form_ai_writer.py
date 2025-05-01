@@ -175,7 +175,7 @@ def research_topic(keywords, search_params=None):
     placeholder.info("Researching topic... Please wait.")
     
     try:
-        from .keywords_to_blog_streamlit import do_tavily_ai_search
+        from .ai_blog_writer.keywords_to_blog_streamlit import do_tavily_ai_search
         
         # Use provided search params or defaults
         if search_params is None:

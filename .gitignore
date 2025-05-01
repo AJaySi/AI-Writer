@@ -130,4 +130,4 @@ venv_*
 AI-Writer_cursor_workspace.code-workspace
 *.code-workspace
 .cursorignore
-lib/ai_writers/__pycache__/ai_agents_crew_writer.cpython-312.pyc
+lib/ai_writers/__pycache__/*.pyc

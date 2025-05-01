@@ -10,7 +10,7 @@ logger.add(sys.stdout,
         format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}"
     )
 
-from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
+from ...gpt_providers.text_generation.main_text_generation import llm_text_gen
 
 
 def write_blog_google_serp(keywords, search_results, blog_params=None):

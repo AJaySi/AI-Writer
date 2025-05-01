@@ -25,7 +25,6 @@ def display_input_section():
     # First column: Keywords input
     with col1:
         st.markdown("### 📌 Content Source")
-        st.markdown("#### Enter Keywords, Title or URL")
         user_input = st.text_area(
             'Power your content with keywords or a website URL',
             help='Provide keywords, a blog title, YouTube link, or web URL to generate targeted content.',
@@ -36,7 +35,6 @@ def display_input_section():
     # Second column: File uploader
     with col2:
         st.markdown("### 📁 File Upload")
-        st.markdown("#### Upload Reference Content")
         uploaded_file = st.file_uploader(
             "Add files to enhance your content",
                                          type=["txt", "pdf", "docx", "jpg", "jpeg", "png", "mp3", "wav", "mp4", "mkv", "avi"],
@@ -46,7 +44,6 @@ def display_input_section():
     # Third column: Voice input
     with col3:
         st.markdown("### 🎤 Voice")
-        st.markdown("#### Record Ideas")
         audio_input = record_voice()
         if audio_input:
             st.success("Voice recorded!")
@@ -54,13 +51,20 @@ def display_input_section():
     return user_input, uploaded_file, audio_input
 
 
-def display_content_type_selection():
-    """Display the content type selection section and return the selected type."""
+def display_content_type_selection(inside_expander=False):
+    """Display the content type selection section and return the selected type.
+    
+    Args:
+        inside_expander (bool): If True, adjust heading levels for display inside an expander.
+    """
     # Content options in a cleaner layout
-    st.markdown("### 🔧 Content Configuration")
+    if not inside_expander:
+        st.markdown("### 🔧 Content Configuration")
+        st.markdown("#### Select Content Type")
+    else:
+        st.markdown("#### Content Type")
     
     # Content type selection with better UI
-    st.markdown("#### Select Content Type")
     content_type = st.radio(
         "Choose the format and length of your blog content",
         ["Standard Blog Post", "Comprehensive Long-form", "AI Agent Team (Beta)"],
@@ -556,8 +560,11 @@ def display_search_settings_tab():
 
 def display_advanced_options():
     """Display all advanced options tabs and return the selected configurations."""
-    with st.expander("⚙️ Advanced Options", expanded=False):
-        tabs = st.tabs(["Content Characteristics", "Content & Analysis Options", "Blog Images Details", "LLM Options", "Search Settings"])
+    
+    with st.expander("⚙️ Advanced Options for Personalization, Analysis, Images, LLM, and Search", expanded=False):
+        content_type, selected_content_type = display_content_type_selection(inside_expander=True)
+
+        tabs = st.tabs(["Personalization", "Analysis Options", "Blog Images Details", "LLM Options", "Search Settings"])
         
         with tabs[0]:  # Content Characteristics
             blog_params = display_content_characteristics_tab()
@@ -574,7 +581,7 @@ def display_advanced_options():
         with tabs[4]:  # Search Settings
             search_params = display_search_settings_tab()
     
-    return blog_params, content_analysis_params, image_params, llm_params, search_params
+    return content_type, selected_content_type, blog_params, content_analysis_params, image_params, llm_params, search_params
 
 
 def blog_from_keyword():
@@ -583,15 +590,12 @@ def blog_from_keyword():
     # Get user inputs
     user_input, uploaded_file, audio_input = display_input_section()
     
-    # Get content type selection
-    content_type, selected_content_type = display_content_type_selection()
-    
     # Display advanced options and get configurations
-    blog_params, content_analysis_params, image_params, llm_params, search_params = display_advanced_options()
+    content_type, selected_content_type, blog_params, content_analysis_params, image_params, llm_params, search_params = display_advanced_options()
     
     # Generate button with icon and clearer purpose
     st.markdown("")  # Add spacing
-    generate_pressed = st.button("✨ Generate Professional Blog Content", use_container_width=True)
+    generate_pressed = st.button("✨ Generate Blog Content", use_container_width=True)
     
     # Processing logic
     if generate_pressed:

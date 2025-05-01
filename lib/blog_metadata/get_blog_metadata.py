@@ -71,7 +71,7 @@ async def blog_metadata(blog_article):
         progress_bar.progress(6 / total_steps)
 
         # Present the result in a table format
-        status_container.success("✅ Metadata generation complete")
+        status_container.success("✅ Blog SEO Metadata generation complete")
         #st.table({
         #    "Metadata": ["Blog Title", "Meta Description", "Tags", "Categories", "Social Hashtags", "URL Slug"],
         #    "Value": [blog_title, blog_meta_desc, blog_tags, blog_categories, blog_hashtags, blog_slug]

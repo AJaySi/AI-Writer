@@ -17,7 +17,7 @@ logger.add(sys.stdout,
     )
 
 from ...ai_web_researcher.gpt_online_researcher import do_google_serp_search
-from ..blog_from_google_serp import blog_with_research
+from ..ai_blog_writer.blog_from_google_serp import blog_with_research
 from ...blog_metadata.get_blog_metadata import blog_metadata
 from ...blog_postprocessing.save_blog_to_file import save_blog_to_file
 from ...gpt_providers.audio_to_text_generation.stt_audio_blog import speech_to_text
@@ -110,13 +110,24 @@ def generate_audio_blog(audio_input):
         logger.error(f"Error in blog_with_research: {e}")
         sys.exit(1)
 
-    try:        
-        blog_title, blog_meta_desc, blog_tags, blog_categories = blog_metadata(blog_markdown_str)
+    try:       
+        import asyncio 
+        # blog_metadata now returns 6 values: title, desc, tags, categories, hashtags, slug
+        blog_title, blog_meta_desc, blog_tags, blog_categories, blog_hashtags, blog_slug = asyncio.run(blog_metadata(blog_markdown_str))
     except Exception as err:
         logger.error(f"Failed to generate blog metadata: {err}")
+        # Set defaults in case of failure
+        blog_title = "Blog Article"
+        blog_meta_desc = "An informative blog post"
+        blog_tags = "content, blog"
+        blog_categories = "General, Information" 
+        blog_hashtags = "#content #blog"
+        blog_slug = "blog-article"
 
     try:
         # TBD: Save the blog content as a .md file. Markdown or HTML ?
+        # Initialize generated_image_filepath to None since it's not generated in this function
+        generated_image_filepath = None
         save_blog_to_file(blog_markdown_str, blog_title, blog_meta_desc, blog_tags, blog_categories, generated_image_filepath)
     except Exception as err:
         logger.error(f"Failed to save final blog in a file: {err}")
