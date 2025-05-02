@@ -3,7 +3,22 @@ from lib.ai_web_researcher.metaphor_basic_neural_web_search import metaphor_find
 from datetime import datetime, timedelta
 import re
 import urllib.parse
+import logging
 
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Create console handler if it doesn't exist
+if not logger.handlers:
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
 
 def is_valid_url(url):
     """
@@ -17,15 +32,20 @@ def is_valid_url(url):
     """
     try:
         result = urllib.parse.urlparse(url)
-        return all([result.scheme, result.netloc])
-    except:
+        is_valid = all([result.scheme, result.netloc])
+        logger.debug(f"URL validation for {url}: {is_valid}")
+        return is_valid
+    except Exception as e:
+        logger.error(f"URL validation error for {url}: {str(e)}")
         return False
 
-
 def competitor_analysis():
+    logger.info("Starting competitor analysis")
+    
     # Initialize session state for progress bar visibility
     if 'show_progress' not in st.session_state:
         st.session_state.show_progress = True
+        logger.debug("Initialized show_progress session state")
         
     st.title("Competitor Analysis")
     st.markdown("""**Use Cases:**
@@ -44,6 +64,7 @@ def competitor_analysis():
     # Validate URL
     url_valid = is_valid_url(similar_url) if similar_url else False
     if similar_url and not url_valid:
+        logger.warning(f"Invalid URL provided: {similar_url}")
         st.error("⚠️ Please enter a valid URL including http:// or https://")
     
     # Usecase selection with improved help
@@ -52,6 +73,7 @@ def competitor_analysis():
         ["similar companies", "listicles", "Top tools", "alternative-to", "similar products", "similar websites"],
         help="Choose the type of analysis you want to perform"
     )
+    logger.debug(f"Selected usecase: {usecase}")
     
     # Default summary query based on usecase
     default_summary_queries = {
@@ -65,6 +87,7 @@ def competitor_analysis():
     
     # Advanced options using a modal dialog
     show_advanced = st.checkbox("Show Advanced Options", help="Configure additional search parameters")
+    logger.debug(f"Advanced options shown: {show_advanced}")
     
     # Initialize default values
     num_results = 5
@@ -96,6 +119,7 @@ def competitor_analysis():
     
     # Advanced options section
     if show_advanced:
+        logger.debug("Processing advanced options")
         st.markdown("### 🔧 Advanced Search Options")
         
         # Summary query with improved help in a card
@@ -192,6 +216,9 @@ def competitor_analysis():
     if st.button("Analyze", disabled=not url_valid if similar_url else False):
         if similar_url and url_valid:
             try:
+                logger.info(f"Starting analysis for URL: {similar_url}")
+                logger.debug(f"Analysis parameters - Usecase: {usecase}, Num Results: {num_results}, Time Range: {time_range}")
+                
                 # Create a progress container
                 progress_container = st.empty()
                 status_container = st.empty()
@@ -201,11 +228,8 @@ def competitor_analysis():
                 status_container.info(f"Starting analysis for the URL: {similar_url}")
                 
                 # Create a progress bar
-                progress_bar = progress_container.progress(0)
-                
-                # Update progress and status
-                progress_bar.progress(10)
-                status_container.info("Initializing search parameters...")
+                progress_bar = progress_container.progress(0.1)
+                logger.debug("Initialized progress bar and status containers")
                 
                 # Calculate date range based on selection
                 start_date = None
@@ -219,6 +243,7 @@ def competitor_analysis():
                         start_date = end_date - timedelta(days=30)
                     elif time_range == "Past Year":
                         start_date = end_date - timedelta(days=365)
+                    logger.debug(f"Date range: {start_date} to {end_date}")
                 
                 # Format dates for API if they exist
                 start_published_date = start_date.strftime("%Y-%m-%dT%H:%M:%S.000Z") if start_date else None
@@ -228,41 +253,48 @@ def competitor_analysis():
                 summary_query_param = None
                 if summary_query:
                     summary_query_param = {"query": summary_query}
+                    logger.debug(f"Summary query: {summary_query}")
                 
                 # Update progress
-                progress_bar.progress(20)
+                progress_bar.progress(0.2)
                 status_container.info("Searching for similar content...")
+                logger.info("Initiating similar content search")
                 
                 # Call the metaphor_find_similar function with all parameters
                 with st.spinner("Performing competitor analysis..."):
-                    # Update progress
-                    progress_bar.progress(30)
-                    status_container.info("Finding similar content...")
-                    
-                    # Call the API
-                    df, search_response = metaphor_find_similar(
-                        similar_url=similar_url,
-                        usecase=usecase,
-                        num_results=num_results,
-                        start_published_date=start_published_date,
-                        end_published_date=end_published_date,
-                        include_domains=include_domains,
-                        exclude_domains=exclude_domains,
-                        include_text=include_text,
-                        exclude_text=exclude_text,
-                        summary_query=summary_query_param
-                    )
-                    
-                    # Update progress
-                    progress_bar.progress(70)
-                    status_container.info("Processing and analyzing results...")
-                    
-                    # Update progress to complete
-                    progress_bar.progress(100)
-                    status_container.success("Analysis completed successfully!")
+                    logger.debug("Calling metaphor_find_similar API")
+                    try:
+                        df, search_response = metaphor_find_similar(
+                            similar_url=similar_url,
+                            usecase=usecase,
+                            num_results=num_results,
+                            start_published_date=start_published_date,
+                            end_published_date=end_published_date,
+                            include_domains=include_domains,
+                            exclude_domains=exclude_domains,
+                            include_text=include_text,
+                            exclude_text=exclude_text,
+                            summary_query=summary_query_param
+                        )
+                        logger.info(f"API call successful. Found {len(df) if not df.empty else 0} results")
+                        
+                        # Update progress
+                        progress_bar.progress(0.7)
+                        status_container.info("Processing and analyzing results...")
+                        logger.debug("Processing search results")
+                        
+                        # Update progress to complete
+                        progress_bar.progress(1.0)
+                        status_container.success("Analysis completed successfully!")
+                        logger.info("Analysis completed successfully")
+                        
+                    except Exception as api_error:
+                        logger.error(f"API call failed: {str(api_error)}", exc_info=True)
+                        raise
                 
-                # Display results using data editor
+                # Display results
                 if not df.empty:
+                    logger.debug(f"Displaying {len(df)} results")
                     st.subheader("📊 Competitor Analysis Results")
                     
                     # Add a download button for the results
@@ -331,8 +363,12 @@ def competitor_analysis():
                     with st.expander("View Raw Data"):
                         st.json(search_response)
                 else:
+                    logger.warning("No results found for the given URL and parameters")
                     st.warning("No results found for the given URL and parameters.")
+                    
             except Exception as err:
+                logger.error(f"Analysis failed: {str(err)}", exc_info=True)
                 st.error(f"✖ 🚫 Failed to do similar search.\nError: {err}")
         else:
+            logger.warning("Analysis attempted without valid URL")
             st.error("Please enter a valid URL.")

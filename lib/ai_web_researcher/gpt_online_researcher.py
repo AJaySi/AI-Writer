@@ -150,7 +150,7 @@ def gpt_web_researcher(search_keywords, search_mode, **kwargs):
                 
                 # Pass the parameters to do_tavily_ai_search
                 t_results = do_tavily_ai_search(
-                    keywords=search_keywords, 
+                    search_keywords,  # Pass as positional argument
                     max_results=kwargs.get('num_results', 10),
                     include_domains=include_domains,
                     search_depth=search_depth,
@@ -258,7 +258,7 @@ def do_google_serp_search(search_keywords, status_container, update_progress, **
     
     try:
         # Validate parameters
-        update_progress("Validating search parameters")
+        update_progress("Validating search parameters", progress=0.1)
         status_container.info("📝 Validating parameters...")
         
         if not search_keywords or not isinstance(search_keywords, str):
@@ -266,7 +266,7 @@ def do_google_serp_search(search_keywords, status_container, update_progress, **
             raise ValueError("Search keywords must be a non-empty string")
         
         # Update search initiation
-        update_progress(f"Initiating search for: '{search_keywords}'")
+        update_progress(f"Initiating search for: '{search_keywords}'", progress=0.2)
         status_container.info("🌐 Querying search API...")
         logger.info(f"Search params: {kwargs}")
         
@@ -275,26 +275,26 @@ def do_google_serp_search(search_keywords, status_container, update_progress, **
         
         if g_results:
             # Log success
-            update_progress("Search completed successfully", "success")
+            update_progress("Search completed successfully", progress=0.8, level="success")
             
             # Update statistics
             stats = f"""Found:
                 - {len(g_results.get('organic', []))} organic results
                 - {len(g_results.get('peopleAlsoAsk', []))} related questions
                 - {len(g_results.get('relatedSearches', []))} related searches"""
-            update_progress(stats)
+            update_progress(stats, progress=0.9)
             
             # Process results
-            update_progress("Processing search results")
+            update_progress("Processing search results", progress=0.95)
             status_container.info("⚡ Processing results...")
             processed_results = process_search_results(g_results)
             
             # Extract titles
-            update_progress("Extracting information")
+            update_progress("Extracting information", progress=0.98)
             g_titles = extract_info(g_results, 'titles')
             
             # Final success
-            update_progress("Analysis completed successfully", "success")
+            update_progress("Analysis completed successfully", progress=1.0, level="success")
             status_container.success("✨ Research completed!")
             
             # Clear main status after delay
@@ -313,13 +313,13 @@ def do_google_serp_search(search_keywords, status_container, update_progress, **
             }
             
         else:
-            update_progress("No results found", "warning")
+            update_progress("No results found", progress=0.5, level="warning")
             status_container.warning("⚠️ No results found")
             return None
             
     except Exception as err:
         error_msg = f"Search failed: {str(err)}"
-        update_progress(error_msg, "error")
+        update_progress(error_msg, progress=0.5, level="error")
         logger.error(error_msg)
         logger.debug("Stack trace:", exc_info=True)
         raise
@@ -343,8 +343,11 @@ def do_tavily_ai_search(search_keywords, max_results=10, **kwargs):
             'include_domains': kwargs.get('include_domains', [""]) if kwargs.get('include_domains') else [""]
         }
         
-        # Pass the parameters to do_tavily_ai_search
-        t_results = do_tavily_ai_search(
+        # Import the Tavily search function directly
+        from .tavily_ai_search import do_tavily_ai_search as tavily_search
+        
+        # Call the actual Tavily search function
+        t_results = tavily_search(
             keywords=search_keywords,
             **tavily_params
         )

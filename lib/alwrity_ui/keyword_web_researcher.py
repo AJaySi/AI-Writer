@@ -494,36 +494,89 @@ def do_web_research():
                     with progress_col:
                         progress_bar = st.progress(0)
 
+                def update_progress(message, progress=None, level="info"):
+                    """Update progress bar and status display.
+                    
+                    Args:
+                        message (str): The message to display
+                        progress (float, optional): Progress value between 0 and 100. Will be converted to 0.0-1.0
+                        level (str, optional): Message level (info, warning, error, success)
+                    """
+                    if progress is not None:
+                        # Convert percentage to decimal (0.0-1.0)
+                        progress = float(progress) / 100.0
+                        # Ensure progress stays within bounds
+                        progress = max(0.0, min(1.0, progress))
+                        progress_bar.progress(progress)
+                    
+                    if level == "error":
+                        status_display.error(f"🚫 {message}")
+                    elif level == "warning":
+                        status_display.warning(f"⚠️ {message}")
+                    elif level == "success":
+                        status_display.success(f"✨ {message}")
+                    else:
+                        status_display.info(f"🔄 {message}")
+                    logger.debug(f"Progress update [{level}]: {message}")
+
                 # Execute search with all parameters
-                web_research_result = gpt_web_researcher(
-                    search_keywords=st.session_state.research_options["primary_keywords"],
-                    search_mode=st.session_state.research_options["search_mode"],
-                    related_keywords=st.session_state.research_options["related_keywords"],
-                    target_audience=st.session_state.research_options["target_audience"],
-                    content_type=st.session_state.research_options["content_type"],
-                    search_depth=st.session_state.research_options["search_depth"],
-                    geo_location=st.session_state.research_options["geo_location"],
-                    search_language=st.session_state.research_options["search_language"],
-                    num_results=st.session_state.research_options["num_results"],
-                    time_range=st.session_state.research_options["time_range"],
-                    include_domains=st.session_state.research_options["include_domains"],
-                    similar_url=st.session_state.research_options["similar_url"]
-                )
+                try:
+                    update_progress("Starting search...", 0.25)
+                    logger.info(f"Executing web research with mode: {st.session_state.research_options['search_mode']}")
+                    
+                    # Create base parameters
+                    research_params = {
+                        "search_keywords": st.session_state.research_options["primary_keywords"],
+                        "search_mode": st.session_state.research_options["search_mode"],
+                        "related_keywords": st.session_state.research_options["related_keywords"],
+                        "target_audience": st.session_state.research_options["target_audience"],
+                        "content_type": st.session_state.research_options["content_type"],
+                        "search_depth": st.session_state.research_options["search_depth"],
+                        "geo_location": st.session_state.research_options["geo_location"],
+                        "search_language": st.session_state.research_options["search_language"],
+                        "num_results": st.session_state.research_options["num_results"],
+                        "time_range": st.session_state.research_options["time_range"],
+                        "include_domains": st.session_state.research_options["include_domains"],
+                        "similar_url": st.session_state.research_options["similar_url"]
+                    }
+                    
+                    # Add UI-specific parameters
+                    research_params.update({
+                        "status_container": status_display,
+                        "update_progress": update_progress
+                    })
+
+                    # For AI search mode, ensure search_keywords is passed correctly
+                    if st.session_state.research_options["search_mode"] == "ai":
+                        research_params["tavily_params"] = {
+                            "max_results": st.session_state.research_options["num_results"],
+                            "search_depth": "advanced" if st.session_state.research_options["search_depth"] > 2 else "basic",
+                            "time_range": st.session_state.research_options["time_range"],
+                            "include_domains": st.session_state.research_options["include_domains"].split(",") if st.session_state.research_options["include_domains"] else [""]
+                        }
+                        # Pass search_keywords as a positional argument
+                        research_params["tavily_search_keywords"] = st.session_state.research_options["primary_keywords"]
+                    
+                    # Execute the research
+                    web_research_result = gpt_web_researcher(**research_params)
+                    
+                    if web_research_result:
+                        status_display.success("✨ Research completed!")
+                        
+                        # Display results in an organized way
+                        with st.expander("📊 Research Results", expanded=False):
+                            st.write(web_research_result)
+                    else:
+                        st.warning("No results found for your search")
+                        
+                except Exception as e:
+                    error_msg = f"Research failed: {str(e)}"
+                    logger.error(error_msg, exc_info=True)
+                    st.error(f"🚫 Research failed: {error_msg}")
                 
-                if web_research_result:
-                    status_display.success("✨ Research completed!")
-                    
-                    # Display results in an organized way
-                    with st.expander("📊 Research Results", expanded=False):
-                        st.write(web_research_result)
-                else:
-                    st.warning("No results found for your search")
-                    
             except Exception as e:
-                error_msg = f"Research failed: {str(e)}"
-                logger.error(error_msg, exc_info=True)
-                st.error(f"🚫 Research failed: {error_msg}")
-                
+                logger.error(f"Unexpected error in web research: {e}", exc_info=True)
+                st.error("🚫 An unexpected error occurred. Please try again.")
     except Exception as e:
         logger.error(f"Unexpected error in web research: {e}", exc_info=True)
         st.error("🚫 An unexpected error occurred. Please try again.")
