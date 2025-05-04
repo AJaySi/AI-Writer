@@ -335,7 +335,7 @@ def do_web_research():
         # Define the research options dialog function
         @st.dialog("🔍 Research Options", width="large")
         def show_research_options():
-            tab1, tab2, tab3 = st.tabs(["Basic", "Advanced", "Technical"])
+            tab1, tab2 = st.tabs(["Basic", "Advanced"])
             
             with tab1:
                 st.session_state.research_options["related_keywords"] = st.text_input(
@@ -400,7 +400,10 @@ def do_web_research():
                         help="Time period for research results"
                     )
 
-            with tab3:
+                # Add the technical options to the Advanced tab
+                st.markdown("---")
+                st.markdown("### Advanced Search Parameters")
+                
                 st.session_state.research_options["include_domains"] = st.text_input(
                     "Include Domains",
                     value=st.session_state.research_options["include_domains"],
@@ -414,31 +417,6 @@ def do_web_research():
                     placeholder="https://example.com/page",
                     help="Find content similar to this URL"
                 )
-
-                # Research method selection
-                st.markdown("### Select Research Method")
-                search_options = [
-                    ("google", "🔍 Google Search", "Traditional web research with AI analysis", bool(api_keys['SERPER_API_KEY'])),
-                    ("ai", "🤖 AI Search", "Neural search with semantic analysis", bool(api_keys['METAPHOR_API_KEY'] and api_keys['TAVILY_API_KEY'])),
-                    ("deep", "🔬 Deep Search (Beta)", "Advanced deep web analysis", bool(all(api_keys.values())))
-                ]
-                
-                enabled_options = [opt[1] for opt in search_options if opt[3]]
-                if enabled_options:
-                    selected_option = st.radio(
-                        "Search Method",
-                        options=enabled_options,
-                        horizontal=True,
-                        help="Choose your preferred research method"
-                    )
-                    
-                    # Map the selected option to the search_mode value
-                    for mode, label, _, _ in search_options:
-                        if label == selected_option:
-                            st.session_state.research_options["search_mode"] = mode
-                            break
-                else:
-                    st.warning("No search methods available. Please configure API keys.")
 
             col1, col2 = st.columns([1, 1])
             with col1:
@@ -476,6 +454,31 @@ def do_web_research():
         with col2:
             if st.button("Research Options", use_container_width=True):
                 show_research_options()
+
+        # Research method selection in main container
+        st.markdown("### Select Research Method")
+        search_options = [
+            ("google", "🔍 Google Search", "Traditional web research with AI analysis", bool(api_keys['SERPER_API_KEY'])),
+            ("ai", "🤖 AI Search", "Neural search with semantic analysis", bool(api_keys['METAPHOR_API_KEY'] and api_keys['TAVILY_API_KEY'])),
+            ("deep", "🔬 Deep Search (Beta)", "Advanced deep web analysis", bool(all(api_keys.values())))
+        ]
+        
+        enabled_options = [opt[1] for opt in search_options if opt[3]]
+        if enabled_options:
+            selected_option = st.radio(
+                "Search Method",
+                options=enabled_options,
+                horizontal=True,
+                help="Choose your preferred research method"
+            )
+            
+            # Map the selected option to the search_mode value
+            for mode, label, _, _ in search_options:
+                if label == selected_option:
+                    st.session_state.research_options["search_mode"] = mode
+                    break
+        else:
+            st.warning("No search methods available. Please configure API keys.")
 
         # Execute search button
         if st.button("🔍 Start Research", type="primary", use_container_width=True):

@@ -243,4 +243,4 @@ Ensure the response is valid JSON."""
                 
         except Exception as e:
             logger.error(f"[AsyncWebCrawlerService.analyze_content_with_llm] Error analyzing content with LLM: {str(e)}")
-            return {} 
+            return {}

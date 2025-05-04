@@ -5,6 +5,7 @@ from lib.ai_writers.ai_story_writer.story_writer import story_input_section
 from lib.ai_writers.ai_product_description_writer import write_ai_prod_desc
 from lib.ai_writers.ai_copywriter.copywriter_dashboard import copywriter_dashboard
 from lib.ai_writers.linkedin_writer import LinkedInAIWriter
+from lib.ai_writers.blog_rewriter_updater.ai_blog_rewriter import write_blog_rewriter
 #from lib.content_planning_calender.content_planning_agents_alwrity_crew import ai_agents_content_planner
 from lib.ai_writers.ai_blog_writer.ai_blog_generator import ai_blog_writer_page
 from loguru import logger
@@ -19,6 +20,14 @@ def list_ai_writers():
             "category": "Content Creation",
             "function": ai_blog_writer_page,
             "path": "ai_blog_writer"
+        },
+        {
+            "name": "AI Blog Rewriter",
+            "icon": "🔄",
+            "description": "Rewrite and update existing blog content with improved quality and SEO optimization",
+            "category": "Content Creation",
+            "function": write_blog_rewriter,
+            "path": "blog_rewriter"
         },
         {
             "name": "Story Writer",

@@ -497,6 +497,8 @@ def metaphor_news_summarizer(news_keywords):
     """ build a LLM-based news summarizer app with the Exa API to keep us up-to-date 
     with the latest news on a given topic.
     """
+    exa = get_metaphor_client()
+
     # FIXME: Needs to be user defined.
     one_week_ago = (datetime.now() - timedelta(days=7))
     date_cutoff = one_week_ago.strftime("%Y-%m-%d")
