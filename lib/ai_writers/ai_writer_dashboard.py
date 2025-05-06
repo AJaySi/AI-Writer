@@ -8,6 +8,7 @@ from lib.ai_writers.linkedin_writer import LinkedInAIWriter
 from lib.ai_writers.blog_rewriter_updater.ai_blog_rewriter import write_blog_rewriter
 from lib.ai_writers.ai_blog_faqs_writer.faqs_ui import main as faqs_generator
 from lib.ai_writers.ai_blog_writer.ai_blog_generator import ai_blog_writer_page
+from lib.ai_writers.ai_outline_writer.outline_ui import main as outline_generator
 from loguru import logger
 
 def list_ai_writers():
@@ -92,6 +93,14 @@ def list_ai_writers():
             "category": "Content Creation",
             "function": faqs_generator,
             "path": "faqs_generator"
+        },
+        {
+            "name": "Blog Outline Generator",
+            "icon": "📋",
+            "description": "Create detailed blog outlines with AI-powered content generation and image integration",
+            "category": "Content Creation",
+            "function": outline_generator,
+            "path": "outline_generator"
         }
     ]
 

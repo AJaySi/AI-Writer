@@ -8,7 +8,7 @@ from lib.ai_seo_tools.optimize_images_for_upload import main_img_optimizer
 from lib.ai_seo_tools.google_pagespeed_insights import google_pagespeed_insights
 from lib.ai_seo_tools.on_page_seo_analyzer import analyze_onpage_seo
 from lib.ai_seo_tools.weburl_seo_checker import url_seo_checker
-from lib.ai_marketing_tools.backlinking_ui_streamlit import backlinking_ui
+from lib.ai_marketing_tools.ai_backlinker.backlinking_ui_streamlit import backlinking_ui
 
 
 def ai_seo_tools():

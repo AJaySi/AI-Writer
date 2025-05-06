@@ -7,6 +7,7 @@ well-researched FAQs from various content sources with customizable options.
 
 import sys
 import json
+import re
 from typing import Dict, List, Optional, Union
 from pathlib import Path
 from enum import Enum
@@ -15,12 +16,12 @@ from loguru import logger
 
 from lib.gpt_providers.text_generation.main_text_generation import llm_text_gen
 from lib.ai_web_researcher.google_serp_search import google_search
-from lib.ai_web_researcher.tavily_ai_search import tavily_search
+from lib.ai_web_researcher.tavily_ai_search import do_tavily_ai_search
 from lib.ai_web_researcher.metaphor_basic_neural_web_search import metaphor_search_articles
 
 logger.remove()
 logger.add(sys.stdout,
-          colorize=True,
+        colorize=True,
           format="<level>{level}</level>|<green>{file}:{line}:{function}</green>| {message}")
 
 class TargetAudience(Enum):
@@ -51,6 +52,7 @@ class FAQConfig:
     time_range: str = "last_6_months"
     exclude_domains: List[str] = None
     language: str = "English"
+    selected_search_queries: List[str] = None
 
 @dataclass
 class FAQItem:
@@ -71,26 +73,77 @@ class FAQGenerator:
         self.config = config or FAQConfig()
         self.faqs: List[FAQItem] = []
         self.research_results = {}
+        self.search_queries = []
         
-    async def generate_faqs(self, content: str, content_type: str = "general") -> List[FAQItem]:
+    def generate_search_queries(self, content: str) -> List[str]:
+        """Generate search queries based on the content."""
+        try:
+            prompt = f"""Based on the following content, generate 5 specific search queries that would help create comprehensive FAQs.
+            Content: {content}
+            
+            Guidelines for search queries:
+            1. Focus on key concepts and terms
+            2. Include common questions users might have
+            3. Cover technical aspects that need clarification
+            4. Include best practices and recommendations
+            5. Make queries specific and focused
+            
+            Please provide exactly 5 search queries, one per line.
+            Do not include numbers or bullet points in the queries.
+            """
+            
+            response = llm_text_gen(prompt)
+            # Clean up the queries by removing numbers and extra spaces
+            queries = []
+            for line in response.split('\n'):
+                # Remove any leading numbers, dots, or spaces
+                cleaned = re.sub(r'^\d+\.\s*', '', line.strip())
+                if cleaned:
+                    queries.append(cleaned)
+            
+            self.search_queries = queries[:5]  # Ensure we only get 5 queries
+            return self.search_queries
+            
+        except Exception as err:
+            logger.error(f"Failed to generate search queries: {err}")
+            return []
+    
+    def _clean_search_query(self, query: str) -> str:
+        """Clean up a search query by removing numbers and extra formatting."""
+        # Remove any leading numbers, dots, or spaces
+        cleaned = re.sub(r'^\d+\.\s*', '', query.strip())
+        # Remove any quotes
+        cleaned = cleaned.replace('"', '').replace("'", '')
+        # Remove any extra spaces
+        cleaned = ' '.join(cleaned.split())
+        return cleaned
+    
+    def generate_faqs(self, content: str, content_type: str = "general") -> List[FAQItem]:
         """Generate FAQs from the given content with research integration."""
         try:
-            # Step 1: Research the topic
-            research_results = await self._conduct_research(content)
+            if not self.config.selected_search_queries:
+                raise ValueError("No search queries selected. Please select queries to proceed.")
+            
+            # Clean up selected queries
+            cleaned_queries = [self._clean_search_query(q) for q in self.config.selected_search_queries]
+            self.config.selected_search_queries = cleaned_queries
+            
+            # Step 1: Research the topic using selected queries
+            research_results = self._conduct_research(content)
             
             # Step 2: Generate initial FAQs
-            initial_faqs = await self._generate_initial_faqs(content, research_results)
+            initial_faqs = self._generate_initial_faqs(content, research_results)
             
             # Step 3: Enhance FAQs with research
-            enhanced_faqs = await self._enhance_faqs_with_research(initial_faqs, research_results)
+            enhanced_faqs = self._enhance_faqs_with_research(initial_faqs, research_results)
             
             # Step 4: Add code examples if requested
             if self.config.include_code_examples:
-                enhanced_faqs = await self._add_code_examples(enhanced_faqs)
+                enhanced_faqs = self._add_code_examples(enhanced_faqs)
             
             # Step 5: Add references if requested
             if self.config.include_references:
-                enhanced_faqs = await self._add_references(enhanced_faqs, research_results)
+                enhanced_faqs = self._add_references(enhanced_faqs, research_results)
             
             self.faqs = enhanced_faqs
             return enhanced_faqs
@@ -99,38 +152,34 @@ class FAQGenerator:
             logger.error(f"Failed to generate FAQs: {err}")
             raise
     
-    async def _conduct_research(self, content: str) -> Dict:
-        """Conduct online research based on the content."""
+    def _conduct_research(self, content: str) -> Dict:
+        """Conduct online research based on the selected search queries."""
         try:
-            research_prompt = f"""Based on the following content, identify key topics and questions for research:
-            {content}
-            
-            Please provide a list of research topics and questions that would help create comprehensive FAQs.
-            Focus on:
-            1. Key concepts and terms
-            2. Common questions users might have
-            3. Technical aspects that need clarification
-            4. Best practices and recommendations
-            """
-            
-            research_topics = await llm_text_gen(research_prompt)
-            
-            # Conduct research for each topic
             research_results = {}
-            for topic in research_topics.split('\n'):
-                if topic.strip():
+            
+            for query in self.config.selected_search_queries:
+                try:
+                    # Clean the query before searching
+                    cleaned_query = self._clean_search_query(query)
+                    logger.info(f"Researching query: {cleaned_query}")
+                    
                     # Select search function based on search depth
                     if self.config.search_depth == SearchDepth.BASIC:
-                        results = await google_search(topic.strip())
+                        results = google_search(cleaned_query)
                     elif self.config.search_depth == SearchDepth.COMPREHENSIVE:
-                        results = await tavily_search(topic.strip())
+                        results = do_tavily_ai_search(cleaned_query)
                     elif self.config.search_depth == SearchDepth.EXPERT:
-                        results = await metaphor_search_articles(topic.strip())
+                        results = metaphor_search_articles(cleaned_query)
                     else:
                         logger.warning(f"Unknown search depth: {self.config.search_depth}, defaulting to Google search")
-                        results = await google_search(topic.strip())
+                        results = google_search(cleaned_query)
                     
-                    research_results[topic.strip()] = results
+                    research_results[query] = results
+                    logger.info(f"Research completed for query: {query}")
+                    
+                except Exception as err:
+                    logger.error(f"Failed to research query '{query}': {err}")
+                    continue
             
             return research_results
             
@@ -138,7 +187,7 @@ class FAQGenerator:
             logger.error(f"Failed to conduct research: {err}")
             return {}
     
-    async def _generate_initial_faqs(self, content: str, research_results: Dict) -> List[FAQItem]:
+    def _generate_initial_faqs(self, content: str, research_results: Dict) -> List[FAQItem]:
         """Generate initial FAQs using LLM."""
         try:
             system_prompt = f"""You are an expert FAQ generator with deep knowledge in content creation and technical writing.
@@ -159,6 +208,13 @@ class FAQGenerator:
             - Based on the provided research
             - Relevant to the target audience
             - Written in the specified style
+
+            Format each FAQ exactly as follows:
+            Q: [Your question here]
+            A: [Your detailed answer here]
+            Category: [Category name]
+            Confidence: [Score between 0 and 1]
+            ---
             """
             
             prompt = f"""Content to generate FAQs from:
@@ -168,22 +224,26 @@ class FAQGenerator:
             {json.dumps(research_results, indent=2)}
 
             Please generate {self.config.num_faqs} FAQs following the guidelines above.
-            Format each FAQ with:
-            - Question
-            - Detailed answer
-            - Category
-            - Confidence score (0-1)
+            Each FAQ must be separated by '---' and include all required fields.
             """
             
-            response = await llm_text_gen(prompt, system_prompt=system_prompt)
+            response = llm_text_gen(prompt, system_prompt=system_prompt)
+            logger.info(f"LLM Response: {response}")
             
             # Parse the response into FAQItem objects
             faqs = []
             current_faq = None
             
             for line in response.split('\n'):
+                line = line.strip()
+                if not line or line == '---':
+                    if current_faq and current_faq.question and current_faq.answer:
+                        faqs.append(current_faq)
+                        current_faq = None
+                    continue
+                
                 if line.startswith('Q:'):
-                    if current_faq:
+                    if current_faq and current_faq.question and current_faq.answer:
                         faqs.append(current_faq)
                     current_faq = FAQItem(question=line[2:].strip(), answer="", category="")
                 elif line.startswith('A:'):
@@ -194,18 +254,23 @@ class FAQGenerator:
                         current_faq.category = line[9:].strip()
                 elif line.startswith('Confidence:'):
                     if current_faq:
-                        current_faq.confidence_score = float(line[11:].strip())
+                        try:
+                            current_faq.confidence_score = float(line[11:].strip())
+                        except ValueError:
+                            current_faq.confidence_score = 0.5
             
-            if current_faq:
+            # Add the last FAQ if it exists and is complete
+            if current_faq and current_faq.question and current_faq.answer:
                 faqs.append(current_faq)
             
+            logger.info(f"Generated {len(faqs)} FAQs")
             return faqs
             
         except Exception as err:
             logger.error(f"Failed to generate initial FAQs: {err}")
             raise
     
-    async def _enhance_faqs_with_research(self, faqs: List[FAQItem], research_results: Dict) -> List[FAQItem]:
+    def _enhance_faqs_with_research(self, faqs: List[FAQItem], research_results: Dict) -> List[FAQItem]:
         """Enhance FAQs with research findings."""
         try:
             enhanced_faqs = []
@@ -231,7 +296,7 @@ class FAQGenerator:
                     4. Keeping the answer concise and clear
                     """
                     
-                    enhanced_answer = await llm_text_gen(enhancement_prompt)
+                    enhanced_answer = llm_text_gen(enhancement_prompt)
                     faq.answer = enhanced_answer
                 
                 enhanced_faqs.append(faq)
@@ -242,24 +307,20 @@ class FAQGenerator:
             logger.error(f"Failed to enhance FAQs with research: {err}")
             return faqs
     
-    async def _add_code_examples(self, faqs: List[FAQItem]) -> List[FAQItem]:
+    def _add_code_examples(self, faqs: List[FAQItem]) -> List[FAQItem]:
         """Add code examples to FAQs where applicable."""
         try:
             for faq in faqs:
                 if self._is_technical_question(faq.question):
                     code_prompt = f"""Generate a code example for the following FAQ:
-                    
                     Question: {faq.question}
                     Answer: {faq.answer}
                     
-                    Please provide a relevant code example that:
-                    1. Illustrates the answer clearly
-                    2. Includes comments and explanations
-                    3. Follows best practices
-                    4. Is easy to understand
+                    Please provide a relevant code example that demonstrates the concept.
+                    Include comments and explanations where necessary.
                     """
                     
-                    code_example = await llm_text_gen(code_prompt)
+                    code_example = llm_text_gen(code_prompt)
                     faq.code_example = code_example
             
             return faqs
@@ -268,21 +329,19 @@ class FAQGenerator:
             logger.error(f"Failed to add code examples: {err}")
             return faqs
     
-    async def _add_references(self, faqs: List[FAQItem], research_results: Dict) -> List[FAQItem]:
-        """Add references to FAQs."""
+    def _add_references(self, faqs: List[FAQItem], research_results: Dict) -> List[FAQItem]:
+        """Add references to FAQs based on research results."""
         try:
             for faq in faqs:
                 relevant_research = self._find_relevant_research(faq, research_results)
                 if relevant_research:
-                    faq.references = [
-                        {
-                            "title": ref.get("title", ""),
-                            "url": ref.get("url", ""),
-                            "source": ref.get("source", ""),
-                            "date": ref.get("date", "")
-                        }
-                        for ref in relevant_research.get("references", [])
-                    ]
+                    references = []
+                    for source, content in relevant_research.items():
+                        references.append({
+                            "source": source,
+                            "content": content
+                        })
+                    faq.references = references
             
             return faqs
             
@@ -291,8 +350,7 @@ class FAQGenerator:
             return faqs
     
     def _find_relevant_research(self, faq: FAQItem, research_results: Dict) -> Dict:
-        """Find research relevant to a specific FAQ."""
-        # Simple keyword matching for now - can be enhanced with semantic search
+        """Find research results relevant to a specific FAQ."""
         relevant_research = {}
         for topic, results in research_results.items():
             if any(keyword in faq.question.lower() for keyword in topic.lower().split()):
@@ -308,8 +366,8 @@ class FAQGenerator:
         """Convert FAQs to markdown format."""
         markdown = "# Frequently Asked Questions\n\n"
         
-        for i, faq in enumerate(self.faqs, 1):
-            markdown += f"## {i}. {faq.question}\n\n"
+        for faq in self.faqs:
+            markdown += f"## {faq.question}\n\n"
             markdown += f"{faq.answer}\n\n"
             
             if faq.code_example:
@@ -320,7 +378,7 @@ class FAQGenerator:
             if faq.references:
                 markdown += "### References\n"
                 for ref in faq.references:
-                    markdown += f"- [{ref['title']}]({ref['url']}) - {ref['source']} ({ref['date']})\n"
+                    markdown += f"- {ref['source']}\n"
                 markdown += "\n"
         
         return markdown
@@ -333,52 +391,52 @@ class FAQGenerator:
         <head>
             <title>Frequently Asked Questions</title>
             <style>
-                .faq-container { max-width: 800px; margin: 0 auto; }
-                .faq-item { margin-bottom: 2em; }
-                .question { font-weight: bold; font-size: 1.2em; }
-                .answer { margin: 1em 0; }
-                .code-example { background: #f5f5f5; padding: 1em; }
-                .references { margin-top: 1em; font-size: 0.9em; }
+                body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+                .faq { margin-bottom: 30px; }
+                .question { font-weight: bold; font-size: 1.2em; color: #2c3e50; }
+                .answer { margin: 10px 0; }
+                .code-example { background: #f8f9fa; padding: 15px; border-radius: 4px; }
+                .references { margin-top: 15px; font-size: 0.9em; }
             </style>
         </head>
         <body>
-            <div class="faq-container">
-                <h1>Frequently Asked Questions</h1>
+            <h1>Frequently Asked Questions</h1>
         """
         
-        for i, faq in enumerate(self.faqs, 1):
+        for faq in self.faqs:
             html += f"""
-                <div class="faq-item">
-                    <div class="question">{i}. {faq.question}</div>
-                    <div class="answer">{faq.answer}</div>
+            <div class="faq">
+                <div class="question">{faq.question}</div>
+                <div class="answer">{faq.answer}</div>
             """
             
             if faq.code_example:
                 html += f"""
-                    <pre class="code-example">{faq.code_example}</pre>
+                <div class="code-example">
+                    <pre><code>{faq.code_example}</code></pre>
+                </div>
                 """
             
             if faq.references:
                 html += """
-                    <div class="references">
-                        <h3>References</h3>
-                        <ul>
+                <div class="references">
+                    <h3>References</h3>
+                    <ul>
                 """
                 for ref in faq.references:
                     html += f"""
-                            <li><a href="{ref['url']}">{ref['title']}</a> - {ref['source']} ({ref['date']})</li>
+                        <li>{ref['source']}</li>
                     """
                 html += """
-                        </ul>
-                    </div>
+                    </ul>
+                </div>
                 """
             
             html += """
-                </div>
+            </div>
             """
         
         html += """
-            </div>
         </body>
         </html>
         """

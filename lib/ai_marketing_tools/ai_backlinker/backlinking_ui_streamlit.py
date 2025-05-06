@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
-from lib.ai_marketing_tools.ai_backlinking import find_backlink_opportunities, compose_personalized_email
+from lib.ai_marketing_tools.ai_backlinker.ai_backlinking import find_backlink_opportunities, compose_personalized_email
 
 
 # Streamlit UI function
