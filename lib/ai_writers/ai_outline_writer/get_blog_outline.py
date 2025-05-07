@@ -10,6 +10,7 @@ from typing import Dict, List, Optional
 from enum import Enum
 from dataclasses import dataclass
 from loguru import logger
+import json
 
 from lib.gpt_providers.text_generation.main_text_generation import llm_text_gen
 from lib.gpt_providers.text_to_image_generation.main_generate_image_from_prompt import generate_image
@@ -84,216 +85,196 @@ class BlogOutlineGenerator:
         self.outline = {}
         self.section_contents = {}
         
-    async def generate_outline(self, topic: str) -> Dict:
-        """Generate a comprehensive outline based on the topic and configuration."""
+    def generate_outline(self, topic: str) -> Dict[str, List[str]]:
+        """Generate a blog outline based on the topic and configuration."""
         try:
-            # Step 1: Generate main sections
-            main_sections = await self._generate_main_sections(topic)
+            # Create a focused prompt for outline generation
+            prompt = f"""Generate a blog outline for topic: {topic}
+
+Content Type: {self.config.content_type.value}
+Target Audience: {self.config.target_audience}
+Content Depth: {self.config.content_depth.value}
+Style: {self.config.outline_style.value}
+Word Count Target: {self.config.target_word_count}
+Main Sections: {self.config.num_main_sections}
+Subsections per Section: {self.config.num_subsections_per_section}
+
+Requirements:
+- Create exactly {self.config.num_main_sections} main sections
+- Each section should have exactly {self.config.num_subsections_per_section} subsections
+- Focus on {self.config.content_type.value} content style
+- Target {self.config.target_audience} audience
+- Maintain {self.config.content_depth.value} depth
+- Follow {self.config.outline_style.value} style
+- Optimize for {self.config.target_word_count} words total
+
+IMPORTANT: You must return a valid JSON object with main sections as keys and lists of subsections as values.
+Example format: {{"Section 1": ["Subsection 1.1", "Subsection 1.2"], "Section 2": ["Subsection 2.1", "Subsection 2.2"]}}
+Do not include any additional text or explanations, only the JSON object."""
+
+            # Get outline from LLM
+            outline_json = llm_text_gen(prompt)
             
-            # Step 2: Generate subsections for each main section
-            detailed_sections = await self._generate_subsections(main_sections)
+            # Clean the response to ensure it's valid JSON
+            outline_json = outline_json.strip()
+            if not outline_json.startswith('{'):
+                outline_json = outline_json[outline_json.find('{'):]
+            if not outline_json.endswith('}'):
+                outline_json = outline_json[:outline_json.rfind('}')+1]
             
-            # Step 3: Add introduction and conclusion if requested
+            # Parse the outline
+            try:
+                outline = json.loads(outline_json)
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON parsing error: {str(e)}")
+                logger.error(f"Raw response: {outline_json}")
+                # Fallback to a basic outline structure
+                outline = {
+                    f"Section {i+1}": [f"Subsection {i+1}.{j+1}" for j in range(self.config.num_subsections_per_section)]
+                    for i in range(self.config.num_main_sections)
+                }
+            
+            # Add introduction and conclusion if configured
             if self.config.include_introduction:
-                detailed_sections["Introduction"] = await self._generate_introduction(topic)
+                outline = {"Introduction": ["Overview", "Importance", "What to Expect"]} | outline
             
             if self.config.include_conclusion:
-                detailed_sections["Conclusion"] = await self._generate_conclusion(topic)
+                outline["Conclusion"] = ["Summary", "Key Takeaways", "Next Steps"]
             
-            # Step 4: Add FAQs if requested
+            # Add FAQs if configured
             if self.config.include_faqs:
-                detailed_sections["FAQs"] = await self._generate_faqs(topic)
-            
-            # Step 5: Add resources if requested
-            if self.config.include_resources:
-                detailed_sections["Additional Resources"] = await self._generate_resources(topic)
-            
-            self.outline = detailed_sections
-            
-            # Step 6: Generate content for each section
-            await self._generate_section_contents(topic)
-            
-            return self.outline
-            
-        except Exception as err:
-            logger.error(f"Failed to generate outline: {err}")
-            raise
-    
-    async def _generate_main_sections(self, topic: str) -> List[str]:
-        """Generate main sections for the outline."""
-        prompt = f"""Generate {self.config.num_main_sections} main sections for a {self.config.content_type.value} 
-        article about {topic} with the following characteristics:
-        
-        Content Type: {self.config.content_type.value}
-        Content Depth: {self.config.content_depth.value}
-        Target Word Count: {self.config.target_word_count}
-        Target Audience: {self.config.target_audience}
-        Style: {self.config.outline_style.value}
-        
-        Additional Requirements:
-        - Each section should contribute to the overall word count goal
-        - Sections should flow logically
-        - Include key concepts and important points
-        - Consider SEO optimization
-        - Keywords to include: {', '.join(self.config.keywords or [])}
-        - Topics to exclude: {', '.join(self.config.exclude_topics or [])}
-        
-        Please provide only the section titles, one per line."""
-        
-        response = await llm_text_gen(prompt)
-        return [section.strip() for section in response.split('\n') if section.strip()]
-    
-    async def _generate_subsections(self, main_sections: List[str]) -> Dict[str, List[str]]:
-        """Generate subsections for each main section."""
-        detailed_sections = {}
-        
-        for section in main_sections:
-            prompt = f"""Generate {self.config.num_subsections_per_section} subsections for the following section:
-            {section}
-            
-            Content Type: {self.config.content_type.value}
-            Content Depth: {self.config.content_depth.value}
-            Style: {self.config.outline_style.value}
-            
-            Each subsection should:
-            - Be specific and focused
-            - Support the main section's topic
-            - Include key points to cover
-            - Consider SEO optimization
-            
-            Please provide only the subsection titles, one per line."""
-            
-            response = await llm_text_gen(prompt)
-            detailed_sections[section] = [sub.strip() for sub in response.split('\n') if sub.strip()]
-        
-        return detailed_sections
-    
-    async def _generate_introduction(self, topic: str) -> List[str]:
-        """Generate introduction subsections."""
-        prompt = f"""Generate introduction subsections for an article about {topic}.
-        
-        Content Type: {self.config.content_type.value}
-        Content Depth: {self.config.content_depth.value}
-        Style: {self.config.outline_style.value}
-        
-        The introduction should:
-        - Hook the reader
-        - Present the main topic
-        - Outline what's to come
-        - Set the tone for the article
-        
-        Please provide only the subsection titles, one per line."""
-        
-        response = await llm_text_gen(prompt)
-        return [sub.strip() for sub in response.split('\n') if sub.strip()]
-    
-    async def _generate_conclusion(self, topic: str) -> List[str]:
-        """Generate conclusion subsections."""
-        prompt = f"""Generate conclusion subsections for an article about {topic}.
-        
-        Content Type: {self.config.content_type.value}
-        Content Depth: {self.config.content_depth.value}
-        Style: {self.config.outline_style.value}
-        
-        The conclusion should:
-        - Summarize key points
-        - Provide final thoughts
-        - Include a call to action
-        - Leave a lasting impression
-        
-        Please provide only the subsection titles, one per line."""
-        
-        response = await llm_text_gen(prompt)
-        return [sub.strip() for sub in response.split('\n') if sub.strip()]
-    
-    async def _generate_faqs(self, topic: str) -> List[str]:
-        """Generate FAQ subsections."""
-        prompt = f"""Generate FAQ subsections for an article about {topic}.
-        
-        Content Type: {self.config.content_type.value}
-        Content Depth: {self.config.content_depth.value}
-        Style: {self.config.outline_style.value}
-        
-        The FAQs should:
-        - Address common questions
-        - Cover important aspects
-        - Be relevant to the target audience
-        - Include both basic and advanced questions
-        
-        Please provide only the FAQ questions, one per line."""
-        
-        response = await llm_text_gen(prompt)
-        return [sub.strip() for sub in response.split('\n') if sub.strip()]
-    
-    async def _generate_resources(self, topic: str) -> List[str]:
-        """Generate resource subsections."""
-        prompt = f"""Generate resource subsections for an article about {topic}.
-        
-        Content Type: {self.config.content_type.value}
-        Content Depth: {self.config.content_depth.value}
-        Style: {self.config.outline_style.value}
-        
-        The resources should:
-        - Include relevant links
-        - Suggest further reading
-        - Provide tools or references
-        - Include related materials
-        
-        Please provide only the resource categories, one per line."""
-        
-        response = await llm_text_gen(prompt)
-        return [sub.strip() for sub in response.split('\n') if sub.strip()]
-    
-    async def _generate_section_contents(self, topic: str):
-        """Generate content and images for each section."""
-        for section, subsections in self.outline.items():
-            if section not in ["Introduction", "Conclusion", "FAQs", "Additional Resources"]:
-                # Generate content for the main section
-                content_prompt = f"""Write a detailed section for a blog post about {topic}.
-                Section Title: {section}
-                Content Type: {self.config.content_type.value}
-                Content Depth: {self.config.content_depth.value}
-                Style: {self.config.outline_style.value}
-                Target Word Count: {self.config.target_word_count // self.config.num_main_sections}
-                
-                Include:
-                - Clear explanation of the main points
-                - Examples and illustrations
-                - Key takeaways
-                - Relevant data or statistics
-                """
-                
-                content = await llm_text_gen(content_prompt)
-                
-                # Generate image prompt if images are enabled
-                image_prompt = None
-                image_path = None
-                
-                if self.config.include_images:
-                    image_prompt = f"""Create a detailed image prompt for a blog section about {topic}.
-                    Section: {section}
-                    Content: {content[:200]}...
-                    Style: {self.config.image_style}
-                    """
+                # Generate topic-specific FAQs
+                faq_prompt = f"""Generate 3 specific and relevant FAQ questions for a blog post about: {topic}
+
+Content Type: {self.config.content_type.value}
+Target Audience: {self.config.target_audience}
+Content Depth: {self.config.content_depth.value}
+
+Requirements:
+- Questions should be specific to the topic
+- Cover common concerns and important aspects
+- Be relevant to the target audience
+- Include both basic and advanced questions
+
+Format: Return only a JSON array of 3 questions.
+Example format: ["Question 1?", "Question 2?", "Question 3?"]"""
+
+                try:
+                    faq_json = llm_text_gen(faq_prompt)
+                    faq_json = faq_json.strip()
+                    if not faq_json.startswith('['):
+                        faq_json = faq_json[faq_json.find('['):]
+                    if not faq_json.endswith(']'):
+                        faq_json = faq_json[:faq_json.rfind(']')+1]
                     
-                    image_prompt = await llm_text_gen(image_prompt)
-                    try:
-                        image_path = generate_image(
-                            image_prompt,
-                            title=section,
-                            description=content[:100],
-                            tags=self.config.keywords
-                        )
-                    except Exception as err:
-                        logger.warning(f"Failed to generate image for section {section}: {err}")
-                
-                self.section_contents[section] = SectionContent(
-                    title=section,
-                    content=content,
-                    image_prompt=image_prompt,
-                    image_path=image_path
-                )
-    
+                    faqs = json.loads(faq_json)
+                    outline["Frequently Asked Questions"] = faqs
+                except Exception as e:
+                    logger.error(f"Error generating FAQs: {str(e)}")
+                    outline["Frequently Asked Questions"] = [
+                        f"Common Question about {topic} 1",
+                        f"Common Question about {topic} 2",
+                        f"Common Question about {topic} 3"
+                    ]
+            
+            # Add resources if configured
+            if self.config.include_resources:
+                outline["Additional Resources"] = [
+                    "Further Reading",
+                    "Tools and References",
+                    "Related Topics"
+                ]
+            
+            return outline
+            
+        except Exception as e:
+            logger.error(f"Error generating outline: {str(e)}")
+            return {}
+
+    def generate_section_content(self, section: str, subsections: List[str]) -> Optional[SectionContent]:
+        """Generate content for a section."""
+        try:
+            # Create a focused prompt for content generation
+            prompt = f"""Generate content for section: {section}
+
+Subsections: {', '.join(subsections)}
+Content Type: {self.config.content_type.value}
+Target Audience: {self.config.target_audience}
+Content Depth: {self.config.content_depth.value}
+Style: {self.config.outline_style.value}
+Word Count Target: {self.config.target_word_count // self.config.num_main_sections}
+
+Requirements:
+- Write content for each subsection
+- Maintain {self.config.content_depth.value} depth
+- Target {self.config.target_audience} audience
+- Follow {self.config.outline_style.value} style
+- Optimize for {self.config.target_word_count // self.config.num_main_sections} words
+- Include relevant examples and data points
+- Use clear, engaging language
+
+Format: Return only a JSON object with 'content' and 'image_prompt' fields.
+Example format: {{"content": "Section content here...", "image_prompt": "Image description here..."}}"""
+
+            # Get content from LLM
+            content_json = llm_text_gen(prompt)
+            content_data = json.loads(content_json)
+            
+            # Generate image if configured
+            image_path = None
+            if self.config.include_images:
+                image_path = self.generate_section_image(section)
+            
+            return SectionContent(
+                title=section,
+                content=content_data["content"],
+                image_prompt=content_data.get("image_prompt"),
+                image_path=image_path
+            )
+            
+        except Exception as e:
+            logger.error(f"Error generating content for section {section}: {str(e)}")
+            return None
+
+    def generate_section_image(self, section: str) -> Optional[str]:
+        """Generate an image for a section."""
+        try:
+            # Create a focused prompt for image generation
+            prompt = f"""Generate an image prompt for section: {section}
+
+Style: {self.config.image_style}
+Engine: {self.config.image_engine}
+Content Type: {self.config.content_type.value}
+Target Audience: {self.config.target_audience}
+
+Requirements:
+- Create a {self.config.image_style} style image
+- Optimize for {self.config.image_engine} engine
+- Match {self.config.content_type.value} content type
+- Appeal to {self.config.target_audience} audience
+- Be visually engaging and relevant
+
+Format: Return only a JSON object with an 'image_prompt' field.
+Example format: {{"image_prompt": "Detailed image description here..."}}"""
+
+            # Get image prompt from LLM
+            prompt_json = llm_text_gen(prompt)
+            prompt_data = json.loads(prompt_json)
+            
+            # Generate image using the specified engine
+            if self.config.image_engine == "Gemini-AI":
+                image_path = generate_gemini_image(prompt_data["image_prompt"])
+            elif self.config.image_engine == "Dalle3":
+                image_path = generate_dalle_image(prompt_data["image_prompt"])
+            else:  # Stability-AI
+                image_path = generate_stability_image(prompt_data["image_prompt"])
+            
+            return image_path
+            
+        except Exception as e:
+            logger.error(f"Error generating image for section {section}: {str(e)}")
+            return None
+
     def to_markdown(self) -> str:
         """Convert outline to markdown format with content and images."""
         markdown = f"# {self.outline.get('Introduction', [''])[0]}\n\n"
