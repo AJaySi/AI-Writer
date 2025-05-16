@@ -131,3 +131,5 @@ AI-Writer_cursor_workspace.code-workspace
 *.code-workspace
 .cursorignore
 lib/ai_writers/__pycache__/*.pyc
+
+lib/workspace/alwrity_content/*

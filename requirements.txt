@@ -16,6 +16,10 @@ GoogleNews>=1.6.15
 langchain-google-genai>=2.0.10
 clint>=0.5.1
 emoji==2.14.1
+moviepy==1.0.3
+imageio-ffmpeg==0.4.5
+decorator==4.4.2
+reportlab==4.4.0
 textblob==0.19.0
 numpy>=1.22.4,<2.0.0
 pandas>=2.0.3

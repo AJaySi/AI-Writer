@@ -161,7 +161,7 @@ class AIPromptGenerator:
         return ", ".join(prompt_parts)
 
 
-def generate_gemini_image(prompt, keywords=None, style=None, focus=None, enhance_prompt=True, max_retries=3, initial_retry_delay=2):
+def generate_gemini_image(prompt, keywords=None, style=None, focus=None, enhance_prompt=True, max_retries=3, initial_retry_delay=2, aspect_ratio="16:9"):
     """
     Generate images using Gemini
     Depending on the prompt and context, Gemini will generate content in different modes (text to image, text to image and text, etc.). 
@@ -184,6 +184,7 @@ def generate_gemini_image(prompt, keywords=None, style=None, focus=None, enhance
         enhance_prompt (bool, optional): Whether to enhance the prompt using AIPromptGenerator. Defaults to True.
         max_retries (int, optional): Maximum number of retry attempts for handling 503 errors. Defaults to 3.
         initial_retry_delay (int, optional): Initial delay in seconds before retrying. Defaults to 2.
+        aspect_ratio (str, optional): The aspect ratio for the generated image. Must be one of "16:9", "9:16", "4:3", "3:4", or "1:1". Defaults to "16:9".
 
     Returns:
         str: The path to the generated image.
@@ -212,6 +213,10 @@ def generate_gemini_image(prompt, keywords=None, style=None, focus=None, enhance
         prompt = f"{prompt}\n\nEnhanced prompt: {enhanced_prompt}"
         logger.info(f"Final prompt: '{prompt[:100]}...'")
     
+    # Add aspect ratio to the prompt
+    if aspect_ratio:
+        prompt += f"\n\nPlease generate the image with {aspect_ratio} aspect ratio."
+    
     retry_count = 0
     retry_delay = initial_retry_delay
     
@@ -238,7 +243,40 @@ def generate_gemini_image(prompt, keywords=None, style=None, focus=None, enhance
                 elif part.inline_data is not None:
                     logger.info("Received image data from Gemini")
                     image = Image.open(BytesIO((part.inline_data.data)))
-                    image.show()
+                    
+                    # Resize image to match aspect ratio if needed
+                    if aspect_ratio:
+                        current_width, current_height = image.size
+                        target_width = current_width
+                        target_height = current_height
+                        
+                        # Calculate target dimensions based on aspect ratio
+                        if aspect_ratio == "16:9":
+                            target_height = int(current_width * 9/16)
+                        elif aspect_ratio == "9:16":
+                            target_width = int(current_height * 9/16)
+                        elif aspect_ratio == "4:3":
+                            target_height = int(current_width * 3/4)
+                        elif aspect_ratio == "3:4":
+                            target_width = int(current_height * 3/4)
+                        elif aspect_ratio == "1:1":
+                            target_size = min(current_width, current_height)
+                            target_width = target_size
+                            target_height = target_size
+                        
+                        logger.info(f"Resizing image from {current_width}x{current_height} to {target_width}x{target_height}")
+                        
+                        # Create a new image with the target dimensions
+                        resized_image = Image.new('RGB', (target_width, target_height), (255, 255, 255))
+                        
+                        # Calculate position to paste the original image
+                        paste_x = (target_width - current_width) // 2
+                        paste_y = (target_height - current_height) // 2
+                        
+                        # Paste the original image onto the new canvas
+                        resized_image.paste(image, (paste_x, paste_y))
+                        image = resized_image
+                    
                     if part.text is not None:
                         img_name = f'{part.text}-gemini-native-image.png'
                     else:

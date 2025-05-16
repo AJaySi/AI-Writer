@@ -45,8 +45,12 @@ except ImportError as e:
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.DEBUG,  # Set to DEBUG for maximum verbosity
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),  # Console handler
+        logging.FileHandler('story_video_generator.log')  # File handler
+    ]
 )
 logger = logging.getLogger(__name__)
 
@@ -68,11 +72,31 @@ class StoryVideoGenerator:
 
     def __init__(self):
         """Initialize the StoryVideoGenerator."""
+        logger.info("Initializing StoryVideoGenerator")
         self.temp_dir = tempfile.mkdtemp()
-        logger.info(
-            f"Initialized StoryVideoGenerator. Temp directory: {self.temp_dir}"
-        )
-        # Consider adding cleanup logic, e.g., using atexit or context manager
+        logger.debug(f"Created temporary directory: {self.temp_dir}")
+        # Register cleanup on program exit
+        import atexit
+        atexit.register(self.cleanup)
+        logger.info("StoryVideoGenerator initialized successfully")
+
+    def cleanup(self):
+        """Clean up temporary files and resources."""
+        logger.info("Starting cleanup process")
+        try:
+            import shutil
+            if os.path.exists(self.temp_dir):
+                shutil.rmtree(self.temp_dir)
+                logger.info(f"Successfully cleaned up temporary directory: {self.temp_dir}")
+            else:
+                logger.warning(f"Temporary directory not found: {self.temp_dir}")
+        except Exception as e:
+            logger.error(f"Error during cleanup: {str(e)}", exc_info=True)
+
+    def __del__(self):
+        """Destructor to ensure cleanup."""
+        logger.debug("Destructor called")
+        self.cleanup()
 
     def generate_story(
         self, prompt: str, num_scenes: int = 5, style: str = "children's story"
@@ -91,64 +115,65 @@ class StoryVideoGenerator:
         Raises:
             Exception: If story generation or parsing fails.
         """
+        logger.info(f"Generating story with parameters: prompt='{prompt}', num_scenes={num_scenes}, style='{style}'")
+        
         if not llm_text_gen:
-             raise RuntimeError("LLM text generation function not available.")
-
-        logger.info(
-            f"Generating story: prompt='{prompt}', num_scenes={num_scenes}, style='{style}'"
-        )
-
-        system_prompt = f"""You are a creative story writer specializing in {style} stories.
-Create a short story based on the prompt below.
-The story should have exactly {num_scenes} scenes.
-Format your response STRICTLY as a JSON object with the following structure:
-{{
-"title": "Story Title",
-"scenes": [
-{{
-"scene_number": 1,
-"description": "Brief visual description of the scene suitable for image generation",
-"narration": "The narration text for this scene"
-}},
-...
-]
-}}
-Ensure each scene has a clear visual description and corresponding narration.
-Do not include any text outside the JSON structure itself (e.g., no '```json' markers).
-"""
-
-        user_prompt = f"Create a {style} story about: {prompt}"
+            logger.error("LLM text generation function not available")
+            raise RuntimeError("LLM text generation function not available.")
 
         try:
-            response = llm_text_gen(user_prompt, system_prompt=system_prompt)
-            logger.debug(f"Raw LLM response received:\n{response}")
+            system_prompt = f"""You are a creative story writer specializing in {style} stories.
+            Create a short story based on the prompt below.
+            The story should have exactly {num_scenes} scenes.
+            Format your response STRICTLY as a JSON object with the following structure:
+            {{
+            "title": "Story Title",
+            "scenes": [
+            {{
+            "scene_number": 1,
+            "description": "Brief visual description of the scene suitable for image generation",
+            "narration": "The narration text for this scene"
+            }},
+            ...
+            ]
+            }}
+            Ensure each scene has a clear visual description and corresponding narration.
+            Do not include any text outside the JSON structure itself (e.g., no '```json' markers).
+            """
+            logger.debug(f"Generated system prompt: {system_prompt}")
 
-            # Attempt to directly parse the response as JSON
+            user_prompt = f"Create a {style} story about: {prompt}"
+            logger.debug(f"Generated user prompt: {user_prompt}")
+
+            response = llm_text_gen(user_prompt, system_prompt=system_prompt)
+            logger.debug(f"Raw LLM response received: {response}")
+
+            # Parse and validate the response
             try:
-                # Clean potential markdown fences and surrounding whitespace aggressively
                 cleaned_response = re.sub(r'^```(json)?\s*|\s*```$', '', response, flags=re.DOTALL | re.IGNORECASE).strip()
                 story_data = json.loads(cleaned_response)
+                logger.info("Successfully parsed JSON response")
             except json.JSONDecodeError as json_err:
                 logger.error(f"JSONDecodeError: {json_err}. Raw response was: {response}")
-                # Fallback: Try regex extraction if direct parsing fails
                 json_match = re.search(r'\{\s*"title":.*\}\s*$', cleaned_response, re.DOTALL)
                 if json_match:
                     json_str = json_match.group(0)
                     try:
                         story_data = json.loads(json_str)
-                        logger.info("Successfully parsed JSON using regex fallback.")
+                        logger.info("Successfully parsed JSON using regex fallback")
                     except json.JSONDecodeError as fallback_err:
-                         logger.error(f"Fallback JSON parsing failed: {fallback_err}")
-                         raise Exception(f"Failed to parse LLM response as JSON. Response:\n{response}") from fallback_err
+                        logger.error(f"Fallback JSON parsing failed: {fallback_err}")
+                        raise Exception(f"Failed to parse LLM response as JSON. Response:\n{response}") from fallback_err
                 else:
                     raise Exception(f"Could not find valid JSON in LLM response. Response:\n{response}") from json_err
 
-
-            # Validate structure (basic check)
+            # Validate structure
             if "title" not in story_data or "scenes" not in story_data:
-                 raise ValueError("Generated JSON missing 'title' or 'scenes' key.")
+                logger.error("Generated JSON missing 'title' or 'scenes' key")
+                raise ValueError("Generated JSON missing 'title' or 'scenes' key")
             if not isinstance(story_data["scenes"], list):
-                 raise ValueError("'scenes' key must contain a list.")
+                logger.error("'scenes' key must contain a list")
+                raise ValueError("'scenes' key must contain a list")
 
             logger.info(f"Successfully generated story: {story_data.get('title', 'Untitled')}")
             return story_data
@@ -170,17 +195,16 @@ Do not include any text outside the JSON structure itself (e.g., no '```json' ma
         Returns:
             Path to the generated image file. Falls back to a placeholder on error.
         """
-        if not generate_gemini_image:
-             raise RuntimeError("Image generation function not available.")
-
         scene_num = scene.get("scene_number", "unknown")
         description = scene.get("description", "No description provided.")
+        logger.info(f"Generating image for scene {scene_num}: '{description}', style: '{style}'")
 
-        logger.info(
-            f"Generating image for scene {scene_num}: '{description}', style: '{style}'"
-        )
+        if not generate_gemini_image:
+            logger.error("Image generation function not available")
+            raise RuntimeError("Image generation function not available.")
 
         prompt = f"Create a {style} image representing this scene: {description}. Image should be visually clear and focus on the core elements described."
+        logger.debug(f"Generated image prompt: {prompt}")
 
         try:
             # Generate image using the imported function
@@ -188,24 +212,22 @@ Do not include any text outside the JSON structure itself (e.g., no '```json' ma
             image_path = generate_gemini_image(prompt, style=style) # Assuming this function saves the image and returns path
 
             if not image_path or not os.path.exists(image_path):
+                logger.error(f"Image generation function did not return a valid path: {image_path}")
                 raise Exception(f"Image generation function did not return a valid path: {image_path}")
 
             logger.info(f"Successfully generated image for scene {scene_num}: {image_path}")
             return image_path
 
         except Exception as e:
-            logger.error(
-                f"Error generating image for scene {scene_num}: {str(e)}",
-                exc_info=True,
-            )
-            # Fallback to creating a placeholder image
-            logger.warning(f"Creating placeholder image for scene {scene_num}.")
+            logger.error(f"Error generating image for scene {scene_num}: {str(e)}", exc_info=True)
+            logger.warning(f"Creating placeholder image for scene {scene_num}")
             return self._create_placeholder_image(scene_num, description)
 
     def _create_placeholder_image(
         self, scene_num: Union[int, str], description: str
     ) -> str:
         """Create a placeholder image with text when image generation fails."""
+        logger.info(f"Creating placeholder image for scene {scene_num}")
         width, height = DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT
         image = Image.new("RGB", (width, height), color=(73, 109, 137))
         draw = ImageDraw.Draw(image)
@@ -303,6 +325,7 @@ Do not include any text outside the JSON structure itself (e.g., no '```json' ma
         Returns:
             Path to the new image with text overlay. Returns original path on error.
         """
+        logger.info(f"Adding text overlay to image: {image_path}")
         try:
             image = Image.open(image_path).convert("RGBA") # Ensure RGBA for overlay
             width, height = image.size
@@ -429,11 +452,11 @@ Do not include any text outside the JSON structure itself (e.g., no '```json' ma
         Returns:
             Path to the downloaded audio file, or None if download fails.
         """
+        logger.info(f"Downloading audio from URL: {url}")
         if not url:
             logger.warning("No audio URL provided.")
             return None
 
-        logger.info(f"Downloading audio from {url}")
         try:
             response = requests.get(url, stream=True, timeout=30) # Add timeout
             response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
@@ -482,15 +505,15 @@ Do not include any text outside the JSON structure itself (e.g., no '```json' ma
             Exception: If video creation fails.
             FileNotFoundError: If any image path is invalid.
         """
-        logger.info(
-            f"Creating video: {len(image_paths)} images, fps={fps}, duration={duration_per_image}s/image"
-        )
+        logger.info(f"Creating video with {len(image_paths)} images, fps={fps}, duration={duration_per_image}s/image")
         if not image_paths:
+            logger.error("Cannot create video with no images.")
             raise ValueError("Cannot create video with no images.")
 
         # Verify all image paths exist before processing
         for img_path in image_paths:
              if not os.path.exists(img_path):
+                  logger.error(f"Image file not found: {img_path}")
                   raise FileNotFoundError(f"Image file not found: {img_path}")
 
         try:
@@ -528,6 +551,7 @@ Do not include any text outside the JSON structure itself (e.g., no '```json' ma
 
 
             if not frames:
+                logger.error("No valid frames could be generated from the images.")
                 raise ValueError("No valid frames could be generated from the images.")
 
             # Create video clip from image sequence
@@ -596,32 +620,35 @@ Do not include any text outside the JSON structure itself (e.g., no '```json' ma
 
 def write_story_video_generator():
     """Main function to run the Streamlit application interface."""
-    st.set_page_config(layout="wide") # Use wider layout
-    st.title("🎬 AI Story Video Generator")
-    st.write(
-        "Create animated story videos using AI. Provide a prompt, and we'll "
-        "generate a story, visualize it with images, and compile it into a video."
-    )
+    logger.info("Starting Story Video Generator UI")
+    
+    if not MOVIEPY_AVAILABLE:
+        logger.error("MoviePy is not available")
+        st.error(
+            "MoviePy is required for video generation but is not properly installed. "
+            "Please install it using:\n"
+            "```\n"
+            "pip install moviepy imageio imageio-ffmpeg\n"
+            "```"
+        )
+        return
 
     # Check if dependencies are loaded
     if not llm_text_gen or not generate_gemini_image:
+        logger.error("Core AI functionalities could not be loaded")
         st.error("Core AI functionalities could not be loaded. Please check the logs and library paths.")
-        st.stop() # Stop execution if core parts are missing
-
+        st.stop()
 
     # Initialize session state variables
+    logger.debug("Initializing session state variables")
     if "story_data" not in st.session_state:
         st.session_state.story_data = None
     if "generated_images" not in st.session_state:
-        st.session_state.generated_images = [] # Stores paths to final images (with text if added)
+        st.session_state.generated_images = []
     if "original_images" not in st.session_state:
-        st.session_state.original_images = [] # Stores paths to original generated images
+        st.session_state.original_images = []
     if "video_path" not in st.session_state:
         st.session_state.video_path = None
-    # Use a single generator instance stored in session state?
-    # Could be useful if it holds state, but here it seems stateless except for temp_dir
-    # Creating it when needed might be simpler.
-
 
     tab1, tab2, tab3, tab4 = st.tabs(
         ["**1. Story Prompt**", "**2. Storyboard**", "**3. Generate Images**", "**4. Create Video**"]
@@ -1014,6 +1041,8 @@ def write_story_video_generator():
     # Add link to your repo or project if desired
     # st.markdown("[GitHub Repository](your-link-here)")
 
+    logger.info("Story Video Generator UI initialized successfully")
+
 if __name__ == "__main__":
     # Ensure essential libraries are installed
     try:
@@ -1025,8 +1054,9 @@ if __name__ == "__main__":
         # Optionally check for google-generativeai if it's the backend
         # import google.generativeai
     except ImportError as e:
-        print(f"Error: Missing required library: {e.name}")
-        print("Please install all required libraries: pip install streamlit numpy Pillow requests moviepy")
+        logger.error(f"Error: Missing required library: {e.name}")
+        st.error(f"Error: Missing required library: {e.name}")
+        st.error("Please install all required libraries: pip install streamlit numpy Pillow requests moviepy")
         # Add other dependencies like google-generativeai if needed
         exit(1)
 

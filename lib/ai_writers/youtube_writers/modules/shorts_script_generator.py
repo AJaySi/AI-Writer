@@ -140,6 +140,16 @@ def analyze_shorts_script(script):
     analysis['optimization_score'] = max(0, score)
     return analysis
 
+def generate_shorts_narration(shorts_script, language="English"):
+    system_prompt = f"""You are an expert at converting YouTube Shorts scripts into natural, engaging narration.\nYour task is to read the provided Shorts script and output only the narration lines, as they would be spoken in the video.\nOmit all visual instructions, timing, text overlays, and technical cues. Write the narration in {language}."""
+    prompt = f"""Shorts Script:\n{shorts_script}\n\nInstructions:\nExtract and rewrite only the narration lines, as they would be spoken in the video. Do not include any section headers, cues, or formatting. Output only the narration text."""
+    try:
+        response = llm_text_gen(prompt, system_prompt=system_prompt)
+        return response.strip()
+    except Exception as err:
+        st.error(f"Error: Failed to get narration from LLM: {err}")
+        return ""
+
 def write_yt_shorts():
     """Create a user interface for YouTube Shorts Script Generator."""
     st.write("Generate optimized scripts for YouTube Shorts that grab attention and drive engagement.")

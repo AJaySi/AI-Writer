@@ -17,6 +17,7 @@ from .modules.end_screen_generator import write_yt_end_screen
 from .modules.tags_generator import write_yt_tags
 from .modules.shorts_script_generator import write_yt_shorts
 from .modules.community_post_generator import write_yt_community_post
+from .modules.shorts_video_generator import write_yt_shorts_video
 
 
 def youtube_main_menu():
@@ -63,6 +64,15 @@ def youtube_main_menu():
             "color": "#FF0000",  # YouTube red
             "category": "Content Creation",
             "function": write_yt_shorts,
+            "status": "active"
+        },
+        {
+            "name": "YT Shorts Video Generator",
+            "icon": "🎥",
+            "description": "Generate complete YouTube Shorts videos with AI-generated images, narration, and music.",
+            "color": "#FF0000",  # YouTube red
+            "category": "Content Creation",
+            "function": write_yt_shorts_video,
             "status": "active"
         },
         

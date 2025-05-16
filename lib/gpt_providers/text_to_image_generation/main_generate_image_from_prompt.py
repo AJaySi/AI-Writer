@@ -27,7 +27,7 @@ from .gen_stabl_diff_img import generate_stable_diffusion_image
 from ..text_generation.main_text_generation import llm_text_gen
 from .gen_gemini_images import generate_gemini_image
 
-def generate_image(user_prompt, title=None, description=None, tags=None, content=None):
+def generate_image(user_prompt, title=None, description=None, tags=None, content=None, aspect_ratio="16:9"):
     """
     The generation API endpoint creates an image based on a text prompt.
 
@@ -42,6 +42,7 @@ def generate_image(user_prompt, title=None, description=None, tags=None, content
     -->response_format (str): The format in which the generated images are returned. 
     Must be one of "url" or "b64_json". Defaults to "url".
     --> user (str): A unique identifier representing your end-user, which will help OpenAI to monitor and detect abuse.
+    --> aspect_ratio (str): The aspect ratio for the generated image. Must be one of "16:9", "4:3", or "1:1". Defaults to "16:9".
     """
     # FIXME: Need to remove default value to match sidebar input.
     image_engine = 'Gemini-AI'
@@ -51,6 +52,11 @@ def generate_image(user_prompt, title=None, description=None, tags=None, content
         try:
             # Use enhanced prompt generator with all available parameters
             img_prompt = generate_enhanced_img_prompt(user_prompt, title, description, tags, content)
+            
+            # Add aspect ratio to the prompt
+            if aspect_ratio:
+                img_prompt += f"\n\nAspect ratio: {aspect_ratio}"
+            
             if 'Dalle3' in image_engine:
                 logger.info(f"Calling Dalle3 text-to-image with prompt: {img_prompt}")
                 image_stored_at = generate_dalle3_images(img_prompt)
@@ -59,7 +65,7 @@ def generate_image(user_prompt, title=None, description=None, tags=None, content
                 image_stored_at = generate_stable_diffusion_image(img_prompt)
             elif 'Gemini-AI' in image_engine:
                 logger.info(f"Calling Gemini text-to-image with prompt: \n{img_prompt}")
-                image_stored_at = generate_gemini_image(img_prompt)
+                image_stored_at = generate_gemini_image(img_prompt, aspect_ratio=aspect_ratio)
             return image_stored_at
         except Exception as err:
             logger.error(f"Failed to generate Image: {err}")
