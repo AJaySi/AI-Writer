@@ -1,0 +1,85 @@
+{
+  "name": null,
+  "description": null,
+  "start_date": "2025-05-22T08:00:48.925689",
+  "duration": "monthly",
+  "platforms": [
+    "website",
+    "instagram",
+    "twitter",
+    "linkedin",
+    "facebook"
+  ],
+  "schedule": {
+    "2025-05-22": [
+      {
+        "title": "AI writer",
+        "description": "",
+        "content_type": "blog_post",
+        "platforms": [
+          "website"
+        ],
+        "publish_date": "2025-05-22T00:00:00",
+        "seo_data": {
+          "title": "AI writer",
+          "meta_description": "",
+          "keywords": [],
+          "structured_data": {},
+          "canonical_url": null,
+          "og_tags": null,
+          "twitter_cards": null
+        },
+        "status": "Draft",
+        "author": null,
+        "tags": [],
+        "notes": null
+      },
+      {
+        "title": "alwrity.",
+        "description": "",
+        "content_type": "blog_post",
+        "platforms": [
+          "linkedin"
+        ],
+        "publish_date": "2025-05-22T00:00:00",
+        "seo_data": {
+          "title": "alwrity.",
+          "meta_description": "",
+          "keywords": [],
+          "structured_data": {},
+          "canonical_url": null,
+          "og_tags": null,
+          "twitter_cards": null
+        },
+        "status": "Draft",
+        "author": null,
+        "tags": [],
+        "notes": null
+      }
+    ],
+    "2025-05-31": [
+      {
+        "title": "ai content generation",
+        "description": "",
+        "content_type": "blog_post",
+        "platforms": [
+          "website"
+        ],
+        "publish_date": "2025-05-31T00:00:00",
+        "seo_data": {
+          "title": "ai content generation",
+          "meta_description": "",
+          "keywords": [],
+          "structured_data": {},
+          "canonical_url": null,
+          "og_tags": null,
+          "twitter_cards": null
+        },
+        "status": "Draft",
+        "author": null,
+        "tags": [],
+        "notes": null
+      }
+    ]
+  }
+}

@@ -1,3 +1,5 @@
+"""Content title generator module."""
+
 import os
 import json
 import streamlit as st
@@ -6,70 +8,106 @@ from tenacity import (
     stop_after_attempt,
     wait_random_exponential,
 )
-from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
+from loguru import logger
+from typing import Dict, Any, List, Optional
+import asyncio
+import sys
+from lib.gpt_providers.text_generation.main_text_generation import llm_text_gen
+from lib.utils.website_analyzer.analyzer import WebsiteAnalyzer
 
-def ai_title_generator():
-    """ UI for the AI Blog Title Generator """
-    st.title("✍️ Alwrity - AI Blog Title Generator")
+# Configure logger
+logger.remove()  # Remove default handler
+logger.add(
+    "logs/content_title_generator.log",
+    rotation="50 MB",
+    retention="10 days",
+    level="DEBUG",
+    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
+)
+logger.add(
+    sys.stdout,
+    level="INFO",
+    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>"
+)
 
-    # Input section
-    with st.expander("**PRO-TIP** - Follow the steps below for best results.", expanded=True):
-        col1, col2 = st.columns([5, 5])
+# Ensure logs directory exists
+os.makedirs("logs", exist_ok=True)
 
-        with col1:
-            input_blog_keywords = st.text_input(
-                '**🔑 Enter main keywords of your blog!**',
-                placeholder="e.g., AI tools, digital marketing, SEO",
-                help="Use 2-3 words that best describe the main topic of your blog."
-            )
-            input_blog_content = st.text_area(
-                '**📄 Copy/Paste your entire blog content.** (Optional)',
-                placeholder="e.g., Content about the importance of AI in digital marketing...",
-                help="Paste your full blog content here for more accurate title suggestions. This is optional."
-            )
-
-        with col2:
-            input_title_type = st.selectbox(
-                '📝 Blog Type', 
-                ('General', 'How-to Guides', 'Tutorials', 'Listicles', 'Newsworthy Posts', 'FAQs', 'Checklists/Cheat Sheets'),
-                index=0
-            )
-            input_title_intent = st.selectbox(
-                '🔍 Search Intent', 
-                ('Informational Intent', 'Commercial Intent', 'Transactional Intent', 'Navigational Intent'), 
-                index=0
-            )
-            language_options = ["English", "Spanish", "French", "German", "Chinese", "Japanese", "Other"]
-            input_language = st.selectbox(
-                '🌐 Select Language', 
-                options=language_options,
-                index=0,
-                help="Choose the language for your blog title."
-            )
-            if input_language == "Other":
-                input_language = st.text_input(
-                    'Specify Language', 
-                    placeholder="e.g., Italian, Dutch",
-                    help="Specify your preferred language."
-                )
-
-    # Generate Blog Title button
-    if st.button('**Generate Blog Titles**'):
-        with st.spinner("Generating blog titles..."):
-            if input_blog_content == 'Optional':
-                input_blog_content = None
-
-            if not input_blog_keywords and not input_blog_content:
-                st.error('**🫣 Provide Inputs to generate Blog Titles. Either Blog Keywords OR content is required!**')
-            else:
-                blog_titles = generate_blog_titles(input_blog_keywords, input_blog_content, input_title_type, input_title_intent, input_language)
-                if blog_titles:
-                    st.subheader('**👩🧕🔬 Go Rule search ranking with these Blog Titles!**')
-                    with st.expander("**Final - Blog Titles Output 🎆🎇🎇**", expanded=True):
-                        st.markdown(blog_titles)
-                else:
-                    st.error("💥 **Failed to generate blog titles. Please try again!**")
-
+def ai_title_generator(url: str) -> Dict[str, Any]:
+    """
+    Generate SEO-optimized titles using AI.
+    
+    Args:
+        url: The URL to analyze
+        
+    Returns:
+        Dictionary containing title suggestions and analysis
+    """
+    try:
+        # Initialize analyzer
+        analyzer = WebsiteAnalyzer()
+        
+        # Analyze website
+        analysis = analyzer.analyze_website(url)
+        if not analysis.get('success', False):
+            return {
+                'error': analysis.get('error', 'Unknown error in analysis'),
+                'patterns': {},
+                'suggestions': []
+            }
+        
+        # Extract content and meta information
+        content_info = analysis['data']['analysis']['content_info']
+        seo_info = analysis['data']['analysis']['seo_info']
+        
+        # Generate title suggestions using AI
+        prompt = f"""Based on the following website content and SEO analysis, generate 5 SEO-optimized title suggestions:
+        
+        Content Analysis:
+        - Word Count: {content_info.get('word_count', 0)}
+        - Heading Structure: {content_info.get('heading_structure', {})}
+        
+        SEO Analysis:
+        - Meta Title: {seo_info.get('meta_tags', {}).get('title', {}).get('value', '')}
+        - Meta Description: {seo_info.get('meta_tags', {}).get('description', {}).get('value', '')}
+        - Keywords: {seo_info.get('meta_tags', {}).get('keywords', {}).get('value', '')}
+        
+        Generate 5 title suggestions that are:
+        1. SEO-optimized
+        2. Engaging and click-worthy
+        3. Between 50-60 characters
+        4. Include relevant keywords
+        5. Follow best practices for title optimization
+        
+        Format the response as JSON with 'suggestions' and 'patterns' keys."""
+        
+        # Get AI suggestions
+        suggestions = llm_text_gen(
+            prompt=prompt,
+            system_prompt="You are an SEO expert specializing in title optimization.",
+            response_format="json_object"
+        )
+        
+        if not suggestions:
+            return {
+                'error': 'Failed to generate title suggestions',
+                'patterns': {},
+                'suggestions': []
+            }
+        
+        return {
+            'patterns': suggestions.get('patterns', {}),
+            'suggestions': suggestions.get('suggestions', [])
+        }
+        
+    except Exception as e:
+        error_msg = f"Error generating title suggestions: {str(e)}"
+        logger.error(error_msg, exc_info=True)
+        return {
+            'error': error_msg,
+            'patterns': {},
+            'suggestions': []
+        }
 
 @retry(stop=stop_after_attempt(3), wait=wait_random_exponential(min=1, max=4))
 def generate_blog_titles(input_blog_keywords, input_blog_content, input_title_type, input_title_intent, input_language):

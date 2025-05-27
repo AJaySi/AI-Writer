@@ -3,7 +3,7 @@
 import streamlit as st
 from loguru import logger
 from ...website_analyzer import analyze_website
-from ...website_analyzer.seo_analyzer import analyze_seo
+from ...website_analyzer.analyzer import WebsiteAnalyzer
 import asyncio
 import sys
 from typing import Dict, Any
@@ -127,37 +127,19 @@ def render_website_setup(api_key_manager: APIKeyManager) -> Dict[str, Any]:
                         # Call the analyze_website function
                         results = analyze_website(url)
                         
-                        # If full analysis is selected, add SEO analysis
-                        if analyze_type == "Full Analysis with SEO":
-                            seo_results = analyze_seo(url)
-                            if seo_results.success:
-                                results['data']['seo_analysis'] = {
-                                    'overall_score': seo_results.overall_score,
-                                    'meta_tags': {
-                                        'title': seo_results.meta_tags.title,
-                                        'description': seo_results.meta_tags.description,
-                                        'keywords': seo_results.meta_tags.keywords,
-                                        'has_robots': seo_results.meta_tags.has_robots,
-                                        'has_sitemap': seo_results.meta_tags.has_sitemap
-                                    },
-                                    'content': {
-                                        'word_count': seo_results.content.word_count,
-                                        'readability_score': seo_results.content.readability_score,
-                                        'content_quality_score': seo_results.content.content_quality_score,
-                                        'headings_structure': seo_results.content.headings_structure,
-                                        'keyword_density': seo_results.content.keyword_density
-                                    },
-                                    'recommendations': [
-                                        {
-                                            'priority': rec.priority,
-                                            'category': rec.category,
-                                            'issue': rec.issue,
-                                            'recommendation': rec.recommendation,
-                                            'impact': rec.impact
-                                        }
-                                        for rec in seo_results.recommendations
-                                    ]
-                                }
+                        # Replace the old SEO analysis code with the new analyzer
+                        analyzer = WebsiteAnalyzer()
+                        seo_results = analyzer.analyze_website(url)
+                        if seo_results.get('success', False):
+                            results['data']['seo_analysis'] = seo_results['data']['analysis']['seo_info']
+                        else:
+                            results['data']['seo_analysis'] = {
+                                'error': seo_results.get('error', 'Unknown error in SEO analysis'),
+                                'overall_score': 0,
+                                'meta_tags': {},
+                                'content': {},
+                                'recommendations': []
+                            }
                         
                         logger.debug(f"[render_website_setup] Analysis results received: {results.get('success', False)}")
                         

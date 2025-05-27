@@ -1,13 +1,33 @@
+"""
+Smart Tweet Generator with modern UI components.
+"""
+
 import streamlit as st
 import re
 import json
-import time
 from typing import Dict, List, Tuple, Optional
 import random
 import emoji
 from datetime import datetime
 
 from ....gpt_providers.text_generation.main_text_generation import llm_text_gen
+from ..twitter_streamlit_ui import (
+    TweetForm,
+    TweetCard,
+    Theme,
+    save_to_session,
+    get_from_session,
+    show_success_message,
+    show_error_message,
+    show_info_message,
+    validate_tweet_content,
+    validate_hashtags,
+    validate_emojis,
+    calculate_engagement_score,
+    generate_tweet_metrics,
+    copy_to_clipboard,
+    create_download_button
+)
 
 # Constants
 MAX_TWEET_LENGTH = 280
@@ -18,14 +38,6 @@ EMOJI_CATEGORIES = {
     "Serious": ["🤔", "💭", "🧐", "📢", "🔔", "⚖️", "🎓", "📊", "🔬", "📰"],
     "Casual": ["👋", "👍", "🙋", "💁", "🤗", "👌", "✌️", "🤝", "👊", "🙏"]
 }
-
-def count_characters(text: str) -> int:
-    """Count characters in tweet, accounting for emojis."""
-    return len(text)
-
-def extract_hashtags(text: str) -> List[str]:
-    """Extract hashtags from tweet text."""
-    return re.findall(r'#\w+', text)
 
 def suggest_hashtags(topic: str, tone: str) -> List[str]:
     """Suggest relevant hashtags based on topic and tone."""
@@ -60,63 +72,6 @@ def suggest_emojis(tone: str, count: int = 3) -> List[str]:
         "inspirational": ["✨", "🌟", "💫", "🔥", "💪"]
     }
     return emoji_map.get(tone.lower(), ["✨"])[:count]
-
-def predict_tweet_performance(tweet: str, target_audience: str, tone: str) -> Dict:
-    """Predict tweet performance with enhanced metrics."""
-    char_count = count_characters(tweet)
-    hashtags = extract_hashtags(tweet)
-    
-    # Enhanced performance metrics
-    metrics = {
-        "character_count": {
-            "score": min(100, (char_count / 280) * 100),
-            "status": "optimal" if 100 <= char_count <= 200 else "suboptimal",
-            "suggestion": "Consider adjusting length for optimal engagement" if char_count < 100 or char_count > 200 else "Length is optimal"
-        },
-        "hashtag_usage": {
-            "score": min(100, (len(hashtags) / 3) * 100),
-            "status": "optimal" if 1 <= len(hashtags) <= 3 else "suboptimal",
-            "suggestion": "Add more hashtags" if len(hashtags) < 1 else "Reduce hashtag count" if len(hashtags) > 3 else "Hashtag count is optimal"
-        },
-        "engagement_potential": {
-            "score": 0,
-            "status": "needs_improvement",
-            "suggestion": ""
-        },
-        "audience_alignment": {
-            "score": 0,
-            "status": "needs_improvement",
-            "suggestion": ""
-        }
-    }
-    
-    # Calculate engagement potential
-    engagement_triggers = ["?", "!", "RT", "like", "follow", "check", "learn", "discover"]
-    trigger_count = sum(1 for trigger in engagement_triggers if trigger.lower() in tweet.lower())
-    metrics["engagement_potential"]["score"] = min(100, (trigger_count / 3) * 100)
-    metrics["engagement_potential"]["status"] = "optimal" if trigger_count >= 1 else "needs_improvement"
-    metrics["engagement_potential"]["suggestion"] = "Add engagement triggers" if trigger_count < 1 else "Good engagement potential"
-    
-    # Calculate audience alignment
-    audience_keywords = {
-        "professionals": ["business", "industry", "professional", "career"],
-        "students": ["learn", "study", "education", "student"],
-        "general": ["everyone", "people", "community", "world"]
-    }
-    keyword_count = sum(1 for keyword in audience_keywords.get(target_audience.lower(), []) 
-                       if keyword.lower() in tweet.lower())
-    metrics["audience_alignment"]["score"] = min(100, (keyword_count / 2) * 100)
-    metrics["audience_alignment"]["status"] = "optimal" if keyword_count >= 1 else "needs_improvement"
-    metrics["audience_alignment"]["suggestion"] = "Add audience-specific keywords" if keyword_count < 1 else "Good audience alignment"
-    
-    # Calculate overall score
-    overall_score = sum(metric["score"] for metric in metrics.values()) / len(metrics)
-    
-    return {
-        "metrics": metrics,
-        "overall_score": overall_score,
-        "status": "excellent" if overall_score >= 80 else "good" if overall_score >= 60 else "fair" if overall_score >= 40 else "needs_improvement"
-    }
 
 def generate_tweet_variations(
     hook: str,
@@ -177,57 +132,13 @@ def generate_tweet_variations(
     
     return sample_tweets[:num_variations]
 
-def suggest_improvements(tweet: str, performance: Dict) -> List[str]:
-    """Generate actionable improvement suggestions."""
-    suggestions = []
-    metrics = performance["metrics"]
-    
-    # Character count suggestions
-    if metrics["character_count"]["status"] == "suboptimal":
-        suggestions.append(f"📝 {metrics['character_count']['suggestion']}")
-    
-    # Hashtag suggestions
-    if metrics["hashtag_usage"]["status"] == "suboptimal":
-        suggestions.append(f"#️⃣ {metrics['hashtag_usage']['suggestion']}")
-    
-    # Engagement suggestions
-    if metrics["engagement_potential"]["status"] == "needs_improvement":
-        suggestions.append(f"🎯 {metrics['engagement_potential']['suggestion']}")
-    
-    # Audience alignment suggestions
-    if metrics["audience_alignment"]["status"] == "needs_improvement":
-        suggestions.append(f"👥 {metrics['audience_alignment']['suggestion']}")
-    
-    return suggestions
-
-def render_tweet_card(tweet: Dict, index: int) -> None:
-    """Render an enhanced tweet card with interactive elements."""
-    with st.container():
-        st.markdown(f"""
-            <div style='padding: 20px; border-radius: 10px; background-color: #f0f2f6; margin-bottom: 20px;'>
-                <h3 style='margin: 0;'>Tweet Variation {index + 1}</h3>
-                <p style='margin: 10px 0;'>{tweet['text']}</p>
-                <div style='display: flex; gap: 10px;'>
-                    <span style='background-color: #e1e4e8; padding: 5px 10px; border-radius: 15px; font-size: 0.8em;'>
-                        Score: {tweet['engagement_score']}%
-                    </span>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        # Interactive elements
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button(f"Copy Tweet {index + 1}", key=f"copy_{index}"):
-                st.write("Tweet copied to clipboard!")
-        with col2:
-            if st.button(f"Save Tweet {index + 1}", key=f"save_{index}"):
-                st.write("Tweet saved!")
-
 def smart_tweet_generator():
     """Enhanced Smart Tweet Generator with improved UI and AI integration."""
     st.title("✨ Smart Tweet Generator")
     st.markdown("Create engaging tweets with AI-powered optimization")
+    
+    # Apply theme
+    Theme().apply()
     
     # Input section with improved UI
     with st.expander("Tweet Parameters", expanded=True):
@@ -291,34 +202,27 @@ def smart_tweet_generator():
             # Display performance metrics
             st.markdown("### 📊 Performance Metrics")
             for tweet in tweets:
-                performance = predict_tweet_performance(tweet["text"], target_audience, tone)
+                # Calculate engagement score
+                engagement_score = calculate_engagement_score(
+                    tweet["text"],
+                    tweet["hashtags"],
+                    tweet["emojis"],
+                    tone
+                )
                 
-                # Overall score with progress bar
-                st.progress(performance["overall_score"] / 100)
-                st.metric("Overall Score", f"{performance['overall_score']:.1f}%")
+                # Generate metrics
+                metrics = generate_tweet_metrics(engagement_score)
                 
-                # Detailed metrics in columns
-                cols = st.columns(4)
-                metrics = performance["metrics"]
-                
-                with cols[0]:
-                    st.metric("Character Count", f"{metrics['character_count']['score']:.1f}%")
-                with cols[1]:
-                    st.metric("Hashtag Usage", f"{metrics['hashtag_usage']['score']:.1f}%")
-                with cols[2]:
-                    st.metric("Engagement", f"{metrics['engagement_potential']['score']:.1f}%")
-                with cols[3]:
-                    st.metric("Audience Fit", f"{metrics['audience_alignment']['score']:.1f}%")
-                
-                # Improvement suggestions
-                suggestions = suggest_improvements(tweet["text"], performance)
-                if suggestions:
-                    st.markdown("### 💡 Improvement Suggestions")
-                    for suggestion in suggestions:
-                        st.info(suggestion)
-                
-                # Tweet card
-                render_tweet_card(tweet, tweets.index(tweet))
+                # Display tweet card
+                TweetCard(
+                    content=tweet["text"],
+                    engagement_score=engagement_score,
+                    hashtags=tweet["hashtags"],
+                    emojis=tweet["emojis"],
+                    metrics=metrics,
+                    on_copy=lambda: copy_to_clipboard(tweet["text"]),
+                    on_save=lambda: save_tweet(tweet)
+                ).render()
                 
                 st.markdown("---")
             
@@ -326,17 +230,23 @@ def smart_tweet_generator():
             st.markdown("### 📥 Export Options")
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("Export as JSON"):
-                    st.download_button(
-                        "Download JSON",
-                        data=json.dumps(tweets, indent=2),
-                        file_name=f"tweets_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                        mime="application/json"
-                    )
+                create_download_button(
+                    data=tweets,
+                    filename=f"tweets_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                    button_text="Export as JSON"
+                )
             with col2:
                 if st.button("Copy All Tweets"):
                     tweet_texts = "\n\n".join(tweet["text"] for tweet in tweets)
-                    st.code(tweet_texts)
+                    copy_to_clipboard(tweet_texts)
+                    show_success_message("All tweets copied to clipboard!")
+
+def save_tweet(tweet: Dict):
+    """Save tweet for later."""
+    tweets = get_from_session("tweets", [])
+    tweets.append(tweet)
+    save_to_session("tweets", tweets)
+    show_success_message("Tweet saved successfully!")
 
 if __name__ == "__main__":
     smart_tweet_generator() 

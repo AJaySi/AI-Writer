@@ -674,3 +674,18 @@ select option {
 .search-option.disabled p {
     color: #64748b;
 }
+
+/* Move main content upwards and reduce free space at the top */
+.main .block-container {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+h1 {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+/* Optionally, reduce margin for the main title container if used */
+.seo-main-title, .main-title, .dashboard-title {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}

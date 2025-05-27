@@ -160,6 +160,142 @@ Stores reusable content templates.
        # Relationships
        user = relationship("User")
 
+ContentGapAnalysis
+~~~~~~~~~~~~~~~~~
+
+Stores content gap analysis results.
+
+.. code-block:: python
+
+   class ContentGapAnalysis(Base):
+       __tablename__ = "content_gap_analyses"
+       
+       id = Column(Integer, primary_key=True)
+       user_id = Column(Integer, ForeignKey("users.id"))
+       website_url = Column(String, nullable=False)
+       industry = Column(String, nullable=False)
+       analysis_date = Column(DateTime, default=datetime.utcnow)
+       status = Column(String, nullable=False)  # completed, in_progress, failed
+       metadata = Column(JSON)
+       
+       # Relationships
+       user = relationship("User", back_populates="content_gap_analyses")
+       website_analysis = relationship("WebsiteAnalysis", back_populates="content_gap_analysis")
+       competitor_analysis = relationship("CompetitorAnalysis", back_populates="content_gap_analysis")
+       keyword_analysis = relationship("KeywordAnalysis", back_populates="content_gap_analysis")
+       recommendations = relationship("ContentRecommendation", back_populates="content_gap_analysis")
+
+WebsiteAnalysis
+~~~~~~~~~~~~~~
+
+Stores website analysis results.
+
+.. code-block:: python
+
+   class WebsiteAnalysis(Base):
+       __tablename__ = "website_analyses"
+       
+       id = Column(Integer, primary_key=True)
+       content_gap_analysis_id = Column(Integer, ForeignKey("content_gap_analyses.id"))
+       content_score = Column(Float)
+       seo_score = Column(Float)
+       structure_score = Column(Float)
+       content_metrics = Column(JSON)
+       seo_metrics = Column(JSON)
+       technical_metrics = Column(JSON)
+       ai_insights = Column(JSON)
+       created_at = Column(DateTime, default=datetime.utcnow)
+       
+       # Relationships
+       content_gap_analysis = relationship("ContentGapAnalysis", back_populates="website_analysis")
+
+CompetitorAnalysis
+~~~~~~~~~~~~~~~~
+
+Stores competitor analysis results.
+
+.. code-block:: python
+
+   class CompetitorAnalysis(Base):
+       __tablename__ = "competitor_analyses"
+       
+       id = Column(Integer, primary_key=True)
+       content_gap_analysis_id = Column(Integer, ForeignKey("content_gap_analyses.id"))
+       competitor_url = Column(String, nullable=False)
+       market_position = Column(JSON)
+       content_gaps = Column(JSON)
+       competitive_advantages = Column(JSON)
+       trend_analysis = Column(JSON)
+       created_at = Column(DateTime, default=datetime.utcnow)
+       
+       # Relationships
+       content_gap_analysis = relationship("ContentGapAnalysis", back_populates="competitor_analysis")
+
+KeywordAnalysis
+~~~~~~~~~~~~~
+
+Stores keyword analysis results.
+
+.. code-block:: python
+
+   class KeywordAnalysis(Base):
+       __tablename__ = "keyword_analyses"
+       
+       id = Column(Integer, primary_key=True)
+       content_gap_analysis_id = Column(Integer, ForeignKey("content_gap_analyses.id"))
+       top_keywords = Column(JSON)
+       search_intent = Column(JSON)
+       opportunities = Column(JSON)
+       trend_analysis = Column(JSON)
+       created_at = Column(DateTime, default=datetime.utcnow)
+       
+       # Relationships
+       content_gap_analysis = relationship("ContentGapAnalysis", back_populates="keyword_analysis")
+
+ContentRecommendation
+~~~~~~~~~~~~~~~~~~~
+
+Stores content recommendations.
+
+.. code-block:: python
+
+   class ContentRecommendation(Base):
+       __tablename__ = "content_recommendations"
+       
+       id = Column(Integer, primary_key=True)
+       content_gap_analysis_id = Column(Integer, ForeignKey("content_gap_analyses.id"))
+       recommendation_type = Column(String, nullable=False)  # content, seo, technical, etc.
+       priority_score = Column(Float)
+       recommendation = Column(Text, nullable=False)
+       implementation_steps = Column(JSON)
+       expected_impact = Column(JSON)
+       status = Column(String, nullable=False)  # pending, in_progress, completed, rejected
+       created_at = Column(DateTime, default=datetime.utcnow)
+       updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+       
+       # Relationships
+       content_gap_analysis = relationship("ContentGapAnalysis", back_populates="recommendations")
+
+AnalysisHistory
+~~~~~~~~~~~~~
+
+Tracks the history of analysis runs.
+
+.. code-block:: python
+
+   class AnalysisHistory(Base):
+       __tablename__ = "analysis_histories"
+       
+       id = Column(Integer, primary_key=True)
+       content_gap_analysis_id = Column(Integer, ForeignKey("content_gap_analyses.id"))
+       run_date = Column(DateTime, default=datetime.utcnow)
+       status = Column(String, nullable=False)  # completed, in_progress, failed
+       metrics = Column(JSON)  # Performance metrics for the analysis run
+       error_log = Column(Text)  # Any errors encountered during analysis
+       
+       # Relationships
+       content_gap_analysis = relationship("ContentGapAnalysis")
+
 Vector Database Schema
 --------------------
 

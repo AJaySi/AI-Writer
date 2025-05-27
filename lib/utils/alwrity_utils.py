@@ -8,7 +8,7 @@ from loguru import logger
 
 
 from lib.ai_writers.ai_news_article_writer import ai_news_generation
-from lib.ai_writers.ai_financial_writer import write_basic_ta_report
+from lib.ai_writers.ai_finance_report_generator.ai_financial_dashboard import get_dashboard
 from lib.ai_writers.ai_facebook_writer.facebook_ai_writer import facebook_main_menu
 from lib.ai_writers.linkedin_writer.linkedin_ai_writer import linkedin_main_menu
 from lib.ai_writers.twitter_writers.twitter_dashboard import run_dashboard
@@ -198,7 +198,9 @@ def ai_finance_ta_writer():
         if ticker_symbol:
             with st.spinner("Generating TA Report..."):
                 try:
-                    ta_report = write_basic_ta_report(ticker_symbol)
+                    # Get dashboard instance and generate technical analysis
+                    dashboard = get_dashboard()
+                    ta_report = dashboard.generate_technical_analysis(ticker_symbol)
                     st.success(f"Successfully generated TA report for: {ticker_symbol}")
                     st.markdown(ta_report)
                 except Exception as err:

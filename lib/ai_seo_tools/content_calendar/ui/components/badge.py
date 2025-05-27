@@ -1,0 +1,2 @@
+def render_badge(platform_disp, platform_icon, type_disp, status_disp):
+    return f"<span class='badge-content-calendar badge-platform-{platform_disp.lower()}'>{platform_icon} {platform_disp} &nbsp;|&nbsp; {type_disp} &nbsp;|&nbsp; <span class='chip-status chip-status-{status_disp.lower()}'>{status_disp}</span></span>" 

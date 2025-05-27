@@ -194,7 +194,7 @@ def facebook_main_menu():
     if st.session_state.selected_tool is not None:
         with tool_container:
             # Add a back button at the top
-            if st.button("← Back to Dashboard", key="back_to_dashboard"):
+            if st.button("← Back to Dashboard", key="back_to_facebook_dashboard"):
                 st.session_state.selected_tool = None
                 st.rerun()
             
