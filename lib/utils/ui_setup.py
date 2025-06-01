@@ -19,6 +19,7 @@ from lib.ai_writers.twitter_writers import run_dashboard
 from lib.ai_writers.insta_ai_writer import insta_writer
 from lib.ai_writers.youtube_writers.youtube_ai_writer import youtube_main_menu
 from lib.ai_writers.ai_writer_dashboard import get_ai_writers, list_ai_writers
+from lib.chatbot_custom.enhanced_alwrity_chatbot import run_enhanced_chatbot
 
 def render_social_tools_dashboard():
     """Render a modern dashboard for social media tools."""
@@ -413,13 +414,9 @@ def setup_alwrity_ui():
         "Content Planning": ("📅", content_planning_tools),
         "AI SEO Tools": ("🔍", ai_seo_tools),
         "AI Social Tools": ("📱", render_social_tools_dashboard),
+        "ALwrity Assistant": ("🤖", run_enhanced_chatbot),
         "ALwrity Settings": ("⚙️", render_settings_page),
-        "Agents Teams(TBD)": ("🤝", lambda: st.subheader("Agents Teams - Coming Soon!")),
-        "Ask Alwrity(TBD)": ("💬", lambda: (
-            st.subheader("Chat with your Data, Chat with any Data.. COMING SOON !"),
-            st.markdown("Create a collection by uploading files (PDF, MD, CSV, etc), or crawl a data source (Websites, more sources coming soon."),
-            st.markdown("One can ask/chat, summarize and do semantic search over the uploaded data")
-        ))
+        "Agents Teams(TBD)": ("🤝", lambda: st.subheader("Agents Teams - Coming Soon!"))
     }
     
     logger.info(f"Defined {len(nav_items)} navigation items")

@@ -2,10 +2,10 @@ import streamlit as st
 from typing import Dict, Any, List
 from datetime import datetime, timedelta
 import pandas as pd
-from ...core.content_generator import ContentGenerator
-from ...core.ai_generator import AIGenerator
-from ...integrations.seo_optimizer import SEOOptimizer
-from ...models.calendar import ContentItem, ContentType, Platform, SEOData
+from lib.ai_seo_tools.content_calendar.core.content_generator import ContentGenerator
+from lib.ai_seo_tools.content_calendar.core.ai_generator import AIGenerator
+from lib.ai_seo_tools.content_calendar.integrations.seo_optimizer import SEOOptimizer
+from lib.database.models import ContentItem, ContentType, Platform, SEOData
 import logging
 
 logger = logging.getLogger('content_calendar.series')
@@ -21,7 +21,7 @@ class SeriesManager:
             st.session_state.series_performance = {}
 
     def create_series(self, series_id: str, topic: str, num_pieces: int, content_type: ContentType, 
-                     platforms: List[Platform], schedule_strategy: str = 'linear') -> Dict[str, Any]:
+                     platforms: List[Platform], schedule_strategy: str = 'linear', series_type: str = '', series_flow: str = '', metadata: Dict[str, Any] = {}) -> Dict[str, Any]:
         """Create a new content series with tracking and scheduling."""
         try:
             series = {
@@ -31,12 +31,15 @@ class SeriesManager:
                 'content_type': content_type,
                 'platforms': platforms,
                 'schedule_strategy': schedule_strategy,
+                'series_type': series_type,
+                'series_flow': series_flow,
                 'pieces': [],
                 'performance': {},
                 'created_at': datetime.now(),
                 'status': 'draft',
                 'relationships': {},
-                'platform_distribution': {p.name: [] for p in platforms}
+                'platform_distribution': {p.name: [] for p in platforms},
+                'metadata': metadata
             }
             st.session_state.content_series[series_id] = series
             return series
@@ -50,23 +53,38 @@ class SeriesManager:
             if series_id in st.session_state.content_series:
                 series = st.session_state.content_series[series_id]
                 piece_id = f"piece_{len(series['pieces'])}"
-                piece['id'] = piece_id
+                
+                # Create a structured piece object
+                structured_piece = {
+                    'id': piece_id,
+                    'title': piece.get('title', f"Part {len(series['pieces']) + 1}"),
+                    'content': piece.get('content', ''),
+                    'platform': piece.get('platform', series['platforms'][0]),
+                    'scheduled_date': None,
+                    'status': 'draft',
+                    'relationships': {
+                        'previous': None,
+                        'next': None
+                    },
+                    'performance': {
+                        'engagement': 0,
+                        'reach': 0,
+                        'conversion_rate': 0
+                    }
+                }
                 
                 # Track relationships
                 if series['pieces']:
                     previous_piece = series['pieces'][-1]
-                    piece['relationships'] = {
-                        'previous': previous_piece['id'],
-                        'next': None
-                    }
-                    previous_piece['relationships']['next'] = piece_id
+                    structured_piece['relationships']['previous'] = previous_piece['id']
+                    structured_piece['relationships']['next'] = piece_id
                 
                 # Add to platform distribution
-                for platform in piece.get('platforms', []):
-                    if platform.name in series['platform_distribution']:
-                        series['platform_distribution'][platform.name].append(piece_id)
+                platform_name = structured_piece['platform'].name
+                if platform_name in series['platform_distribution']:
+                    series['platform_distribution'][platform_name].append(piece_id)
                 
-                series['pieces'].append(piece)
+                series['pieces'].append(structured_piece)
                 return True
             return False
         except Exception as e:
@@ -176,10 +194,67 @@ class SeriesManager:
             logger.error(f"Error scheduling series: {str(e)}")
             return False
 
-def render_content_series_generator(ai_generator: AIGenerator, content_generator: ContentGenerator, 
-                                  seo_optimizer: SEOOptimizer):
-    """Render the content series generator interface with enhanced features."""
+def render_content_series_generator(
+    ai_generator: AIGenerator,
+    content_generator: ContentGenerator,
+    seo_optimizer: SEOOptimizer
+):
+    """Render the content series generator interface."""
     st.header("Content Series Generator")
+    
+    # Check if calendar manager is available
+    if 'calendar_manager' not in st.session_state:
+        st.error("Calendar manager not initialized. Please refresh the page.")
+        return
+    
+    # Get available content
+    try:
+        available_content = st.session_state.calendar_manager.get_calendar().get_all_content()
+        content_options = [item.title for item in available_content]
+    except Exception as e:
+        logger.error(f"Error getting content options: {str(e)}")
+        st.error("Error loading content. Please try again.")
+        return
+    
+    if not content_options:
+        st.info("""
+        ## Welcome to Content Series Generator! 📚
+        
+        Create and manage content series across multiple platforms. Here's what you can do:
+        
+        ### Features:
+        - 📝 **Series Creation**: Generate connected content pieces
+        - 🔄 **Cross-Platform Distribution**: Optimize for different platforms
+        - 📊 **Series Analytics**: Track performance across the series
+        - 📅 **Smart Scheduling**: Plan content distribution
+        
+        ### Getting Started:
+        1. First, add some content to your calendar
+        2. Select a topic for your content series
+        3. Configure series parameters and platforms
+        4. Generate and schedule your series
+        
+        Ready to get started? Add some content to your calendar first!
+        """)
+        return
+    
+    # Series Configuration
+    st.subheader("Create New Content Series")
+    
+    # Show onboarding info if no series exist
+    if not st.session_state.get('content_series', {}):
+        st.info("""
+        ### Content Series Guide
+        
+        Create engaging content series with these features:
+        
+        - **Series Planning**: Define your series structure and goals
+        - **Content Generation**: Create connected content pieces
+        - **Platform Optimization**: Adapt content for each platform
+        - **Performance Tracking**: Monitor series success
+        
+        Fill out the form below to create your first series!
+        """)
     
     # Initialize series manager
     series_manager = SeriesManager()
@@ -231,144 +306,125 @@ def render_content_series_generator(ai_generator: AIGenerator, content_generator
                 try:
                     # Create series
                     series_id = f"series_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                    
+                    # Prepare metadata with default values
+                    metadata = {
+                        'tone': series_tone,
+                        'length': 'medium',  # Default length
+                        'engagement_goal': series_goals[0] if series_goals else 'Awareness',
+                        'creativity_level': 'balanced'  # Default creativity level
+                    }
+                    
                     series = series_manager.create_series(
                         series_id=series_id,
                         topic=series_topic,
                         num_pieces=num_pieces,
                         content_type=ContentType[content_type],
                         platforms=[Platform[p] for p in platforms],
-                        schedule_strategy=schedule_strategy
+                        schedule_strategy=schedule_strategy,
+                        series_type=series_goals[0] if series_goals else 'Awareness',
+                        series_flow='sequential',  # Default flow
+                        metadata=metadata
                     )
                     
                     if series:
                         # Generate series content
-                        for i in range(num_pieces):
-                            content_item = ContentItem(
-                                title=f"{series_topic} - Part {i+1}",
-                                description="",
-                                content_type=ContentType[content_type],
-                                platforms=[Platform[p] for p in platforms],
-                                publish_date=datetime.now() + timedelta(days=i*7),
-                                seo_data=SEOData(
-                                    title=f"{series_topic} - Part {i+1}",
-                                    meta_description="",
-                                    keywords=[],
-                                    structured_data={}
-                                ),
-                                status='Draft'
-                            )
-                            
-                            # Generate content using AI
-                            base_content = ai_generator.generate_series_content(
-                                content_item=content_item,
-                                series_info={
-                                    'topic': series_topic,
-                                    'part_number': i+1,
-                                    'total_parts': num_pieces,
-                                    'content_type': content_type,
-                                    'platforms': platforms,
-                                    'audience': target_audience,
-                                    'goals': series_goals,
-                                    'tone': series_tone
-                                }
-                            )
-                            
-                            if base_content:
-                                # Enhance with Content Generator
-                                enhanced_content = content_generator.enhance_series_content(
-                                    content=base_content,
-                                    series_info={
-                                        'topic': series_topic,
-                                        'part_number': i+1,
-                                        'total_parts': num_pieces
-                                    }
+                        series_content = content_generator.generate_content(
+                            content_type=ContentType[content_type],
+                            topic=series_topic,
+                            platforms=[Platform[p] for p in platforms],
+                            num_pieces=num_pieces,
+                            requirements={
+                                'tone': series_tone,
+                                'length': metadata['length'],
+                                'engagement_goal': metadata['engagement_goal'],
+                                'creativity_level': metadata['creativity_level'],
+                                'series_type': metadata['engagement_goal'],
+                                'series_flow': 'sequential',
+                                'target_audience': target_audience
+                            }
+                        )
+                        
+                        if series_content:
+                            # Add content pieces to series
+                            for piece in series_content:
+                                series_manager.add_piece(
+                                    series_id=series['id'],
+                                    piece=piece
                                 )
-                                
-                                if enhanced_content:
-                                    base_content.update(enhanced_content)
-                                
-                                # Add to series
-                                series_manager.add_piece(series_id, {
-                                    'part_number': i+1,
-                                    'content': base_content,
-                                    'seo_data': seo_optimizer.optimize_content(
-                                        content=base_content,
-                                        content_type=content_type,
-                                        language='English',
-                                        search_intent='Informational Intent'
+                            
+                            # Schedule series
+                            if schedule_strategy == 'linear':
+                                start_date = st.date_input("Start Date", datetime.now())
+                                interval = st.number_input("Days between pieces", min_value=1, value=7)
+                                series_manager.schedule_series(
+                                    series_id=series['id'],
+                                    start_date=start_date,
+                                    interval_days=interval
+                                )
+                            elif schedule_strategy == 'burst':
+                                start_date = st.date_input("Start Date", datetime.now())
+                                burst_size = st.number_input("Burst Size", min_value=1, value=1)
+                                series_manager.schedule_series(
+                                    series_id=series['id'],
+                                    start_date=start_date,
+                                    interval_days=1,
+                                    burst_size=burst_size
+                                )
+                            else:  # custom
+                                for i, piece in enumerate(series_manager.series_data[series['id']]['pieces']):
+                                    piece['scheduled_date'] = st.date_input(
+                                        f"Publish Date for Part {i+1}",
+                                        datetime.now() + timedelta(days=i*7)
                                     )
-                                })
-                        
-                        st.success(f"Generated {num_pieces} content pieces for series!")
-                        
-                        # Display series preview
-                        with st.expander("Series Preview", expanded=True):
-                            for piece in series_manager.series_data[series_id]['pieces']:
-                                st.markdown(f"### Part {piece['part_number']}")
-                                st.json(piece['content'])
                                 
-                                # Platform-specific previews
-                                st.markdown("#### Platform Previews")
+                                if st.button("Save Schedule"):
+                                    st.success("Series schedule saved!")
+                            
+                            st.success(f"Generated {num_pieces} content pieces for series!")
+                            
+                            # Display series preview
+                            with st.expander("Series Preview", expanded=True):
+                                for piece in series_manager.series_data[series_id]['pieces']:
+                                    st.markdown(f"### Part {piece['part_number']}")
+                                    st.json(piece['content'])
+                                    
+                                    # Platform-specific previews
+                                    st.markdown("#### Platform Previews")
+                                    for platform in platforms:
+                                        with st.expander(f"{platform} Preview"):
+                                            st.write(piece['content'].get('platform_previews', {}).get(platform, 'No preview available'))
+                            
+                            # Series performance tracking
+                            st.subheader("Series Performance")
+                            performance_data = series_manager.get_series_performance(series_id)
+                            if performance_data:
+                                st.write("### Overall Performance")
+                                col1, col2, col3 = st.columns(3)
+                                with col1:
+                                    st.metric("Total Engagement", f"{performance_data['overall']['total_engagement']:.1f}%")
+                                with col2:
+                                    st.metric("Total Reach", f"{performance_data['overall']['total_reach']:,}")
+                                with col3:
+                                    st.metric("Conversion Rate", f"{performance_data['overall']['conversion_rate']:.1f}%")
+                                
+                                # Platform-specific performance
+                                st.write("### Platform Performance")
                                 for platform in platforms:
-                                    with st.expander(f"{platform} Preview"):
-                                        st.write(piece['content'].get('platform_previews', {}).get(platform, 'No preview available'))
-                        
-                        # Series scheduling
-                        st.subheader("Series Scheduling")
-                        if schedule_strategy == 'linear':
-                            start_date = st.date_input("Start Date", datetime.now())
-                            interval = st.number_input("Days between pieces", min_value=1, value=7)
-                            
-                            if st.button("Schedule Series"):
-                                series_manager.schedule_series(series_id, start_date, interval)
-                                st.success("Series scheduled successfully!")
-                        
-                        elif schedule_strategy == 'burst':
-                            start_date = st.date_input("Start Date", datetime.now())
-                            if st.button("Schedule Series"):
-                                series_manager.schedule_series(series_id, start_date, interval=1)
-                                st.success("Series scheduled successfully!")
-                        
-                        else:  # custom
-                            for i, piece in enumerate(series_manager.series_data[series_id]['pieces']):
-                                piece['scheduled_date'] = st.date_input(
-                                    f"Publish Date for Part {i+1}",
-                                    datetime.now() + timedelta(days=i*7)
-                                )
-                            
-                            if st.button("Save Schedule"):
-                                st.success("Series schedule saved!")
-                        
-                        # Series performance tracking
-                        st.subheader("Series Performance")
-                        performance_data = series_manager.get_series_performance(series_id)
-                        if performance_data:
-                            st.write("### Overall Performance")
-                            col1, col2, col3 = st.columns(3)
-                            with col1:
-                                st.metric("Total Engagement", f"{performance_data['overall']['total_engagement']:.1f}%")
-                            with col2:
-                                st.metric("Total Reach", f"{performance_data['overall']['total_reach']:,}")
-                            with col3:
-                                st.metric("Conversion Rate", f"{performance_data['overall']['conversion_rate']:.1f}%")
-                            
-                            # Platform-specific performance
-                            st.write("### Platform Performance")
-                            for platform in platforms:
-                                with st.expander(f"{platform} Performance"):
-                                    platform_data = performance_data['platforms'].get(platform, {})
-                                    st.write(f"Engagement: {platform_data.get('engagement', 0):.1f}%")
-                                    st.write(f"Reach: {platform_data.get('reach', 0):,}")
-                                    st.write(f"Conversions: {platform_data.get('conversion_rate', 0):.1f}%")
-                            
-                            # Performance trends
-                            st.write("### Performance Trends")
-                            trend_data = performance_data['trends']
-                            st.line_chart(pd.DataFrame({
-                                'Engagement': trend_data['engagement'],
-                                'Reach': trend_data['reach'],
-                                'Conversions': trend_data['conversions']
-                            }))
+                                    with st.expander(f"{platform} Performance"):
+                                        platform_data = performance_data['platforms'].get(platform, {})
+                                        st.write(f"Engagement: {platform_data.get('engagement', 0):.1f}%")
+                                        st.write(f"Reach: {platform_data.get('reach', 0):,}")
+                                        st.write(f"Conversions: {platform_data.get('conversion_rate', 0):.1f}%")
+                                
+                                # Performance trends
+                                st.write("### Performance Trends")
+                                trend_data = performance_data['trends']
+                                st.line_chart(pd.DataFrame({
+                                    'Engagement': trend_data['engagement'],
+                                    'Reach': trend_data['reach'],
+                                    'Conversions': trend_data['conversions']
+                                }))
                         
                 except Exception as e:
                     logger.error(f"Error generating series: {str(e)}", exc_info=True)
@@ -389,4 +445,13 @@ def render_content_series_generator(ai_generator: AIGenerator, content_generator
                 
                 if st.button(f"Delete Series", key=f"delete_{series_id}"):
                     del st.session_state.content_series[series_id]
-                    st.experimental_rerun() 
+                    st.rerun()
+
+def on_series_complete():
+    """Handle series completion."""
+    try:
+        st.session_state.series_complete = True
+        st.rerun()
+    except Exception as e:
+        logger.error(f"Error handling series completion: {str(e)}")
+        st.error("An error occurred while completing the series. Please try again.") 

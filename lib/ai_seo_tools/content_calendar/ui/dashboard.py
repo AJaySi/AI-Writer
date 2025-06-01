@@ -1,64 +1,71 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import sys
 import hashlib
+from pathlib import Path
+from typing import Dict, Any
 from .calendar_view import render_calendar_view
 from .filters import render_filters
 from .add_content_modal import render_add_content_modal
 from .ai_suggestions_modal import render_ai_suggestions_modal
-from .components.performance_insights import render_performance_insights
-from .components.content_series import render_content_series_generator
-from .components.ab_testing import render_ab_testing
 from .components.content_optimization import render_content_optimization
+from .components.ab_testing import render_ab_testing
+from .components.content_series import render_content_series_generator
+from .components.performance_insights import render_performance_insights
+import json
+from lib.content_scheduler.ui.dashboard import run_dashboard as run_scheduler_dashboard
+
+# Add parent directory to path to import existing tools
+parent_dir = str(Path(__file__).parent.parent.parent.parent)
+if parent_dir not in sys.path:
+    sys.path.append(parent_dir)
+
+from lib.database.models import ContentItem, ContentType, Platform, get_engine, get_session, init_db
 from ..core.calendar_manager import CalendarManager
-from ..core.content_brief import ContentBriefGenerator
 from ..core.content_generator import ContentGenerator
 from ..core.ai_generator import AIGenerator
-from ..integrations.platform_adapters import UnifiedPlatformAdapter
+from ..core.content_brief import ContentBriefGenerator
 from ..integrations.seo_optimizer import SEOOptimizer
-from lib.ai_seo_tools.content_calendar.models.calendar import ContentItem, Platform, ContentType, SEOData, Calendar
-from lib.gpt_providers.text_generation.main_text_generation import llm_text_gen
-from typing import Dict, Any, List, Tuple
-import json
+from lib.integrations.platform_adapters import PlatformAdapter, UnifiedPlatformAdapter
+
+# Initialize logger
+logger = logging.getLogger(__name__)
+
+# Initialize DB/session (do this once at app startup)
+engine = get_engine()
+init_db(engine)
+session = get_session(engine)
+
+# Import content repurposing UI with error handling
+def render_smart_repurposing_tab():
+    """Render the Smart Content Repurposing tab with error handling."""
+    try:
+        from lib.ai_seo_tools.content_calendar.ui.components.content_repurposing_ui import render_content_repurposing_ui
+        render_content_repurposing_ui()
+    except ImportError as e:
+        st.error(f"Smart Content Repurposing feature is not available: {str(e)}")
+        st.info("Please ensure all dependencies are installed correctly.")
+    except Exception as e:
+        st.error(f"Error loading Smart Content Repurposing: {str(e)}")
+        st.info("Please check the logs for more details.")
 
 class ContentCalendarDashboard:
     """Interactive dashboard for content calendar management."""
     def __init__(self):
         self.logger = logging.getLogger('content_calendar.dashboard')
         self.logger.info("Initializing ContentCalendarDashboard")
-        
-        # Initialize calendar manager and store in session state
-        if 'calendar_manager' not in st.session_state:
-            st.session_state.calendar_manager = CalendarManager()
-            st.session_state.calendar_manager.load_calendar_from_json()
-        
-        self.calendar_manager = st.session_state.calendar_manager
         self.content_brief_generator = ContentBriefGenerator()
         self.content_generator = ContentGenerator()
         self.ai_generator = AIGenerator()
         self.platform_adapter = UnifiedPlatformAdapter()
         self.seo_optimizer = SEOOptimizer()
-        
-        # Initialize A/B testing state
+        # Initialize session state variables
         if 'ab_test_results' not in st.session_state:
             st.session_state.ab_test_results = {}
-        
-        # Initialize content optimization state
         if 'optimization_history' not in st.session_state:
             st.session_state.optimization_history = {}
-        
-        # Ensure a calendar exists
-        if not self.calendar_manager.get_calendar():
-            self.calendar_manager._calendar = Calendar(
-                start_date=datetime.now(),
-                duration='monthly',
-                platforms=[Platform.WEBSITE, Platform.INSTAGRAM, Platform.TWITTER, Platform.LINKEDIN, Platform.FACEBOOK],
-                schedule={}
-            )
-        
-        # Initialize session state
         if 'calendar_data' not in st.session_state:
             st.session_state.calendar_data = None
         if 'selected_content' not in st.session_state:
@@ -67,9 +74,8 @@ class ContentCalendarDashboard:
             st.session_state.view_mode = 'day'
         if 'selected_date' not in st.session_state:
             st.session_state.selected_date = datetime.now()
-        
         self.logger.info("ContentCalendarDashboard initialized successfully")
-    
+
     def render(self):
         self.logger.info("Starting dashboard render (tabbed UI)")
         try:
@@ -78,8 +84,15 @@ class ContentCalendarDashboard:
             st.markdown("""
             Plan, schedule, and manage your content strategy with AI-powered insights. Use the calendar to organize your content and leverage AI tools for optimization.
             """)
-            tabs = st.tabs(["Content Planning", "Content Optimization", "A/B Testing", "Content Series", "Analytics"])
-            
+            tabs = st.tabs([
+                "Content Planning",
+                "Content Optimization",
+                "🔄 Smart Repurposing",
+                "A/B Testing",
+                "Content Series",
+                "Analytics",
+                "Content Scheduling"
+            ])
             with tabs[0]:
                 icon_map = {
                     'Blog': '📝', 'Website': '🌐', 'Instagram': '📸', 'Twitter': '🐦', 'LinkedIn': '💼', 'Facebook': '📘',
@@ -90,17 +103,26 @@ class ContentCalendarDashboard:
                 }
                 calendar_data = self._get_calendar_data()
                 def on_edit(row):
-                    st.session_state["editing_item_key"] = self._get_item_key(row)
-                    st.experimental_rerun()
+                    try:
+                        st.session_state.editing_content = row
+                        st.rerun()
+                    except Exception as e:
+                        logger.error(f"Error handling edit action: {str(e)}")
+                        st.error("An error occurred while editing content. Please try again.")
                 def on_delete(row):
-                    self._delete_content(row)
-                    st.experimental_rerun()
+                    try:
+                        self._delete_content(row)
+                        st.success(f"Successfully deleted content: {row['title']}")
+                        st.rerun()
+                    except Exception as e:
+                        logger.error(f"Error handling delete action: {str(e)}")
+                        st.error("An error occurred while deleting content. Please try again.")
                 def on_generate(row):
                     st.session_state['show_ai_modal'] = True
                     st.session_state['ai_modal_topic'] = row['title']
                     st.session_state['ai_modal_type'] = str(row['type'])
                     st.session_state['ai_modal_platform'] = str(row['platform'])
-                    st.experimental_rerun()
+                    st.rerun()
                 render_calendar_view(
                     calendar_data=calendar_data,
                     icon_map=icon_map,
@@ -121,7 +143,7 @@ class ContentCalendarDashboard:
                     })
                     st.session_state['show_add_content_dialog'] = False
                     st.success("Content added!")
-                    st.experimental_rerun()
+                    st.rerun()
                 def handle_generate_with_ai(title, platform, content_type):
                     st.session_state['show_add_content_dialog'] = False
                     st.session_state['show_ai_modal'] = True
@@ -145,48 +167,47 @@ class ContentCalendarDashboard:
                         )
                         if st.button("Close"):
                             st.session_state['show_ai_modal'] = False
-
             with tabs[1]:
                 render_content_optimization(
                     content_generator=self.content_generator,
                     ai_generator=self.ai_generator,
                     seo_optimizer=self.seo_optimizer
                 )
-
             with tabs[2]:
-                render_ab_testing(self.content_generator, self.calendar_manager)
-
+                render_smart_repurposing_tab()
             with tabs[3]:
+                render_ab_testing(self.content_generator, None)
+            with tabs[4]:
                 render_content_series_generator(
                     self.ai_generator,
                     self.content_generator,
                     self.seo_optimizer
                 )
-
-            with tabs[4]:
+            with tabs[5]:
                 st.header("Analytics")
                 st.markdown("### Performance Insights")
+                all_content = session.query(ContentItem).all()
                 selected_content = st.selectbox(
                     "Select content to analyze",
-                    options=[item.title for item in self.calendar_manager.get_calendar().get_all_content()],
+                    options=[item.title for item in all_content],
                     key="analytics_content_select"
                 )
                 if selected_content:
                     content_item = next(
-                        item for item in self.calendar_manager.get_calendar().get_all_content()
+                        item for item in all_content
                         if item.title == selected_content
                     )
                     render_performance_insights(content_item, self.platform_adapter)
-                
                 st.markdown("### Optimization History")
                 if selected_content in st.session_state.optimization_history:
                     st.json(st.session_state.optimization_history[selected_content])
-
+            with tabs[6]:
+                run_scheduler_dashboard()
             self.logger.info("Dashboard render completed successfully (tabbed UI)")
         except Exception as e:
             self.logger.error(f"Error rendering dashboard: {str(e)}", exc_info=True)
             st.error(f"An error occurred: {str(e)}")
-    
+
     def _inject_custom_css(self):
         st.markdown("""
             <style>
@@ -197,20 +218,16 @@ class ContentCalendarDashboard:
     def _get_calendar_data(self):
         self.logger.info("_get_calendar_data called")
         try:
-            calendar_obj = self.calendar_manager.get_calendar()
-            if not calendar_obj:
-                self.logger.info("No calendar found in manager")
-                return None
+            all_content = session.query(ContentItem).all()
             data = []
-            for date_str, items in calendar_obj.schedule.items():
-                for item in items:
-                    data.append({
-                        'date': pd.to_datetime(date_str),
-                        'title': item.title,
-                        'platform': item.platforms[0] if item.platforms else 'Unknown',
-                        'type': item.content_type,
-                        'status': item.status
-                    })
+            for item in all_content:
+                data.append({
+                    'date': item.publish_date,
+                    'title': item.title,
+                    'platform': item.platforms[0] if item.platforms else 'Unknown',
+                    'type': item.content_type.value if hasattr(item.content_type, 'value') else str(item.content_type),
+                    'status': item.status
+                })
             df = pd.DataFrame(data) if data else None
             return df
         except Exception as e:
@@ -219,10 +236,6 @@ class ContentCalendarDashboard:
             return None
 
     def _add_content(self, content):
-        calendar = self.calendar_manager.get_calendar()
-        if not calendar:
-            st.error("No calendar found. Please create a calendar first.")
-            return
         platform_map = {
             'Blog': Platform.WEBSITE,
             'Instagram': Platform.INSTAGRAM,
@@ -238,41 +251,32 @@ class ContentCalendarDashboard:
             'Newsletter': ContentType.NEWSLETTER,
         }
         content_type_enum = content_type_map.get(content['type'], ContentType.BLOG_POST)
-        seo_data = SEOData(
-            title=content['title'],
-            meta_description="",
-            keywords=[],
-            structured_data={},
-        )
         new_item = ContentItem(
             title=content['title'],
             description="",
             content_type=content_type_enum,
-            platforms=[platform_enum],
+            platforms=[platform_enum.value],
             publish_date=pd.to_datetime(content['publish_date']),
-            seo_data=seo_data,
-            status=content.get('status', 'Draft')
+            status=content.get('status', 'Draft'),
+            author=None,
+            tags=[],
+            notes=None,
+            seo_data={}
         )
-        calendar.add_content(new_item)
-        self.calendar_manager.save_calendar_to_json()
+        session.add(new_item)
+        session.commit()
 
     def _delete_content(self, row):
-        calendar = self.calendar_manager.get_calendar()
-        if not calendar:
-            return
-        for date_str, items in list(calendar.schedule.items()):
-            calendar.schedule[date_str] = [
-                item for item in items
-                if not (
-                    item.title == row['title'] and
-                    str(item.publish_date.date()) == str(row['date'].date()) and
-                    item.platforms[0].name == str(row['platform']) and
-                    item.content_type.name == str(row['type'])
-                )
-            ]
-            if not calendar.schedule[date_str]:
-                del calendar.schedule[date_str]
-        self.calendar_manager.save_calendar_to_json()
+        # Find by title and publish_date (could be improved with unique IDs)
+        all_content = session.query(ContentItem).all()
+        for item in all_content:
+            if (item.title == row['title'] and
+                str(item.publish_date.date()) == str(row['date'].date()) and
+                (item.platforms[0] if item.platforms else 'Unknown') == str(row['platform']) and
+                (item.content_type.value if hasattr(item.content_type, 'value') else str(item.content_type)) == str(row['type'])):
+                session.delete(item)
+                session.commit()
+                break
 
     def _edit_content(self, row, new_title, new_platform, new_type, new_status):
         self._delete_content(row)

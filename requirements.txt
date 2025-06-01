@@ -15,6 +15,9 @@ exa_py>=1.9.1
 GoogleNews>=1.6.15
 langchain-google-genai>=2.0.10
 clint>=0.5.1
+oauthlib==3.2.2 
+requests-oauthlib==2.0.0 
+tweepy==4.15.0
 emoji==2.14.1
 moviepy==1.0.3
 imageio-ffmpeg==0.4.5
@@ -54,4 +57,6 @@ validators>=0.20.0
 python-whois==0.9.5
 dnspython
 sqlalchemy==2.0.41
+APScheduler>=3.9.1
+SQLAlchemy>=1.4.0
 scipy>=1.10.0

@@ -9,7 +9,7 @@ parent_dir = str(Path(__file__).parent.parent.parent.parent)
 if parent_dir not in sys.path:
     sys.path.append(parent_dir)
 
-from lib.ai_seo_tools.content_calendar.models.calendar import ContentType, ContentItem, Platform
+from lib.database.models import ContentType, ContentItem, Platform
 from lib.ai_seo_tools.content_calendar.utils.error_handling import handle_calendar_error
 from lib.gpt_providers.text_generation.main_text_generation import llm_text_gen
 from lib.ai_seo_tools.content_gap_analysis.main import ContentGapAnalysis
@@ -570,22 +570,6 @@ class AIGenerator:
     ) -> List[Dict[str, Any]]:
         """
         Generate AI content suggestions based on input parameters.
-        
-        Args:
-            content_type: Type of content to generate
-            topic: Main topic or subject
-            audience: Target audience
-            goals: List of content goals
-            tone: Desired tone
-            length: Content length
-            model_settings: AI model settings
-            style_preferences: Style preferences
-            seo_preferences: SEO preferences
-            platform_settings: Platform-specific settings
-            platform: Target platform
-            
-        Returns:
-            List of generated content suggestions
         """
         try:
             self.logger.info(f"Generating AI suggestions for topic: {topic}")
@@ -601,14 +585,14 @@ Tone: {tone}
 Length: {length}
 
 Style Preferences:
-- Creativity Level: {model_settings['Creativity Level']}
-- Formality Level: {model_settings['Formality Level']}
+- Creativity Level: {model_settings.get('Creativity Level', 'medium')}
+- Formality Level: {model_settings.get('Formality Level', 'professional')}
 - Style Elements: {', '.join(style_preferences)}
 
 SEO Preferences:
-- Keyword Density: {seo_preferences['Keyword Density']}%
-- Internal Linking: {'Enabled' if seo_preferences['Internal Linking'] else 'Disabled'}
-- External Linking: {'Enabled' if seo_preferences['External Linking'] else 'Disabled'}
+- Keyword Density: {seo_preferences.get('Keyword Density', 2)}%
+- Internal Linking: {'Enabled' if seo_preferences.get('Internal Linking', True) else 'Disabled'}
+- External Linking: {'Enabled' if seo_preferences.get('External Linking', True) else 'Disabled'}
 
 Platform Settings:
 - Platform: {platform}
@@ -645,55 +629,20 @@ Please generate 3 different content suggestions. Format your response as a valid
 
 IMPORTANT: Your response must be a valid JSON object. Do not include any text before or after the JSON object."""
 
-            # Define JSON structure for validation
-            json_struct = {
-                "type": "object",
-                "properties": {
-                    "suggestions": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "title": {"type": "string"},
-                                "introduction": {"type": "string"},
-                                "key_points": {"type": "array", "items": {"type": "string"}},
-                                "main_sections": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "title": {"type": "string"},
-                                            "content": {"type": "string"},
-                                            "engagement_elements": {"type": "array", "items": {"type": "string"}},
-                                            "seo_elements": {"type": "array", "items": {"type": "string"}}
-                                        }
-                                    }
-                                },
-                                "conclusion": {"type": "string"},
-                                "seo_elements": {"type": "array", "items": {"type": "string"}},
-                                "platform_optimizations": {"type": "array", "items": {"type": "string"}},
-                                "engagement_strategies": {"type": "array", "items": {"type": "string"}},
-                                "content_metrics": {
-                                    "type": "object",
-                                    "properties": {
-                                        "estimated_read_time": {"type": "string"},
-                                        "word_count": {"type": "number"},
-                                        "keyword_density": {"type": "number"},
-                                        "engagement_score": {"type": "number"}
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            # Generate content using llm_text_gen with JSON structure
-            generated_content = llm_text_gen(prompt, json_struct=json_struct)
+            # Generate content using llm_text_gen
+            generated_content = llm_text_gen(
+                prompt=prompt,
+                max_tokens=1000,
+                temperature=0.7,
+                top_p=0.9,
+                frequency_penalty=0.5,
+                presence_penalty=0.5
+            )
             
             if not generated_content:
-                raise ValueError("Failed to generate content suggestions")
-            
+                self.logger.error("No content generated from AI model")
+                return []
+
             # Parse the generated content
             try:
                 # If generated_content is already a dict, use it directly
@@ -703,6 +652,10 @@ IMPORTANT: Your response must be a valid JSON object. Do not include any text be
                     # Try to parse as JSON string
                     content_data = json.loads(generated_content)
                 
+                if not content_data or 'suggestions' not in content_data:
+                    self.logger.error("Invalid content structure in AI response")
+                    return []
+
                 return self._format_suggestions(
                     content_data,
                     content_type,
@@ -725,6 +678,9 @@ IMPORTANT: Your response must be a valid JSON object. Do not include any text be
                     if start >= 0 and end > start:
                         json_str = generated_content[start:end]
                         content_data = json.loads(json_str)
+                        if not content_data or 'suggestions' not in content_data:
+                            self.logger.error("Invalid content structure in extracted JSON")
+                            return []
                         return self._format_suggestions(
                             content_data,
                             content_type,
@@ -738,11 +694,11 @@ IMPORTANT: Your response must be a valid JSON object. Do not include any text be
                         )
                 except Exception as e2:
                     self.logger.error(f"Error extracting JSON from response: {str(e2)}")
-                    raise ValueError("Failed to parse generated content")
+                    return []
             
         except Exception as e:
             self.logger.error(f"Error generating AI suggestions: {str(e)}", exc_info=True)
-            raise
+            return []
 
     def _format_suggestions(
         self,

@@ -8,7 +8,7 @@ parent_dir = str(Path(__file__).parent.parent.parent.parent)
 if parent_dir not in sys.path:
     sys.path.append(parent_dir)
 
-from lib.ai_seo_tools.content_calendar.models.calendar import ContentType, ContentItem, Platform
+from lib.database.models import ContentType, ContentItem, Platform
 from lib.ai_seo_tools.content_calendar.utils.error_handling import handle_calendar_error
 from lib.gpt_providers.text_generation.main_text_generation import llm_text_gen
 from lib.ai_seo_tools.content_gap_analysis.main import ContentGapAnalysis

@@ -235,7 +235,3 @@ def youtube_main_menu():
                             # Store the selected tool in session state
                             st.session_state.selected_tool = tool
                             st.rerun()
-
-
-if __name__ == "__main__":
-    youtube_ai_writer()

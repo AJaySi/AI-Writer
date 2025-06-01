@@ -3,7 +3,7 @@ Unified platform adapter for content adaptation across different platforms.
 """
 
 import logging
-from typing import Dict, Any, List, Optional, TypedDict
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 from loguru import logger
 
@@ -12,19 +12,6 @@ from lib.ai_seo_tools.content_gap_analysis.main import ContentGapAnalysis
 from lib.ai_seo_tools.content_title_generator import ai_title_generator
 from lib.ai_seo_tools.meta_desc_generator import metadesc_generator_main
 from lib.ai_seo_tools.seo_structured_data import ai_structured_data
-
-class ContentItem(TypedDict):
-    """Type definition for content items."""
-    id: str
-    title: str
-    content: str
-    platforms: List[str]
-    status: str
-    created_at: datetime
-    updated_at: datetime
-    published_at: Optional[datetime]
-    metadata: Dict[str, Any]
-    analytics: Optional[Dict[str, Any]]
 
 class UnifiedPlatformAdapter:
     """Unified adapter for different social media platforms."""
@@ -65,17 +52,13 @@ class UnifiedPlatformAdapter:
                 'content': None
             }
     
-    def get_content_performance(self, content_item: ContentItem) -> Dict[str, Any]:
+    def get_content_performance(self, content_item: Dict[str, Any]) -> Dict[str, Any]:
         """Get performance metrics for content across platforms."""
         try:
-            logger.info(f"Getting performance metrics for content: {getattr(content_item, 'title', 'Untitled')}")
+            logger.info(f"Getting performance metrics for content: {content_item.get('title', 'Untitled')}")
             
             # Get platform from content item
-            platforms = getattr(content_item, 'platforms', None)
-            if platforms and len(platforms) > 0:
-                platform = platforms[0].name if hasattr(platforms[0], 'name') else str(platforms[0])
-            else:
-                platform = 'Unknown'
+            platform = content_item.get('platforms', ['Unknown'])[0]
             
             # Initialize performance metrics
             performance = {
@@ -102,7 +85,7 @@ class UnifiedPlatformAdapter:
             }
             
             # Add platform-specific metrics
-            if platform.upper() == 'WEBSITE':
+            if platform == 'WEBSITE':
                 performance['platform_specific'] = {
                     'bounce_rate': 0,
                     'time_on_page': 0,

@@ -1,6 +1,6 @@
 import streamlit as st
 from typing import Dict, Any
-from lib.ai_seo_tools.content_calendar.models.calendar import ContentItem
+from lib.database.models import ContentItem
 import logging
 
 logger = logging.getLogger(__name__)
