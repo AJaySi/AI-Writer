@@ -40,7 +40,17 @@ class Sidebar:
         with st.sidebar:
             # Logo and title
             if self.logo:
-                st.image(self.logo, width=50)
+                try:
+                    import os
+                    if os.path.exists(self.logo):
+                        st.image(self.logo, width=50)
+                    else:
+                        # Show a placeholder or just skip the logo
+                        st.markdown("🐦", help="Twitter Tools Logo")
+                except Exception as e:
+                    # If there's any error loading the image, show an emoji instead
+                    st.markdown("🐦", help="Twitter Tools Logo")
+            
             st.markdown(f"""
                 <h2 style="margin: {Theme.SPACING["sm"]} 0;">{self.title}</h2>
             """, unsafe_allow_html=True)

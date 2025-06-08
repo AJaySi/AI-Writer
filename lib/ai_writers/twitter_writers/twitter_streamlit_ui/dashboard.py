@@ -9,35 +9,43 @@ from .components.cards import FeatureCard, TweetCard
 from .components.forms import TweetForm, SettingsForm
 from .components.navigation import Sidebar, Header, Tabs, Breadcrumbs
 from .styles.theme import Theme
+import os
 
 class TwitterDashboard:
     """Main dashboard class for Twitter UI."""
     
     def __init__(self):
-        self.setup_page()
+        """Initialize the Twitter dashboard."""
         self.setup_theme()
         self.setup_navigation()
         self.setup_state()
     
-    def setup_page(self) -> None:
-        """Configure the Streamlit page settings."""
-        st.set_page_config(
-            page_title="Twitter Tools",
-            page_icon="🐦",
-            layout="wide",
-            initial_sidebar_state="expanded"
-        )
+    def get_logo_path(self) -> str:
+        """Get the best available logo path with fallbacks."""
+        # List of potential logo paths in order of preference
+        logo_paths = [
+            "lib/workspace/alwrity_logo.png",
+            "lib/workspace/AskAlwrity-min.ico",
+            "lib/workspace/alwrity_ai_writer.png"
+        ]
+        
+        for path in logo_paths:
+            if os.path.exists(path):
+                return path
+        
+        # If no logo files are found, return None
+        return None
     
     def setup_theme(self) -> None:
-        """Apply the theme to the dashboard."""
-        Theme().apply()
+        """Setup theme and styling."""
+        Theme.apply()
     
     def setup_navigation(self) -> None:
         """Setup navigation components."""
         # Sidebar
         self.sidebar = Sidebar(
             title="Twitter Tools",
-            logo="assets/logo.png"
+            logo=self.get_logo_path()
         )
         
         # Add menu items
@@ -92,7 +100,7 @@ class TwitterDashboard:
     
     def refresh_dashboard(self) -> None:
         """Refresh dashboard data."""
-        st.experimental_rerun()
+        st.rerun()
     
     def render_overview(self) -> None:
         """Render the overview tab content."""

@@ -1,36 +1,29 @@
+#!/usr/bin/env python3
 """
-Enhanced ALwrity Chatbot - Comprehensive Content Creation Assistant
+Enhanced ALwrity Chatbot - Complete Modular Version
 
-This module provides an advanced chatbot interface that integrates all ALwrity features
-including AI writers, SEO tools, content planning, and document analysis.
+An intelligent conversational AI assistant that provides comprehensive writing assistance,
+SEO analysis, workflow automation, and content creation tools.
 """
 
 import time
 import os
 import json
-import joblib
 import streamlit as st
+import sys
+import traceback
+import tempfile
+import requests
 from dotenv import load_dotenv
 from pathlib import Path
 from typing import Dict, List, Any, Optional
-import tempfile
-import requests
 from urllib.parse import urlparse
 import pandas as pd
+from datetime import datetime
 
-# Import ALwrity components
-from ..gpt_providers.text_generation.main_text_generation import llm_text_gen
-from ..ai_writers.ai_writer_dashboard import list_ai_writers
-from ..ai_seo_tools.content_gap_analysis.main import ContentGapAnalysis
-from ..database.models import ContentItem
-from ..ai_seo_tools.content_calendar.ui.components.content_repurposing_ui import ContentRepurposingUI
-from ..utils.alwrity_utils import essay_writer, ai_news_writer, ai_finance_ta_writer
-from ..ai_writers.ai_blog_writer.ai_blog_generator import ai_blog_writer_page
-from ..ai_writers.ai_story_writer.story_writer import story_input_section
-from ..ai_writers.ai_product_description_writer import write_ai_prod_desc
-from ..ai_writers.linkedin_writer import LinkedInAIWriter
-from ..ai_writers.ai_facebook_writer.facebook_ai_writer import FacebookAIWriter
-from ..ai_writers.youtube_writers.youtube_ai_writer import youtube_main_menu
+# Add the project root to Python path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 # Load environment variables
 load_dotenv()
@@ -41,6 +34,98 @@ AI_AVATAR_ICON = '🤖'
 USER_AVATAR_ICON = '👤'
 DATA_DIR = 'data/chatbot/'
 
+# Initialize import flags
+IMPORTS_SUCCESSFUL = True
+IMPORT_ERRORS = []
+
+try:
+    # Import ALwrity components
+    from lib.gpt_providers.text_generation.main_text_generation import llm_text_gen
+except ImportError as e:
+    IMPORT_ERRORS.append(f"Text generation: {str(e)}")
+    llm_text_gen = None
+
+try:
+    from lib.ai_writers.ai_writer_dashboard import list_ai_writers
+except ImportError as e:
+    IMPORT_ERRORS.append(f"AI writers: {str(e)}")
+    list_ai_writers = lambda: []
+
+try:
+    from lib.ai_seo_tools.content_gap_analysis.main import ContentGapAnalysis
+except ImportError as e:
+    IMPORT_ERRORS.append(f"Content gap analysis: {str(e)}")
+    ContentGapAnalysis = None
+
+try:
+    from lib.database.models import ContentItem
+except ImportError as e:
+    IMPORT_ERRORS.append(f"Database models: {str(e)}")
+    ContentItem = None
+
+try:
+    from lib.ai_seo_tools.content_calendar.ui.components.content_repurposing_ui import ContentRepurposingUI
+except ImportError as e:
+    IMPORT_ERRORS.append(f"Content repurposing: {str(e)}")
+    ContentRepurposingUI = None
+
+try:
+    from lib.utils.alwrity_utils import essay_writer, ai_news_writer, ai_finance_ta_writer
+except ImportError as e:
+    IMPORT_ERRORS.append(f"ALwrity utils: {str(e)}")
+    essay_writer = ai_news_writer = ai_finance_ta_writer = None
+
+try:
+    from lib.ai_writers.ai_blog_writer.ai_blog_generator import ai_blog_writer_page
+    from lib.ai_writers.ai_story_writer.story_writer import story_input_section
+    from lib.ai_writers.ai_product_description_writer import write_ai_prod_desc
+    from lib.ai_writers.linkedin_writer import LinkedInAIWriter
+    from lib.ai_writers.ai_facebook_writer.facebook_ai_writer import FacebookAIWriter
+    from lib.ai_writers.youtube_writers.youtube_ai_writer import youtube_main_menu
+except ImportError as e:
+    IMPORT_ERRORS.append(f"AI writers modules: {str(e)}")
+
+try:
+    from lib.ai_seo_tools.on_page_seo_analyzer import analyze_onpage_seo, fetch_seo_data
+    from lib.ai_seo_tools.weburl_seo_checker import run_analysis
+    from lib.ai_seo_tools.technical_seo_crawler.crawler import TechnicalSEOCrawler
+except ImportError as e:
+    IMPORT_ERRORS.append(f"SEO tools: {str(e)}")
+    analyze_onpage_seo = fetch_seo_data = run_analysis = None
+    TechnicalSEOCrawler = None
+
+try:
+    # Import core modules
+    from .core.workflow_engine import WorkflowEngine
+    from .core.tool_router import SmartToolRouter
+    from .core.intent_analyzer import IntentAnalyzer
+    from .core.context_manager import ContextManager
+except ImportError as e:
+    IMPORT_ERRORS.append(f"Core modules: {str(e)}")
+    WorkflowEngine = SmartToolRouter = IntentAnalyzer = ContextManager = None
+
+try:
+    # Import UI components
+    from .ui.sidebar import SidebarManager
+except ImportError as e:
+    IMPORT_ERRORS.append(f"UI components: {str(e)}")
+    SidebarManager = None
+
+# Check if UI init exists
+try:
+    ui_init_path = Path(__file__).parent / "ui" / "__init__.py"
+    if not ui_init_path.exists():
+        # Create basic init file if missing
+        ui_init_path.parent.mkdir(exist_ok=True)
+        ui_init_path.write_text('"""UI Components for Enhanced ALwrity Chatbot."""\n')
+except Exception as e:
+    IMPORT_ERRORS.append(f"UI init setup: {str(e)}")
+
+# Set global flag
+if IMPORT_ERRORS:
+    IMPORTS_SUCCESSFUL = False
+
+
 class EnhancedALwrityChatbot:
     """Enhanced ALwrity Chatbot with comprehensive content creation capabilities."""
     
@@ -50,932 +135,1022 @@ class EnhancedALwrityChatbot:
         self.setup_ai_model()
         self.load_ai_writers()
         
+        # Initialize core components with error handling
+        try:
+            self.workflow_engine = WorkflowEngine() if WorkflowEngine else None
+            self.tool_router = SmartToolRouter() if SmartToolRouter else None
+            self.intent_analyzer = IntentAnalyzer() if IntentAnalyzer else None
+            self.context_manager = ContextManager() if ContextManager else None
+            self.content_gap_analyzer = ContentGapAnalysis() if ContentGapAnalysis else None
+            self.technical_seo_crawler = TechnicalSEOCrawler() if TechnicalSEOCrawler else None
+        except Exception as e:
+            st.warning(f"Some advanced features may not be available: {str(e)}")
+            self.workflow_engine = None
+            self.tool_router = None
+            self.intent_analyzer = None
+            self.context_manager = None
+            self.content_gap_analyzer = None
+            self.technical_seo_crawler = None
+        
+        # Initialize UI components with error handling
+        try:
+            self.sidebar_manager = SidebarManager(
+                self.context_manager, 
+                self.workflow_engine, 
+                self.tool_router
+            ) if SidebarManager and self.context_manager else None
+        except Exception as e:
+            st.warning(f"Advanced UI features may not be available: {str(e)}")
+            self.sidebar_manager = None
+        
+        # Track UI state
+        if "ui_state" not in st.session_state:
+            st.session_state.ui_state = {}
+    
     def initialize_session_state(self):
         """Initialize session state variables."""
         if "enhanced_chat_messages" not in st.session_state:
             st.session_state.enhanced_chat_messages = [
                 {
                     "role": "assistant", 
-                    "content": "👋 Welcome to ALwrity! I'm your AI content creation assistant. I can help you with:\n\n"
-                              "📝 **Content Writing**: Blog posts, articles, stories, essays\n"
-                              "📱 **Social Media**: LinkedIn, Facebook, YouTube content\n"
-                              "🔍 **SEO Analysis**: Competitor research, keyword analysis\n"
-                              "📊 **Content Planning**: Calendar creation, repurposing\n"
-                              "📄 **Document Analysis**: Upload files for insights\n\n"
-                              "What would you like to create today?",
+                    "content": "🚀 **Welcome to Enhanced ALwrity - Your AI Content Creation Hub!**\n\n"
+                              "I'm your intelligent assistant that can help you with:\n\n"
+                              "**🎯 Smart Content Creation**\n"
+                              "• Blog posts, articles, stories with AI optimization\n"
+                              "• Social media content for all platforms\n"
+                              "• Product descriptions and marketing copy\n\n"
+                              "**🔍 Advanced SEO & Analysis**\n"
+                              "• Content gap analysis vs competitors\n"
+                              "• Technical SEO audits and recommendations\n"
+                              "• Keyword research and optimization\n\n"
+                              "**📊 Intelligent Workflows**\n"
+                              "• Multi-tool automation for complex tasks\n"
+                              "• Content calendar and strategy planning\n"
+                              "• Document analysis and insights\n\n"
+                              "**💡 What makes me special:**\n"
+                              "• I suggest the best tools for your specific needs\n"
+                              "• I can chain multiple tools together for complex workflows\n"
+                              "• I learn from your preferences and improve suggestions\n\n"
+                              "**Ready to create amazing content? Try asking:**\n"
+                              "• *\"Help me write a blog post about sustainable technology\"*\n"
+                              "• *\"Analyze my website's SEO compared to competitors\"*\n"
+                              "• *\"Create a social media campaign for my product launch\"*\n\n"
+                              "What content challenge can I help you solve today? 🎨",
                     "avatar": AI_AVATAR_ICON
                 }
             ]
         
+        # Enhanced context tracking
         if "chat_context" not in st.session_state:
             st.session_state.chat_context = {
                 "current_task": None,
-                "user_preferences": {},
+                "user_preferences": {
+                    "preferred_writing_style": None,
+                    "industry": None,
+                    "target_audience": None,
+                    "content_goals": []
+                },
                 "uploaded_files": [],
-                "content_history": []
+                "content_history": [],
+                "active_workflows": [],
+                "tool_usage_history": [],
+                "conversation_summary": ""
             }
             
         if "content_workspace" not in st.session_state:
             st.session_state.content_workspace = {
                 "drafts": [],
                 "templates": [],
-                "research_data": {}
+                "research_data": {},
+                "seo_insights": {},
+                "competitor_data": {},
+                "keyword_data": {}
             }
-    
+        
+        # Initialize messages for modular interface
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
+
     def setup_ai_model(self):
         """Setup the AI model for conversation."""
         try:
-            st.session_state.enhanced_model = genai.GenerativeModel('gemini-pro')
-            st.session_state.enhanced_chat = st.session_state.enhanced_model.start_chat(history=[])
+            # Using ALwrity's main text generation instead of direct API calls
+            st.session_state.enhanced_model_ready = True
         except Exception as e:
             st.error(f"Error setting up AI model: {str(e)}")
     
     def load_ai_writers(self):
         """Load available AI writers."""
-        self.ai_writers = list_ai_writers()
-        self.writer_functions = {
-            writer['name']: writer['function'] for writer in self.ai_writers
-        }
-    
-    def render_chatbot_ui(self):
-        """Render the main chatbot interface."""
-        st.title("🤖 ALwrity Assistant")
-        
-        # Sidebar with features and tools
-        self.render_sidebar()
-        
-        # Main chat interface
-        self.render_chat_interface()
-        
-        # File upload area
-        self.render_file_upload()
-        
-        # Quick actions
-        self.render_quick_actions()
-    
-    def render_sidebar(self):
-        """Render the sidebar with available features."""
-        with st.sidebar:
-            st.header("🛠️ ALwrity Tools")
-            
-            # Content Writers
-            with st.expander("📝 AI Writers", expanded=False):
-                for writer in self.ai_writers:
-                    if st.button(f"{writer['icon']} {writer['name']}", key=f"writer_{writer['name']}"):
-                        self.suggest_writer_usage(writer)
-            
-            # SEO Tools
-            with st.expander("🔍 SEO Tools", expanded=False):
-                if st.button("🔍 Competitor Analysis"):
-                    self.suggest_competitor_analysis()
-                if st.button("📊 Content Gap Analysis"):
-                    self.suggest_content_gap_analysis()
-                if st.button("🎯 Keyword Research"):
-                    self.suggest_keyword_research()
-            
-            # Content Planning
-            with st.expander("📅 Content Planning", expanded=False):
-                if st.button("📅 Content Calendar"):
-                    self.suggest_content_calendar()
-                if st.button("🔄 Content Repurposing"):
-                    self.suggest_content_repurposing()
-                if st.button("📈 Content Strategy"):
-                    self.suggest_content_strategy()
-            
-            # Quick Templates
-            with st.expander("📋 Quick Templates", expanded=False):
-                templates = [
-                    "Blog Post Outline",
-                    "Social Media Campaign",
-                    "Email Newsletter",
-                    "Product Description",
-                    "Press Release"
-                ]
-                for template in templates:
-                    if st.button(template, key=f"template_{template}"):
-                        self.suggest_template_usage(template)
-            
-            # Chat History
-            with st.expander("💬 Chat History", expanded=False):
-                if st.button("🗑️ Clear Chat"):
-                    self.clear_chat_history()
-                if st.button("💾 Save Chat"):
-                    self.save_chat_history()
-    
-    def render_chat_interface(self):
-        """Render the main chat interface."""
-        # Display chat messages
-        for message in st.session_state.enhanced_chat_messages:
-            with st.chat_message(message["role"], avatar=message.get("avatar")):
-                st.markdown(message["content"])
-        
-        # Chat input
-        if prompt := st.chat_input("Ask me anything about content creation..."):
-            self.handle_user_input(prompt)
-    
-    def render_file_upload(self):
-        """Render file upload interface."""
-        with st.expander("📁 Upload Files for Analysis", expanded=False):
-            uploaded_files = st.file_uploader(
-                "Upload documents, images, or URLs",
-                type=['txt', 'pdf', 'docx', 'csv', 'xlsx', 'jpg', 'png', 'gif'],
-                accept_multiple_files=True,
-                help="Upload files to analyze content, extract insights, or use as reference material"
-            )
-            
-            if uploaded_files:
-                self.process_uploaded_files(uploaded_files)
-            
-            # URL input
-            url_input = st.text_input("Or enter a URL to analyze:")
-            if url_input and st.button("Analyze URL"):
-                self.process_url(url_input)
-    
-    def render_quick_actions(self):
-        """Render quick action buttons."""
-        st.subheader("⚡ Quick Actions")
-        
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            if st.button("📝 Write Blog Post"):
-                self.quick_blog_post()
-        
-        with col2:
-            if st.button("📱 Social Media Post"):
-                self.quick_social_media()
-        
-        with col3:
-            if st.button("🔍 SEO Analysis"):
-                self.quick_seo_analysis()
-        
-        with col4:
-            if st.button("📊 Content Ideas"):
-                self.quick_content_ideas()
-    
-    def handle_user_input(self, prompt: str):
-        """Handle user input and generate appropriate response."""
-        # Add user message to chat
-        st.session_state.enhanced_chat_messages.append({
-            "role": "user",
-            "content": prompt,
-            "avatar": USER_AVATAR_ICON
-        })
-        
-        # Analyze user intent
-        intent = self.analyze_user_intent(prompt)
-        
-        # Generate response based on intent
-        response = self.generate_contextual_response(prompt, intent)
-        
-        # Add assistant response to chat
-        st.session_state.enhanced_chat_messages.append({
-            "role": "assistant",
-            "content": response,
-            "avatar": AI_AVATAR_ICON
-        })
-        
-        st.rerun()
-    
-    def analyze_user_intent(self, prompt: str) -> Dict[str, Any]:
-        """Analyze user intent from the prompt."""
-        intent_keywords = {
-            "write": ["write", "create", "generate", "compose", "draft"],
-            "analyze": ["analyze", "review", "check", "examine", "evaluate"],
-            "seo": ["seo", "optimize", "rank", "keyword", "search"],
-            "social": ["social", "facebook", "twitter", "linkedin", "instagram"],
-            "blog": ["blog", "article", "post", "content"],
-            "help": ["help", "how", "what", "explain", "guide"],
-            "research": ["research", "competitor", "market", "trend"],
-            "plan": ["plan", "strategy", "calendar", "schedule"]
-        }
-        
-        prompt_lower = prompt.lower()
-        detected_intents = []
-        
-        for intent, keywords in intent_keywords.items():
-            if any(keyword in prompt_lower for keyword in keywords):
-                detected_intents.append(intent)
-        
-        return {
-            "primary_intent": detected_intents[0] if detected_intents else "general",
-            "all_intents": detected_intents,
-            "confidence": len(detected_intents) / len(intent_keywords)
-        }
-    
-    def generate_contextual_response(self, prompt: str, intent: Dict[str, Any]) -> str:
-        """Generate a contextual response based on user intent."""
         try:
-            # Build context from chat history and user preferences
-            context = self.build_conversation_context()
+            if list_ai_writers:
+                self.ai_writers = list_ai_writers()
+                self.writer_functions = {
+                    writer['name']: writer['function'] for writer in self.ai_writers
+                }
+            else:
+                self.ai_writers = []
+                self.writer_functions = {}
+        except Exception as e:
+            st.warning(f"Could not load AI writers: {str(e)}")
+            self.ai_writers = []
+            self.writer_functions = {}
+    
+    def process_message(self, prompt: str) -> str:
+        """Process user message and generate response."""
+        try:
+            # Ensure session state is properly initialized
+            if "chat_context" not in st.session_state:
+                st.warning("🔧 Initializing session state...")
+                self.initialize_session_state()
             
-            # Create system prompt based on intent
-            system_prompt = self.create_system_prompt(intent)
+            # Validate session state structure
+            if not isinstance(st.session_state.chat_context, dict):
+                st.error(f"🐛 Invalid chat_context type: {type(st.session_state.chat_context)}")
+                st.session_state.chat_context = {
+                    "user_preferences": {},
+                    "tool_usage_history": [],
+                    "active_workflows": [],
+                    "conversation_summary": ""
+                }
             
-            # Generate response using AI
-            ai_prompt = f"""
-            Context: {context}
-            User Intent: {intent['primary_intent']}
-            User Message: {prompt}
-            
-            Provide a helpful, actionable response that:
-            1. Addresses the user's specific need
-            2. Suggests relevant ALwrity tools if applicable
-            3. Offers step-by-step guidance
-            4. Includes examples when helpful
-            5. Maintains a friendly, professional tone
-            
-            Available ALwrity Features:
-            - AI Writers: {[w['name'] for w in self.ai_writers]}
-            - SEO Tools: Competitor Analysis, Content Gap Analysis, Keyword Research
-            - Content Planning: Calendar, Repurposing, Strategy
-            - Document Analysis: File upload and URL analysis
-            """
-            
-            response = llm_text_gen(
-                prompt=ai_prompt,
-                system_prompt=system_prompt
-            )
-            
-            # Add action buttons if relevant
-            if intent['primary_intent'] in ['write', 'create']:
-                response += self.add_writer_suggestions(prompt)
-            elif intent['primary_intent'] in ['analyze', 'seo']:
-                response += self.add_analysis_suggestions(prompt)
-            elif intent['primary_intent'] in ['plan', 'strategy']:
-                response += self.add_planning_suggestions(prompt)
+            # Analyze user intent if available
+            if self.intent_analyzer:
+                try:
+                    intent = self.intent_analyzer.analyze_user_intent(prompt, st.session_state.chat_context)
+                    
+                    # Debug: Log the type and content of intent
+                    if not isinstance(intent, dict):
+                        st.error(f"🐛 DEBUG: Intent analyzer returned {type(intent)}: {intent}")
+                        intent = self._create_fallback_intent(prompt)
+                    
+                    # Validate that intent is a dictionary
+                    if not isinstance(intent, dict):
+                        st.warning(f"Intent analyzer returned unexpected type: {type(intent)}")
+                        intent = self._create_fallback_intent(prompt)
+                    
+                    # Ensure required keys exist
+                    required_keys = ['primary_intent', 'all_intents', 'sub_intents', 'content_types', 'urgency', 'complexity']
+                    for key in required_keys:
+                        if key not in intent:
+                            intent[key] = self._get_default_intent_value(key)
+                    
+                    # Final validation before proceeding
+                    if not isinstance(intent, dict):
+                        st.error("🚨 Critical: Intent is still not a dictionary after fallback. Creating emergency fallback.")
+                        intent = {
+                            "primary_intent": "general",
+                            "all_intents": ["general"],
+                            "sub_intents": [],
+                            "content_types": [],
+                            "urgency": {"level": "normal", "score": 0.5, "is_urgent": False},
+                            "complexity": {"level": "medium", "score": 0.5, "word_count": len(prompt.split())},
+                            "suggested_workflows": [],
+                            "suggested_tools": []
+                        }
+                    
+                    # Generate response based on intent
+                    response = self.generate_contextual_response(prompt, intent)
+                    # Update conversation context
+                    self.update_conversation_context(prompt, response, intent)
+                    
+                except Exception as intent_error:
+                    st.warning(f"Intent analysis failed: {str(intent_error)}. Using fallback mode.")
+                    # Create fallback intent structure
+                    intent = self._create_fallback_intent(prompt)
+                    response = self.generate_contextual_response(prompt, intent)
+                    self.update_conversation_context(prompt, response, intent)
+            else:
+                # Fallback to simple text generation
+                response = self.generate_simple_response(prompt)
             
             return response
             
         except Exception as e:
-            return f"I apologize, but I encountered an error processing your request: {str(e)}. Please try rephrasing your question or use the quick actions below."
+            st.error(f"🚨 Critical error in process_message: {str(e)}")
+            return f"I apologize, but I encountered an error processing your request: {str(e)}. Let me suggest some alternative approaches based on what you're trying to achieve."
     
-    def create_system_prompt(self, intent: Dict[str, Any]) -> str:
-        """Create a system prompt based on user intent."""
-        base_prompt = """You are ALwrity, an expert AI content creation assistant. You help users create high-quality content, optimize for SEO, and develop content strategies."""
-        
-        intent_prompts = {
-            "write": "Focus on content creation guidance, writing tips, and suggesting appropriate AI writers.",
-            "analyze": "Focus on content analysis, SEO evaluation, and providing actionable insights.",
-            "seo": "Focus on SEO optimization, keyword research, and search engine best practices.",
-            "social": "Focus on social media content creation and platform-specific optimization.",
-            "research": "Focus on competitor analysis, market research, and content gap identification.",
-            "plan": "Focus on content strategy, planning, and calendar management.",
-            "help": "Focus on explaining features, providing tutorials, and guiding users."
+    def generate_contextual_response(self, prompt: str, intent: Dict[str, Any]) -> str:
+        """Enhanced contextual response generation with smart tool integration."""
+        try:
+            # Validate intent parameter
+            if not isinstance(intent, dict):
+                st.warning("Invalid intent data received. Using fallback response.")
+                return self.generate_simple_response(prompt)
+            
+            # Build comprehensive context
+            context = self.build_comprehensive_context()
+            
+            # Create advanced system prompt
+            system_prompt = self.create_advanced_system_prompt(intent, context)
+            
+            # Safely extract intent values with defaults
+            primary_intent = intent.get('primary_intent', 'general')
+            all_intents = intent.get('all_intents', [primary_intent])
+            sub_intents = intent.get('sub_intents', [])
+            content_types = intent.get('content_types', [])
+            complexity = intent.get('complexity', {})
+            urgency = intent.get('urgency', {})
+            suggested_workflows = intent.get('suggested_workflows', [])
+            suggested_tools = intent.get('suggested_tools', [])
+            
+            # Generate enhanced AI prompt
+            ai_prompt = f"""
+            **CONVERSATION CONTEXT:**
+            {context}
+            
+            **USER INTENT ANALYSIS:**
+            • Primary Intent: {primary_intent}
+            • All Intents: {', '.join(all_intents)}
+            • Sub-intents: {', '.join(sub_intents)}
+            • Content Types: {', '.join(content_types)}
+            • Complexity: {complexity.get('level', 'medium')}
+            • Urgency: {"High" if urgency.get('is_urgent', False) else "Normal"}
+            
+            **USER MESSAGE:** {prompt}
+            
+            **RESPONSE INSTRUCTIONS:**
+            1. **Immediate Value**: Provide actionable insights right away
+            2. **Tool Integration**: Suggest specific ALwrity tools with clear benefits
+            3. **Workflow Automation**: Recommend multi-step workflows when appropriate
+            4. **Personalization**: Use context to personalize suggestions
+            5. **Next Steps**: Always provide clear next steps
+            
+            **AVAILABLE ALWRITY ECOSYSTEM:**
+            • AI Writers: {[w.get('name', 'Unknown') if isinstance(w, dict) else str(w) for w in self.ai_writers] if self.ai_writers else ['Basic AI Writer']}
+            • SEO Tools: Content Gap Analysis, Technical SEO Crawler, On-Page SEO
+            • Workflows: {[w.get('name', 'Workflow') if isinstance(w, dict) else str(w) for w in suggested_workflows] if suggested_workflows else ['Basic Workflow']}
+            • Smart Tools: {[t.get('tool', 'Tool') if isinstance(t, dict) else str(t) for t in suggested_tools[:3]] if suggested_tools else ['Basic Tools']}
+            
+            **RESPONSE STRUCTURE:**
+            1. Acknowledge user's specific need
+            2. Provide immediate helpful information
+            3. Suggest relevant tools with clear value propositions
+            4. Offer workflow automation if applicable
+            5. Include actionable next steps with buttons/links
+            
+            Create a response that is conversational, helpful, and leverages ALwrity's full capabilities.
+            """
+            
+            if llm_text_gen:
+                response = llm_text_gen(
+                    prompt=ai_prompt,
+                    system_prompt=system_prompt
+                )
+            else:
+                response = f"I understand you're looking for help with {primary_intent}. While I'm running in limited mode, I can still assist you with basic guidance and suggestions."
+            
+            # Add smart tool suggestions and workflow recommendations
+            response += self.add_smart_suggestions(intent, prompt)
+            
+            # Add quick actions if relevant
+            response += self.add_contextual_actions(intent, prompt)
+            
+            return response
+            
+        except Exception as e:
+            st.error(f"Error in contextual response generation: {str(e)}")
+            return f"I apologize, but I encountered an error processing your request: {str(e)}. Let me suggest some alternative approaches based on what you're trying to achieve."
+    
+    def create_advanced_system_prompt(self, intent: Dict[str, Any], context: Dict[str, Any]) -> str:
+        """Create an advanced system prompt based on intent and context."""
+        try:
+            base_prompt = """You are ALwrity AI, the most advanced content creation and SEO assistant. You have deep expertise in:
+
+• Content Strategy & Creation across all formats and platforms
+• Advanced SEO optimization and technical analysis  
+• Competitive intelligence and market research
+• Multi-platform social media marketing
+• Workflow automation and process optimization
+• Data-driven content performance analysis
+
+You are equipped with a comprehensive suite of specialized tools and can orchestrate complex workflows."""
+            
+            # Add intent-specific expertise
+            intent_expertise = {
+                "write": "Focus on content creation excellence, writing optimization, and audience engagement strategies.",
+                "analyze": "Focus on data analysis, competitive intelligence, and actionable insights generation.",
+                "seo": "Focus on technical SEO, content optimization, and search performance improvement.",
+                "social": "Focus on platform-specific optimization, audience engagement, and viral content creation.",
+                "research": "Focus on market intelligence, competitor analysis, and opportunity identification.",
+                "plan": "Focus on strategic planning, workflow optimization, and systematic execution.",
+                "workflow": "Focus on process automation, multi-tool integration, and efficiency optimization."
+            }
+            
+            # Safely get primary intent
+            primary_intent = 'general'
+            if isinstance(intent, dict):
+                primary_intent = intent.get('primary_intent', 'general')
+            
+            specific_expertise = intent_expertise.get(primary_intent, "Provide comprehensive, expert assistance.")
+            
+            # Add context awareness
+            context_prompt = ""
+            if isinstance(context, dict):
+                user_preferences = context.get('user_preferences', {})
+                if isinstance(user_preferences, dict):
+                    if user_preferences.get('industry'):
+                        context_prompt += f"\n• User's Industry: {user_preferences['industry']}"
+                    if user_preferences.get('target_audience'):
+                        context_prompt += f"\n• Target Audience: {user_preferences['target_audience']}"
+                
+                tool_usage_history = context.get('tool_usage_history', [])
+                if isinstance(tool_usage_history, list) and tool_usage_history:
+                    recent_tools = [tool for tool in tool_usage_history[-3:] if tool]
+                    if recent_tools:
+                        context_prompt += f"\n• Recently Used Tools: {', '.join(recent_tools)}"
+            
+            return f"{base_prompt}\n\n{specific_expertise}\n\nCONTEXT AWARENESS:{context_prompt}\n\nAlways provide specific, actionable guidance and leverage ALwrity's ecosystem effectively."
+            
+        except Exception as e:
+            st.warning(f"Error creating system prompt: {str(e)}")
+            return """You are ALwrity AI, a helpful content creation and SEO assistant. Provide clear, helpful, and actionable responses about writing, content creation, and SEO guidance."""
+    
+    def build_comprehensive_context(self) -> Dict[str, Any]:
+        """Build comprehensive context from conversation history and user data."""
+        context = {
+            "conversation_length": len(st.session_state.enhanced_chat_messages),
+            "user_preferences": st.session_state.chat_context.get("user_preferences", {}),
+            "tool_usage_history": st.session_state.chat_context.get("tool_usage_history", []),
+            "active_workflows": st.session_state.chat_context.get("active_workflows", []),
+            "recent_topics": [],
+            "content_workspace": st.session_state.content_workspace
         }
         
-        specific_prompt = intent_prompts.get(intent['primary_intent'], "Provide helpful, comprehensive assistance.")
-        
-        return f"{base_prompt} {specific_prompt}"
-    
-    def build_conversation_context(self) -> str:
-        """Build context from conversation history."""
-        recent_messages = st.session_state.enhanced_chat_messages[-5:]  # Last 5 messages
-        context_parts = []
-        
+        # Extract recent topics from conversation
+        recent_messages = st.session_state.enhanced_chat_messages[-5:]
         for msg in recent_messages:
             if msg['role'] == 'user':
-                context_parts.append(f"User asked: {msg['content']}")
-            else:
-                context_parts.append(f"Assistant responded about: {msg['content'][:100]}...")
+                # Simple keyword extraction
+                words = msg['content'].lower().split()
+                context["recent_topics"].extend([word for word in words if len(word) > 4])
         
-        return " | ".join(context_parts)
+        # Remove duplicates and limit
+        context["recent_topics"] = list(set(context["recent_topics"]))[:10]
+        
+        return context
     
-    def add_writer_suggestions(self, prompt: str) -> str:
-        """Add writer suggestions based on the prompt."""
-        suggestions = "\n\n**💡 Suggested ALwrity Tools:**\n"
-        
-        prompt_lower = prompt.lower()
-        
-        if any(word in prompt_lower for word in ['blog', 'article', 'post']):
-            suggestions += "- 📝 AI Blog Writer - Create comprehensive blog posts\n"
-        
-        if any(word in prompt_lower for word in ['story', 'narrative', 'fiction']):
-            suggestions += "- 📚 Story Writer - Create engaging stories\n"
-        
-        if any(word in prompt_lower for word in ['linkedin', 'professional']):
-            suggestions += "- 💼 LinkedIn AI Writer - Professional content\n"
-        
-        if any(word in prompt_lower for word in ['facebook', 'social']):
-            suggestions += "- 📘 Facebook AI Writer - Social media content\n"
-        
-        if any(word in prompt_lower for word in ['product', 'description', 'ecommerce']):
-            suggestions += "- 🛍️ Product Description Writer - Sales copy\n"
-        
-        return suggestions
-    
-    def add_analysis_suggestions(self, prompt: str) -> str:
-        """Add analysis tool suggestions."""
-        suggestions = "\n\n**🔍 Suggested Analysis Tools:**\n"
-        suggestions += "- 🔍 Competitor Analysis - Analyze competitor content\n"
-        suggestions += "- 📊 Content Gap Analysis - Find content opportunities\n"
-        suggestions += "- 🎯 Keyword Research - Discover target keywords\n"
-        
-        return suggestions
-    
-    def add_planning_suggestions(self, prompt: str) -> str:
-        """Add planning tool suggestions."""
-        suggestions = "\n\n**📅 Suggested Planning Tools:**\n"
-        suggestions += "- 📅 Content Calendar - Plan your content schedule\n"
-        suggestions += "- 🔄 Content Repurposing - Maximize content value\n"
-        suggestions += "- 📈 Content Strategy - Develop comprehensive plans\n"
-        
-        return suggestions
-    
-    def process_uploaded_files(self, uploaded_files):
-        """Process uploaded files for analysis."""
-        for file in uploaded_files:
-            try:
-                # Save file temporarily
-                with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file.name.split('.')[-1]}") as tmp_file:
-                    tmp_file.write(file.getvalue())
-                    tmp_path = tmp_file.name
-                
-                # Analyze file based on type
-                file_analysis = self.analyze_file(tmp_path, file.name, file.type)
-                
-                # Add to chat
-                analysis_message = f"📁 **File Analysis: {file.name}**\n\n{file_analysis}"
-                st.session_state.enhanced_chat_messages.append({
-                    "role": "assistant",
-                    "content": analysis_message,
-                    "avatar": AI_AVATAR_ICON
-                })
-                
-                # Store in context
-                st.session_state.chat_context["uploaded_files"].append({
-                    "name": file.name,
-                    "type": file.type,
-                    "analysis": file_analysis
-                })
-                
-                # Clean up
-                os.unlink(tmp_path)
-                
-            except Exception as e:
-                st.error(f"Error processing file {file.name}: {str(e)}")
-    
-    def analyze_file(self, file_path: str, file_name: str, file_type: str) -> str:
-        """Analyze uploaded file content."""
+    def add_smart_suggestions(self, intent: Dict[str, Any], prompt: str) -> str:
+        """Add smart tool suggestions based on intent analysis."""
         try:
-            if file_type.startswith('text/') or file_name.endswith('.txt'):
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                return self.analyze_text_content(content)
+            # Validate intent parameter with detailed logging
+            if not isinstance(intent, dict):
+                st.error(f"🐛 add_smart_suggestions received {type(intent)}: {intent}")
+                return "\n\n**🎯 Smart Recommendations:** Available in full mode."
             
-            elif file_type == 'application/pdf':
-                # PDF analysis would require additional libraries
-                return "PDF file uploaded. Content analysis available with additional setup."
+            suggestions = "\n\n**🎯 Smart Recommendations:**\n"
             
-            elif file_type.startswith('image/'):
-                return "Image file uploaded. Visual content analysis available with additional setup."
+            # Add workflow suggestions if available
+            suggested_workflows = intent.get('suggested_workflows', [])
+            if suggested_workflows:
+                suggestions += "\n**🔄 Automated Workflows:**\n"
+                for workflow in suggested_workflows[:2]:
+                    if isinstance(workflow, dict):
+                        workflow_name = workflow.get('name', 'Workflow')
+                        workflow_desc = workflow.get('description', 'Automated process')
+                        suggestions += f"• **{workflow_name}** - {workflow_desc}\n"
+                    else:
+                        suggestions += f"• **{workflow}** - Automated process\n"
             
-            else:
-                return f"File type {file_type} uploaded. Specialized analysis may be available."
-                
-        except Exception as e:
-            return f"Error analyzing file: {str(e)}"
-    
-    def analyze_text_content(self, content: str) -> str:
-        """Analyze text content using AI."""
-        try:
-            prompt = f"""
-            Analyze the following text content and provide insights:
+            # Add tool suggestions
+            suggested_tools = intent.get('suggested_tools', [])
+            if suggested_tools:
+                suggestions += "\n**🛠️ Recommended Tools:**\n"
+                for tool in suggested_tools[:3]:
+                    if isinstance(tool, dict):
+                        tool_name = tool.get('tool', '').replace('_', ' ').title()
+                        confidence = tool.get('confidence', 0.5)
+                        confidence_indicator = "🔥" if confidence > 0.8 else "⭐" if confidence > 0.6 else "💡"
+                        category = tool.get('category', 'general')
+                        suggestions += f"• {confidence_indicator} **{tool_name}** ({category})\n"
+                    else:
+                        tool_name = str(tool).replace('_', ' ').title()
+                        suggestions += f"• 💡 **{tool_name}** (general)\n"
             
-            Content: {content[:2000]}...
+            # Add content-specific suggestions
+            content_types = intent.get('content_types', [])
+            if 'blog' in content_types:
+                suggestions += "\n**📝 Blog Creation Pipeline:**\n"
+                suggestions += "• Keyword Research → Content Gap Analysis → AI Writing → SEO Optimization\n"
             
-            Provide:
-            1. Content summary
-            2. Key topics and themes
-            3. Writing style and tone
-            4. Potential improvements
-            5. Content repurposing suggestions
-            """
+            primary_intent = intent.get('primary_intent', 'general')
+            if primary_intent == 'seo':
+                suggestions += "\n**🔍 SEO Analysis Suite:**\n"
+                suggestions += "• Technical SEO Audit → Content Optimization → Competitor Analysis\n"
             
-            analysis = llm_text_gen(
-                prompt=prompt,
-                system_prompt="You are a content analysis expert. Provide detailed, actionable insights."
-            )
-            
-            return analysis
+            return suggestions
             
         except Exception as e:
-            return f"Error analyzing content: {str(e)}"
+            st.error(f"🚨 Error in add_smart_suggestions: {str(e)}")
+            return "\n\n**🎯 Smart Recommendations:** Available in full mode."
     
-    def process_url(self, url: str):
-        """Process and analyze a URL."""
+    def add_contextual_actions(self, intent: Dict[str, Any], prompt: str) -> str:
+        """Add contextual action buttons and quick starts."""
         try:
-            # Basic URL validation
-            parsed_url = urlparse(url)
-            if not parsed_url.scheme or not parsed_url.netloc:
-                st.error("Please enter a valid URL (including http:// or https://)")
+            # Validate intent parameter with detailed logging
+            if not isinstance(intent, dict):
+                st.error(f"🐛 add_contextual_actions received {type(intent)}: {intent}")
+                return "\n\n**⚡ Quick Actions:** Available in full mode."
+            
+            actions = "\n\n**⚡ Quick Actions:**\n"
+            
+            # Intent-based actions
+            primary_intent = intent.get('primary_intent', 'general')
+            if primary_intent == 'write':
+                actions += "🎬 [Start Blog Workflow] | 📱 [Social Media Creation] | ✍️ [Custom Writing]\n"
+            elif primary_intent == 'analyze':
+                actions += "🔍 [Website Analysis] | 🏆 [Competitor Research] | 📊 [Content Audit]\n"
+            elif primary_intent == 'seo':
+                actions += "🎯 [SEO Audit] | 📈 [Content Gap Analysis] | 🔧 [Technical SEO]\n"
+            elif primary_intent == 'plan':
+                actions += "📅 [Content Calendar] | 🗺️ [Strategy Planning] | 🔄 [Workflow Setup]\n"
+            
+            # Add urgency-based actions
+            urgency = intent.get('urgency', {})
+            if isinstance(urgency, dict) and urgency.get('is_urgent', False):
+                actions += "\n**🚨 Express Options:** Fast-track tools for immediate results\n"
+            
+            # Add follow-up suggestions
+            actions += "\n**💬 Try asking:**\n"
+            follow_ups = self.generate_follow_up_questions(intent)
+            for follow_up in follow_ups[:3]:
+                actions += f"• *\"{follow_up}\"*\n"
+            
+            return actions
+            
+        except Exception as e:
+            st.error(f"🚨 Error in add_contextual_actions: {str(e)}")
+            return "\n\n**⚡ Quick Actions:** Available in full mode."
+    
+    def generate_follow_up_questions(self, intent: Dict[str, Any]) -> List[str]:
+        """Generate relevant follow-up questions based on intent."""
+        try:
+            # Validate intent parameter
+            if not isinstance(intent, dict):
+                return [
+                    "What specific aspect would you like help with?",
+                    "Should I suggest a workflow to automate this process?",
+                    "Would you like me to analyze any existing content?"
+                ]
+            
+            follow_ups = {
+                "write": [
+                    "What tone should I use for my target audience?",
+                    "Can you help me optimize this content for SEO?",
+                    "How can I repurpose this content for social media?"
+                ],
+                "analyze": [
+                    "What are my biggest content gaps compared to competitors?",
+                    "Which keywords should I target next?",
+                    "How can I improve my website's SEO score?"
+                ],
+                "seo": [
+                    "What technical SEO issues should I fix first?",
+                    "How can I improve my content's search rankings?",
+                    "What keywords are my competitors ranking for?"
+                ],
+                "plan": [
+                    "How often should I publish new content?",
+                    "What content types perform best in my industry?",
+                    "Can you create a content calendar for next month?"
+                ]
+            }
+            
+            primary_intent = intent.get('primary_intent', 'general')
+            return follow_ups.get(primary_intent, [
+                "What specific aspect would you like help with?",
+                "Should I suggest a workflow to automate this process?",
+                "Would you like me to analyze any existing content?"
+            ])
+            
+        except Exception as e:
+            st.warning(f"Error generating follow-up questions: {str(e)}")
+            return [
+                "What specific aspect would you like help with?",
+                "Should I suggest a workflow to automate this process?",
+                "Would you like me to analyze any existing content?"
+            ]
+    
+    def update_conversation_context(self, prompt: str, response: str, intent: Dict[str, Any]):
+        """Update conversation context with new information."""
+        try:
+            # Validate intent parameter
+            if not isinstance(intent, dict):
                 return
             
-            # Analyze URL using content gap analysis
-            analyzer = ContentGapAnalysis()
-            analysis = analyzer.website_analyzer.analyze_website(url)
+            # Update tool usage history
+            suggested_tools = intent.get('suggested_tools', [])
+            for tool in suggested_tools:
+                if isinstance(tool, dict):
+                    tool_name = tool.get('tool', '')
+                else:
+                    tool_name = str(tool)
+                
+                if tool_name and tool_name not in st.session_state.chat_context['tool_usage_history']:
+                    st.session_state.chat_context['tool_usage_history'].append(tool_name)
             
-            if analysis.get('success', False):
-                analysis_message = f"🔗 **URL Analysis: {url}**\n\n"
-                analysis_message += self.format_url_analysis(analysis['data'])
+            # Update user preferences based on conversation
+            content_types = intent.get('content_types', [])
+            if content_types:
+                if 'content_preferences' not in st.session_state.chat_context['user_preferences']:
+                    st.session_state.chat_context['user_preferences']['content_preferences'] = []
+                st.session_state.chat_context['user_preferences']['content_preferences'].extend(content_types)
+            
+            # Update conversation summary
+            primary_intent = intent.get('primary_intent', 'general')
+            summary_update = f"User interested in {primary_intent} related to {', '.join(content_types)}. "
+            st.session_state.chat_context['conversation_summary'] += summary_update
+            
+            # Limit conversation summary length
+            if len(st.session_state.chat_context['conversation_summary']) > 500:
+                st.session_state.chat_context['conversation_summary'] = st.session_state.chat_context['conversation_summary'][-500:]
+                
+        except Exception as e:
+            st.warning(f"Error updating conversation context: {str(e)}")
+    
+    def perform_real_time_analysis(self, url: str):
+        """Perform real-time SEO analysis and add results to chat."""
+        try:
+            with st.spinner("🔍 Analyzing URL..."):
+                # Basic SEO analysis
+                seo_analysis = run_analysis(url)
+                
+                # Content gap analysis
+                content_analysis = self.content_gap_analyzer.website_analyzer.analyze_website(url)
+                
+                # Format results
+                analysis_message = f"""🔍 **Real-time Analysis: {url}**
+
+**📊 SEO Overview:**
+• Overall Score: {seo_analysis.get('overall_score', 'N/A')}/100
+• Page Speed: {seo_analysis.get('page_speed', 'N/A')}
+• Mobile Friendly: {'✅' if seo_analysis.get('mobile_friendly') else '❌'}
+
+**🎯 Content Analysis:**
+• Title: {content_analysis.get('analysis', {}).get('basic_info', {}).get('title', 'N/A')[:50]}...
+• Word Count: {content_analysis.get('analysis', {}).get('content_metrics', {}).get('word_count', 'N/A')}
+• Headings: {content_analysis.get('analysis', {}).get('content_metrics', {}).get('heading_count', 'N/A')}
+
+**💡 Quick Recommendations:**
+• {seo_analysis.get('recommendations', ['No specific recommendations available'])[0] if seo_analysis.get('recommendations') else 'Analysis complete'}
+
+**⚡ Next Steps:**
+• Run full Content Gap Analysis for detailed insights
+• Use Technical SEO Crawler for comprehensive audit
+• Generate optimized content based on findings"""
                 
                 st.session_state.enhanced_chat_messages.append({
                     "role": "assistant",
                     "content": analysis_message,
                     "avatar": AI_AVATAR_ICON
                 })
-            else:
-                st.error(f"Error analyzing URL: {analysis.get('error', 'Unknown error')}")
+                
+                # Store analysis in workspace
+                st.session_state.content_workspace["seo_insights"][url] = {
+                    "timestamp": datetime.now().isoformat(),
+                    "seo_analysis": seo_analysis,
+                    "content_analysis": content_analysis
+                }
+                
+                st.rerun()
                 
         except Exception as e:
-            st.error(f"Error processing URL: {str(e)}")
+            st.error(f"Error analyzing URL: {str(e)}")
     
-    def format_url_analysis(self, analysis_data: Dict[str, Any]) -> str:
-        """Format URL analysis data for display."""
+    def run(self):
+        """Run the modular chatbot interface."""
         try:
-            basic_info = analysis_data.get('analysis', {}).get('basic_info', {})
-            seo_info = analysis_data.get('analysis', {}).get('seo_info', {})
             
-            formatted = f"""
-            **📊 Website Overview:**
-            - Title: {basic_info.get('title', 'N/A')}
-            - Description: {basic_info.get('meta_description', 'N/A')[:100]}...
+            # Render sidebar and get actions if available
+            if self.sidebar_manager:
+                sidebar_data = self.sidebar_manager.render_sidebar()
+                # Handle sidebar actions
+                self._handle_sidebar_actions(sidebar_data)
+            else:
+                # Simple sidebar fallback
+                st.sidebar.title("🚀 ALwrity Assistant")
+                st.sidebar.info("Running in simplified mode")
+                if not IMPORTS_SUCCESSFUL:
+                    with st.sidebar.expander("⚠️ Import Issues"):
+                        for error in IMPORT_ERRORS[:3]:  # Show first 3 errors
+                            st.sidebar.text(f"• {error}")
             
-            **🔍 SEO Analysis:**
-            - Overall Score: {seo_info.get('overall_score', 'N/A')}
-            - Meta Tags Status: {seo_info.get('meta_tags', {}).get('status', 'N/A')}
+            # Main chat interface
+            self._render_main_interface()
             
-            **💡 Recommendations:**
-            """
-            
-            recommendations = seo_info.get('recommendations', [])
-            for i, rec in enumerate(recommendations[:3], 1):
-                formatted += f"{i}. {rec}\n"
-            
-            return formatted
+            # Handle chat interactions
+            self._handle_chat_interactions()
             
         except Exception as e:
-            return f"Error formatting analysis: {str(e)}"
+            st.error(f"Application Error: {str(e)}")
+            with st.expander("Error Details"):
+                st.code(traceback.format_exc())
     
-    def suggest_writer_usage(self, writer: Dict[str, Any]):
-        """Suggest how to use a specific writer."""
-        suggestion = f"💡 **{writer['name']}** - {writer['description']}\n\n"
-        suggestion += "Would you like me to help you get started with this tool? Just tell me what you'd like to create!"
+    def _handle_sidebar_actions(self, sidebar_data: Dict[str, Any]):
+        """Handle actions from the sidebar."""
+        if not sidebar_data:
+            return
+            
+        # Handle quick actions
+        quick_actions = sidebar_data.get("quick_actions", {})
+        if "action" in quick_actions:
+            action = quick_actions["action"]
+            self._execute_quick_action(action)
         
-        st.session_state.enhanced_chat_messages.append({
-            "role": "assistant",
-            "content": suggestion,
-            "avatar": AI_AVATAR_ICON
-        })
-        st.rerun()
+        # Handle workflow actions
+        workflow_actions = sidebar_data.get("workflow_actions", {})
+        for action_type, action_value in workflow_actions.items():
+            self._handle_workflow_action(action_type, action_value)
+        
+        # Handle preferences updates
+        preferences_updated = sidebar_data.get("preferences_updated", {})
+        if preferences_updated and self.context_manager:
+            self.context_manager.update_user_preferences(preferences_updated)
+            if self.sidebar_manager:
+                self.sidebar_manager.show_notification("Preferences updated successfully!", "success")
+        
+        # Handle export actions
+        export_actions = sidebar_data.get("export_actions", {})
+        if export_actions:
+            self._handle_export_actions(export_actions)
     
-    def suggest_competitor_analysis(self):
-        """Suggest competitor analysis usage."""
-        suggestion = """🔍 **Competitor Analysis**
-        
-        I can help you analyze your competitors' content strategies. Here's what I can do:
-        
-        1. **Content Analysis** - Analyze competitor websites and content
-        2. **SEO Comparison** - Compare SEO metrics and strategies
-        3. **Content Gaps** - Identify opportunities in your market
-        4. **Market Position** - Understand your competitive landscape
-        
-        To get started, please provide:
-        - Your website URL (optional)
-        - Competitor URLs (1-5 competitors)
-        - Your industry or niche
-        
-        Example: "Analyze competitors for my fitness blog: competitor1.com, competitor2.com"
-        """
-        
-        st.session_state.enhanced_chat_messages.append({
-            "role": "assistant",
-            "content": suggestion,
-            "avatar": AI_AVATAR_ICON
-        })
-        st.rerun()
-    
-    def quick_blog_post(self):
-        """Quick blog post creation."""
-        suggestion = """📝 **Quick Blog Post Creation**
-        
-        I'll help you create a blog post! Please provide:
-        
-        1. **Topic or Keywords** - What should the blog post be about?
-        2. **Target Audience** - Who are you writing for?
-        3. **Tone** - Professional, casual, technical, etc.
-        4. **Length** - Short (500-800 words), Medium (800-1500 words), Long (1500+ words)
-        
-        Example: "Write a professional blog post about 'sustainable marketing practices' for business owners, medium length"
-        """
-        
-        st.session_state.enhanced_chat_messages.append({
-            "role": "assistant",
-            "content": suggestion,
-            "avatar": AI_AVATAR_ICON
-        })
-        st.rerun()
-    
-    def quick_social_media(self):
-        """Quick social media content creation."""
-        suggestion = """📱 **Social Media Content Creation**
-        
-        I can create content for various platforms:
-        
-        **Platforms Available:**
-        - 💼 LinkedIn (Professional posts, articles)
-        - 📘 Facebook (Posts, ads, events)
-        - 🎥 YouTube (Titles, descriptions, scripts)
-        - 📸 Instagram (Captions, hashtags)
-        
-        **What I need:**
-        1. Platform choice
-        2. Content topic or message
-        3. Target audience
-        4. Call-to-action (if any)
-        
-        Example: "Create a LinkedIn post about AI in marketing for business professionals"
-        """
-        
-        st.session_state.enhanced_chat_messages.append({
-            "role": "assistant",
-            "content": suggestion,
-            "avatar": AI_AVATAR_ICON
-        })
-        st.rerun()
-    
-    def quick_seo_analysis(self):
-        """Quick SEO analysis."""
-        suggestion = """🔍 **SEO Analysis**
-        
-        I can perform various SEO analyses:
-        
-        **Available Analyses:**
-        1. **Website SEO Audit** - Comprehensive site analysis
-        2. **Competitor SEO Analysis** - Compare with competitors
-        3. **Keyword Research** - Find target keywords
-        4. **Content Gap Analysis** - Identify content opportunities
-        
-        **To get started:**
-        - Provide your website URL
-        - Specify the type of analysis you want
-        - Include competitor URLs (for competitive analysis)
-        
-        Example: "Analyze SEO for mywebsite.com and compare with competitor1.com"
-        """
-        
-        st.session_state.enhanced_chat_messages.append({
-            "role": "assistant",
-            "content": suggestion,
-            "avatar": AI_AVATAR_ICON
-        })
-        st.rerun()
-    
-    def quick_content_ideas(self):
-        """Generate quick content ideas."""
-        suggestion = """📊 **Content Ideas Generator**
-        
-        I can help you brainstorm content ideas! Tell me:
-        
-        1. **Your Industry/Niche** - What field are you in?
-        2. **Content Type** - Blog posts, social media, videos, etc.
-        3. **Target Audience** - Who are you creating for?
-        4. **Goals** - Education, entertainment, sales, etc.
-        5. **Current Trends** - Any specific trends to focus on?
-        
-        I'll generate:
-        - 10-20 content ideas
-        - Content calendar suggestions
-        - Platform-specific recommendations
-        - SEO-optimized topics
-        
-        Example: "Generate content ideas for a digital marketing agency targeting small businesses"
-        """
-        
-        st.session_state.enhanced_chat_messages.append({
-            "role": "assistant",
-            "content": suggestion,
-            "avatar": AI_AVATAR_ICON
-        })
-        st.rerun()
-    
-    def clear_chat_history(self):
-        """Clear chat history."""
-        st.session_state.enhanced_chat_messages = [
-            {
-                "role": "assistant",
-                "content": "Chat history cleared! How can I help you today?",
-                "avatar": AI_AVATAR_ICON
-            }
-        ]
-        st.session_state.chat_context = {
-            "current_task": None,
-            "user_preferences": {},
-            "uploaded_files": [],
-            "content_history": []
+    def _execute_quick_action(self, action: str):
+        """Execute a quick action from the sidebar."""
+        action_map = {
+            "blog_writer": "I want to write a blog post",
+            "social_post": "I need to create a social media post",
+            "email_writer": "Help me write an email",
+            "story_writer": "I want to write a story",
+            "technical_seo": "I need a technical SEO analysis",
+            "content_gap": "I want to analyze content gaps",
+            "keyword_research": "I need keyword research",
+            "competitor_analysis": "I want competitor analysis",
+            "website_analyzer": "I want to analyze a website",
+            "onpage_seo": "I need on-page SEO analysis",
+            "url_seo_check": "I want to check URL SEO",
+            "social_analyzer": "I need social media analysis"
         }
-        st.rerun()
+        
+        if action in action_map:
+            # Add to chat history and trigger processing
+            if "messages" not in st.session_state:
+                st.session_state.messages = []
+            
+            user_message = action_map[action]
+            st.session_state.messages.append({"role": "user", "content": user_message})
+            
+            # Process the message
+            with st.spinner("Processing your request..."):
+                response = self.process_message(user_message)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+            
+            st.rerun()
     
-    def save_chat_history(self):
-        """Save chat history."""
+    def _handle_workflow_action(self, action_type: str, action_value: Any):
+        """Handle workflow-related actions."""
+        if not self.workflow_engine:
+            st.warning("Workflow engine not available in current mode.")
+            return
+            
+        if action_type == "start":
+            workflow_name = action_value
+            result = self.workflow_engine.start_workflow(workflow_name)
+            if result.get("success"):
+                if self.sidebar_manager:
+                    self.sidebar_manager.show_notification(
+                        f"Started workflow: {workflow_name}", "success"
+                    )
+                else:
+                    st.success(f"Started workflow: {workflow_name}")
+            else:
+                if self.sidebar_manager:
+                    self.sidebar_manager.show_notification(
+                        f"Failed to start workflow: {result.get('error')}", "error"
+                    )
+                else:
+                    st.error(f"Failed to start workflow: {result.get('error')}")
+        
+        elif action_type == "pause":
+            workflow_id = action_value
+            result = self.workflow_engine.pause_workflow(workflow_id)
+            if result.get("success"):
+                if self.sidebar_manager:
+                    self.sidebar_manager.show_notification("Workflow paused", "info")
+                else:
+                    st.info("Workflow paused")
+        
+        elif action_type in ["continue", "resume"]:
+            workflow_id = action_value
+            result = self.workflow_engine.resume_workflow(workflow_id)
+            if result.get("success"):
+                if self.sidebar_manager:
+                    self.sidebar_manager.show_notification("Workflow resumed", "success")
+                else:
+                    st.success("Workflow resumed")
+    
+    def _handle_export_actions(self, export_actions: Dict[str, Any]):
+        """Handle data export and cleanup actions."""
+        if not self.context_manager:
+            st.warning("Export features not available in current mode.")
+            return
+            
+        if "export" in export_actions:
+            export_config = export_actions["export"]
+            export_type = export_config["type"]
+            export_format = export_config["format"]
+            
+            if export_type == "conversation_history":
+                data = self.context_manager.export_conversation_history(export_format)
+                self._download_data(data, f"conversation_history.{export_format}")
+            
+            elif export_type == "analytics":
+                data = self.context_manager.export_analytics(export_format)
+                self._download_data(data, f"analytics.{export_format}")
+        
+        elif "cleanup" in export_actions:
+            days = export_actions["cleanup"]
+            result = self.context_manager.cleanup_old_data(days)
+            if result.get("success"):
+                if self.sidebar_manager:
+                    self.sidebar_manager.show_notification(
+                        f"Cleaned up data older than {days} days", "success"
+                    )
+                else:
+                    st.success(f"Cleaned up data older than {days} days")
+        
+        elif "reset" in export_actions and export_actions["reset"]:
+            self.context_manager.reset_all_data()
+            if self.sidebar_manager:
+                self.sidebar_manager.show_notification("All data reset", "warning")
+            else:
+                st.warning("All data reset")
+            st.rerun()
+    
+    def _download_data(self, data: str, filename: str):
+        """Provide download button for exported data."""
+        st.download_button(
+            label=f"📥 Download {filename}",
+            data=data,
+            file_name=filename,
+            mime="application/octet-stream"
+        )
+    
+    def _render_main_interface(self):
+        """Render the main chat interface."""
+        # Header
+        st.title("🚀 Enhanced ALwrity Assistant")
+        st.markdown("*Your intelligent content creation and SEO analysis companion*")
+        
+        # Main content area
+        col1, col2 = st.columns([3, 1])
+        
+        with col1:
+            # Chat messages container
+            self._render_chat_messages()
+        
+        with col2:
+            # Context and suggestions panel
+            self._render_context_panel()
+    
+    def _render_chat_messages(self):
+        """Render the chat messages."""
+        # Initialize chat history
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
+        
+        # Display chat messages
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+    
+    def _render_context_panel(self):
+        """Render the context and suggestions panel."""
+        with st.container():
+            st.markdown("### 💡 Context & Suggestions")
+            
+            # Current context
+            if self.context_manager and hasattr(self.context_manager, 'get_current_context'):
+                current_context = self.context_manager.get_current_context()
+                if current_context:
+                    with st.expander("🧠 Current Context"):
+                        st.text(current_context[:200] + "..." if len(current_context) > 200 else current_context)
+            
+            # Active workflows
+            if self.context_manager:
+                active_workflows = self.context_manager.get_active_workflows()
+                if active_workflows:
+                    st.markdown("**🔄 Active Workflows:**")
+                    for workflow in active_workflows[:3]:
+                        progress = workflow.current_step / workflow.total_steps
+                        st.progress(progress, text=f"{workflow.workflow_name} ({workflow.current_step}/{workflow.total_steps})")
+            
+            # Quick suggestions
+            st.markdown("**💡 Quick Suggestions:**")
+            suggestions = [
+                "Analyze this website's SEO",
+                "Create a blog post outline",
+                "Generate social media content",
+                "Check technical SEO issues",
+                "Research competitors"
+            ]
+            
+            for suggestion in suggestions:
+                if st.button(suggestion, key=f"suggestion_{suggestion.replace(' ', '_')}"):
+                    # Add suggestion to chat
+                    if "messages" not in st.session_state:
+                        st.session_state.messages = []
+                    
+                    st.session_state.messages.append({"role": "user", "content": suggestion})
+                    
+                    # Process the suggestion
+                    with st.spinner("Processing..."):
+                        response = self.process_message(suggestion)
+                        st.session_state.messages.append({"role": "assistant", "content": response})
+                    
+                    st.rerun()
+    
+    def _handle_chat_interactions(self):
+        """Handle chat input and interactions."""
+        # Chat input
+        if prompt := st.chat_input("Ask me anything about content creation, SEO, or writing..."):
+            # Initialize messages if not exists
+            if "messages" not in st.session_state:
+                st.session_state.messages = []
+            
+            # Add user message
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            
+            # Display user message
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            
+            # Generate and display assistant response
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
+                    response = self.process_message(prompt)
+                    st.markdown(response)
+            
+            # Add assistant response to history
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            
+            # Check for suggestions and update sidebar if available
+            if self.intent_analyzer and self.sidebar_manager:
+                intent_analysis = self.intent_analyzer.analyze_user_intent(prompt)
+                
+                # Render suggestions if available
+                suggested_workflow = self.sidebar_manager.render_workflow_suggestions(intent_analysis)
+                if suggested_workflow:
+                    self._handle_workflow_action("start", suggested_workflow)
+                
+                suggested_tool = self.sidebar_manager.render_tool_suggestions(intent_analysis)
+                if suggested_tool:
+                    self._execute_quick_action(suggested_tool)
+
+    def generate_simple_response(self, prompt: str) -> str:
+        """Generate a simple response when advanced features are not available."""
         try:
-            os.makedirs(DATA_DIR, exist_ok=True)
-            timestamp = int(time.time())
-            filename = f"chat_history_{timestamp}.json"
-            filepath = os.path.join(DATA_DIR, filename)
-            
-            chat_data = {
-                "timestamp": timestamp,
-                "messages": st.session_state.enhanced_chat_messages,
-                "context": st.session_state.chat_context
-            }
-            
-            with open(filepath, 'w') as f:
-                json.dump(chat_data, f, indent=2)
-            
-            st.success(f"Chat history saved as {filename}")
-            
+            if llm_text_gen:
+                system_prompt = """You are ALwrity AI, a helpful writing and content creation assistant. 
+                You help users with writing, content creation, SEO, and digital marketing tasks.
+                Provide clear, helpful, and actionable responses."""
+                
+                response = llm_text_gen(
+                    prompt=prompt,
+                    system_prompt=system_prompt
+                )
+                return response
+            else:
+                return ("I'm currently running in limited mode. While I can't access all my advanced features right now, "
+                       "I'm still here to help! Please describe what you'd like to work on, and I'll do my best to assist you "
+                       "with writing, content creation, or SEO guidance.")
         except Exception as e:
-            st.error(f"Error saving chat history: {str(e)}")
-    
-    def suggest_content_gap_analysis(self):
-        """Suggest content gap analysis usage."""
-        suggestion = """📊 **Content Gap Analysis**
+            return f"I'm having some technical difficulties right now. Error: {str(e)}. Please try again or contact support if the issue persists."
+
+    def _create_fallback_intent(self, prompt: str) -> Dict[str, Any]:
+        """Create a fallback intent structure when intent analysis fails."""
+        prompt_lower = prompt.lower()
         
-        I can help you identify content opportunities by analyzing gaps in your content strategy:
+        # Simple keyword-based intent detection
+        primary_intent = "general"
+        if any(word in prompt_lower for word in ['write', 'create', 'generate', 'compose']):
+            primary_intent = "write"
+        elif any(word in prompt_lower for word in ['analyze', 'check', 'review', 'examine']):
+            primary_intent = "analyze"
+        elif any(word in prompt_lower for word in ['seo', 'optimize', 'rank', 'search']):
+            primary_intent = "seo"
+        elif any(word in prompt_lower for word in ['social', 'facebook', 'twitter', 'linkedin']):
+            primary_intent = "social"
+        elif any(word in prompt_lower for word in ['plan', 'strategy', 'calendar']):
+            primary_intent = "plan"
         
-        **What I can analyze:**
-        1. **Missing Topics** - Topics your competitors cover but you don't
-        2. **Content Depth** - Areas where you need more comprehensive content
-        3. **Keyword Gaps** - Keywords you're missing opportunities for
-        4. **Format Gaps** - Content types you should consider
-        
-        **To get started, provide:**
-        - Your website URL
-        - 2-5 competitor URLs
-        - Your target industry/niche
-        - Specific topics you're interested in (optional)
-        
-        Example: "Analyze content gaps for mysite.com vs competitor1.com, competitor2.com in digital marketing"
-        """
-        
-        st.session_state.enhanced_chat_messages.append({
-            "role": "assistant",
-            "content": suggestion,
-            "avatar": AI_AVATAR_ICON
-        })
-        st.rerun()
-    
-    def suggest_keyword_research(self):
-        """Suggest keyword research usage."""
-        suggestion = """🎯 **Keyword Research**
-        
-        I can help you discover valuable keywords for your content strategy:
-        
-        **Research Types:**
-        1. **Seed Keywords** - Find related keywords from your main topics
-        2. **Long-tail Keywords** - Discover specific, less competitive phrases
-        3. **Competitor Keywords** - See what keywords competitors rank for
-        4. **Content Keywords** - Keywords for specific content pieces
-        
-        **What I need:**
-        - Your main topic or industry
-        - Target audience description
-        - Geographic location (if local business)
-        - Content type you're planning
-        
-        Example: "Research keywords for 'sustainable fashion' targeting eco-conscious millennials"
-        """
-        
-        st.session_state.enhanced_chat_messages.append({
-            "role": "assistant",
-            "content": suggestion,
-            "avatar": AI_AVATAR_ICON
-        })
-        st.rerun()
-    
-    def suggest_content_calendar(self):
-        """Suggest content calendar usage."""
-        suggestion = """📅 **Content Calendar Planning**
-        
-        I can help you create a strategic content calendar:
-        
-        **Calendar Features:**
-        1. **Content Scheduling** - Plan posts across multiple platforms
-        2. **Topic Planning** - Organize themes and campaigns
-        3. **Content Mix** - Balance different content types
-        4. **Seasonal Planning** - Align with holidays and events
-        
-        **To create your calendar:**
-        - Specify time period (weekly, monthly, quarterly)
-        - List your content platforms
-        - Define your content goals
-        - Share your target audience
-        - Mention any upcoming events or campaigns
-        
-        Example: "Create a monthly content calendar for a fitness brand on Instagram, Facebook, and blog"
-        """
-        
-        st.session_state.enhanced_chat_messages.append({
-            "role": "assistant",
-            "content": suggestion,
-            "avatar": AI_AVATAR_ICON
-        })
-        st.rerun()
-    
-    def suggest_content_repurposing(self):
-        """Suggest content repurposing usage."""
-        suggestion = """🔄 **Content Repurposing**
-        
-        I can help you maximize your content's reach by repurposing it across platforms:
-        
-        **Repurposing Options:**
-        1. **Blog to Social** - Turn blog posts into social media content
-        2. **Long-form to Short-form** - Create snippets and highlights
-        3. **Cross-platform Adaptation** - Optimize for different platforms
-        4. **Format Transformation** - Convert text to infographics, videos, etc.
-        
-        **What I can do:**
-        - Analyze existing content for repurposing opportunities
-        - Create platform-specific versions
-        - Suggest content series from single pieces
-        - Generate social media campaigns from blog posts
-        
-        Example: "Repurpose my blog post about 'remote work productivity' for LinkedIn, Twitter, and Instagram"
-        """
-        
-        st.session_state.enhanced_chat_messages.append({
-            "role": "assistant",
-            "content": suggestion,
-            "avatar": AI_AVATAR_ICON
-        })
-        st.rerun()
-    
-    def suggest_content_strategy(self):
-        """Suggest content strategy usage."""
-        suggestion = """📈 **Content Strategy Development**
-        
-        I can help you develop a comprehensive content strategy:
-        
-        **Strategy Components:**
-        1. **Audience Analysis** - Define and understand your target audience
-        2. **Content Pillars** - Establish core themes and topics
-        3. **Platform Strategy** - Choose the right channels for your content
-        4. **Content Mix** - Balance educational, promotional, and entertaining content
-        5. **Performance Metrics** - Define success metrics and KPIs
-        
-        **To develop your strategy:**
-        - Describe your business/brand
-        - Define your target audience
-        - Share your business goals
-        - List your current content challenges
-        - Specify your available resources
-        
-        Example: "Develop a content strategy for a B2B SaaS company targeting marketing managers"
-        """
-        
-        st.session_state.enhanced_chat_messages.append({
-            "role": "assistant",
-            "content": suggestion,
-            "avatar": AI_AVATAR_ICON
-        })
-        st.rerun()
-    
-    def suggest_template_usage(self, template: str):
-        """Suggest how to use a specific template."""
-        template_guides = {
-            "Blog Post Outline": """📋 **Blog Post Outline Template**
-            
-            I'll help you create a structured blog post outline:
-            
-            **What I'll include:**
-            - Compelling headline options
-            - Introduction hook
-            - Main sections with subheadings
-            - Key points for each section
-            - Conclusion and call-to-action
-            - SEO recommendations
-            
-            **Just tell me:**
-            - Your blog post topic
-            - Target audience
-            - Desired word count
-            - Key points you want to cover
-            
-            Example: "Create a blog post outline about 'email marketing best practices' for small business owners"
-            """,
-            
-            "Social Media Campaign": """📱 **Social Media Campaign Template**
-            
-            I'll help you plan a complete social media campaign:
-            
-            **Campaign Elements:**
-            - Campaign objectives and goals
-            - Target audience definition
-            - Content calendar (posts, stories, etc.)
-            - Platform-specific content
-            - Hashtag strategy
-            - Engagement tactics
-            - Performance metrics
-            
-            **Provide details about:**
-            - Campaign goal (awareness, sales, engagement)
-            - Target platforms
-            - Campaign duration
-            - Product/service to promote
-            - Budget considerations
-            
-            Example: "Create a social media campaign to launch a new fitness app targeting young professionals"
-            """,
-            
-            "Email Newsletter": """📧 **Email Newsletter Template**
-            
-            I'll help you create an engaging email newsletter:
-            
-            **Newsletter Structure:**
-            - Compelling subject line
-            - Personal greeting
-            - Main content sections
-            - Featured articles/products
-            - Call-to-action buttons
-            - Footer with social links
-            
-            **Tell me about:**
-            - Newsletter purpose (updates, promotions, education)
-            - Your audience
-            - Key content to include
-            - Desired tone and style
-            - Frequency of sending
-            
-            Example: "Create a monthly newsletter for a digital marketing agency showcasing case studies and tips"
-            """,
-            
-            "Product Description": """🛍️ **Product Description Template**
-            
-            I'll help you write compelling product descriptions:
-            
-            **Description Elements:**
-            - Attention-grabbing headline
-            - Key features and benefits
-            - Problem-solution positioning
-            - Technical specifications
-            - Social proof elements
-            - Clear call-to-action
-            
-            **Product details needed:**
-            - Product name and category
-            - Key features and benefits
-            - Target customer
-            - Unique selling points
-            - Price point (if relevant)
-            
-            Example: "Write a product description for wireless noise-canceling headphones targeting remote workers"
-            """,
-            
-            "Press Release": """📰 **Press Release Template**
-            
-            I'll help you write a professional press release:
-            
-            **Press Release Structure:**
-            - Newsworthy headline
-            - Dateline and location
-            - Lead paragraph (who, what, when, where, why)
-            - Supporting paragraphs with details
-            - Company boilerplate
-            - Contact information
-            
-            **Information needed:**
-            - News announcement details
-            - Company information
-            - Key quotes from executives
-            - Supporting data/statistics
-            - Target media outlets
-            
-            Example: "Write a press release announcing our company's Series A funding round of $5M"
-            """
+        return {
+            "primary_intent": primary_intent,
+            "all_intents": [primary_intent],
+            "sub_intents": [],
+            "content_types": [],
+            "confidence_scores": {primary_intent: 0.5},
+            "urgency": {"level": "normal", "score": 0.5, "is_urgent": False},
+            "complexity": {"level": "medium", "score": 0.5, "word_count": len(prompt.split())},
+            "suggested_workflows": [],
+            "suggested_tools": [],
+            "intent_strength": "moderate",
+            "multi_intent": False,
+            "context_enhanced": False
         }
-        
-        suggestion = template_guides.get(template, f"I'll help you create a {template}. Please provide more details about what you need.")
-        
-        st.session_state.enhanced_chat_messages.append({
-            "role": "assistant",
-            "content": suggestion,
-            "avatar": AI_AVATAR_ICON
-        })
-        st.rerun()
+    
+    def _get_default_intent_value(self, key: str) -> Any:
+        """Get default value for missing intent keys."""
+        defaults = {
+            "primary_intent": "general",
+            "all_intents": ["general"],
+            "sub_intents": [],
+            "content_types": [],
+            "confidence_scores": {"general": 0.5},
+            "urgency": {"level": "normal", "score": 0.5, "is_urgent": False},
+            "complexity": {"level": "medium", "score": 0.5, "word_count": 0},
+            "suggested_workflows": [],
+            "suggested_tools": [],
+            "intent_strength": "moderate",
+            "multi_intent": False,
+            "context_enhanced": False
+        }
+        return defaults.get(key, None)
+
 
 def run_enhanced_chatbot():
-    """Main function to run the enhanced chatbot."""
+    """
+    Main entry point for the enhanced ALwrity chatbot.
+    This function is called from the UI setup module.
+    """
+    # Show import warnings if any
+    if not IMPORTS_SUCCESSFUL and IMPORT_ERRORS:
+        with st.expander("⚠️ Import Warnings", expanded=False):
+            st.warning("Some features may not be available due to import issues:")
+            for error in IMPORT_ERRORS:
+                st.text(f"• {error}")
+            st.info("The chatbot will run in limited mode with available features.")
+    
     try:
-        # Initialize chatbot
+        # Initialize and run the chatbot
         chatbot = EnhancedALwrityChatbot()
-        
-        # Render UI
-        chatbot.render_chatbot_ui()
-        
+        chatbot.run()
     except Exception as e:
-        st.error(f"Error running enhanced chatbot: {str(e)}")
-        st.info("Please check your configuration and try again.")
+        st.error(f"Failed to initialize Enhanced ALwrity Chatbot: {str(e)}")
+        st.error("Please check your configuration and try again.")
+        with st.expander("🔍 Error Details"):
+            st.code(traceback.format_exc())
+        
+        # Provide fallback simple chatbot interface
+        st.markdown("---")
+        st.markdown("### 🔧 Fallback Mode")
+        st.info("Running in simplified mode due to initialization issues.")
+        
+        # Simple chat interface as fallback
+        if "fallback_messages" not in st.session_state:
+            st.session_state.fallback_messages = [
+                {
+                    "role": "assistant",
+                    "content": "Hello! I'm running in simplified mode. I can still help with basic text generation and writing tasks."
+                }
+            ]
+        
+        # Display messages
+        for message in st.session_state.fallback_messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+        
+        # Chat input
+        if prompt := st.chat_input("How can I help you today?"):
+            # Add user message
+            st.session_state.fallback_messages.append({"role": "user", "content": prompt})
+            
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            
+            # Generate response using basic text generation
+            with st.chat_message("assistant"):
+                try:
+                    if llm_text_gen:
+                        with st.spinner("Generating response..."):
+                            response = llm_text_gen(
+                                prompt=prompt,
+                                system_prompt="You are ALwrity AI, a helpful writing assistant. Provide clear, helpful responses about writing, content creation, and SEO."
+                            )
+                            st.markdown(response)
+                            st.session_state.fallback_messages.append({"role": "assistant", "content": response})
+                    else:
+                        error_response = "I'm currently unable to generate responses. Please check the system configuration."
+                        st.markdown(error_response)
+                        st.session_state.fallback_messages.append({"role": "assistant", "content": error_response})
+                except Exception as gen_error:
+                    error_response = f"I apologize, but I'm having trouble generating a response right now. Error: {str(gen_error)}"
+                    st.markdown(error_response)
+                    st.session_state.fallback_messages.append({"role": "assistant", "content": error_response})
+
+
+def main():
+    """Main function to run the modular chatbot."""
+    run_enhanced_chatbot()
+
 
 if __name__ == "__main__":
-    run_enhanced_chatbot() 
+    main() 

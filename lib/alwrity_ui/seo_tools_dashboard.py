@@ -1,6 +1,7 @@
 import streamlit as st
 from loguru import logger
 
+# Import existing tools
 from lib.ai_seo_tools.seo_structured_data import ai_structured_data
 from lib.ai_seo_tools.content_title_generator import ai_title_generator
 from lib.ai_seo_tools.meta_desc_generator import metadesc_generator_main
@@ -12,7 +13,16 @@ from lib.ai_seo_tools.on_page_seo_analyzer import analyze_onpage_seo
 from lib.ai_seo_tools.weburl_seo_checker import url_seo_checker
 from lib.ai_marketing_tools.ai_backlinker.backlinking_ui_streamlit import backlinking_ui
 from lib.ai_seo_tools.content_gap_analysis.ui import ContentGapAnalysisUI
+from lib.ai_seo_tools.content_gap_analysis.enhanced_ui import render_enhanced_content_gap_analysis
 from lib.ai_seo_tools.content_calendar.ui.dashboard import ContentCalendarDashboard
+from lib.ai_seo_tools.technical_seo_crawler import render_technical_seo_crawler
+
+# Import additional tools
+from lib.ai_seo_tools.twitter_tags_generator import display_app as twitter_tags_app
+from lib.ai_seo_tools.sitemap_analysis import main as sitemap_analyzer
+from lib.ai_seo_tools.textstaty import analyze_text as readability_analyzer
+from lib.ai_seo_tools.wordcloud import generate_wordcloud
+
 from lib.alwrity_ui.dashboard_styles import apply_dashboard_style, render_dashboard_header, render_category_header, render_card
 
 def render_content_gap_analysis():
@@ -22,6 +32,10 @@ def render_content_gap_analysis():
     # Initialize and run the Content Gap Analysis UI
     ui = ContentGapAnalysisUI()
     ui.run()
+
+def render_enhanced_content_gap_analysis_ui():
+    """Render the enhanced content gap analysis with advertools integration."""
+    render_enhanced_content_gap_analysis()
 
 def render_content_calendar():
     """Render the content calendar dashboard."""
@@ -50,6 +64,81 @@ def render_content_calendar():
         logger.error(f"Error rendering content calendar: {str(e)}", exc_info=True)
         st.error(f"An error occurred while loading the content calendar: {str(e)}")
 
+def render_twitter_tags():
+    """Render the Twitter tags generator."""
+    twitter_tags_app()
+
+def render_readability_analyzer():
+    """Render the text readability analyzer."""
+    st.title("📖 Text Readability Analyzer")
+    st.write("Making Your Content Easy to Read")
+    
+    text_input = st.text_area("Paste your text here:", height=200)
+    
+    if st.button("Analyze Readability"):
+        if text_input.strip():
+            from textstat import textstat
+            
+            # Calculate various metrics
+            metrics = {
+                "Flesch Reading Ease": textstat.flesch_reading_ease(text_input),
+                "Flesch-Kincaid Grade Level": textstat.flesch_kincaid_grade(text_input),
+                "Gunning Fog Index": textstat.gunning_fog(text_input),
+                "SMOG Index": textstat.smog_index(text_input),
+                "Automated Readability Index": textstat.automated_readability_index(text_input),
+                "Coleman-Liau Index": textstat.coleman_liau_index(text_input),
+                "Linsear Write Formula": textstat.linsear_write_formula(text_input),
+                "Dale-Chall Readability Score": textstat.dale_chall_readability_score(text_input),
+                "Readability Consensus": textstat.readability_consensus(text_input)
+            }
+            
+            # Display metrics
+            st.subheader("Text Analysis Results")
+            for metric, value in metrics.items():
+                st.metric(metric, f"{value:.2f}")
+            
+            # Add recommendations
+            st.subheader("Key Takeaways:")
+            st.markdown("""
+                * **Don't Be Afraid to Simplify!** Often, simpler language makes content more impactful and easier to digest.
+                * **Aim for a Reading Level Appropriate for Your Audience:** Consider the education level, background, and familiarity of your readers.
+                * **Use Short Sentences:** This makes your content more scannable and easier to read.
+                * **Write for Everyone:** Accessibility should always be a priority. When in doubt, aim for clear, concise language!
+            """)
+        else:
+            st.error("Please enter text to analyze.")
+
+def render_wordcloud_generator():
+    """Render the word cloud generator."""
+    st.title("☁️ Word Cloud Generator")
+    st.write("Visualize the most important words in your content")
+    
+    text_input = st.text_area("Enter your text:", height=200)
+    
+    if st.button("Generate Word Cloud"):
+        if text_input.strip():
+            from wordcloud import WordCloud
+            import matplotlib.pyplot as plt
+            
+            # Create and generate a word cloud image
+            wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text_input)
+            
+            # Display the word cloud
+            st.subheader("Word Cloud Visualization")
+            fig, ax = plt.subplots(figsize=(10, 5))
+            ax.imshow(wordcloud, interpolation='bilinear')
+            ax.axis('off')
+            st.pyplot(fig)
+            
+            # Add some statistics
+            st.subheader("Text Statistics")
+            words = text_input.split()
+            unique_words = set(words)
+            st.metric("Total Words", len(words))
+            st.metric("Unique Words", len(unique_words))
+        else:
+            st.error("Please enter text to generate a word cloud.")
+
 def render_seo_tools_dashboard():
     """Render a modern dashboard for SEO tools with premium glassmorphic design."""
     
@@ -62,75 +151,144 @@ def render_seo_tools_dashboard():
         "Dominate search rankings with our comprehensive AI-powered SEO toolkit. From keyword research to content optimization, master every aspect of search engine optimization."
     )
 
-    # Define SEO tools organized by category
+    # Define SEO tools organized by real use cases and existing functionality
     seo_tools = {
-        "Research & Strategy": {
-            "Color Analysis": {
-                "icon": "🎨",
-                "description": "Analyze website color schemes for optimal user experience and SEO performance",
-                "category": "Analysis",
-                "path": "color_analysis",
-                "features": ["Color Psychology", "Accessibility Check", "Brand Analysis", "Conversion Optimization"]
-            },
-            "Keyword Research": {
-                "icon": "🔑", 
-                "description": "Discover high-impact keywords with advanced AI-powered research and competition analysis",
-                "category": "Research",
-                "path": "keyword_research",
-                "features": ["Keyword Discovery", "Competition Analysis", "Search Volume", "Difficulty Scoring"]
-            },
-            "SEO Audit": {
-                "icon": "🔍",
-                "description": "Comprehensive website analysis with actionable insights for improving search rankings",
-                "category": "Analysis",
-                "path": "seo_audit",
-                "features": ["Technical SEO", "Content Analysis", "Performance Check", "Mobile Optimization"]
-            }
-        },
-        "Content Optimization": {
-            "Content Optimizer": {
+        "Content Creation & Optimization": {
+            "Content Title Generator": {
                 "icon": "📝",
-                "description": "Transform your content with AI-driven SEO optimization for maximum search visibility",
-                "category": "Optimization",
-                "path": "content_optimizer",
-                "features": ["Content Analysis", "SEO Scoring", "Readability Check", "Meta Optimization"]
+                "description": "Create attention-grabbing, SEO-optimized titles that resonate with your audience",
+                "category": "Content",
+                "path": "blog_title",
+                "features": ["Keyword Optimization", "Title Variations", "CTR Enhancement", "SEO Best Practices"]
             },
-            "Meta Generator": {
+            "Meta Description Generator": {
                 "icon": "🏷️",
-                "description": "Create compelling meta titles and descriptions that boost click-through rates",
-                "category": "Optimization",
-                "path": "meta_generator",
-                "features": ["Title Generation", "Description Writing", "Character Optimization", "SERP Preview"]
+                "description": "Generate compelling meta descriptions that boost click-through rates from search results",
+                "category": "Meta Tags",
+                "path": "meta_description",
+                "features": ["SERP Optimization", "Character Limits", "Keyword Integration", "CTR Improvement"]
             },
-            "Schema Markup": {
+            "Structured Data Generator": {
                 "icon": "🏗️",
-                "description": "Generate structured data markup to enhance search result appearance",
+                "description": "Create schema markup to enhance search result appearance with rich snippets",
                 "category": "Technical",
-                "path": "schema_markup",
-                "features": ["Rich Snippets", "Local SEO", "Product Markup", "FAQ Schema"]
+                "path": "structured_data",
+                "features": ["Rich Snippets", "Schema Markup", "Search Enhancement", "SERP Features"]
             }
         },
-        "Analysis & Tracking": {
-            "Rank Tracker": {
-                "icon": "📊",
-                "description": "Monitor keyword rankings and track your SEO progress with detailed analytics",
-                "category": "Analytics",
-                "path": "rank_tracker",
-                "features": ["Position Tracking", "Progress Analytics", "Competitor Monitoring", "Ranking Reports"]
+        "Image & Media Optimization": {
+            "Image Alt Text Generator": {
+                "icon": "🖼️",
+                "description": "Generate SEO-friendly alt text for images to improve accessibility and search visibility",
+                "category": "Images",
+                "path": "alt_text",
+                "features": ["Accessibility", "Image SEO", "Screen Reader Support", "Search Discovery"]
             },
-            "Backlink Analyzer": {
-                "icon": "🔗",
-                "description": "Analyze your backlink profile and discover new link building opportunities",
-                "category": "Analysis",
-                "path": "backlink_analyzer",
-                "features": ["Link Analysis", "Authority Metrics", "Anchor Text Analysis", "Toxic Link Detection"]
-            },
-            "Site Speed Test": {
-                "icon": "⚡",
-                "description": "Evaluate website performance and get optimization recommendations",
+            "Image Optimizer": {
+                "icon": "🎯",
+                "description": "Optimize images for web performance and faster loading times",
                 "category": "Performance",
-                "path": "speed_test",
-                "features": ["Speed Analysis", "Core Web Vitals", "Optimization Tips", "Mobile Performance"]
+                "path": "image_optimizer",
+                "features": ["File Compression", "Format Optimization", "Performance Boost", "Web Standards"]
+            }
+        },
+        "Social Media Optimization": {
+            "OpenGraph Generator": {
+                "icon": "📱",
+                "description": "Create OpenGraph tags for beautiful social media sharing experiences",
+                "category": "Social",
+                "path": "opengraph",
+                "features": ["Social Sharing", "Visual Appeal", "Engagement Boost", "Platform Optimization"]
+            },
+            "Twitter Tags Generator": {
+                "icon": "🐦",
+                "description": "Generate trending and relevant Twitter hashtags for maximum engagement",
+                "category": "Social",
+                "path": "twitter_tags",
+                "features": ["Hashtag Research", "Trend Analysis", "Engagement Boost", "Content Discovery"]
+            }
+        },
+        "Technical SEO Analysis": {
+            "Technical SEO Crawler": {
+                "icon": "🔧",
+                "description": "Comprehensive site-wide technical SEO analysis with AI-powered recommendations. Identify and fix technical issues that impact your search rankings.",
+                "category": "Technical",
+                "path": "technical_seo_crawler",
+                "features": ["Site-wide Crawling", "Technical Issues Detection", "Performance Analysis", "AI Recommendations"]
+            },
+            "On-Page SEO Analyzer": {
+                "icon": "🔍",
+                "description": "Comprehensive analysis of on-page SEO factors with actionable recommendations",
+                "category": "Analysis",
+                "path": "onpage_seo",
+                "features": ["Content Analysis", "SEO Scoring", "Recommendations", "Best Practices"]
+            },
+            "Website Speed Insights": {
+                "icon": "⚡",
+                "description": "Analyze website performance using Google PageSpeed Insights",
+                "category": "Performance",
+                "path": "pagespeed",
+                "features": ["Core Web Vitals", "Performance Metrics", "Optimization Tips", "Mobile Analysis"]
+            },
+            "URL SEO Checker": {
+                "icon": "🌐",
+                "description": "Analyze URL structure and SEO factors for better search rankings",
+                "category": "Technical",
+                "path": "url_checker",
+                "features": ["URL Analysis", "SEO Factors", "Technical Issues", "Optimization Tips"]
+            },
+            "Sitemap Analyzer": {
+                "icon": "🗺️",
+                "description": "Analyze website sitemaps to understand content structure and publishing trends",
+                "category": "Technical",
+                "path": "sitemap_analysis",
+                "features": ["Content Structure", "Publishing Trends", "URL Analysis", "Site Architecture"]
+            }
+        },
+        "Content Analysis & Research": {
+            "Content Gap Analysis": {
+                "icon": "📊",
+                "description": "Identify content opportunities and gaps in your SEO strategy",
+                "category": "Research",
+                "path": "content_gap_analysis",
+                "features": ["Competitor Analysis", "Keyword Gaps", "Content Opportunities", "Strategic Insights"]
+            },
+            "Enhanced Content Gap Analysis": {
+                "icon": "🎯",
+                "description": "Advanced content gap analysis with SERP intelligence, competitor crawling, and AI insights using advertools",
+                "category": "Research",
+                "path": "enhanced_content_gap_analysis",
+                "features": ["SERP Analysis", "Competitor Intelligence", "Keyword Expansion", "AI Strategic Insights"]
+            },
+            "Text Readability Analyzer": {
+                "icon": "📖",
+                "description": "Analyze text readability and get suggestions for content improvement",
+                "category": "Content",
+                "path": "readability_analyzer",
+                "features": ["Reading Level", "Clarity Score", "Improvement Tips", "Audience Targeting"]
+            },
+            "Word Cloud Generator": {
+                "icon": "☁️",
+                "description": "Visualize the most important words and terms in your content",
+                "category": "Visualization",
+                "path": "wordcloud_generator",
+                "features": ["Content Visualization", "Keyword Analysis", "Theme Identification", "Text Statistics"]
+            }
+        },
+        "Strategy & Planning": {
+            "Content Calendar": {
+                "icon": "📅",
+                "description": "Plan and organize your content strategy with AI-powered scheduling",
+                "category": "Planning",
+                "path": "content_calendar",
+                "features": ["Content Planning", "Publishing Schedule", "Strategy Management", "Team Collaboration"]
+            },
+            "Backlink Analysis": {
+                "icon": "🔗",
+                "description": "Analyze backlink opportunities and develop link building strategies",
+                "category": "Link Building",
+                "path": "backlinking",
+                "features": ["Link Analysis", "Opportunity Discovery", "Authority Building", "Outreach Planning"]
             }
         }
     }
@@ -161,8 +319,8 @@ def render_seo_tools_dashboard():
     st.markdown("""
         <div style="margin-top: 3rem;">
             <div class="dashboard-header" style="margin-bottom: 2rem;">
-                <h1 style="font-size: 2.2em;">🎯 SEO Success Features</h1>
-                <p>Comprehensive tools designed to boost your search engine rankings and drive organic traffic growth.</p>
+                <h1 style="font-size: 2.2em;">🎯 Why Choose Our SEO Tools?</h1>
+                <p>Real tools, real results. Each tool is designed to solve specific SEO challenges and drive measurable improvements.</p>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -172,19 +330,19 @@ def render_seo_tools_dashboard():
     insights = [
         {
             "title": "🤖 AI-Powered Analysis",
-            "description": "Advanced machine learning algorithms analyze your content and provide data-driven optimization recommendations."
+            "description": "Advanced algorithms analyze your content and provide data-driven optimization recommendations for better rankings."
         },
         {
-            "title": "📈 Real-Time Tracking",
-            "description": "Monitor your SEO performance with live ranking updates and comprehensive progress analytics."
+            "title": "📈 Actionable Insights",
+            "description": "Get specific, implementable suggestions that directly impact your search engine visibility and traffic."
         },
         {
-            "title": "🎯 Competitor Intelligence",
-            "description": "Stay ahead of the competition with detailed analysis of competitor strategies and opportunities."
+            "title": "🎯 Comprehensive Coverage",
+            "description": "From technical SEO to content optimization, our tools cover every aspect of search engine optimization."
         },
         {
-            "title": "🚀 Technical Excellence",
-            "description": "Comprehensive technical SEO analysis covering Core Web Vitals, mobile optimization, and site architecture."
+            "title": "🚀 Proven Results",
+            "description": "Based on industry best practices and proven SEO strategies that deliver measurable improvements."
         }
     ]
 
@@ -215,21 +373,37 @@ def ai_seo_tools():
     selected_tool = st.query_params.get("tool")
     
     if selected_tool:
-        # Map tool paths to their respective functions
+        # Map tool paths to their respective functions - ONLY existing, working tools
         tool_functions = {
-            # Individual tools
+            # Core content tools
             "structured_data": ai_structured_data,
             "blog_title": ai_title_generator,
             "meta_description": metadesc_generator_main,
             "alt_text": alt_text_gen,
             "opengraph": og_tag_generator,
             "image_optimizer": main_img_optimizer,
+            
+            # Technical analysis tools
+            "technical_seo_crawler": render_technical_seo_crawler,
             "pagespeed": google_pagespeed_insights,
             "onpage_seo": analyze_onpage_seo,
             "url_checker": url_seo_checker,
-            "backlinking": backlinking_ui,
+            "sitemap_analysis": sitemap_analyzer,
             
-            # Tool combinations
+            # Social media tools
+            "twitter_tags": render_twitter_tags,
+            
+            # Content analysis tools
+            "readability_analyzer": render_readability_analyzer,
+            "wordcloud_generator": render_wordcloud_generator,
+            
+            # Advanced tools
+            "backlinking": backlinking_ui,
+            "content_gap_analysis": render_content_gap_analysis,
+            "enhanced_content_gap_analysis": render_enhanced_content_gap_analysis_ui,
+            "content_calendar": render_content_calendar,
+            
+            # Tool combinations for workflow efficiency
             "content_optimization": lambda: run_tool_combination([
                 ai_title_generator,
                 metadesc_generator_main,
@@ -246,12 +420,8 @@ def ai_seo_tools():
             ], "Image Optimization Suite"),
             "social_optimization": lambda: run_tool_combination([
                 og_tag_generator,
-                backlinking_ui
-            ], "Social Media Optimization"),
-            
-            # Add Content Gap Analysis and Content Calendar
-            "content_gap_analysis": render_content_gap_analysis,
-            "content_calendar": render_content_calendar
+                render_twitter_tags
+            ], "Social Media Optimization")
         }
         
         if selected_tool in tool_functions:
@@ -260,7 +430,8 @@ def ai_seo_tools():
             # Execute the selected tool's function
             tool_functions[selected_tool]()
         else:
-            st.error(f"Invalid tool selected: {selected_tool}")
+            st.error(f"Tool '{selected_tool}' is not available or under development.")
+            st.info("Please select a different tool from the dashboard.")
             render_seo_tools_dashboard()
     else:
         # Show the dashboard if no tool is selected
@@ -269,25 +440,42 @@ def ai_seo_tools():
 def run_tool_combination(tools, combination_name):
     """Run a combination of tools and provide cross-tool analysis."""
     st.markdown(f"# {combination_name}")
-    st.markdown("Running comprehensive analysis...")
+    st.markdown("Comprehensive SEO analysis workflow")
     
     # Create tabs for each tool in the combination
-    tabs = st.tabs([f"Step {i+1}" for i in range(len(tools))])
+    tab_names = []
+    for i, tool in enumerate(tools):
+        if hasattr(tool, '__name__'):
+            tab_names.append(tool.__name__.replace('_', ' ').title())
+        else:
+            tab_names.append(f"Step {i+1}")
+    
+    tabs = st.tabs(tab_names)
     
     # Run each tool in its own tab
-    for i, (tab, tool) in enumerate(zip(tabs, tools)):
+    for tab, tool in zip(tabs, tools):
         with tab:
-            st.markdown(f"### Step {i+1}")
-            tool()
+            try:
+                tool()
+            except Exception as e:
+                st.error(f"Error running tool: {str(e)}")
+                logger.error(f"Error in tool combination: {str(e)}")
     
     # Add cross-tool analysis section
-    st.markdown("## 📊 Cross-Tool Analysis")
-    st.markdown("Analyzing results across all tools...")
+    with st.expander("📊 Analysis Summary", expanded=True):
+        st.markdown("""
+        ### Key Recommendations:
+        1. **Content Optimization**: Ensure your titles and meta descriptions are keyword-optimized
+        2. **Technical Performance**: Address any speed or technical issues identified
+        3. **Structured Data**: Implement schema markup for better search visibility
+        4. **Social Optimization**: Optimize social sharing tags for better engagement
+        
+        ### Next Steps:
+        - Implement the recommendations from each tool
+        - Monitor your rankings and traffic after changes
+        - Regularly audit your content using these tools
+        """)
     
-    # Add recommendations based on combined results
-    st.markdown("## 💡 Recommendations")
-    st.markdown("Based on the combined analysis, here are the key recommendations:")
-    
-    # Add a button to export the complete analysis
-    if st.button("📥 Export Complete Analysis", use_container_width=True):
-        st.info("Analysis export functionality coming soon!")
+    # Add export functionality placeholder
+    if st.button("📥 Export Analysis Report", use_container_width=True):
+        st.info("Export functionality is being developed. Save your results manually for now.")
