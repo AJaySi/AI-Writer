@@ -37,7 +37,7 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # === Start runtime stage ===
-FROM python:3.11-slim AS runtime
+FROM python:3.12-slim AS runtime
 
 # 7. Install build tools needed for wordcloud
 RUN apt-get update && apt-get install -y --no-install-recommends gcc build-essential && rm -rf /var/lib/apt/lists/*
