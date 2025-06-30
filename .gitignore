@@ -3,6 +3,8 @@
 .DS_Store
 .vscode
 *.pyc
+content_scheduler.db
+*.db
 .env
 .env.local
 .env.development.local

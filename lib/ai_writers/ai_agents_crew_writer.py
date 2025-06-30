@@ -1,8 +1,6 @@
 import os
 import configparser
 import streamlit as st
-from crewai import Agent, Task, Crew
-from crewai_tools import SerperDevTool
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 # Initialize session state variables if not already done
@@ -12,6 +10,11 @@ if 'progress' not in st.session_state:
 
 def create_agents(search_keywords):
     """Create agents for content creation."""
+    try:
+        from crewai import Agent
+        from crewai_tools import SerperDevTool
+    except ImportError:
+        raise ImportError("The 'crewai' and/or 'crewai_tools' package is not installed. Please install them to use AI Agents Crew Writer features.")
     search_tool = SerperDevTool()
     google_api_key = os.getenv("GEMINI_API_KEY")
     
@@ -53,6 +56,10 @@ def create_agents(search_keywords):
 def create_tasks(agents, search_keywords):
     """Create tasks for the agents."""
     try:
+        from crewai import Task
+    except ImportError:
+        raise ImportError("The 'crewai' package is not installed. Please install it to use AI Agents Crew Writer features.")
+    try:
         task_description, expected_output = read_config("research_task")
         research_task = Task(
             description=f"The main focus keywords are: '{search_keywords}'.\n{task_description}.",
@@ -89,6 +96,10 @@ def create_tasks(agents, search_keywords):
 
 def execute_tasks(agents, tasks, lang):
     """Execute tasks with the agents."""
+    try:
+        from crewai import Crew
+    except ImportError:
+        raise ImportError("The 'crewai' package is not installed. Please install it to use AI Agents Crew Writer features.")
     crew = Crew(
         agents=agents,
         tasks=tasks,

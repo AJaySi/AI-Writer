@@ -12,9 +12,64 @@ from lib.ai_writers.ai_outline_writer.outline_ui import main as outline_generato
 from lib.alwrity_ui.dashboard_styles import apply_dashboard_style, render_dashboard_header, render_category_header, render_card
 from loguru import logger
 
+# Try to import AI Content Performance Predictor (AI-first approach)
+try:
+    from lib.content_performance_predictor.ai_performance_predictor import render_ai_predictor_ui as render_content_performance_predictor
+    AI_PREDICTOR_AVAILABLE = True
+    logger.info("AI Content Performance Predictor loaded successfully")
+except ImportError:
+    logger.warning("AI Content Performance Predictor not available")
+    render_content_performance_predictor = None
+    AI_PREDICTOR_AVAILABLE = False
+
+# Try to import Bootstrap AI Competitive Suite
+try:
+    from lib.ai_competitive_suite.bootstrap_ai_suite import render_bootstrap_ai_suite
+    BOOTSTRAP_SUITE_AVAILABLE = True
+    logger.info("Bootstrap AI Competitive Suite loaded successfully")
+except ImportError:
+    logger.warning("Bootstrap AI Competitive Suite not available")
+    render_bootstrap_ai_suite = None
+    BOOTSTRAP_SUITE_AVAILABLE = False
+
 def list_ai_writers():
     """Return a list of available AI writers with their metadata (no UI rendering)."""
-    return [
+    writers = []
+    
+    # Add Content Performance Predictor if available
+    if render_content_performance_predictor:
+        # AI-first approach description
+        if AI_PREDICTOR_AVAILABLE:
+            description = "🎯 AI-powered content performance prediction with competitive intelligence - perfect for solo entrepreneurs"
+            name = "AI Content Performance Predictor"
+        else:
+            description = "Predict content success before publishing with AI-powered performance analysis"
+            name = "Content Performance Predictor"
+        
+        writers.append({
+            "name": name,
+            "icon": "🎯",
+            "description": description,
+            "category": "⭐ Featured",
+            "function": render_content_performance_predictor,
+            "path": "performance_predictor",
+            "featured": True
+        })
+    
+    # Add Bootstrap AI Competitive Suite if available
+    if render_bootstrap_ai_suite:
+        writers.append({
+            "name": "Bootstrap AI Competitive Suite",
+            "icon": "🚀",
+            "description": "🥷 Complete AI-powered competitive toolkit: content performance prediction + competitive intelligence for solo entrepreneurs",
+            "category": "⭐ Featured",
+            "function": render_bootstrap_ai_suite,
+            "path": "bootstrap_ai_suite",
+            "featured": True
+        })
+    
+    # Add existing writers
+    writers.extend([
         {
             "name": "AI Blog Writer",
             "icon": "📝",
@@ -103,7 +158,9 @@ def list_ai_writers():
             "function": outline_generator,
             "path": "outline_generator"
         }
-    ]
+    ])
+    
+    return writers
 
 def get_ai_writers():
     """Main function to display AI writers dashboard with premium glassmorphic design."""

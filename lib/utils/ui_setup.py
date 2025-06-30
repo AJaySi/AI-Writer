@@ -11,6 +11,7 @@ from lib.utils.alwrity_utils import ai_social_writer
 from lib.alwrity_ui.seo_tools_dashboard import ai_seo_tools
 from lib.alwrity_ui.settings_page import render_settings_page
 from lib.alwrity_ui.navigation_styles import apply_navigation_styles, apply_compact_layout
+from lib.alwrity_ui.content_generation.content_generation_dashboard import render_content_generation_dashboard
 from loguru import logger
 
 # Import social media writer functions
@@ -36,7 +37,7 @@ def setup_alwrity_ui():
     
     # Initialize session state for active tab if not exists
     if 'active_tab' not in st.session_state:
-        st.session_state.active_tab = "Content Planning"
+        st.session_state.active_tab = "Content Generation"
         logger.info(f"Initialized active_tab to: {st.session_state.active_tab}")
     
     # Initialize session state for active sub-tab if not exists
@@ -46,6 +47,7 @@ def setup_alwrity_ui():
 
     # Define the navigation items with their icons and functions
     nav_items = {
+        "Content Generation": ("🎯", render_content_generation_dashboard),
         "AI Writers": ("📝", get_ai_writers),
         "Content Planning": ("📅", content_planning_tools),
         "AI SEO Tools": ("🔍", ai_seo_tools),

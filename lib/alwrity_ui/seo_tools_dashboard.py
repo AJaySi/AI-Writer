@@ -1,5 +1,6 @@
 import streamlit as st
 from loguru import logger
+from typing import List, Dict, Any, Callable
 
 # Import existing tools
 from lib.ai_seo_tools.seo_structured_data import ai_structured_data
@@ -23,13 +24,228 @@ from lib.ai_seo_tools.sitemap_analysis import main as sitemap_analyzer
 from lib.ai_seo_tools.textstaty import analyze_text as readability_analyzer
 from lib.ai_seo_tools.wordcloud import generate_wordcloud
 
+# Import new enterprise tools
+from ..ai_seo_tools.google_search_console_integration import render_gsc_integration
+from ..ai_seo_tools.ai_content_strategy import render_ai_content_strategy
+from ..ai_seo_tools.enterprise_seo_suite import render_enterprise_seo_suite
+
 from lib.alwrity_ui.dashboard_styles import apply_dashboard_style, render_dashboard_header, render_category_header, render_card
+
+
+# ============================================================================
+# TOOL CONFIGURATION FUNCTIONS
+# ============================================================================
+
+def get_enterprise_tools_config() -> List[Dict[str, Any]]:
+    """Get configuration for enterprise tools."""
+    return [
+        {
+            'name': '🎯 Enterprise SEO Suite',
+            'description': 'Unified command center for comprehensive SEO management with AI-powered workflows',
+            'function': render_enterprise_seo_suite,
+            'features': ['Complete SEO audit workflows', 'AI-powered recommendations', 'Strategic planning', 'Performance tracking']
+        },
+        {
+            'name': '📊 Google Search Console Intelligence',
+            'description': 'AI-powered insights from Google Search Console data with content recommendations',
+            'function': render_gsc_integration,
+            'features': ['GSC data analysis', 'Content opportunities', 'Performance insights', 'Strategic recommendations']
+        },
+        {
+            'name': '🧠 AI Content Strategy Generator',
+            'description': 'Generate comprehensive content strategies using AI market intelligence',
+            'function': render_ai_content_strategy,
+            'features': ['Content pillar development', 'Topic cluster strategy', 'Content calendar planning', 'Distribution strategy']
+        }
+    ]
+
+def get_analytics_tools_config() -> List[Dict[str, Any]]:
+    """Get configuration for analytics tools."""
+    return [
+        {
+            'name': '📊 Google Search Console Intelligence',
+            'description': 'Deep analysis of GSC data with AI-powered content recommendations',
+            'function': render_gsc_integration,
+            'category': 'Search Analytics'
+        },
+        {
+            'name': '🔍 Enhanced Content Gap Analysis',
+            'description': 'Advanced competitor content analysis with AI insights',
+            'function': lambda: render_enhanced_content_gap_analysis(),
+            'category': 'Competitive Intelligence'
+        },
+        {
+            'name': '📈 SEO Performance Tracker',
+            'description': 'Track and analyze SEO performance with trend analysis',
+            'function': lambda: st.info("SEO Performance Tracker - Coming soon with advanced metrics"),
+            'category': 'Performance Analytics'
+        }
+    ]
+
+def get_technical_tools_config() -> List[Dict[str, Any]]:
+    """Get configuration for technical SEO tools."""
+    return [
+        {
+            'name': '🔍 Technical SEO Crawler',
+            'description': 'Comprehensive site-wide technical SEO analysis',
+            'function': lambda: render_technical_seo_crawler(),
+            'priority': 'High'
+        },
+        {
+            'name': '📱 Mobile SEO Analyzer',
+            'description': 'Mobile-specific SEO analysis and optimization',
+            'function': lambda: st.info("Mobile SEO Analyzer - Advanced mobile optimization coming soon"),
+            'priority': 'Medium'
+        },
+        {
+            'name': '⚡ Core Web Vitals Optimizer',
+            'description': 'Analyze and optimize Core Web Vitals performance',
+            'function': lambda: st.info("Core Web Vitals Optimizer - Performance optimization coming soon"),
+            'priority': 'High'
+        },
+        {
+            'name': '🗺️ XML Sitemap Generator',
+            'description': 'Generate and optimize XML sitemaps',
+            'function': lambda: st.info("XML Sitemap Generator - Coming soon"),
+            'priority': 'Medium'
+        }
+    ]
+
+def get_content_tools_config() -> List[Dict[str, Any]]:
+    """Get configuration for content and strategy tools."""
+    return [
+        {
+            'name': '🧠 AI Content Strategy Generator',
+            'description': 'Comprehensive content strategy with AI market intelligence',
+            'function': render_ai_content_strategy,
+            'type': 'Enterprise'
+        },
+        {
+            'name': '📅 Content Calendar Planner',
+            'description': 'AI-powered content calendar with SEO optimization',
+            'function': lambda: render_content_calendar(),
+            'type': 'Professional'
+        },
+        {
+            'name': '🎯 Topic Cluster Generator',
+            'description': 'Generate SEO topic clusters for content dominance',
+            'function': lambda: st.info("Topic Cluster Generator - Advanced clustering coming soon"),
+            'type': 'Professional'
+        },
+        {
+            'name': '📊 Content Performance Analyzer',
+            'description': 'Analyze content performance and optimization opportunities',
+            'function': lambda: st.info("Content Performance Analyzer - Coming soon"),
+            'type': 'Standard'
+        }
+    ]
+
+def get_basic_tools_config() -> List[Dict[str, Any]]:
+    """Get configuration for basic SEO tools."""
+    return [
+        {
+            'name': '📝 Meta Description Generator',
+            'description': 'Generate SEO-optimized meta descriptions',
+            'function': lambda: metadesc_generator_main(),
+            'category': 'Metadata'
+        },
+        {
+            'name': '🎯 Content Title Generator', 
+            'description': 'Create compelling, SEO-friendly titles',
+            'function': lambda: ai_title_generator(),
+            'category': 'Content'
+        },
+        {
+            'name': '🔗 OpenGraph Generator',
+            'description': 'Generate social media OpenGraph tags',
+            'function': lambda: og_tag_generator(),
+            'category': 'Social'
+        },
+        {
+            'name': '🖼️ Image Alt Text Generator',
+            'description': 'Generate SEO-friendly image alt text',
+            'function': lambda: alt_text_gen(),
+            'category': 'Images'
+        },
+        {
+            'name': '📋 Schema Markup Generator',
+            'description': 'Generate structured data markup',
+            'function': lambda: ai_structured_data(),
+            'category': 'Technical'
+        },
+        {
+            'name': '🔍 On-Page SEO Analyzer',
+            'description': 'Comprehensive on-page SEO analysis',
+            'function': lambda: analyze_onpage_seo(),
+            'category': 'Analysis'
+        },
+        {
+            'name': '🌐 URL SEO Checker',
+            'description': 'Quick SEO check for any URL',
+            'function': lambda: url_seo_checker(),
+            'category': 'Analysis'
+        }
+    ]
+
+def get_tool_functions_mapping() -> Dict[str, Callable]:
+    """Get mapping of tool names to their functions for URL routing."""
+    return {
+        # Core content tools
+        "structured_data": ai_structured_data,
+        "blog_title": ai_title_generator,
+        "meta_description": metadesc_generator_main,
+        "alt_text": alt_text_gen,
+        "opengraph": og_tag_generator,
+        "image_optimizer": main_img_optimizer,
+        
+        # Technical analysis tools
+        "technical_seo_crawler": render_technical_seo_crawler,
+        "pagespeed": google_pagespeed_insights,
+        "onpage_seo": analyze_onpage_seo,
+        "url_checker": url_seo_checker,
+        "sitemap_analysis": sitemap_analyzer,
+        
+        # Social media tools
+        "twitter_tags": render_twitter_tags,
+        
+        # Content analysis tools
+        "readability_analyzer": render_readability_analyzer,
+        "wordcloud_generator": render_wordcloud_generator,
+        
+        # Advanced tools
+        "backlinking": backlinking_ui,
+        "content_gap_analysis": render_content_gap_analysis,
+        "enhanced_content_gap_analysis": render_enhanced_content_gap_analysis_ui,
+        "content_calendar": render_content_calendar,
+        
+        # Tool combinations for workflow efficiency
+        "content_optimization": lambda: run_tool_combination([
+            ai_title_generator,
+            metadesc_generator_main,
+            ai_structured_data
+        ], "Content Optimization Suite"),
+        "technical_audit": lambda: run_tool_combination([
+            google_pagespeed_insights,
+            analyze_onpage_seo,
+            url_seo_checker
+        ], "Technical SEO Audit"),
+        "image_optimization": lambda: run_tool_combination([
+            alt_text_gen,
+            main_img_optimizer
+        ], "Image Optimization Suite"),
+        "social_optimization": lambda: run_tool_combination([
+            og_tag_generator,
+            render_twitter_tags
+        ], "Social Media Optimization")
+    }
+
+
+# ============================================================================
+# INDIVIDUAL TOOL RENDERING FUNCTIONS
+# ============================================================================
 
 def render_content_gap_analysis():
     """Render the content gap analysis workflow interface."""
-    from lib.ai_seo_tools.content_gap_analysis.ui import ContentGapAnalysisUI
-    
-    # Initialize and run the Content Gap Analysis UI
     ui = ContentGapAnalysisUI()
     ui.run()
 
@@ -38,10 +254,9 @@ def render_enhanced_content_gap_analysis_ui():
     render_enhanced_content_gap_analysis()
 
 def render_content_calendar():
-    """Render the content calendar dashboard."""
+    """Render the content calendar dashboard with proper error handling."""
     import logging
     import sys
-    from datetime import datetime
     
     # Configure logging
     logging.basicConfig(
@@ -52,16 +267,16 @@ def render_content_calendar():
             logging.FileHandler('content_calendar.log', mode='a')
         ]
     )
-    logger = logging.getLogger('content_calendar')
+    calendar_logger = logging.getLogger('content_calendar')
     
     try:
-        logger.info("Initializing Content Calendar Dashboard")
+        calendar_logger.info("Initializing Content Calendar Dashboard")
         dashboard = ContentCalendarDashboard()
-        logger.info("Rendering Content Calendar Dashboard")
+        calendar_logger.info("Rendering Content Calendar Dashboard")
         dashboard.render()
-        logger.info("Content Calendar Dashboard rendered successfully")
+        calendar_logger.info("Content Calendar Dashboard rendered successfully")
     except Exception as e:
-        logger.error(f"Error rendering content calendar: {str(e)}", exc_info=True)
+        calendar_logger.error(f"Error rendering content calendar: {str(e)}", exc_info=True)
         st.error(f"An error occurred while loading the content calendar: {str(e)}")
 
 def render_twitter_tags():
@@ -77,36 +292,40 @@ def render_readability_analyzer():
     
     if st.button("Analyze Readability"):
         if text_input.strip():
-            from textstat import textstat
-            
-            # Calculate various metrics
-            metrics = {
-                "Flesch Reading Ease": textstat.flesch_reading_ease(text_input),
-                "Flesch-Kincaid Grade Level": textstat.flesch_kincaid_grade(text_input),
-                "Gunning Fog Index": textstat.gunning_fog(text_input),
-                "SMOG Index": textstat.smog_index(text_input),
-                "Automated Readability Index": textstat.automated_readability_index(text_input),
-                "Coleman-Liau Index": textstat.coleman_liau_index(text_input),
-                "Linsear Write Formula": textstat.linsear_write_formula(text_input),
-                "Dale-Chall Readability Score": textstat.dale_chall_readability_score(text_input),
-                "Readability Consensus": textstat.readability_consensus(text_input)
-            }
-            
-            # Display metrics
-            st.subheader("Text Analysis Results")
-            for metric, value in metrics.items():
-                st.metric(metric, f"{value:.2f}")
-            
-            # Add recommendations
-            st.subheader("Key Takeaways:")
-            st.markdown("""
-                * **Don't Be Afraid to Simplify!** Often, simpler language makes content more impactful and easier to digest.
-                * **Aim for a Reading Level Appropriate for Your Audience:** Consider the education level, background, and familiarity of your readers.
-                * **Use Short Sentences:** This makes your content more scannable and easier to read.
-                * **Write for Everyone:** Accessibility should always be a priority. When in doubt, aim for clear, concise language!
-            """)
+            _display_readability_metrics(text_input)
+            _display_readability_recommendations()
         else:
             st.error("Please enter text to analyze.")
+
+def _display_readability_metrics(text: str):
+    """Display readability metrics for the given text."""
+    from textstat import textstat
+    
+    metrics = {
+        "Flesch Reading Ease": textstat.flesch_reading_ease(text),
+        "Flesch-Kincaid Grade Level": textstat.flesch_kincaid_grade(text),
+        "Gunning Fog Index": textstat.gunning_fog(text),
+        "SMOG Index": textstat.smog_index(text),
+        "Automated Readability Index": textstat.automated_readability_index(text),
+        "Coleman-Liau Index": textstat.coleman_liau_index(text),
+        "Linsear Write Formula": textstat.linsear_write_formula(text),
+        "Dale-Chall Readability Score": textstat.dale_chall_readability_score(text),
+        "Readability Consensus": textstat.readability_consensus(text)
+    }
+    
+    st.subheader("Text Analysis Results")
+    for metric, value in metrics.items():
+        st.metric(metric, f"{value:.2f}")
+
+def _display_readability_recommendations():
+    """Display readability recommendations."""
+    st.subheader("Key Takeaways:")
+    st.markdown("""
+        * **Don't Be Afraid to Simplify!** Often, simpler language makes content more impactful and easier to digest.
+        * **Aim for a Reading Level Appropriate for Your Audience:** Consider the education level, background, and familiarity of your readers.
+        * **Use Short Sentences:** This makes your content more scannable and easier to read.
+        * **Write for Everyone:** Accessibility should always be a priority. When in doubt, aim for clear, concise language!
+    """)
 
 def render_wordcloud_generator():
     """Render the word cloud generator."""
@@ -117,253 +336,291 @@ def render_wordcloud_generator():
     
     if st.button("Generate Word Cloud"):
         if text_input.strip():
-            from wordcloud import WordCloud
-            import matplotlib.pyplot as plt
-            
-            # Create and generate a word cloud image
-            wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text_input)
-            
-            # Display the word cloud
-            st.subheader("Word Cloud Visualization")
-            fig, ax = plt.subplots(figsize=(10, 5))
-            ax.imshow(wordcloud, interpolation='bilinear')
-            ax.axis('off')
-            st.pyplot(fig)
-            
-            # Add some statistics
-            st.subheader("Text Statistics")
-            words = text_input.split()
-            unique_words = set(words)
-            st.metric("Total Words", len(words))
-            st.metric("Unique Words", len(unique_words))
+            _generate_and_display_wordcloud(text_input)
+            _display_text_statistics(text_input)
         else:
             st.error("Please enter text to generate a word cloud.")
 
-def render_seo_tools_dashboard():
-    """Render a modern dashboard for SEO tools with premium glassmorphic design."""
+def _generate_and_display_wordcloud(text: str):
+    """Generate and display word cloud for the given text."""
+    from wordcloud import WordCloud
+    import matplotlib.pyplot as plt
     
-    # Apply common dashboard styling
-    apply_dashboard_style()
+    # Create and generate a word cloud image
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
+    
+    # Display the word cloud
+    st.subheader("Word Cloud Visualization")
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.imshow(wordcloud, interpolation='bilinear')
+    ax.axis('off')
+    st.pyplot(fig)
 
-    # Enhanced dashboard header with modern design
-    render_dashboard_header(
-        "🚀 SEO AI Power Suite",
-        "Dominate search rankings with our comprehensive AI-powered SEO toolkit. From keyword research to content optimization, master every aspect of search engine optimization."
-    )
+def _display_text_statistics(text: str):
+    """Display basic text statistics."""
+    st.subheader("Text Statistics")
+    words = text.split()
+    unique_words = set(words)
+    st.metric("Total Words", len(words))
+    st.metric("Unique Words", len(unique_words))
 
-    # Define SEO tools organized by real use cases and existing functionality
-    seo_tools = {
-        "Content Creation & Optimization": {
-            "Content Title Generator": {
-                "icon": "📝",
-                "description": "Create attention-grabbing, SEO-optimized titles that resonate with your audience",
-                "category": "Content",
-                "path": "blog_title",
-                "features": ["Keyword Optimization", "Title Variations", "CTR Enhancement", "SEO Best Practices"]
-            },
-            "Meta Description Generator": {
-                "icon": "🏷️",
-                "description": "Generate compelling meta descriptions that boost click-through rates from search results",
-                "category": "Meta Tags",
-                "path": "meta_description",
-                "features": ["SERP Optimization", "Character Limits", "Keyword Integration", "CTR Improvement"]
-            },
-            "Structured Data Generator": {
-                "icon": "🏗️",
-                "description": "Create schema markup to enhance search result appearance with rich snippets",
-                "category": "Technical",
-                "path": "structured_data",
-                "features": ["Rich Snippets", "Schema Markup", "Search Enhancement", "SERP Features"]
-            }
-        },
-        "Image & Media Optimization": {
-            "Image Alt Text Generator": {
-                "icon": "🖼️",
-                "description": "Generate SEO-friendly alt text for images to improve accessibility and search visibility",
-                "category": "Images",
-                "path": "alt_text",
-                "features": ["Accessibility", "Image SEO", "Screen Reader Support", "Search Discovery"]
-            },
-            "Image Optimizer": {
-                "icon": "🎯",
-                "description": "Optimize images for web performance and faster loading times",
-                "category": "Performance",
-                "path": "image_optimizer",
-                "features": ["File Compression", "Format Optimization", "Performance Boost", "Web Standards"]
-            }
-        },
-        "Social Media Optimization": {
-            "OpenGraph Generator": {
-                "icon": "📱",
-                "description": "Create OpenGraph tags for beautiful social media sharing experiences",
-                "category": "Social",
-                "path": "opengraph",
-                "features": ["Social Sharing", "Visual Appeal", "Engagement Boost", "Platform Optimization"]
-            },
-            "Twitter Tags Generator": {
-                "icon": "🐦",
-                "description": "Generate trending and relevant Twitter hashtags for maximum engagement",
-                "category": "Social",
-                "path": "twitter_tags",
-                "features": ["Hashtag Research", "Trend Analysis", "Engagement Boost", "Content Discovery"]
-            }
-        },
-        "Technical SEO Analysis": {
-            "Technical SEO Crawler": {
-                "icon": "🔧",
-                "description": "Comprehensive site-wide technical SEO analysis with AI-powered recommendations. Identify and fix technical issues that impact your search rankings.",
-                "category": "Technical",
-                "path": "technical_seo_crawler",
-                "features": ["Site-wide Crawling", "Technical Issues Detection", "Performance Analysis", "AI Recommendations"]
-            },
-            "On-Page SEO Analyzer": {
-                "icon": "🔍",
-                "description": "Comprehensive analysis of on-page SEO factors with actionable recommendations",
-                "category": "Analysis",
-                "path": "onpage_seo",
-                "features": ["Content Analysis", "SEO Scoring", "Recommendations", "Best Practices"]
-            },
-            "Website Speed Insights": {
-                "icon": "⚡",
-                "description": "Analyze website performance using Google PageSpeed Insights",
-                "category": "Performance",
-                "path": "pagespeed",
-                "features": ["Core Web Vitals", "Performance Metrics", "Optimization Tips", "Mobile Analysis"]
-            },
-            "URL SEO Checker": {
-                "icon": "🌐",
-                "description": "Analyze URL structure and SEO factors for better search rankings",
-                "category": "Technical",
-                "path": "url_checker",
-                "features": ["URL Analysis", "SEO Factors", "Technical Issues", "Optimization Tips"]
-            },
-            "Sitemap Analyzer": {
-                "icon": "🗺️",
-                "description": "Analyze website sitemaps to understand content structure and publishing trends",
-                "category": "Technical",
-                "path": "sitemap_analysis",
-                "features": ["Content Structure", "Publishing Trends", "URL Analysis", "Site Architecture"]
-            }
-        },
-        "Content Analysis & Research": {
-            "Content Gap Analysis": {
-                "icon": "📊",
-                "description": "Identify content opportunities and gaps in your SEO strategy",
-                "category": "Research",
-                "path": "content_gap_analysis",
-                "features": ["Competitor Analysis", "Keyword Gaps", "Content Opportunities", "Strategic Insights"]
-            },
-            "Enhanced Content Gap Analysis": {
-                "icon": "🎯",
-                "description": "Advanced content gap analysis with SERP intelligence, competitor crawling, and AI insights using advertools",
-                "category": "Research",
-                "path": "enhanced_content_gap_analysis",
-                "features": ["SERP Analysis", "Competitor Intelligence", "Keyword Expansion", "AI Strategic Insights"]
-            },
-            "Text Readability Analyzer": {
-                "icon": "📖",
-                "description": "Analyze text readability and get suggestions for content improvement",
-                "category": "Content",
-                "path": "readability_analyzer",
-                "features": ["Reading Level", "Clarity Score", "Improvement Tips", "Audience Targeting"]
-            },
-            "Word Cloud Generator": {
-                "icon": "☁️",
-                "description": "Visualize the most important words and terms in your content",
-                "category": "Visualization",
-                "path": "wordcloud_generator",
-                "features": ["Content Visualization", "Keyword Analysis", "Theme Identification", "Text Statistics"]
-            }
-        },
-        "Strategy & Planning": {
-            "Content Calendar": {
-                "icon": "📅",
-                "description": "Plan and organize your content strategy with AI-powered scheduling",
-                "category": "Planning",
-                "path": "content_calendar",
-                "features": ["Content Planning", "Publishing Schedule", "Strategy Management", "Team Collaboration"]
-            },
-            "Backlink Analysis": {
-                "icon": "🔗",
-                "description": "Analyze backlink opportunities and develop link building strategies",
-                "category": "Link Building",
-                "path": "backlinking",
-                "features": ["Link Analysis", "Opportunity Discovery", "Authority Building", "Outreach Planning"]
-            }
-        }
-    }
 
-    # Render categories and tools
-    for category, tools in seo_tools.items():
-        # Render category header
-        render_category_header(category)
+# ============================================================================
+# TAB RENDERING FUNCTIONS
+# ============================================================================
+
+def render_enterprise_tab():
+    """Render the Enterprise Suite tab."""
+    st.header("🏢 Enterprise SEO Command Center")
+    st.markdown("**Unified SEO management for enterprise-level optimization**")
+    
+    enterprise_tools = get_enterprise_tools_config()
+    
+    # Display enterprise tools
+    for tool in enterprise_tools:
+        _render_enterprise_tool_card(tool)
+    
+    # Render selected enterprise tool
+    _render_selected_enterprise_tool(enterprise_tools)
+
+def _render_enterprise_tool_card(tool: Dict[str, Any]):
+    """Render an individual enterprise tool card."""
+    with st.expander(f"{tool['name']} - {tool['description']}", expanded=False):
+        col1, col2 = st.columns([2, 1])
         
-        # Create responsive grid for tools in this category
-        cols = st.columns(3)
-        for idx, (tool_name, details) in enumerate(tools.items()):
-            with cols[idx % 3]:
-                # Use the common card renderer
-                if render_card(
-                    icon=details['icon'],
-                    title=tool_name,
-                    description=details['description'],
-                    category=details['category'],
-                    key_suffix=f"seo_{tool_name.replace(' ', '_')}",
-                    help_text=f"Open {tool_name} - {details['description'][:50]}..."
-                ):
-                    # Set query parameters to redirect to the specific tool
-                    st.query_params["tool"] = details["path"]
-                    st.rerun()
+        with col1:
+            st.markdown("**Key Features:**")
+            for feature in tool['features']:
+                st.write(f"• {feature}")
+        
+        with col2:
+            if st.button(f"Launch {tool['name'].split()[1]}", key=f"enterprise_{tool['name']}", use_container_width=True):
+                st.session_state.selected_enterprise_tool = tool['name']
+                tool['function']()
 
-    # Add SEO insights section
-    st.markdown("""
-        <div style="margin-top: 3rem;">
-            <div class="dashboard-header" style="margin-bottom: 2rem;">
-                <h1 style="font-size: 2.2em;">🎯 Why Choose Our SEO Tools?</h1>
-                <p>Real tools, real results. Each tool is designed to solve specific SEO challenges and drive measurable improvements.</p>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
+def _render_selected_enterprise_tool(enterprise_tools: List[Dict[str, Any]]):
+    """Render the selected enterprise tool if any."""
+    if 'selected_enterprise_tool' in st.session_state:
+        selected_tool = next((tool for tool in enterprise_tools if tool['name'] == st.session_state.selected_enterprise_tool), None)
+        if selected_tool:
+            st.markdown("---")
+            selected_tool['function']()
 
-    # SEO insights grid
-    insight_cols = st.columns(2)
-    insights = [
-        {
-            "title": "🤖 AI-Powered Analysis",
-            "description": "Advanced algorithms analyze your content and provide data-driven optimization recommendations for better rankings."
-        },
-        {
-            "title": "📈 Actionable Insights",
-            "description": "Get specific, implementable suggestions that directly impact your search engine visibility and traffic."
-        },
-        {
-            "title": "🎯 Comprehensive Coverage",
-            "description": "From technical SEO to content optimization, our tools cover every aspect of search engine optimization."
-        },
-        {
-            "title": "🚀 Proven Results",
-            "description": "Based on industry best practices and proven SEO strategies that deliver measurable improvements."
-        }
-    ]
-
-    for idx, insight in enumerate(insights):
-        with insight_cols[idx % 2]:
-            st.markdown(f"""
-                <div class="premium-card" style="min-height: 160px; cursor: default;">
-                    <div class="card-glow"></div>
-                    <div class="card-content">
-                        <div class="card-title" style="margin-bottom: 0.8rem;">{insight['title']}</div>
-                        <div class="card-description" style="margin-bottom: 0;">{insight['description']}</div>
-                    </div>
-                    <div class="card-shine"></div>
-                </div>
-            """, unsafe_allow_html=True)
+def render_analytics_tab():
+    """Render the Analytics & Intelligence tab."""
+    st.header("📊 Analytics & Intelligence")
+    st.markdown("**Advanced analytics and competitive intelligence tools**")
     
-    # Close dashboard container
-    st.markdown('</div>', unsafe_allow_html=True)
+    analytics_tools = get_analytics_tools_config()
+    
+    # Group tools by category
+    categories = _group_tools_by_category(analytics_tools)
+    
+    for category, tools in categories.items():
+        st.subheader(f"📊 {category}")
+        
+        for tool in tools:
+            _render_analytics_tool_row(tool)
+
+def _group_tools_by_category(tools: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    """Group tools by their category."""
+    categories = {}
+    for tool in tools:
+        category = tool['category']
+        if category not in categories:
+            categories[category] = []
+        categories[category].append(tool)
+    return categories
+
+def _render_analytics_tool_row(tool: Dict[str, Any]):
+    """Render an analytics tool row."""
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        st.markdown(f"**{tool['name']}**")
+        st.write(tool['description'])
+    
+    with col2:
+        if st.button("Launch", key=f"analytics_{tool['name']}", use_container_width=True):
+            tool['function']()
+
+def render_technical_tab():
+    """Render the Technical SEO tab."""
+    st.header("🔧 Technical SEO")
+    st.markdown("**Advanced technical SEO analysis and optimization tools**")
+    
+    technical_tools = get_technical_tools_config()
+    
+    # Display technical tools with priority indicators
+    for tool in technical_tools:
+        _render_technical_tool_row(tool)
+
+def _render_technical_tool_row(tool: Dict[str, Any]):
+    """Render a technical tool row with priority indicator."""
+    priority_color = "🔴" if tool['priority'] == 'High' else "🟡"
+    
+    col1, col2, col3 = st.columns([2, 1, 1])
+    
+    with col1:
+        st.markdown(f"**{tool['name']}** {priority_color}")
+        st.write(tool['description'])
+    
+    with col2:
+        st.write(f"**Priority:** {tool['priority']}")
+    
+    with col3:
+        if st.button("Launch", key=f"technical_{tool['name']}", use_container_width=True):
+            tool['function']()
+
+def render_content_tab():
+    """Render the Content & Strategy tab."""
+    st.header("📝 Content & Strategy")
+    st.markdown("**AI-powered content creation and strategy tools**")
+    
+    content_tools = get_content_tools_config()
+    
+    # Group by tool type
+    tool_types = _group_tools_by_type(content_tools)
+    
+    for tool_type, tools in tool_types.items():
+        _render_content_tool_section(tool_type, tools)
+
+def _group_tools_by_type(tools: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    """Group tools by their type."""
+    tool_types = {}
+    for tool in tools:
+        tool_type = tool['type']
+        if tool_type not in tool_types:
+            tool_types[tool_type] = []
+        tool_types[tool_type].append(tool)
+    return tool_types
+
+def _render_content_tool_section(tool_type: str, tools: List[Dict[str, Any]]):
+    """Render a content tool section."""
+    type_color = {"Enterprise": "🏢", "Professional": "💼", "Standard": "📋"}
+    st.subheader(f"{type_color.get(tool_type, '📋')} {tool_type} Tools")
+    
+    for tool in tools:
+        col1, col2 = st.columns([3, 1])
+        
+        with col1:
+            st.markdown(f"**{tool['name']}**")
+            st.write(tool['description'])
+        
+        with col2:
+            if st.button("Launch", key=f"content_{tool['name']}", use_container_width=True):
+                tool['function']()
+
+def render_basic_tools_tab():
+    """Render the Basic Tools tab."""
+    st.header("🎯 Basic SEO Tools")
+    st.markdown("**Essential SEO tools for quick optimization tasks**")
+    
+    basic_tools = get_basic_tools_config()
+    
+    # Group basic tools by category
+    basic_categories = _group_tools_by_category(basic_tools)
+    
+    # Display in columns for better layout
+    _render_basic_tools_in_columns(basic_categories)
+
+def _render_basic_tools_in_columns(basic_categories: Dict[str, List[Dict[str, Any]]]):
+    """Render basic tools in two columns."""
+    col1, col2 = st.columns(2)
+    
+    categories_list = list(basic_categories.items())
+    mid_point = len(categories_list) // 2
+    
+    with col1:
+        for category, tools in categories_list[:mid_point]:
+            _render_basic_tool_category(category, tools)
+    
+    with col2:
+        for category, tools in categories_list[mid_point:]:
+            _render_basic_tool_category(category, tools)
+
+def _render_basic_tool_category(category: str, tools: List[Dict[str, Any]]):
+    """Render a basic tool category."""
+    st.subheader(f"📂 {category}")
+    for tool in tools:
+        if st.button(f"{tool['name']}", key=f"basic_{tool['name']}", use_container_width=True):
+            tool['function']()
+        st.caption(tool['description'])
+        st.markdown("---")
+
+def render_enterprise_features_footer():
+    """Render the enterprise features footer."""
+    st.markdown("---")
+    st.markdown("### 🚀 Enterprise SEO Features")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.info("""
+        **🏢 Enterprise Suite**
+        - Unified SEO workflows
+        - AI-powered insights
+        - Strategic planning
+        - Performance tracking
+        """)
+    
+    with col2:
+        st.info("""
+        **📊 Advanced Analytics**
+        - GSC integration
+        - Competitive intelligence
+        - Content gap analysis
+        - Performance insights
+        """)
+    
+    with col3:
+        st.info("""
+        **🧠 AI Strategy**
+        - Content strategy generation
+        - Topic cluster planning
+        - Distribution optimization
+        - Market intelligence
+        """)
+
+
+# ============================================================================
+# MAIN DASHBOARD FUNCTIONS
+# ============================================================================
+
+def render_seo_tools_dashboard():
+    """Render comprehensive SEO tools dashboard with enterprise features."""
+    st.title("🚀 Alwrity AI SEO Tools")
+    st.markdown("**Enterprise-level SEO tools powered by artificial intelligence**")
+    
+    # Create tabs for different tool categories
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "🏢 Enterprise Suite",
+        "📊 Analytics & Intelligence", 
+        "🔧 Technical SEO",
+        "📝 Content & Strategy",
+        "🎯 Basic Tools"
+    ])
+    
+    with tab1:
+        render_enterprise_tab()
+    
+    with tab2:
+        render_analytics_tab()
+    
+    with tab3:
+        render_technical_tab()
+    
+    with tab4:
+        render_content_tab()
+    
+    with tab5:
+        render_basic_tools_tab()
+    
+    # Add footer with enterprise features highlight
+    render_enterprise_features_footer()
 
 def ai_seo_tools():
-    """Render the SEO tools dashboard with premium glassmorphic design."""
+    """Main entry point for SEO tools dashboard with premium glassmorphic design."""
     logger.info("Starting SEO Tools Dashboard")
     
     # Apply common dashboard styling
@@ -373,86 +630,52 @@ def ai_seo_tools():
     selected_tool = st.query_params.get("tool")
     
     if selected_tool:
-        # Map tool paths to their respective functions - ONLY existing, working tools
-        tool_functions = {
-            # Core content tools
-            "structured_data": ai_structured_data,
-            "blog_title": ai_title_generator,
-            "meta_description": metadesc_generator_main,
-            "alt_text": alt_text_gen,
-            "opengraph": og_tag_generator,
-            "image_optimizer": main_img_optimizer,
-            
-            # Technical analysis tools
-            "technical_seo_crawler": render_technical_seo_crawler,
-            "pagespeed": google_pagespeed_insights,
-            "onpage_seo": analyze_onpage_seo,
-            "url_checker": url_seo_checker,
-            "sitemap_analysis": sitemap_analyzer,
-            
-            # Social media tools
-            "twitter_tags": render_twitter_tags,
-            
-            # Content analysis tools
-            "readability_analyzer": render_readability_analyzer,
-            "wordcloud_generator": render_wordcloud_generator,
-            
-            # Advanced tools
-            "backlinking": backlinking_ui,
-            "content_gap_analysis": render_content_gap_analysis,
-            "enhanced_content_gap_analysis": render_enhanced_content_gap_analysis_ui,
-            "content_calendar": render_content_calendar,
-            
-            # Tool combinations for workflow efficiency
-            "content_optimization": lambda: run_tool_combination([
-                ai_title_generator,
-                metadesc_generator_main,
-                ai_structured_data
-            ], "Content Optimization Suite"),
-            "technical_audit": lambda: run_tool_combination([
-                google_pagespeed_insights,
-                analyze_onpage_seo,
-                url_seo_checker
-            ], "Technical SEO Audit"),
-            "image_optimization": lambda: run_tool_combination([
-                alt_text_gen,
-                main_img_optimizer
-            ], "Image Optimization Suite"),
-            "social_optimization": lambda: run_tool_combination([
-                og_tag_generator,
-                render_twitter_tags
-            ], "Social Media Optimization")
-        }
-        
-        if selected_tool in tool_functions:
-            # Clear any existing content
-            st.empty()
-            # Execute the selected tool's function
-            tool_functions[selected_tool]()
-        else:
-            st.error(f"Tool '{selected_tool}' is not available or under development.")
-            st.info("Please select a different tool from the dashboard.")
-            render_seo_tools_dashboard()
+        _handle_selected_tool(selected_tool)
     else:
         # Show the dashboard if no tool is selected
         render_seo_tools_dashboard()
 
-def run_tool_combination(tools, combination_name):
+def _handle_selected_tool(selected_tool: str):
+    """Handle rendering of a specific selected tool."""
+    tool_functions = get_tool_functions_mapping()
+    
+    if selected_tool in tool_functions:
+        # Clear any existing content
+        st.empty()
+        # Execute the selected tool's function
+        tool_functions[selected_tool]()
+    else:
+        st.error(f"Tool '{selected_tool}' is not available or under development.")
+        st.info("Please select a different tool from the dashboard.")
+        render_seo_tools_dashboard()
+
+def run_tool_combination(tools: List[Callable], combination_name: str):
     """Run a combination of tools and provide cross-tool analysis."""
     st.markdown(f"# {combination_name}")
     st.markdown("Comprehensive SEO analysis workflow")
     
     # Create tabs for each tool in the combination
+    tab_names = _generate_tab_names(tools)
+    tabs = st.tabs(tab_names)
+    
+    # Run each tool in its own tab
+    _execute_tools_in_tabs(tabs, tools)
+    
+    # Add cross-tool analysis section
+    _render_analysis_summary()
+
+def _generate_tab_names(tools: List[Callable]) -> List[str]:
+    """Generate tab names for tool combination."""
     tab_names = []
     for i, tool in enumerate(tools):
         if hasattr(tool, '__name__'):
             tab_names.append(tool.__name__.replace('_', ' ').title())
         else:
             tab_names.append(f"Step {i+1}")
-    
-    tabs = st.tabs(tab_names)
-    
-    # Run each tool in its own tab
+    return tab_names
+
+def _execute_tools_in_tabs(tabs: List, tools: List[Callable]):
+    """Execute tools in their respective tabs."""
     for tab, tool in zip(tabs, tools):
         with tab:
             try:
@@ -460,8 +683,9 @@ def run_tool_combination(tools, combination_name):
             except Exception as e:
                 st.error(f"Error running tool: {str(e)}")
                 logger.error(f"Error in tool combination: {str(e)}")
-    
-    # Add cross-tool analysis section
+
+def _render_analysis_summary():
+    """Render the analysis summary section."""
     with st.expander("📊 Analysis Summary", expanded=True):
         st.markdown("""
         ### Key Recommendations:
