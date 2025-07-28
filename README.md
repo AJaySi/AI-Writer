@@ -207,7 +207,7 @@ Advanced analytics help you understand what content performs best and optimize y
 - 🔄 Advanced analytics dashboard
 
 ### Q2 2025
-- 📅 Team collaboration features
+- 📅 Team collaboration features 
 - 📅 Content performance tracking
 - 📅 Advanced workflow automation
 - 📅 Enterprise security features
@@ -327,3 +327,119 @@ ALwrity stands on the shoulders of giants. Special thanks to:
 ## 🏷️ Keywords & Tags
 
 `ai-content-writer` `seo-tools` `blog-generator` `social-media-automation` `content-marketing` `ai-copywriting` `streamlit-app` `openai-gpt` `content-creation` `digital-marketing` `seo-optimization` `ai-writing-assistant` `content-strategy` `marketing-automation` `python-ai-tools` `web-research` `multi-language-content` `ai-agents` `content-calendar` `wordpress-integration`
+
+---
+
+When your Streamlit-based Alwrity webpage is not working, it could be due to several common issues. Here’s a checklist to help you diagnose and fix the problem:
+
+---
+
+## 1. **Check the Terminal for Errors**
+- When you run `streamlit run alwrity.py`, look at the terminal/command prompt for any error messages.
+- Common errors include missing dependencies, Python version issues, or file not found errors.
+
+---
+
+## 2. **Is Streamlit Installed?**
+- Make sure Streamlit is installed:
+  ```sh
+  pip show streamlit
+  ```
+  If not, install it:
+  ```sh
+  pip install streamlit
+  ```
+
+---
+
+## 3. **Correct Working Directory**
+- Make sure you are in the project’s root directory (where `alwrity.py` is located) when you run:
+  ```sh
+  streamlit run alwrity.py
+  ```
+
+---
+
+## 4. **Python Version**
+- Alwrity requires Python 3.10+ (ideally 3.11).
+- Check your version:
+  ```sh
+  python --version
+  ```
+
+---
+
+## 5. **Missing Dependencies**
+- If you see errors about missing packages, install them:
+  ```sh
+  pip install -r requirements.txt
+  ```
+
+---
+
+## 6. **Port Already in Use**
+- If you see an error about port 8501 being in use, either close the other process or run:
+  ```sh
+  streamlit run alwrity.py --server.port 8502
+  ```
+
+---
+
+## 7. **File Not Found Errors**
+- If the app tries to load a file (like a CSS or image file) that doesn’t exist, it may crash or not display correctly.
+- Check the terminal for messages about missing files.
+
+---
+
+## 8. **Browser Not Opening**
+- Sometimes the browser doesn’t open automatically. Open your browser and go to:
+  ```
+  http://localhost:8501
+  ```
+
+---
+
+## 9. **API Keys or Environment Variables**
+- On first run, Alwrity may require you to enter API keys. If you skip this, the app may not work.
+- Make sure you follow the on-screen instructions to set up your API keys.
+
+---
+
+## 10. **Check for Syntax or Code Errors**
+- If you edited `alwrity.py` or other files, a syntax error can prevent the app from running.
+
+---
+
+## 11. **Firewall or Antivirus Blocking**
+- On some systems, firewall or antivirus software may block the local server. Try temporarily disabling them to test.
+
+---
+
+## 12. **Check Streamlit Logs**
+- Streamlit outputs logs in the terminal. Look for lines that start with `ERROR` or `WARNING`.
+
+---
+
+### **If you provide the exact error message or describe what you see (blank page, error page, etc.), I can give you a more specific solution!**
+
+---
+
+**Summary Table**
+
+| Problem Type         | What to Check/Do                                 |
+|----------------------|--------------------------------------------------|
+| Terminal errors      | Read and share the error message                 |
+| Streamlit missing    | `pip install streamlit`                          |
+| Wrong directory      | `cd` to project root                             |
+| Python version       | Use Python 3.10+                                 |
+| Missing dependencies | `pip install -r requirements.txt`                |
+| Port in use          | Use `--server.port 8502`                         |
+| File not found       | Check for missing files in logs                  |
+| Browser issue        | Open `http://localhost:8501` manually            |
+| API keys             | Complete setup in the app                        |
+| Syntax/code errors   | Check for typos in your code                     |
+| Firewall/antivirus   | Temporarily disable to test                      |
+
+---
+
+**If you can copy and paste the error message you see, I can help you fix it right away!**

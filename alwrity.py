@@ -5,6 +5,7 @@ import base64
 import logging
 from datetime import datetime
 
+
 # Set page config with favicon
 favicon_path = os.path.join("lib", "workspace", "alwrity_logo.png")
 if os.path.exists(favicon_path):
