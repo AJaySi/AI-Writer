@@ -4,6 +4,9 @@ import json
 import base64
 import logging
 from datetime import datetime
+import numpy as np
+from numpy import nan
+
 
 
 # Set page config with favicon
