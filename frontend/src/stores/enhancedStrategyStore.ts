@@ -688,15 +688,27 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
     let isValid = true;
     const errors: Record<string, string> = {};
     
-    STRATEGIC_INPUT_FIELDS.forEach(field => {
+    // Only validate required fields, not all fields
+    const requiredFields = STRATEGIC_INPUT_FIELDS.filter(field => field.required);
+    
+    console.log('🔍 Validating required fields:', requiredFields.map(f => f.id));
+    console.log('📝 Current form data keys:', Object.keys(formData));
+    
+    requiredFields.forEach(field => {
       const value = formData[field.id];
+      console.log(`🔍 Checking field ${field.id}:`, value);
       
-      if (field.required && (!value || (Array.isArray(value) && value.length === 0))) {
+      if (!value || (Array.isArray(value) && value.length === 0) || 
+          (typeof value === 'string' && value.trim() === '')) {
         errors[field.id] = `${field.label} is required`;
         isValid = false;
+        console.log(`❌ Field ${field.id} is missing or empty`);
+      } else {
+        console.log(`✅ Field ${field.id} is valid`);
       }
     });
     
+    console.log('📊 Validation result:', { isValid, errors });
     set({ formErrors: errors });
     return isValid;
   },
@@ -904,12 +916,20 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
   calculateCompletionPercentage: () => {
     const { formData } = get();
     const requiredFields = STRATEGIC_INPUT_FIELDS.filter(field => field.required);
-    const filledRequiredFields = requiredFields.filter(field => 
-      formData[field.id] && 
-      (typeof formData[field.id] === 'string' ? formData[field.id].trim() !== '' : true)
-    );
+    const filledRequiredFields = requiredFields.filter(field => {
+      const value = formData[field.id];
+      const isValid = value && 
+        (typeof value === 'string' ? value.trim() !== '' : true) &&
+        (!Array.isArray(value) || value.length > 0);
+      
+      console.log(`📊 Field ${field.id}: ${isValid ? '✅' : '❌'} (${value})`);
+      return isValid;
+    });
     
-    return (filledRequiredFields.length / requiredFields.length) * 100;
+    const percentage = (filledRequiredFields.length / requiredFields.length) * 100;
+    console.log(`📈 Completion: ${filledRequiredFields.length}/${requiredFields.length} = ${percentage}%`);
+    
+    return percentage;
   },
   
   getCompletionStats: () => {
