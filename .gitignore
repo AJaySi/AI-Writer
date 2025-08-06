@@ -9,7 +9,11 @@ content_scheduler.db
 venv_new*
 venv_*
 
+.github
+.vscode
 node_modules
+
+.gitignore
 
 .env.local
 .env.development.local

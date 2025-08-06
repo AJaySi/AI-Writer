@@ -13,16 +13,6 @@
 
 ### **1. Backend Setup**
 
-#### **Option A: Run from project root (Recommended)**
-```bash
-# Install backend dependencies
-cd backend
-pip install -r requirements.txt
-
-# Run backend from project root
-cd ..
-python run_backend.py
-```
 
 #### **Option B: Run from backend directory**
 ```bash
