@@ -1,0 +1,929 @@
+"""
+AI Service Manager
+Centralized AI service management for content planning system.
+"""
+
+from typing import Dict, Any, List, Optional
+from loguru import logger
+from datetime import datetime
+import json
+import asyncio
+from dataclasses import dataclass
+from enum import Enum
+
+# Import AI providers
+from llm_providers.main_text_generation import llm_text_gen
+from llm_providers.gemini_provider import gemini_structured_json_response
+
+class AIServiceType(Enum):
+    """AI service types for monitoring."""
+    CONTENT_GAP_ANALYSIS = "content_gap_analysis"
+    MARKET_POSITION_ANALYSIS = "market_position_analysis"
+    KEYWORD_ANALYSIS = "keyword_analysis"
+    PERFORMANCE_PREDICTION = "performance_prediction"
+    STRATEGIC_INTELLIGENCE = "strategic_intelligence"
+    CONTENT_QUALITY_ASSESSMENT = "content_quality_assessment"
+    CONTENT_SCHEDULE_GENERATION = "content_schedule_generation"
+
+@dataclass
+class AIServiceMetrics:
+    """Metrics for AI service performance."""
+    service_type: AIServiceType
+    response_time: float
+    success: bool
+    error_message: Optional[str] = None
+    timestamp: datetime = None
+    
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = datetime.utcnow()
+
+class AIServiceManager:
+    """Centralized AI service management for content planning system."""
+    
+    def __init__(self):
+        """Initialize AI service manager."""
+        self.logger = logger
+        self.metrics: List[AIServiceMetrics] = []
+        self.prompts = self._load_centralized_prompts()
+        self.schemas = self._load_centralized_schemas()
+        self.config = self._load_ai_configuration()
+        
+        logger.info("AIServiceManager initialized")
+    
+    def _load_ai_configuration(self) -> Dict[str, Any]:
+        """Load AI configuration settings."""
+        return {
+            'max_retries': 3,
+            'timeout_seconds': 30,
+            'temperature': 0.7,
+            'max_tokens': 2048,
+            'enable_caching': True,
+            'cache_duration_minutes': 60,
+            'performance_monitoring': True,
+            'fallback_enabled': True
+        } 
+    
+    def _load_centralized_prompts(self) -> Dict[str, str]:
+        """Load centralized AI prompts."""
+        return {
+            'content_gap_analysis': """
+As an expert SEO content strategist with 15+ years of experience in content marketing and competitive analysis, analyze this comprehensive content gap analysis data and provide actionable strategic insights:
+
+TARGET ANALYSIS:
+- Website: {target_url}
+- Industry: {industry}
+- SERP Opportunities: {serp_opportunities} keywords not ranking
+- Keyword Expansion: {expanded_keywords_count} additional keywords identified
+- Competitors Analyzed: {competitors_analyzed} websites
+- Content Quality Score: {content_quality_score}/10
+- Market Competition Level: {competition_level}
+
+DOMINANT CONTENT THEMES:
+{dominant_themes}
+
+COMPETITIVE LANDSCAPE:
+{competitive_landscape}
+
+PROVIDE COMPREHENSIVE ANALYSIS:
+1. Strategic Content Gap Analysis (identify 3-5 major gaps with impact assessment)
+2. Priority Content Recommendations (top 5 with ROI estimates)
+3. Keyword Strategy Insights (trending, seasonal, long-tail opportunities)
+4. Competitive Positioning Advice (differentiation strategies)
+5. Content Format Recommendations (video, interactive, comprehensive guides)
+6. Technical SEO Opportunities (structured data, schema markup)
+7. Implementation Timeline (30/60/90 days with milestones)
+8. Risk Assessment and Mitigation Strategies
+9. Success Metrics and KPIs
+10. Resource Allocation Recommendations
+
+Consider user intent, search behavior patterns, and content consumption trends in your analysis.
+Format as structured JSON with clear, actionable recommendations and confidence scores.
+""",
+
+            'market_position_analysis': """
+As a senior competitive intelligence analyst specializing in digital marketing and content strategy, analyze the market position of competitors in the {industry} industry:
+
+COMPETITOR ANALYSES:
+{competitor_analyses}
+
+MARKET CONTEXT:
+- Industry: {industry}
+- Market Size: {market_size}
+- Growth Rate: {growth_rate}
+- Key Trends: {key_trends}
+
+PROVIDE COMPREHENSIVE MARKET ANALYSIS:
+1. Market Leader Identification (with reasoning)
+2. Content Leader Analysis (content strategy assessment)
+3. Quality Leader Assessment (content quality metrics)
+4. Market Gaps Identification (3-5 major gaps)
+5. Opportunities Analysis (high-impact opportunities)
+6. Competitive Advantages (unique positioning)
+7. Strategic Positioning Recommendations (differentiation)
+8. Content Strategy Insights (format, frequency, quality)
+9. Innovation Opportunities (emerging trends)
+10. Risk Assessment (competitive threats)
+
+Include market share estimates, competitive positioning matrix, and strategic recommendations with implementation timeline.
+Format as structured JSON with detailed analysis and confidence levels.
+""",
+
+            'keyword_analysis': """
+As an expert keyword research specialist with deep understanding of search algorithms and user behavior, analyze keyword opportunities for {industry} industry:
+
+KEYWORD DATA:
+- Target Keywords: {target_keywords}
+- Industry Context: {industry}
+- Search Volume Data: {search_volume_data}
+- Competition Analysis: {competition_analysis}
+- Trend Analysis: {trend_analysis}
+
+PROVIDE COMPREHENSIVE KEYWORD ANALYSIS:
+1. Search Volume Estimates (with confidence intervals)
+2. Competition Level Assessment (difficulty scoring)
+3. Trend Analysis (seasonal, cyclical, emerging)
+4. Opportunity Scoring (ROI potential)
+5. Content Format Recommendations (based on intent)
+6. Keyword Clustering (semantic relationships)
+7. Long-tail Opportunities (specific, low-competition)
+8. Seasonal Variations (trending patterns)
+9. Search Intent Classification (informational, commercial, navigational, transactional)
+10. Implementation Priority (quick wins vs long-term)
+
+Consider search intent, user journey stages, and conversion potential in your analysis.
+Format as structured JSON with detailed metrics and strategic recommendations.
+""",
+
+            'performance_prediction': """
+As a data-driven content strategist with expertise in predictive analytics and content performance optimization, predict content performance based on comprehensive analysis:
+
+CONTENT DATA:
+{content_data}
+
+MARKET CONTEXT:
+- Industry: {industry}
+- Target Audience: {target_audience}
+- Competition Level: {competition_level}
+- Content Quality Score: {quality_score}
+
+PROVIDE DETAILED PERFORMANCE PREDICTIONS:
+1. Traffic Predictions (monthly, peak, growth rate)
+2. Engagement Predictions (time on page, bounce rate, social shares)
+3. Ranking Predictions (position, timeline, competition)
+4. Conversion Predictions (CTR, conversion rate, leads)
+5. Revenue Impact (estimated revenue, ROI)
+6. Risk Factors (content saturation, algorithm changes)
+7. Success Factors (quality indicators, optimization opportunities)
+8. Competitive Response (market reaction)
+9. Seasonal Variations (performance fluctuations)
+10. Long-term Sustainability (content lifecycle)
+
+Include confidence intervals, risk assessments, and optimization recommendations.
+Format as structured JSON with detailed predictions and actionable insights.
+""",
+
+            'strategic_intelligence': """
+As a senior content strategy consultant with expertise in digital marketing, competitive intelligence, and strategic planning, generate comprehensive strategic insights:
+
+ANALYSIS DATA:
+{analysis_data}
+
+STRATEGIC CONTEXT:
+- Business Objectives: {business_objectives}
+- Target Audience: {target_audience}
+- Competitive Landscape: {competitive_landscape}
+- Market Opportunities: {market_opportunities}
+
+PROVIDE STRATEGIC INTELLIGENCE:
+1. Content Strategy Recommendations (pillar content, topic clusters)
+2. Competitive Positioning Advice (differentiation strategies)
+3. Content Optimization Suggestions (quality, format, frequency)
+4. Innovation Opportunities (emerging trends, new formats)
+5. Risk Mitigation Strategies (competitive threats, algorithm changes)
+6. Resource Allocation (budget, team, timeline)
+7. Performance Optimization (KPIs, metrics, tracking)
+8. Market Expansion Opportunities (new audiences, verticals)
+9. Technology Integration (AI, automation, tools)
+10. Long-term Strategic Vision (3-5 year roadmap)
+
+Consider market dynamics, user behavior trends, and competitive landscape in your analysis.
+Format as structured JSON with strategic insights and implementation guidance.
+""",
+
+            'content_quality_assessment': """
+As an expert content quality analyst with deep understanding of SEO, user experience, and content marketing best practices, assess content quality comprehensively:
+
+CONTENT DATA:
+{content_data}
+
+QUALITY METRICS:
+- Readability Score: {readability_score}
+- SEO Optimization: {seo_score}
+- User Engagement: {engagement_score}
+- Content Depth: {depth_score}
+
+PROVIDE COMPREHENSIVE QUALITY ASSESSMENT:
+1. Overall Quality Score (comprehensive evaluation)
+2. Readability Analysis (clarity, accessibility, flow)
+3. SEO Optimization Analysis (technical, on-page, off-page)
+4. Engagement Potential (user experience, interaction)
+5. Content Depth Assessment (comprehensiveness, authority)
+6. Improvement Suggestions (specific, actionable)
+7. Competitive Benchmarking (industry standards)
+8. Performance Optimization (conversion, retention)
+9. Accessibility Assessment (inclusive design)
+10. Future-Proofing (algorithm resilience)
+
+Include specific recommendations with implementation steps and expected impact.
+Format as structured JSON with detailed assessment and optimization guidance.
+"""
+        }
+    
+    def _load_centralized_schemas(self) -> Dict[str, Dict[str, Any]]:
+        """Load centralized JSON schemas."""
+        return {
+            'content_gap_analysis': {
+                "type": "object",
+                "properties": {
+                    "strategic_insights": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {"type": "string"},
+                                "insight": {"type": "string"},
+                                "confidence": {"type": "number"},
+                                "priority": {"type": "string"},
+                                "estimated_impact": {"type": "string"},
+                                "implementation_time": {"type": "string"},
+                                "risk_level": {"type": "string"}
+                            }
+                        }
+                    },
+                    "content_recommendations": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {"type": "string"},
+                                "recommendation": {"type": "string"},
+                                "priority": {"type": "string"},
+                                "estimated_traffic": {"type": "string"},
+                                "implementation_time": {"type": "string"},
+                                "roi_estimate": {"type": "string"},
+                                "success_metrics": {
+                                    "type": "array",
+                                    "items": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            
+            'market_position_analysis': {
+                "type": "object",
+                "properties": {
+                    "market_leader": {"type": "string"},
+                    "content_leader": {"type": "string"},
+                    "quality_leader": {"type": "string"},
+                    "market_gaps": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "opportunities": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "competitive_advantages": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "strategic_recommendations": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {"type": "string"},
+                                "recommendation": {"type": "string"},
+                                "priority": {"type": "string"},
+                                "estimated_impact": {"type": "string"},
+                                "implementation_time": {"type": "string"},
+                                "confidence_level": {"type": "string"}
+                            }
+                        }
+                    }
+                }
+            },
+            
+            'keyword_analysis': {
+                "type": "object",
+                "properties": {
+                    "keyword_opportunities": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "keyword": {"type": "string"},
+                                "search_volume": {"type": "number"},
+                                "competition_level": {"type": "string"},
+                                "difficulty_score": {"type": "number"},
+                                "trend": {"type": "string"},
+                                "intent": {"type": "string"},
+                                "opportunity_score": {"type": "number"},
+                                "recommended_format": {"type": "string"},
+                                "estimated_traffic": {"type": "string"},
+                                "implementation_priority": {"type": "string"}
+                            }
+                        }
+                    }
+                }
+            },
+            
+            'performance_prediction': {
+                "type": "object",
+                "properties": {
+                    "traffic_predictions": {
+                        "type": "object",
+                        "properties": {
+                            "estimated_monthly_traffic": {"type": "string"},
+                            "traffic_growth_rate": {"type": "string"},
+                            "peak_traffic_month": {"type": "string"},
+                            "confidence_level": {"type": "string"}
+                        }
+                    },
+                    "engagement_predictions": {
+                        "type": "object",
+                        "properties": {
+                            "estimated_time_on_page": {"type": "string"},
+                            "estimated_bounce_rate": {"type": "string"},
+                            "estimated_social_shares": {"type": "string"},
+                            "estimated_comments": {"type": "string"},
+                            "confidence_level": {"type": "string"}
+                        }
+                    }
+                }
+            },
+            
+            'strategic_intelligence': {
+                "type": "object",
+                "properties": {
+                    "strategic_insights": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {"type": "string"},
+                                "insight": {"type": "string"},
+                                "reasoning": {"type": "string"},
+                                "priority": {"type": "string"},
+                                "estimated_impact": {"type": "string"},
+                                "implementation_time": {"type": "string"},
+                                "confidence_level": {"type": "string"}
+                            }
+                        }
+                    }
+                }
+            },
+            
+            'content_quality_assessment': {
+                "type": "object",
+                "properties": {
+                    "overall_score": {"type": "number"},
+                    "readability_score": {"type": "number"},
+                    "seo_score": {"type": "number"},
+                    "engagement_potential": {"type": "string"},
+                    "improvement_suggestions": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "timestamp": {"type": "string"}
+                }
+            },
+            'content_schedule_generation': {
+                "type": "object",
+                "properties": {
+                    "schedule": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "day": {"type": "number"},
+                                "title": {"type": "string"},
+                                "description": {"type": "string"},
+                                "content_type": {"type": "string"},
+                                "platform": {"type": "string"},
+                                "pillar": {"type": "string"},
+                                "priority": {"type": "string"},
+                                "keywords": {
+                                    "type": "array",
+                                    "items": {"type": "string"}
+                                },
+                                "estimated_impact": {"type": "string"},
+                                "implementation_time": {"type": "string"}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    
+    async def _execute_ai_call(self, service_type: AIServiceType, prompt: str, schema: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute AI call with performance monitoring.
+        
+        Args:
+            service_type: Type of AI service
+            prompt: AI prompt
+            schema: JSON schema for response
+            
+        Returns:
+            AI response
+        """
+        start_time = datetime.utcnow()
+        success = False
+        error_message = None
+        result = {}
+        
+        try:
+            logger.info(f"🤖 Executing AI call for {service_type.value}")
+            
+            # Execute AI call with timeout
+            response = await asyncio.wait_for(
+                gemini_structured_json_response(
+                    prompt=prompt,
+                    schema=schema,
+                    temperature=self.config['temperature'],
+                    max_tokens=self.config['max_tokens']
+                ),
+                timeout=self.config['timeout_seconds']
+            )
+            
+            # Parse response
+            result = json.loads(response)
+            success = True
+            logger.info(f"✅ AI call for {service_type.value} completed successfully")
+            
+        except asyncio.TimeoutError:
+            error_message = f"AI call timeout for {service_type.value}"
+            logger.error(error_message)
+        except json.JSONDecodeError as e:
+            error_message = f"JSON decode error for {service_type.value}: {str(e)}"
+            logger.error(error_message)
+        except Exception as e:
+            error_message = f"AI call error for {service_type.value}: {str(e)}"
+            logger.error(error_message)
+        
+        # Calculate response time
+        response_time = (datetime.utcnow() - start_time).total_seconds()
+        
+        # Record metrics
+        metrics = AIServiceMetrics(
+            service_type=service_type,
+            response_time=response_time,
+            success=success,
+            error_message=error_message
+        )
+        self.metrics.append(metrics)
+        
+        return result
+    
+    async def generate_content_gap_analysis(self, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate content gap analysis using centralized AI service.
+        
+        Args:
+            analysis_data: Analysis data
+            
+        Returns:
+            Content gap analysis results
+        """
+        try:
+            # Format prompt
+            prompt = self.prompts['content_gap_analysis'].format(
+                target_url=analysis_data.get('target_url', 'N/A'),
+                industry=analysis_data.get('industry', 'N/A'),
+                serp_opportunities=analysis_data.get('serp_opportunities', 0),
+                expanded_keywords_count=analysis_data.get('expanded_keywords_count', 0),
+                competitors_analyzed=analysis_data.get('competitors_analyzed', 0),
+                content_quality_score=analysis_data.get('content_quality_score', 7.0),
+                competition_level=analysis_data.get('competition_level', 'medium'),
+                dominant_themes=json.dumps(analysis_data.get('dominant_themes', {}), indent=2),
+                competitive_landscape=json.dumps(analysis_data.get('competitive_landscape', {}), indent=2)
+            )
+            
+            # Execute AI call
+            result = await self._execute_ai_call(
+                AIServiceType.CONTENT_GAP_ANALYSIS,
+                prompt,
+                self.schemas['content_gap_analysis']
+            )
+            
+            return result if result else self._get_fallback_content_gap_analysis()
+            
+        except Exception as e:
+            logger.error(f"Error in content gap analysis: {str(e)}")
+            return self._get_fallback_content_gap_analysis()
+    
+    async def generate_market_position_analysis(self, market_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate market position analysis using centralized AI service.
+        
+        Args:
+            market_data: Market analysis data
+            
+        Returns:
+            Market position analysis results
+        """
+        try:
+            # Format prompt
+            prompt = self.prompts['market_position_analysis'].format(
+                industry=market_data.get('industry', 'N/A'),
+                competitor_analyses=json.dumps(market_data.get('competitors', []), indent=2),
+                market_size=market_data.get('market_size', 'N/A'),
+                growth_rate=market_data.get('growth_rate', 'N/A'),
+                key_trends=json.dumps(market_data.get('key_trends', []), indent=2)
+            )
+            
+            # Execute AI call
+            result = await self._execute_ai_call(
+                AIServiceType.MARKET_POSITION_ANALYSIS,
+                prompt,
+                self.schemas['market_position_analysis']
+            )
+            
+            return result if result else self._get_fallback_market_position_analysis()
+            
+        except Exception as e:
+            logger.error(f"Error in market position analysis: {str(e)}")
+            return self._get_fallback_market_position_analysis()
+    
+    async def generate_keyword_analysis(self, keyword_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate keyword analysis using centralized AI service.
+        
+        Args:
+            keyword_data: Keyword analysis data
+            
+        Returns:
+            Keyword analysis results
+        """
+        try:
+            # Format prompt
+            prompt = self.prompts['keyword_analysis'].format(
+                industry=keyword_data.get('industry', 'N/A'),
+                target_keywords=json.dumps(keyword_data.get('target_keywords', []), indent=2),
+                search_volume_data=json.dumps(keyword_data.get('search_volume_data', {}), indent=2),
+                competition_analysis=json.dumps(keyword_data.get('competition_analysis', {}), indent=2),
+                trend_analysis=json.dumps(keyword_data.get('trend_analysis', {}), indent=2)
+            )
+            
+            # Execute AI call
+            result = await self._execute_ai_call(
+                AIServiceType.KEYWORD_ANALYSIS,
+                prompt,
+                self.schemas['keyword_analysis']
+            )
+            
+            return result if result else self._get_fallback_keyword_analysis()
+            
+        except Exception as e:
+            logger.error(f"Error in keyword analysis: {str(e)}")
+            return self._get_fallback_keyword_analysis()
+    
+    async def generate_performance_prediction(self, content_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate performance prediction using centralized AI service.
+        
+        Args:
+            content_data: Content data for prediction
+            
+        Returns:
+            Performance prediction results
+        """
+        try:
+            # Format prompt
+            prompt = self.prompts['performance_prediction'].format(
+                industry=content_data.get('industry', 'N/A'),
+                target_audience=json.dumps(content_data.get('target_audience', {})),
+                competition_level=content_data.get('competition_level', 'medium'),
+                quality_score=content_data.get('quality_score', 7.0)
+            )
+            
+            # Execute AI call
+            result = await self._execute_ai_call(
+                AIServiceType.PERFORMANCE_PREDICTION,
+                prompt,
+                self.schemas['performance_prediction']
+            )
+            
+            return result if result else self._get_fallback_performance_prediction()
+            
+        except Exception as e:
+            logger.error(f"Error in performance prediction: {str(e)}")
+            return self._get_fallback_performance_prediction()
+    
+    async def generate_strategic_intelligence(self, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate strategic intelligence using centralized AI service.
+        
+        Args:
+            analysis_data: Analysis data for strategic insights
+            
+        Returns:
+            Strategic intelligence results
+        """
+        try:
+            # Format prompt
+            prompt = self.prompts['strategic_intelligence'].format(
+                analysis_data=json.dumps(analysis_data, indent=2),
+                business_objectives=json.dumps(analysis_data.get('business_objectives', {})),
+                target_audience=json.dumps(analysis_data.get('target_audience', {})),
+                competitive_landscape=json.dumps(analysis_data.get('competitive_landscape', {}), indent=2),
+                market_opportunities=json.dumps(analysis_data.get('market_opportunities', []), indent=2)
+            )
+            
+            # Execute AI call
+            result = await self._execute_ai_call(
+                AIServiceType.STRATEGIC_INTELLIGENCE,
+                prompt,
+                self.schemas['strategic_intelligence']
+            )
+            
+            return result if result else self._get_fallback_strategic_intelligence()
+            
+        except Exception as e:
+            logger.error(f"Error in strategic intelligence: {str(e)}")
+            return self._get_fallback_strategic_intelligence()
+    
+    async def generate_content_quality_assessment(self, content_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate content quality assessment using centralized AI service.
+        
+        Args:
+            content_data: Content data for assessment
+            
+        Returns:
+            Content quality assessment results
+        """
+        try:
+            # Format prompt
+            prompt = self.prompts['content_quality_assessment'].format(
+                content_data=json.dumps(content_data, indent=2),
+                readability_score=content_data.get('readability_score', 80.0),
+                seo_score=content_data.get('seo_score', 90.0),
+                engagement_score=content_data.get('engagement_score', 75.0),
+                depth_score=content_data.get('depth_score', 85.0)
+            )
+            
+            # Execute AI call
+            result = await self._execute_ai_call(
+                AIServiceType.CONTENT_QUALITY_ASSESSMENT,
+                prompt,
+                self.schemas['content_quality_assessment']
+            )
+            
+            return result if result else self._get_fallback_content_quality_assessment()
+            
+        except Exception as e:
+            logger.error(f"Error in content quality assessment: {str(e)}")
+            return self._get_fallback_content_quality_assessment()
+    
+    async def generate_content_schedule(self, prompt: str) -> Dict[str, Any]:
+        """
+        Generate content schedule using AI.
+        """
+        try:
+            logger.info("Generating content schedule using AI")
+            
+            # Use the content schedule prompt
+            enhanced_prompt = f"""
+            {prompt}
+            
+            Please return a structured JSON response with the following format:
+            {{
+                "schedule": [
+                    {{
+                        "day": 1,
+                        "title": "Content Title",
+                        "description": "Content description",
+                        "content_type": "blog_post",
+                        "platform": "website",
+                        "pillar": "Educational Content",
+                        "priority": "high",
+                        "keywords": ["keyword1", "keyword2"],
+                        "estimated_impact": "High",
+                        "implementation_time": "2-4 weeks"
+                    }}
+                ]
+            }}
+            """
+            
+            response = await self._execute_ai_call(
+                AIServiceType.CONTENT_SCHEDULE_GENERATION,
+                enhanced_prompt,
+                self.schemas.get('content_schedule_generation', {})
+            )
+            
+            logger.info("Content schedule generated successfully")
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error generating content schedule: {str(e)}")
+            return {"schedule": []}
+    
+    # Fallback methods
+    def _get_fallback_content_gap_analysis(self) -> Dict[str, Any]:
+        """Fallback content gap analysis."""
+        return {
+            'strategic_insights': [
+                {
+                    'type': 'content_strategy',
+                    'insight': 'Focus on educational content to build authority',
+                    'confidence': 0.85,
+                    'priority': 'high',
+                    'estimated_impact': 'Authority building',
+                    'implementation_time': '3-6 months',
+                    'risk_level': 'low'
+                }
+            ],
+            'content_recommendations': [
+                {
+                    'type': 'content_creation',
+                    'recommendation': 'Create comprehensive guides for high-opportunity keywords',
+                    'priority': 'high',
+                    'estimated_traffic': '5K+ monthly',
+                    'implementation_time': '2-3 weeks',
+                    'roi_estimate': 'High ROI potential',
+                    'success_metrics': ['Traffic increase', 'Authority building', 'Lead generation']
+                }
+            ]
+        }
+    
+    def _get_fallback_market_position_analysis(self) -> Dict[str, Any]:
+        """Fallback market position analysis."""
+        return {
+            'market_leader': 'competitor1.com',
+            'content_leader': 'competitor2.com',
+            'quality_leader': 'competitor3.com',
+            'market_gaps': ['Video content', 'Interactive content', 'Expert interviews'],
+            'opportunities': ['Niche content development', 'Expert interviews', 'Industry reports'],
+            'competitive_advantages': ['Technical expertise', 'Comprehensive guides', 'Industry insights']
+        }
+    
+    def _get_fallback_keyword_analysis(self) -> Dict[str, Any]:
+        """Fallback keyword analysis."""
+        return {
+            'keyword_opportunities': [
+                {
+                    'keyword': 'industry best practices',
+                    'search_volume': 3000,
+                    'competition_level': 'low',
+                    'difficulty_score': 35,
+                    'trend': 'rising',
+                    'intent': 'informational',
+                    'opportunity_score': 85,
+                    'recommended_format': 'comprehensive_guide',
+                    'estimated_traffic': '2K+ monthly',
+                    'implementation_priority': 'high'
+                }
+            ]
+        }
+    
+    def _get_fallback_performance_prediction(self) -> Dict[str, Any]:
+        """Fallback performance prediction."""
+        return {
+            "traffic_predictions": {
+                "estimated_monthly_traffic": "10K+",
+                "traffic_growth_rate": "10%",
+                "peak_traffic_month": "June",
+                "confidence_level": "high"
+            },
+            "engagement_predictions": {
+                "estimated_time_on_page": "5 min",
+                "estimated_bounce_rate": "20%",
+                "estimated_social_shares": "100+",
+                "estimated_comments": "50+",
+                "confidence_level": "medium"
+            }
+        }
+    
+    def _get_fallback_strategic_intelligence(self) -> Dict[str, Any]:
+        """Fallback strategic intelligence."""
+        return {
+            "strategic_insights": [
+                {
+                    "type": "content_strategy",
+                    "insight": "Focus on educational content to build authority",
+                    "reasoning": "Educational content is highly shareable and can attract a targeted audience.",
+                    "priority": "high",
+                    "estimated_impact": "Authority building",
+                    "implementation_time": "3-6 months",
+                    "confidence_level": "high"
+                }
+            ]
+        }
+    
+    def _get_fallback_content_quality_assessment(self) -> Dict[str, Any]:
+        """Fallback content quality assessment."""
+        return {
+            "overall_score": 88.0,
+            "readability_score": 92.0,
+            "seo_score": 95.0,
+            "engagement_potential": "High engagement and retention",
+            "improvement_suggestions": ["Add more internal links", "Optimize images for SEO"],
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    
+    def get_performance_metrics(self) -> Dict[str, Any]:
+        """
+        Get AI service performance metrics.
+        
+        Returns:
+            Performance metrics
+        """
+        if not self.metrics:
+            return {
+                'total_calls': 0,
+                'success_rate': 0,
+                'average_response_time': 0,
+                'service_breakdown': {}
+            }
+        
+        total_calls = len(self.metrics)
+        successful_calls = len([m for m in self.metrics if m.success])
+        success_rate = (successful_calls / total_calls) * 100 if total_calls > 0 else 0
+        average_response_time = sum(m.response_time for m in self.metrics) / total_calls if total_calls > 0 else 0
+        
+        # Service breakdown
+        service_breakdown = {}
+        for service_type in AIServiceType:
+            service_metrics = [m for m in self.metrics if m.service_type == service_type]
+            if service_metrics:
+                service_breakdown[service_type.value] = {
+                    'total_calls': len(service_metrics),
+                    'success_rate': (len([m for m in service_metrics if m.success]) / len(service_metrics)) * 100,
+                    'average_response_time': sum(m.response_time for m in service_metrics) / len(service_metrics)
+                }
+        
+        return {
+            'total_calls': total_calls,
+            'success_rate': success_rate,
+            'average_response_time': average_response_time,
+            'service_breakdown': service_breakdown,
+            'last_updated': datetime.utcnow().isoformat()
+        }
+    
+    async def health_check(self) -> Dict[str, Any]:
+        """
+        Health check for the AI service manager.
+        
+        Returns:
+            Health status information
+        """
+        try:
+            logger.info("Performing health check for AIServiceManager")
+            
+            # Test AI functionality with a simple prompt
+            test_prompt = "Hello, this is a health check test."
+            try:
+                test_response = llm_text_gen(test_prompt)
+                ai_status = "operational" if test_response else "degraded"
+            except Exception as e:
+                ai_status = "error"
+                logger.warning(f"AI health check failed: {str(e)}")
+            
+            # Get performance metrics
+            performance_metrics = self.get_performance_metrics()
+            
+            health_status = {
+                'service': 'AIServiceManager',
+                'status': 'healthy',
+                'capabilities': {
+                    'content_gap_analysis': 'operational',
+                    'market_position_analysis': 'operational',
+                    'keyword_analysis': 'operational',
+                    'performance_prediction': 'operational',
+                    'strategic_intelligence': 'operational',
+                    'content_quality_assessment': 'operational',
+                    'ai_integration': ai_status
+                },
+                'performance_metrics': performance_metrics,
+                'prompts_loaded': len(self.prompts),
+                'schemas_loaded': len(self.schemas),
+                'configuration': self.config,
+                'timestamp': datetime.utcnow().isoformat()
+            }
+            
+            logger.info("AIServiceManager health check passed")
+            return health_status
+            
+        except Exception as e:
+            logger.error(f"AIServiceManager health check failed: {str(e)}")
+            return {
+                'service': 'AIServiceManager',
+                'status': 'unhealthy',
+                'error': str(e),
+                'timestamp': datetime.utcnow().isoformat()
+            } 

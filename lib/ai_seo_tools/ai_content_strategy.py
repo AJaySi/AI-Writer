@@ -572,6 +572,7 @@ def render_ai_content_strategy():
             budget = st.selectbox(
                 "Monthly Content Budget",
                 [
+                    "No budget",
                     "Under $1,000",
                     "$1,000 - $5,000",
                     "$5,000 - $10,000",

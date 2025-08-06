@@ -1,0 +1,376 @@
+/* Global Styles for Alwrity Onboarding */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better focus styles */
+*:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Enhanced custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(102, 126, 234, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);
+  }
+}
+
+/* Enhanced typography */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* Better button interactions */
+button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* Enhanced card shadows and effects */
+.MuiCard-root {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.MuiCard-root:hover {
+  transform: translateY(-2px);
+}
+
+/* Glassmorphism effects */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+}
+
+.glass-effect-hover:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Better form field styling */
+.MuiTextField-root .MuiOutlinedInput-root {
+  transition: all 0.3s ease;
+}
+
+.MuiTextField-root .MuiOutlinedInput-root:hover {
+  transform: translateY(-1px);
+}
+
+/* Enhanced progress bars */
+.MuiLinearProgress-root {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.MuiLinearProgress-bar {
+  transition: transform 0.3s ease;
+}
+
+/* Better chip styling */
+.MuiChip-root {
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.MuiChip-root:hover {
+  transform: translateY(-1px);
+}
+
+/* Enhanced alert styling */
+.MuiAlert-root {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* Better tooltip styling */
+.MuiTooltip-tooltip {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* Enhanced stepper styling */
+.MuiStepLabel-root {
+  transition: all 0.3s ease;
+}
+
+.MuiStepLabel-root:hover {
+  transform: scale(1.05);
+}
+
+/* Better icon button styling */
+.MuiIconButton-root {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.MuiIconButton-root:hover {
+  transform: scale(1.1);
+}
+
+/* Enhanced paper styling */
+.MuiPaper-root {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Better link styling */
+a {
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Loading animation */
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Focus ring for accessibility */
+.focus-ring {
+  position: relative;
+}
+
+.focus-ring::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid transparent;
+  border-radius: inherit;
+  transition: border-color 0.3s ease;
+}
+
+.focus-ring:focus::after {
+  border-color: #667eea;
+}
+
+/* Enhanced gradient backgrounds */
+.gradient-bg {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-bg-secondary {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.gradient-bg-premium {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+}
+
+/* Professional shadows */
+.shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Glassmorphism shadows */
+.glass-shadow {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.glass-shadow-hover:hover {
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+}
+
+/* Animation classes */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s ease-out;
+}
+
+/* Hover effects */
+.hover-lift:hover {
+  transform: translateY(-4px);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+/* Text effects */
+.text-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .mobile-hidden {
+    display: none;
+  }
+  
+  .mobile-full {
+    width: 100% !important;
+  }
+  
+  .mobile-text-center {
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-padding {
+    padding: 16px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .auto-dark {
+    background: #1a1a1a;
+    color: #ffffff;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .high-contrast {
+    border: 2px solid;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+} 

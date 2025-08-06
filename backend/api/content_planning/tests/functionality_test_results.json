@@ -1,0 +1,1789 @@
+{
+  "health_health": {
+    "status": "passed",
+    "status_code": 200,
+    "response_time": 0.001746,
+    "response_data": {
+      "service": "calendar_generation",
+      "status": "unhealthy",
+      "timestamp": "2025-08-04T13:10:20.471585",
+      "error": "check_all_api_keys() missing 1 required positional argument: 'api_manager'"
+    }
+  },
+  "health_backend": {
+    "status": "passed",
+    "status_code": 200,
+    "response_time": 0.002261,
+    "response_data": {
+      "status": "healthy",
+      "timestamp": "2025-08-04T13:10:20.462188",
+      "services": {
+        "api_server": true,
+        "database_connection": true,
+        "file_system": true,
+        "memory_usage": "normal"
+      },
+      "version": "1.0.0"
+    }
+  },
+  "health_ai": {
+    "status": "passed",
+    "status_code": 200,
+    "response_time": 0.002154,
+    "response_data": {
+      "status": "healthy",
+      "timestamp": "2025-08-04T13:10:20.465393",
+      "services": {
+        "gemini_provider": true,
+        "ai_analytics_service": true,
+        "ai_engine_service": true
+      }
+    }
+  },
+  "strategy_create": {
+    "status": "passed",
+    "status_code": 200,
+    "response_time": 0.010642,
+    "response_data": {
+      "id": 1,
+      "name": "Test Strategy",
+      "industry": "technology",
+      "target_audience": {
+        "age_range": "25-45",
+        "interests": [
+          "technology",
+          "innovation"
+        ],
+        "location": "global"
+      },
+      "content_pillars": [
+        {
+          "name": "Educational Content",
+          "percentage": 40
+        },
+        {
+          "name": "Thought Leadership",
+          "percentage": 30
+        },
+        {
+          "name": "Product Updates",
+          "percentage": 30
+        }
+      ],
+      "ai_recommendations": {
+        "priority_topics": [
+          "AI",
+          "Machine Learning"
+        ],
+        "content_frequency": "daily",
+        "platform_focus": [
+          "LinkedIn",
+          "Website"
+        ]
+      },
+      "created_at": "2025-08-04T13:10:20.476464",
+      "updated_at": "2025-08-04T13:10:20.476467"
+    }
+  },
+  "strategy_get_all": {
+    "status": "passed",
+    "status_code": 200,
+    "response_time": 0.012977,
+    "response_data": {
+      "status": "success",
+      "message": "Content strategy retrieved successfully",
+      "data": {
+        "strategies": [
+          {
+            "strategy_id": 1,
+            "market_positioning": {
+              "industry_position": "emerging",
+              "competitive_advantage": "content_quality",
+              "market_share": "medium",
+              "differentiation_factors": [
+                "Educational Content",
+                "Thought Leadership",
+                "Product Updates"
+              ]
+            },
+            "competitive_advantages": [
+              {
+                "type": "content_pillar",
+                "name": "Educational Content",
+                "description": "",
+                "strength": "medium"
+              },
+              {
+                "type": "content_pillar",
+                "name": "Thought Leadership",
+                "description": "",
+                "strength": "medium"
+              },
+              {
+                "type": "content_pillar",
+                "name": "Product Updates",
+                "description": "",
+                "strength": "medium"
+              },
+              {
+                "type": "audience_focus",
+                "name": "Targeted Audience",
+                "description": "Well-defined target audience",
+                "strength": "high"
+              }
+            ],
+            "strategic_scores": {
+              "market_positioning_score": 0.7,
+              "competitive_advantage_score": 0.9,
+              "content_strategy_score": 0.75,
+              "overall_strategic_score": 0.775
+            },
+            "risk_assessment": [],
+            "opportunity_analysis": [
+              {
+                "type": "industry_growth",
+                "priority": "high",
+                "description": "Growing technology industry presents expansion opportunities",
+                "action_items": [
+                  "Monitor industry trends",
+                  "Develop industry-specific content",
+                  "Expand into emerging sub-sectors"
+                ]
+              },
+              {
+                "type": "content_expansion",
+                "priority": "medium",
+                "description": "Opportunity to expand content pillar coverage",
+                "action_items": [
+                  "Identify underserved content areas",
+                  "Develop new content pillars",
+                  "Expand into new content formats"
+                ]
+              }
+            ],
+            "analysis_date": "2025-08-04T13:10:20.493028"
+          }
+        ],
+        "total_count": 1,
+        "user_id": 1,
+        "analysis_date": "2025-08-03T15:09:22.731351",
+        "strategic_insights": [],
+        "market_positioning": {
+          "industry_position": "emerging",
+          "competitive_advantage": "content_quality",
+          "market_share": "medium",
+          "differentiation_factors": [
+            "Educational Content",
+            "Thought Leadership",
+            "Product Updates"
+          ]
+        },
+        "strategic_scores": {
+          "market_positioning_score": 0.7,
+          "competitive_advantage_score": 0.9,
+          "content_strategy_score": 0.75,
+          "overall_strategic_score": 0.775
+        },
+        "risk_assessment": [],
+        "opportunity_analysis": [
+          {
+            "type": "industry_growth",
+            "priority": "high",
+            "description": "Growing technology industry presents expansion opportunities",
+            "action_items": [
+              "Monitor industry trends",
+              "Develop industry-specific content",
+              "Expand into emerging sub-sectors"
+            ]
+          },
+          {
+            "type": "content_expansion",
+            "priority": "medium",
+            "description": "Opportunity to expand content pillar coverage",
+            "action_items": [
+              "Identify underserved content areas",
+              "Develop new content pillars",
+              "Expand into new content formats"
+            ]
+          }
+        ],
+        "recommendations": [],
+        "personalized_data": {
+          "website_analysis": {
+            "website_url": "https://example.com",
+            "content_types": [
+              "blog",
+              "article",
+              "guide"
+            ],
+            "writing_style": "professional",
+            "target_audience": [
+              "professionals",
+              "business owners"
+            ],
+            "industry_focus": "technology",
+            "expertise_level": "intermediate"
+          },
+          "competitor_analysis": {
+            "top_performers": [
+              "techcrunch.com",
+              "wired.com",
+              "theverge.com"
+            ],
+            "industry": "technology",
+            "target_demographics": [
+              "professionals",
+              "business owners"
+            ]
+          },
+          "gap_analysis": {
+            "content_gaps": [
+              "Video tutorials",
+              "Case studies",
+              "Infographics",
+              "Personal stories"
+            ],
+            "target_keywords": [
+              "AI tools",
+              "Digital transformation",
+              "Tech trends"
+            ],
+            "content_opportunities": [
+              "How-to guides",
+              "Tutorials",
+              "Educational content"
+            ]
+          },
+          "keyword_analysis": {
+            "high_value_keywords": [
+              "AI marketing",
+              "Content automation",
+              "Digital strategy"
+            ],
+            "content_topics": [
+              "Industry trends",
+              "How-to guides",
+              "Expert insights"
+            ],
+            "search_intent": {
+              "intent": "practical",
+              "focus": "implementation"
+            }
+          }
+        }
+      }
+    }
+  },
+  "strategy_get_specific": {
+    "status": "passed",
+    "status_code": 200,
+    "response_time": 0.00469,
+    "response_data": {
+      "id": 1,
+      "name": "Test Strategy",
+      "industry": "technology",
+      "target_audience": {
+        "age_range": "25-45",
+        "interests": [
+          "technology",
+          "innovation"
+        ],
+        "location": "global"
+      },
+      "content_pillars": [
+        {
+          "name": "Educational Content",
+          "percentage": 40
+        },
+        {
+          "name": "Thought Leadership",
+          "percentage": 30
+        },
+        {
+          "name": "Product Updates",
+          "percentage": 30
+        }
+      ],
+      "ai_recommendations": {
+        "priority_topics": [
+          "AI",
+          "Machine Learning"
+        ],
+        "content_frequency": "daily",
+        "platform_focus": [
+          "LinkedIn",
+          "Website"
+        ]
+      },
+      "created_at": "2025-08-04T13:10:20.476464",
+      "updated_at": "2025-08-04T13:10:20.476467"
+    }
+  },
+  "calendar_create": {
+    "status": "passed",
+    "status_code": 200,
+    "response_time": 0.011005,
+    "response_data": {
+      "id": 1,
+      "strategy_id": 1,
+      "title": "Test Calendar Event",
+      "description": "This is a test calendar event for functionality testing",
+      "content_type": "blog_post",
+      "platform": "website",
+      "scheduled_date": "2025-08-11T18:40:20.505070",
+      "status": "draft",
+      "ai_recommendations": {
+        "optimal_time": "09:00",
+        "hashtags": [
+          "#test",
+          "#content"
+        ],
+        "tone": "professional"
+      },
+      "created_at": "2025-08-04T13:10:20.510463",
+      "updated_at": "2025-08-04T13:10:20.510467"
+    }
+  },
+  "calendar_get_all": {
+    "status": "passed",
+    "status_code": 200,
+    "response_time": 0.004314,
+    "response_data": [
+      {
+        "id": 1,
+        "strategy_id": 1,
+        "title": "Test Calendar Event",
+        "description": "This is a test calendar event for functionality testing",
+        "content_type": "blog_post",
+        "platform": "website",
+        "scheduled_date": "2025-08-11T18:40:20.505070",
+        "status": "draft",
+        "ai_recommendations": {
+          "optimal_time": "09:00",
+          "hashtags": [
+            "#test",
+            "#content"
+          ],
+          "tone": "professional"
+        },
+        "created_at": "2025-08-04T13:10:20.510463",
+        "updated_at": "2025-08-04T13:10:20.510467"
+      }
+    ]
+  },
+  "gap_analysis_create": {
+    "status": "failed",
+    "status_code": 500,
+    "response_time": 0.003722,
+    "response_data": null
+  },
+  "gap_analysis_get_all": {
+    "status": "failed",
+    "status_code": 500,
+    "response_time": 0.007849,
+    "response_data": null
+  },
+  "ai_analytics_get": {
+    "status": "failed",
+    "status_code": 500,
+    "response_time": 0.007233,
+    "response_data": null
+  },
+  "ai_analytics_evolution": {
+    "status": "passed",
+    "status_code": 200,
+    "response_time": 0.004985,
+    "response_data": {
+      "analysis_type": "content_evolution",
+      "strategy_id": 1,
+      "results": {
+        "strategy_id": 1,
+        "time_period": "30d",
+        "performance_trends": {
+          "trend": "stable",
+          "growth_rate": 0,
+          "insights": "No data available"
+        },
+        "content_evolution": {
+          "content_types": {},
+          "most_performing_type": null,
+          "evolution_insights": "Content type performance analysis completed"
+        },
+        "engagement_patterns": {
+          "patterns": {},
+          "insights": "No engagement data available"
+        },
+        "recommendations": [],
+        "analysis_date": "2025-08-04T13:10:20.548801"
+      },
+      "recommendations": [],
+      "analysis_date": "2025-08-04T13:10:20.549079"
+    }
+  },
+  "calendar_generation": {
+    "status": "passed",
+    "status_code": 200,
+    "response_time": 25.650923,
+    "response_data": {
+      "user_id": 1,
+      "strategy_id": 1,
+      "calendar_type": "monthly",
+      "industry": "technology",
+      "business_size": "sme",
+      "generated_at": "2025-08-04T18:40:46.197965",
+      "content_pillars": [
+        "Educational Content",
+        "Thought Leadership",
+        "Product Updates",
+        "Industry Insights",
+        "Team Culture"
+      ],
+      "platform_strategies": {
+        "website": {
+          "content_types": [
+            "blog_posts",
+            "case_studies",
+            "whitepapers",
+            "product_pages"
+          ],
+          "frequency": "2-3 per week",
+          "optimal_length": "1500+ words",
+          "tone": "professional, educational",
+          "content_pillars": [
+            "Educational Content",
+            "Thought Leadership",
+            "Product Updates",
+            "Industry Insights",
+            "Team Culture"
+          ]
+        },
+        "linkedin": {
+          "content_types": [
+            "industry_insights",
+            "professional_tips",
+            "company_updates",
+            "employee_spotlights"
+          ],
+          "frequency": "daily",
+          "optimal_length": "100-300 words",
+          "tone": "professional, thought leadership",
+          "content_pillars": [
+            "Educational Content",
+            "Thought Leadership",
+            "Product Updates",
+            "Industry Insights",
+            "Team Culture"
+          ]
+        },
+        "instagram": {
+          "content_types": [
+            "behind_scenes",
+            "product_demos",
+            "team_culture",
+            "infographics"
+          ],
+          "frequency": "daily",
+          "optimal_length": "visual focus",
+          "tone": "casual, engaging",
+          "content_pillars": [
+            "Educational Content",
+            "Thought Leadership",
+            "Product Updates",
+            "Industry Insights",
+            "Team Culture"
+          ]
+        },
+        "youtube": {
+          "content_types": [
+            "tutorial_videos",
+            "product_demos",
+            "customer_testimonials",
+            "industry_interviews"
+          ],
+          "frequency": "weekly",
+          "optimal_length": "5-15 minutes",
+          "tone": "educational, engaging",
+          "content_pillars": [
+            "Educational Content",
+            "Thought Leadership",
+            "Product Updates",
+            "Industry Insights",
+            "Team Culture"
+          ]
+        },
+        "twitter": {
+          "content_types": [
+            "industry_news",
+            "quick_tips",
+            "event_announcements",
+            "community_engagement"
+          ],
+          "frequency": "3-5 per day",
+          "optimal_length": "280 characters",
+          "tone": "informative, engaging",
+          "content_pillars": [
+            "Educational Content",
+            "Thought Leadership",
+            "Product Updates",
+            "Industry Insights",
+            "Team Culture"
+          ]
+        }
+      },
+      "content_mix": {
+        "educational": 40.0,
+        "thought_leadership": 30.0,
+        "engagement": 20.0,
+        "promotional": 10.0
+      },
+      "daily_schedule": [
+        {
+          "day": 1,
+          "title": "Thought Leadership Content Day 1",
+          "description": "Create engaging thought leadership content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Thought Leadership",
+          "priority": "medium"
+        },
+        {
+          "day": 2,
+          "title": "Product Updates Content Day 2",
+          "description": "Create engaging product updates content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Product Updates",
+          "priority": "medium"
+        },
+        {
+          "day": 3,
+          "title": "Industry Insights Content Day 3",
+          "description": "Create engaging industry insights content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Industry Insights",
+          "priority": "medium"
+        },
+        {
+          "day": 4,
+          "title": "Team Culture Content Day 4",
+          "description": "Create engaging team culture content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Team Culture",
+          "priority": "medium"
+        },
+        {
+          "day": 5,
+          "title": "Educational Content Content Day 5",
+          "description": "Create engaging educational content content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Educational Content",
+          "priority": "medium"
+        },
+        {
+          "day": 6,
+          "title": "Thought Leadership Content Day 6",
+          "description": "Create engaging thought leadership content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Thought Leadership",
+          "priority": "medium"
+        },
+        {
+          "day": 7,
+          "title": "Product Updates Content Day 7",
+          "description": "Create engaging product updates content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Product Updates",
+          "priority": "medium"
+        },
+        {
+          "day": 8,
+          "title": "Industry Insights Content Day 8",
+          "description": "Create engaging industry insights content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Industry Insights",
+          "priority": "medium"
+        },
+        {
+          "day": 9,
+          "title": "Team Culture Content Day 9",
+          "description": "Create engaging team culture content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Team Culture",
+          "priority": "medium"
+        },
+        {
+          "day": 10,
+          "title": "Educational Content Content Day 10",
+          "description": "Create engaging educational content content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Educational Content",
+          "priority": "medium"
+        },
+        {
+          "day": 11,
+          "title": "Thought Leadership Content Day 11",
+          "description": "Create engaging thought leadership content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Thought Leadership",
+          "priority": "medium"
+        },
+        {
+          "day": 12,
+          "title": "Product Updates Content Day 12",
+          "description": "Create engaging product updates content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Product Updates",
+          "priority": "medium"
+        },
+        {
+          "day": 13,
+          "title": "Industry Insights Content Day 13",
+          "description": "Create engaging industry insights content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Industry Insights",
+          "priority": "medium"
+        },
+        {
+          "day": 14,
+          "title": "Team Culture Content Day 14",
+          "description": "Create engaging team culture content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Team Culture",
+          "priority": "medium"
+        },
+        {
+          "day": 15,
+          "title": "Educational Content Content Day 15",
+          "description": "Create engaging educational content content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Educational Content",
+          "priority": "medium"
+        },
+        {
+          "day": 16,
+          "title": "Thought Leadership Content Day 16",
+          "description": "Create engaging thought leadership content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Thought Leadership",
+          "priority": "medium"
+        },
+        {
+          "day": 17,
+          "title": "Product Updates Content Day 17",
+          "description": "Create engaging product updates content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Product Updates",
+          "priority": "medium"
+        },
+        {
+          "day": 18,
+          "title": "Industry Insights Content Day 18",
+          "description": "Create engaging industry insights content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Industry Insights",
+          "priority": "medium"
+        },
+        {
+          "day": 19,
+          "title": "Team Culture Content Day 19",
+          "description": "Create engaging team culture content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Team Culture",
+          "priority": "medium"
+        },
+        {
+          "day": 20,
+          "title": "Educational Content Content Day 20",
+          "description": "Create engaging educational content content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Educational Content",
+          "priority": "medium"
+        },
+        {
+          "day": 21,
+          "title": "Thought Leadership Content Day 21",
+          "description": "Create engaging thought leadership content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Thought Leadership",
+          "priority": "medium"
+        },
+        {
+          "day": 22,
+          "title": "Product Updates Content Day 22",
+          "description": "Create engaging product updates content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Product Updates",
+          "priority": "medium"
+        },
+        {
+          "day": 23,
+          "title": "Industry Insights Content Day 23",
+          "description": "Create engaging industry insights content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Industry Insights",
+          "priority": "medium"
+        },
+        {
+          "day": 24,
+          "title": "Team Culture Content Day 24",
+          "description": "Create engaging team culture content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Team Culture",
+          "priority": "medium"
+        },
+        {
+          "day": 25,
+          "title": "Educational Content Content Day 25",
+          "description": "Create engaging educational content content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Educational Content",
+          "priority": "medium"
+        },
+        {
+          "day": 26,
+          "title": "Thought Leadership Content Day 26",
+          "description": "Create engaging thought leadership content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Thought Leadership",
+          "priority": "medium"
+        },
+        {
+          "day": 27,
+          "title": "Product Updates Content Day 27",
+          "description": "Create engaging product updates content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Product Updates",
+          "priority": "medium"
+        },
+        {
+          "day": 28,
+          "title": "Industry Insights Content Day 28",
+          "description": "Create engaging industry insights content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Industry Insights",
+          "priority": "medium"
+        },
+        {
+          "day": 29,
+          "title": "Team Culture Content Day 29",
+          "description": "Create engaging team culture content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Team Culture",
+          "priority": "medium"
+        },
+        {
+          "day": 30,
+          "title": "Educational Content Content Day 30",
+          "description": "Create engaging educational content content",
+          "content_type": "blog_post",
+          "platform": "website",
+          "pillar": "Educational Content",
+          "priority": "medium"
+        }
+      ],
+      "weekly_themes": [
+        {
+          "week": 1,
+          "theme": "Establishing content_quality",
+          "focus": "Building competitive advantage through content",
+          "content_types": [
+            "thought_leadership",
+            "case_studies",
+            "expert_insights"
+          ]
+        },
+        {
+          "week": 4,
+          "theme": "Technology Innovation",
+          "focus": "Latest tech trends and innovations",
+          "content_types": [
+            "industry_insights",
+            "product_updates",
+            "expert_interviews"
+          ]
+        }
+      ],
+      "content_recommendations": [
+        {
+          "title": "AI Marketing Video Tutorial Series",
+          "description": "Create a series of video tutorials focused on practical applications of AI in marketing. Target intermediate-level professionals and business owners looking to implement AI solutions.",
+          "priority": "High",
+          "content_type": "Content Creation",
+          "estimated_impact": "High - Increased engagement, lead generation, and brand authority.",
+          "implementation_time": "4-6 weeks"
+        },
+        {
+          "title": "Digital Transformation Case Studies",
+          "description": "Develop case studies showcasing successful digital transformation initiatives within technology-focused businesses. Highlight challenges, solutions, and measurable results.",
+          "priority": "High",
+          "content_type": "Content Creation",
+          "estimated_impact": "High - Demonstrates expertise, builds trust, and attracts potential clients.",
+          "implementation_time": "6-8 weeks"
+        },
+        {
+          "title": "Infographic: Top 5 Tech Trends Shaping the Future",
+          "description": "Create visually appealing infographics summarizing key technology trends and their impact on businesses. Focus on actionable insights and data-driven predictions.",
+          "priority": "Medium",
+          "content_type": "Content Creation",
+          "estimated_impact": "Medium - Increased social sharing, brand awareness, and website traffic.",
+          "implementation_time": "2-3 weeks"
+        },
+        {
+          "title": "Optimize Existing Content for 'AI Tools' and 'Digital Transformation'",
+          "description": "Review existing blog posts, articles, and guides to ensure they are optimized for the target keywords 'AI Tools' and 'Digital Transformation'. Improve on-page SEO, internal linking, and readability.",
+          "priority": "High",
+          "content_type": "Content Optimization",
+          "estimated_impact": "Medium - Improved search engine rankings, increased organic traffic, and enhanced user experience.",
+          "implementation_time": "2-4 weeks"
+        },
+        {
+          "title": "Expert Insights on Digital Strategy",
+          "description": "Develop a series of articles or blog posts featuring expert insights on various aspects of digital strategy. Invite guest contributors from the industry to share their knowledge and perspectives.",
+          "priority": "Medium",
+          "content_type": "Content Series",
+          "estimated_impact": "Medium - Increased brand credibility, expanded reach, and diverse perspectives.",
+          "implementation_time": "Ongoing"
+        }
+      ],
+      "optimal_timing": {
+        "best_days": [
+          "Tuesday",
+          "Wednesday",
+          "Thursday"
+        ],
+        "best_times": [
+          "9:00 AM",
+          "2:00 PM",
+          "7:00 PM"
+        ],
+        "optimal_frequency": "2-3 per week"
+      },
+      "performance_predictions": {
+        "traffic_growth": 27.0,
+        "engagement_rate": 16.5,
+        "conversion_rate": 10.9,
+        "roi_prediction": 18.0,
+        "confidence_score": 0.85
+      },
+      "trending_topics": [
+        {
+          "topic": "AI marketing",
+          "relevance_score": 0.9,
+          "trend_direction": "rising",
+          "content_opportunities": [
+            "Create content around AI marketing",
+            "Develop case studies featuring AI marketing",
+            "Create how-to guides for AI marketing"
+          ]
+        },
+        {
+          "topic": "Content automation",
+          "relevance_score": 0.9,
+          "trend_direction": "rising",
+          "content_opportunities": [
+            "Create content around Content automation",
+            "Develop case studies featuring Content automation",
+            "Create how-to guides for Content automation"
+          ]
+        },
+        {
+          "topic": "Digital strategy",
+          "relevance_score": 0.9,
+          "trend_direction": "rising",
+          "content_opportunities": [
+            "Create content around Digital strategy",
+            "Develop case studies featuring Digital strategy",
+            "Create how-to guides for Digital strategy"
+          ]
+        }
+      ],
+      "repurposing_opportunities": [
+        {
+          "original_content": "Educational Content content piece",
+          "repurposing_options": [
+            "Convert to Educational Content blog post",
+            "Create Educational Content social media series",
+            "Develop Educational Content video content",
+            "Design Educational Content infographic"
+          ],
+          "platforms": [
+            "website",
+            "linkedin",
+            "instagram",
+            "youtube"
+          ],
+          "estimated_reach_increase": "40%"
+        },
+        {
+          "original_content": "Thought Leadership content piece",
+          "repurposing_options": [
+            "Convert to Thought Leadership blog post",
+            "Create Thought Leadership social media series",
+            "Develop Thought Leadership video content",
+            "Design Thought Leadership infographic"
+          ],
+          "platforms": [
+            "website",
+            "linkedin",
+            "instagram",
+            "youtube"
+          ],
+          "estimated_reach_increase": "40%"
+        },
+        {
+          "original_content": "Product Updates content piece",
+          "repurposing_options": [
+            "Convert to Product Updates blog post",
+            "Create Product Updates social media series",
+            "Develop Product Updates video content",
+            "Design Product Updates infographic"
+          ],
+          "platforms": [
+            "website",
+            "linkedin",
+            "instagram",
+            "youtube"
+          ],
+          "estimated_reach_increase": "40%"
+        },
+        {
+          "original_content": "Industry Insights content piece",
+          "repurposing_options": [
+            "Convert to Industry Insights blog post",
+            "Create Industry Insights social media series",
+            "Develop Industry Insights video content",
+            "Design Industry Insights infographic"
+          ],
+          "platforms": [
+            "website",
+            "linkedin",
+            "instagram",
+            "youtube"
+          ],
+          "estimated_reach_increase": "40%"
+        },
+        {
+          "original_content": "Team Culture content piece",
+          "repurposing_options": [
+            "Convert to Team Culture blog post",
+            "Create Team Culture social media series",
+            "Develop Team Culture video content",
+            "Design Team Culture infographic"
+          ],
+          "platforms": [
+            "website",
+            "linkedin",
+            "instagram",
+            "youtube"
+          ],
+          "estimated_reach_increase": "40%"
+        }
+      ],
+      "ai_insights": [
+        {
+          "type": "opportunity",
+          "title": "Content Gap Opportunity",
+          "description": "Address 6 identified content gaps",
+          "priority": "high",
+          "impact": "High - Increased lead generation and brand authority"
+        },
+        {
+          "type": "strategy",
+          "title": "Market Positioning",
+          "description": "Focus on content_quality",
+          "priority": "high",
+          "impact": "High - Competitive differentiation"
+        },
+        {
+          "type": "strategy",
+          "title": "Content Pillars",
+          "description": "Focus on 5 core content pillars",
+          "priority": "medium",
+          "impact": "Medium - Consistent content strategy"
+        }
+      ],
+      "competitor_analysis": {
+        "top_performers": [
+          "techcrunch.com",
+          "wired.com",
+          "theverge.com"
+        ],
+        "industry": "technology",
+        "target_demographics": [
+          "professionals",
+          "business owners"
+        ]
+      },
+      "gap_analysis_insights": {
+        "content_gaps": [
+          {
+            "type": "Content Creation",
+            "title": "AI Marketing Video Tutorial Series",
+            "description": "Create a series of video tutorials focused on practical applications of AI in marketing. Target intermediate-level professionals and business owners looking to implement AI solutions.",
+            "priority": "High",
+            "estimated_impact": "High - Increased engagement, lead generation, and brand authority.",
+            "implementation_time": "4-6 weeks",
+            "ai_confidence": 0.95,
+            "content_suggestions": [
+              "Introduction to AI Marketing Tools",
+              "Setting Up AI-Powered Content Automation",
+              "Analyzing AI Marketing Campaign Performance",
+              "Best Practices for AI-Driven SEO",
+              "Future Trends in AI Marketing"
+            ]
+          },
+          {
+            "type": "Content Creation",
+            "title": "Digital Transformation Case Studies",
+            "description": "Develop case studies showcasing successful digital transformation initiatives within technology-focused businesses. Highlight challenges, solutions, and measurable results.",
+            "priority": "High",
+            "estimated_impact": "High - Demonstrates expertise, builds trust, and attracts potential clients.",
+            "implementation_time": "6-8 weeks",
+            "ai_confidence": 0.9,
+            "content_suggestions": [
+              "Case Study: AI Implementation for E-commerce Personalization",
+              "Case Study: Cloud Migration for Enhanced Scalability",
+              "Case Study: Data Analytics for Improved Decision-Making",
+              "Case Study: Automation of Customer Service Processes",
+              "Case Study: Cybersecurity Enhancement through AI"
+            ]
+          },
+          {
+            "type": "Content Creation",
+            "title": "Infographic: Top 5 Tech Trends Shaping the Future",
+            "description": "Create visually appealing infographics summarizing key technology trends and their impact on businesses. Focus on actionable insights and data-driven predictions.",
+            "priority": "Medium",
+            "estimated_impact": "Medium - Increased social sharing, brand awareness, and website traffic.",
+            "implementation_time": "2-3 weeks",
+            "ai_confidence": 0.85,
+            "content_suggestions": [
+              "AI and Machine Learning",
+              "Cloud Computing",
+              "Cybersecurity",
+              "Internet of Things (IoT)",
+              "Blockchain Technology"
+            ]
+          },
+          {
+            "type": "Content Optimization",
+            "title": "Optimize Existing Content for 'AI Tools' and 'Digital Transformation'",
+            "description": "Review existing blog posts, articles, and guides to ensure they are optimized for the target keywords 'AI Tools' and 'Digital Transformation'. Improve on-page SEO, internal linking, and readability.",
+            "priority": "High",
+            "estimated_impact": "Medium - Improved search engine rankings, increased organic traffic, and enhanced user experience.",
+            "implementation_time": "2-4 weeks",
+            "ai_confidence": 0.9,
+            "content_suggestions": [
+              "Update meta descriptions and title tags",
+              "Incorporate keywords naturally within the content",
+              "Add relevant internal and external links",
+              "Improve readability with headings, subheadings, and bullet points",
+              "Ensure content is mobile-friendly"
+            ]
+          },
+          {
+            "type": "Content Series",
+            "title": "Expert Insights on Digital Strategy",
+            "description": "Develop a series of articles or blog posts featuring expert insights on various aspects of digital strategy. Invite guest contributors from the industry to share their knowledge and perspectives.",
+            "priority": "Medium",
+            "estimated_impact": "Medium - Increased brand credibility, expanded reach, and diverse perspectives.",
+            "implementation_time": "Ongoing",
+            "ai_confidence": 0.8,
+            "content_suggestions": [
+              "Developing a Comprehensive Digital Marketing Plan",
+              "Measuring the ROI of Digital Marketing Campaigns",
+              "Adapting to Changing Consumer Behavior",
+              "Leveraging Data Analytics for Strategic Decision-Making",
+              "Building a Strong Online Presence"
+            ]
+          },
+          {
+            "type": "Content Creation",
+            "title": "How-to Guide: Implementing Content Automation",
+            "description": "Create a detailed how-to guide on implementing content automation, covering tools, techniques, and best practices. Target professionals seeking to streamline their content creation process.",
+            "priority": "High",
+            "estimated_impact": "Medium - Provides practical value, attracts targeted audience, and generates leads.",
+            "implementation_time": "3-4 weeks",
+            "ai_confidence": 0.9,
+            "content_suggestions": [
+              "Choosing the Right Content Automation Tools",
+              "Setting Up Automated Content Workflows",
+              "Personalizing Content with AI",
+              "Measuring the Effectiveness of Content Automation",
+              "Common Mistakes to Avoid"
+            ]
+          }
+        ],
+        "keyword_opportunities": [
+          "AI marketing",
+          "Content automation",
+          "Digital strategy"
+        ],
+        "competitor_insights": [
+          "techcrunch.com",
+          "wired.com",
+          "theverge.com"
+        ],
+        "recommendations": [
+          {
+            "type": "Content Creation",
+            "title": "AI Marketing Video Tutorial Series",
+            "description": "Create a series of video tutorials focused on practical applications of AI in marketing. Target intermediate-level professionals and business owners looking to implement AI solutions.",
+            "priority": "High",
+            "estimated_impact": "High - Increased engagement, lead generation, and brand authority.",
+            "implementation_time": "4-6 weeks",
+            "ai_confidence": 0.95,
+            "content_suggestions": [
+              "Introduction to AI Marketing Tools",
+              "Setting Up AI-Powered Content Automation",
+              "Analyzing AI Marketing Campaign Performance",
+              "Best Practices for AI-Driven SEO",
+              "Future Trends in AI Marketing"
+            ]
+          },
+          {
+            "type": "Content Creation",
+            "title": "Digital Transformation Case Studies",
+            "description": "Develop case studies showcasing successful digital transformation initiatives within technology-focused businesses. Highlight challenges, solutions, and measurable results.",
+            "priority": "High",
+            "estimated_impact": "High - Demonstrates expertise, builds trust, and attracts potential clients.",
+            "implementation_time": "6-8 weeks",
+            "ai_confidence": 0.9,
+            "content_suggestions": [
+              "Case Study: AI Implementation for E-commerce Personalization",
+              "Case Study: Cloud Migration for Enhanced Scalability",
+              "Case Study: Data Analytics for Improved Decision-Making",
+              "Case Study: Automation of Customer Service Processes",
+              "Case Study: Cybersecurity Enhancement through AI"
+            ]
+          },
+          {
+            "type": "Content Creation",
+            "title": "Infographic: Top 5 Tech Trends Shaping the Future",
+            "description": "Create visually appealing infographics summarizing key technology trends and their impact on businesses. Focus on actionable insights and data-driven predictions.",
+            "priority": "Medium",
+            "estimated_impact": "Medium - Increased social sharing, brand awareness, and website traffic.",
+            "implementation_time": "2-3 weeks",
+            "ai_confidence": 0.85,
+            "content_suggestions": [
+              "AI and Machine Learning",
+              "Cloud Computing",
+              "Cybersecurity",
+              "Internet of Things (IoT)",
+              "Blockchain Technology"
+            ]
+          },
+          {
+            "type": "Content Optimization",
+            "title": "Optimize Existing Content for 'AI Tools' and 'Digital Transformation'",
+            "description": "Review existing blog posts, articles, and guides to ensure they are optimized for the target keywords 'AI Tools' and 'Digital Transformation'. Improve on-page SEO, internal linking, and readability.",
+            "priority": "High",
+            "estimated_impact": "Medium - Improved search engine rankings, increased organic traffic, and enhanced user experience.",
+            "implementation_time": "2-4 weeks",
+            "ai_confidence": 0.9,
+            "content_suggestions": [
+              "Update meta descriptions and title tags",
+              "Incorporate keywords naturally within the content",
+              "Add relevant internal and external links",
+              "Improve readability with headings, subheadings, and bullet points",
+              "Ensure content is mobile-friendly"
+            ]
+          },
+          {
+            "type": "Content Series",
+            "title": "Expert Insights on Digital Strategy",
+            "description": "Develop a series of articles or blog posts featuring expert insights on various aspects of digital strategy. Invite guest contributors from the industry to share their knowledge and perspectives.",
+            "priority": "Medium",
+            "estimated_impact": "Medium - Increased brand credibility, expanded reach, and diverse perspectives.",
+            "implementation_time": "Ongoing",
+            "ai_confidence": 0.8,
+            "content_suggestions": [
+              "Developing a Comprehensive Digital Marketing Plan",
+              "Measuring the ROI of Digital Marketing Campaigns",
+              "Adapting to Changing Consumer Behavior",
+              "Leveraging Data Analytics for Strategic Decision-Making",
+              "Building a Strong Online Presence"
+            ]
+          },
+          {
+            "type": "Content Creation",
+            "title": "How-to Guide: Implementing Content Automation",
+            "description": "Create a detailed how-to guide on implementing content automation, covering tools, techniques, and best practices. Target professionals seeking to streamline their content creation process.",
+            "priority": "High",
+            "estimated_impact": "Medium - Provides practical value, attracts targeted audience, and generates leads.",
+            "implementation_time": "3-4 weeks",
+            "ai_confidence": 0.9,
+            "content_suggestions": [
+              "Choosing the Right Content Automation Tools",
+              "Setting Up Automated Content Workflows",
+              "Personalizing Content with AI",
+              "Measuring the Effectiveness of Content Automation",
+              "Common Mistakes to Avoid"
+            ]
+          }
+        ],
+        "opportunities": [
+          "How-to guides",
+          "Tutorials",
+          "Educational content"
+        ]
+      },
+      "strategy_insights": {},
+      "onboarding_insights": {
+        "website_analysis": {
+          "website_url": "https://example.com",
+          "content_types": [
+            "blog",
+            "article",
+            "guide"
+          ],
+          "writing_style": "professional",
+          "target_audience": [
+            "professionals",
+            "business owners"
+          ],
+          "industry_focus": "technology",
+          "expertise_level": "intermediate"
+        },
+        "competitor_analysis": {
+          "top_performers": [
+            "techcrunch.com",
+            "wired.com",
+            "theverge.com"
+          ],
+          "industry": "technology",
+          "target_demographics": [
+            "professionals",
+            "business owners"
+          ]
+        },
+        "gap_analysis": {
+          "content_gaps": [
+            "Video tutorials",
+            "Case studies",
+            "Infographics",
+            "Personal stories"
+          ],
+          "target_keywords": [
+            "AI tools",
+            "Digital transformation",
+            "Tech trends"
+          ],
+          "content_opportunities": [
+            "How-to guides",
+            "Tutorials",
+            "Educational content"
+          ]
+        },
+        "keyword_analysis": {
+          "high_value_keywords": [
+            "AI marketing",
+            "Content automation",
+            "Digital strategy"
+          ],
+          "content_topics": [
+            "Industry trends",
+            "How-to guides",
+            "Expert insights"
+          ],
+          "search_intent": {
+            "intent": "practical",
+            "focus": "implementation"
+          }
+        }
+      },
+      "processing_time": 25.64372682571411,
+      "ai_confidence": 0.95
+    }
+  },
+  "content_optimization": {
+    "status": "failed",
+    "status_code": 500,
+    "response_time": 0.006919,
+    "response_data": null
+  },
+  "performance_prediction": {
+    "status": "failed",
+    "status_code": 500,
+    "response_time": 11.737037,
+    "response_data": null
+  },
+  "content_repurposing": {
+    "status": "failed",
+    "status_code": 500,
+    "response_time": 12.734162,
+    "response_data": null
+  },
+  "trending_topics": {
+    "status": "passed",
+    "status_code": 200,
+    "response_time": 41.956215,
+    "response_data": {
+      "user_id": 1,
+      "industry": "technology",
+      "trending_topics": [],
+      "gap_relevance_scores": {},
+      "audience_alignment_scores": {},
+      "created_at": "2025-08-04T13:11:52.646740"
+    }
+  },
+  "comprehensive_user_data": {
+    "status": "passed",
+    "status_code": 200,
+    "response_time": 99.359601,
+    "response_data": {
+      "status": "success",
+      "data": {
+        "user_id": 1,
+        "onboarding_data": {
+          "website_analysis": {
+            "content_types": [
+              "blog",
+              "video",
+              "social"
+            ],
+            "writing_style": "professional",
+            "target_audience": [
+              "professionals"
+            ],
+            "industry_focus": "general",
+            "expertise_level": "intermediate"
+          },
+          "competitor_analysis": {
+            "top_performers": [
+              "competitor1.com",
+              "competitor2.com"
+            ],
+            "industry": "general",
+            "target_demographics": [
+              "professionals"
+            ]
+          },
+          "gap_analysis": {
+            "content_gaps": [
+              "AI content",
+              "Video tutorials",
+              "Case studies"
+            ],
+            "target_keywords": [
+              "Industry insights",
+              "Best practices"
+            ],
+            "content_opportunities": [
+              "How-to guides",
+              "Tutorials"
+            ]
+          },
+          "keyword_analysis": {
+            "high_value_keywords": [
+              "AI marketing",
+              "Content automation",
+              "Digital strategy"
+            ],
+            "content_topics": [
+              "Industry trends",
+              "Expert insights"
+            ],
+            "search_intent": {
+              "intent": "practical",
+              "focus": "implementation"
+            }
+          }
+        },
+        "ai_analysis_results": {
+          "strategy_id": 1,
+          "market_positioning": {
+            "industry_position": "established",
+            "competitive_advantage": "content_quality",
+            "market_share": "medium",
+            "differentiation_factors": []
+          },
+          "competitive_advantages": [],
+          "strategic_scores": {
+            "market_positioning_score": 0.7999999999999999,
+            "competitive_advantage_score": 0.8,
+            "content_strategy_score": 0.75,
+            "overall_strategic_score": 0.775
+          },
+          "risk_assessment": [
+            {
+              "type": "content_diversity",
+              "severity": "medium",
+              "description": "Limited content pillar diversity",
+              "mitigation": "Develop additional content pillars"
+            },
+            {
+              "type": "audience_definition",
+              "severity": "high",
+              "description": "Unclear target audience definition",
+              "mitigation": "Define detailed audience personas"
+            }
+          ],
+          "opportunity_analysis": [],
+          "analysis_date": "2025-08-04T13:13:22.672206"
+        },
+        "gap_analysis": {
+          "content_gaps": [
+            {
+              "type": "Content Creation",
+              "title": "AI Marketing Implementation Guide",
+              "description": "Develop a comprehensive guide on implementing AI in marketing strategies, focusing on practical applications and best practices.",
+              "priority": "High",
+              "estimated_impact": "High - Increased organic traffic, lead generation, and brand authority.",
+              "implementation_time": "4-6 weeks",
+              "ai_confidence": 0.95,
+              "content_suggestions": [
+                "Blog posts detailing different AI marketing tools.",
+                "Video tutorials demonstrating how to use AI for specific marketing tasks.",
+                "Case studies showcasing successful AI marketing implementations.",
+                "Downloadable checklist for AI marketing implementation."
+              ]
+            },
+            {
+              "type": "Content Creation",
+              "title": "Content Automation Masterclass",
+              "description": "Create a series of videos and blog posts covering various aspects of content automation, including tools, techniques, and best practices.",
+              "priority": "High",
+              "estimated_impact": "Medium - Improved user engagement, lead nurturing, and content efficiency.",
+              "implementation_time": "6-8 weeks",
+              "ai_confidence": 0.9,
+              "content_suggestions": [
+                "Video tutorials on setting up content automation workflows.",
+                "Blog posts comparing different content automation platforms.",
+                "Expert interviews on the future of content automation.",
+                "Webinars on advanced content automation strategies."
+              ]
+            },
+            {
+              "type": "Content Creation",
+              "title": "Digital Strategy Case Studies",
+              "description": "Publish case studies showcasing successful digital strategies across different industries, highlighting key insights and lessons learned.",
+              "priority": "Medium",
+              "estimated_impact": "Medium - Enhanced credibility, lead generation, and brand awareness.",
+              "implementation_time": "4-6 weeks",
+              "ai_confidence": 0.85,
+              "content_suggestions": [
+                "Detailed case studies with quantifiable results.",
+                "Infographics summarizing key findings from the case studies.",
+                "Webinars discussing the strategies used in the case studies.",
+                "Blog posts analyzing the trends revealed by the case studies."
+              ]
+            },
+            {
+              "type": "Content Optimization",
+              "title": "Keyword Optimization for Existing Content",
+              "description": "Optimize existing blog posts and articles with high-value keywords such as 'AI marketing,' 'content automation,' and 'digital strategy'.",
+              "priority": "High",
+              "estimated_impact": "Medium - Increased organic traffic and improved search engine rankings.",
+              "implementation_time": "2-4 weeks",
+              "ai_confidence": 0.9,
+              "content_suggestions": [
+                "Update meta descriptions and title tags with target keywords.",
+                "Incorporate keywords naturally within the content body.",
+                "Add internal links to relevant content.",
+                "Optimize images with alt text containing target keywords."
+              ]
+            },
+            {
+              "type": "Content Series",
+              "title": "Industry Insights Series",
+              "description": "Develop a series of blog posts and videos featuring expert insights on current industry trends and future predictions.",
+              "priority": "Medium",
+              "estimated_impact": "Medium - Increased thought leadership, audience engagement, and brand authority.",
+              "implementation_time": "Ongoing",
+              "ai_confidence": 0.8,
+              "content_suggestions": [
+                "Interviews with industry leaders.",
+                "Analysis of emerging trends.",
+                "Predictions for the future of the industry.",
+                "Expert opinions on current challenges."
+              ]
+            },
+            {
+              "type": "Content Format",
+              "title": "Expand Video Content",
+              "description": "Increase the production and distribution of video content, focusing on tutorials, case studies, and expert interviews.",
+              "priority": "High",
+              "estimated_impact": "High - Increased engagement, brand awareness, and lead generation.",
+              "implementation_time": "Ongoing",
+              "ai_confidence": 0.95,
+              "content_suggestions": [
+                "Create short, engaging video tutorials.",
+                "Produce high-quality case study videos.",
+                "Conduct expert interviews via video conferencing.",
+                "Promote video content on social media platforms."
+              ]
+            }
+          ],
+          "keyword_opportunities": [
+            "AI marketing",
+            "Content automation",
+            "Digital strategy"
+          ],
+          "competitor_insights": [
+            "competitor1.com",
+            "competitor2.com"
+          ],
+          "recommendations": [
+            {
+              "type": "Content Creation",
+              "title": "AI Marketing Implementation Guide",
+              "description": "Develop a comprehensive guide on implementing AI in marketing strategies, focusing on practical applications and best practices.",
+              "priority": "High",
+              "estimated_impact": "High - Increased organic traffic, lead generation, and brand authority.",
+              "implementation_time": "4-6 weeks",
+              "ai_confidence": 0.95,
+              "content_suggestions": [
+                "Blog posts detailing different AI marketing tools.",
+                "Video tutorials demonstrating how to use AI for specific marketing tasks.",
+                "Case studies showcasing successful AI marketing implementations.",
+                "Downloadable checklist for AI marketing implementation."
+              ]
+            },
+            {
+              "type": "Content Creation",
+              "title": "Content Automation Masterclass",
+              "description": "Create a series of videos and blog posts covering various aspects of content automation, including tools, techniques, and best practices.",
+              "priority": "High",
+              "estimated_impact": "Medium - Improved user engagement, lead nurturing, and content efficiency.",
+              "implementation_time": "6-8 weeks",
+              "ai_confidence": 0.9,
+              "content_suggestions": [
+                "Video tutorials on setting up content automation workflows.",
+                "Blog posts comparing different content automation platforms.",
+                "Expert interviews on the future of content automation.",
+                "Webinars on advanced content automation strategies."
+              ]
+            },
+            {
+              "type": "Content Creation",
+              "title": "Digital Strategy Case Studies",
+              "description": "Publish case studies showcasing successful digital strategies across different industries, highlighting key insights and lessons learned.",
+              "priority": "Medium",
+              "estimated_impact": "Medium - Enhanced credibility, lead generation, and brand awareness.",
+              "implementation_time": "4-6 weeks",
+              "ai_confidence": 0.85,
+              "content_suggestions": [
+                "Detailed case studies with quantifiable results.",
+                "Infographics summarizing key findings from the case studies.",
+                "Webinars discussing the strategies used in the case studies.",
+                "Blog posts analyzing the trends revealed by the case studies."
+              ]
+            },
+            {
+              "type": "Content Optimization",
+              "title": "Keyword Optimization for Existing Content",
+              "description": "Optimize existing blog posts and articles with high-value keywords such as 'AI marketing,' 'content automation,' and 'digital strategy'.",
+              "priority": "High",
+              "estimated_impact": "Medium - Increased organic traffic and improved search engine rankings.",
+              "implementation_time": "2-4 weeks",
+              "ai_confidence": 0.9,
+              "content_suggestions": [
+                "Update meta descriptions and title tags with target keywords.",
+                "Incorporate keywords naturally within the content body.",
+                "Add internal links to relevant content.",
+                "Optimize images with alt text containing target keywords."
+              ]
+            },
+            {
+              "type": "Content Series",
+              "title": "Industry Insights Series",
+              "description": "Develop a series of blog posts and videos featuring expert insights on current industry trends and future predictions.",
+              "priority": "Medium",
+              "estimated_impact": "Medium - Increased thought leadership, audience engagement, and brand authority.",
+              "implementation_time": "Ongoing",
+              "ai_confidence": 0.8,
+              "content_suggestions": [
+                "Interviews with industry leaders.",
+                "Analysis of emerging trends.",
+                "Predictions for the future of the industry.",
+                "Expert opinions on current challenges."
+              ]
+            },
+            {
+              "type": "Content Format",
+              "title": "Expand Video Content",
+              "description": "Increase the production and distribution of video content, focusing on tutorials, case studies, and expert interviews.",
+              "priority": "High",
+              "estimated_impact": "High - Increased engagement, brand awareness, and lead generation.",
+              "implementation_time": "Ongoing",
+              "ai_confidence": 0.95,
+              "content_suggestions": [
+                "Create short, engaging video tutorials.",
+                "Produce high-quality case study videos.",
+                "Conduct expert interviews via video conferencing.",
+                "Promote video content on social media platforms."
+              ]
+            }
+          ],
+          "opportunities": [
+            "How-to guides",
+            "Tutorials"
+          ]
+        },
+        "strategy_data": {},
+        "recommendations_data": [],
+        "performance_data": {},
+        "industry": "general",
+        "target_audience": [
+          "professionals"
+        ],
+        "business_goals": [
+          "Increase brand awareness",
+          "Generate leads",
+          "Establish thought leadership"
+        ],
+        "website_analysis": {
+          "content_types": [
+            "blog",
+            "video",
+            "social"
+          ],
+          "writing_style": "professional",
+          "target_audience": [
+            "professionals"
+          ],
+          "industry_focus": "general",
+          "expertise_level": "intermediate"
+        },
+        "competitor_analysis": {
+          "top_performers": [
+            "competitor1.com",
+            "competitor2.com"
+          ],
+          "industry": "general",
+          "target_demographics": [
+            "professionals"
+          ]
+        },
+        "keyword_analysis": {
+          "high_value_keywords": [
+            "AI marketing",
+            "Content automation",
+            "Digital strategy"
+          ],
+          "content_topics": [
+            "Industry trends",
+            "Expert insights"
+          ],
+          "search_intent": {
+            "intent": "practical",
+            "focus": "implementation"
+          }
+        }
+      },
+      "message": "Comprehensive user data retrieved successfully",
+      "timestamp": "2025-08-04T18:43:32.007024"
+    }
+  },
+  "error_invalid_user": {
+    "status": "failed",
+    "status_code": 200,
+    "response_time": 0.003097,
+    "response_data": null
+  },
+  "error_invalid_strategy": {
+    "status": "passed",
+    "status_code": 404,
+    "response_time": 0.003199,
+    "response_data": {
+      "detail": "Content strategy not found"
+    }
+  },
+  "validation_invalid_strategy": {
+    "status": "passed",
+    "status_code": 422,
+    "response_time": 0.001707,
+    "response_data": {
+      "detail": [
+        {
+          "type": "int_parsing",
+          "loc": [
+            "body",
+            "user_id"
+          ],
+          "msg": "Input should be a valid integer, unable to parse string as an integer",
+          "input": "invalid"
+        },
+        {
+          "type": "missing",
+          "loc": [
+            "body",
+            "target_audience"
+          ],
+          "msg": "Field required",
+          "input": {
+            "user_id": "invalid",
+            "name": "",
+            "industry": "invalid_industry"
+          }
+        }
+      ]
+    }
+  },
+  "response_format_strategies": {
+    "status": "failed",
+    "has_required_fields": false,
+    "response_structure": [
+      "status",
+      "message",
+      "data"
+    ]
+  },
+  "performance_metrics": {
+    "status": "completed",
+    "results": {
+      "/api/content-planning/health": {
+        "response_time": 161.07707333564758,
+        "status_code": 200,
+        "is_successful": true
+      },
+      "/api/content-planning/strategies/?user_id=1": {
+        "response_time": 0.009449958801269531,
+        "status_code": 200,
+        "is_successful": true
+      },
+      "/api/content-planning/calendar-events/?strategy_id=1": {
+        "response_time": 0.004015207290649414,
+        "status_code": 200,
+        "is_successful": true
+      },
+      "/api/content-planning/gap-analysis/?user_id=1": {
+        "response_time": 0.006508350372314453,
+        "status_code": 500,
+        "is_successful": false
+      }
+    },
+    "summary": {
+      "total_endpoints": 4,
+      "successful_requests": 3,
+      "average_response_time": 40.274261713027954
+    }
+  }
+}
