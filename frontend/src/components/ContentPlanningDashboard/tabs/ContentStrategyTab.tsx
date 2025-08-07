@@ -55,7 +55,7 @@ import {
 } from '@mui/icons-material';
 import { useContentPlanningStore } from '../../../stores/contentPlanningStore';
 import { contentPlanningApi } from '../../../services/contentPlanningApi';
-import EnhancedStrategyBuilder from '../components/EnhancedStrategyBuilder';
+import ContentStrategyBuilder from '../components/ContentStrategyBuilder';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -429,20 +429,6 @@ const ContentStrategyTab: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Content Strategy Builder
-        </Typography>
-        <Button
-          variant="outlined"
-          startIcon={<RefreshIcon />}
-          onClick={handleRefreshData}
-          disabled={loading}
-        >
-          Refresh Data
-        </Button>
-      </Box>
-
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
@@ -455,13 +441,12 @@ const ContentStrategyTab: React.FC = () => {
           <Tabs value={tabValue} onChange={handleTabChange} aria-label="strategy builder tabs">
             <Tab 
               label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <AutoAwesomeIcon />
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <AutoAwesomeIcon sx={{ mr: 1 }} />
                   Enhanced Strategy Builder
                 </Box>
               } 
             />
-            <Tab label="Legacy Strategy Builder" />
             <Tab label="Strategic Intelligence" icon={<AssessmentIcon />} />
             <Tab label="Keyword Research" icon={<SearchIcon />} />
             <Tab label="Performance Analytics" icon={<BarChartIcon />} />
@@ -471,479 +456,340 @@ const ContentStrategyTab: React.FC = () => {
 
         {/* Enhanced Strategy Builder Tab */}
         <TabPanel value={tabValue} index={0}>
-          <EnhancedStrategyBuilder />
-        </TabPanel>
-
-        {/* Legacy Strategy Builder Tab */}
-        <TabPanel value={tabValue} index={1}>
-          <Grid container spacing={3}>
-            {/* Strategy Overview */}
-            <Grid item xs={12} md={4}>
-              <Paper sx={{ p: 3, mb: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  <BusinessIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Strategy Overview
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                
-                <TextField
-                  fullWidth
-                  label="Strategy Name"
-                  value={strategyForm.name}
-                  onChange={(e) => handleStrategyFormChange('name', e.target.value)}
-                  placeholder="Enter strategy name"
-                  sx={{ mb: 2 }}
-                />
-                
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={3}
-                  label="Strategy Description"
-                  value={strategyForm.description}
-                  onChange={(e) => handleStrategyFormChange('description', e.target.value)}
-                  placeholder="Describe your content strategy"
-                  sx={{ mb: 2 }}
-                />
-                
-                <TextField
-                  fullWidth
-                  label="Industry"
-                  value={strategyForm.industry}
-                  onChange={(e) => handleStrategyFormChange('industry', e.target.value)}
-                  placeholder="e.g., Technology, Healthcare, Finance"
-                  sx={{ mb: 2 }}
-                />
-
-                <Button
-                  variant="contained"
-                  fullWidth
-                  startIcon={<AddIcon />}
-                  disabled={loading}
-                  onClick={handleCreateStrategy}
-                >
-                  {loading ? 'Creating...' : 'Create Strategy'}
-                </Button>
-              </Paper>
-
-              {/* Performance Metrics */}
-              <Paper sx={{ p: 3, mb: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  <AnalyticsIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Performance Metrics
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                
-                {performanceMetrics ? (
-                  <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                      <Typography variant="body2" color="text.secondary">
-                        Engagement Rate
-                      </Typography>
-                      <Typography variant="h6" color="primary">
-                        {performanceMetrics.engagement || 75.2}%
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Typography variant="body2" color="text.secondary">
-                        Reach
-                      </Typography>
-                      <Typography variant="h6" color="primary">
-                        {(performanceMetrics.reach || 12500).toLocaleString()}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Typography variant="body2" color="text.secondary">
-                        Conversion Rate
-                      </Typography>
-                      <Typography variant="h6" color="success.main">
-                        {performanceMetrics.conversion || 3.8}%
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Typography variant="body2" color="text.secondary">
-                        ROI
-                      </Typography>
-                      <Typography variant="h6" color="success.main">
-                        ${(performanceMetrics.roi || 14200).toLocaleString()}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    No performance data available
-                  </Typography>
-                )}
-              </Paper>
-            </Grid>
-
-            {/* Main Content Area */}
-            <Grid item xs={12} md={8}>
-              <Paper sx={{ width: '100%' }}>
-                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                  <Tabs value={tabValue} onChange={handleTabChange} aria-label="strategy tabs">
-                    <Tab label="Strategic Intelligence" icon={<AssessmentIcon />} />
-                    <Tab label="Keyword Research" icon={<SearchIcon />} />
-                    <Tab label="Performance Analytics" icon={<BarChartIcon />} />
-                    <Tab label="Content Pillars" icon={<PieChartIcon />} />
-                  </Tabs>
-                </Box>
-
-                {/* Strategic Intelligence Tab */}
-                <TabPanel value={tabValue} index={2}>
-                  {dataLoading.strategicIntelligence ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                      <CircularProgress />
-                    </Box>
-                  ) : strategicIntelligence && strategicIntelligence.market_positioning ? (
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                        <Card>
-                          <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                              Market Positioning
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                              <CircularProgress
-                                variant="determinate"
-                                value={strategicIntelligence.market_positioning.score || 0}
-                                size={60}
-                                color="primary"
-                              />
-                              <Typography variant="h4" sx={{ ml: 2 }}>
-                                {strategicIntelligence.market_positioning.score || 0}/100
-                              </Typography>
-                            </Box>
-                            
-                            <Typography variant="subtitle2" gutterBottom>
-                              Strengths:
-                            </Typography>
-                            <List dense>
-                              {(strategicIntelligence.market_positioning.strengths || []).map((strength: string, index: number) => (
-                                <ListItem key={index}>
-                                  <ListItemIcon>
-                                    <CheckCircleIcon color="success" />
-                                  </ListItemIcon>
-                                  <ListItemText primary={strength} />
-                                </ListItem>
-                              ))}
-                            </List>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-
-                      <Grid item xs={12} md={6}>
-                        <Card>
-                          <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                              Competitive Advantages
-                            </Typography>
-                            {(strategicIntelligence.competitive_advantages || []).map((advantage: any, index: number) => (
-                              <Box key={index} sx={{ mb: 2 }}>
-                                <Typography variant="subtitle1">
-                                  {advantage.advantage}
-                                </Typography>
-                                <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                                  <Chip 
-                                    label={advantage.impact} 
-                                    color={advantage.impact === 'High' ? 'success' : 'primary'}
-                                    size="small"
-                                  />
-                                  <Chip 
-                                    label={advantage.implementation} 
-                                    variant="outlined"
-                                    size="small"
-                                  />
-                                </Box>
-                              </Box>
-                            ))}
-                          </CardContent>
-                        </Card>
-                      </Grid>
-
-                      <Grid item xs={12}>
-                        <Card>
-                          <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                              Strategic Risks
-                            </Typography>
-                            {(strategicIntelligence.strategic_risks || []).map((risk: any, index: number) => (
-                              <Box key={index} sx={{ mb: 2 }}>
-                                <Typography variant="subtitle1">
-                                  {risk.risk}
-                                </Typography>
-                                <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                                  <Chip 
-                                    label={`Probability: ${risk.probability}`} 
-                                    color={risk.probability === 'High' ? 'error' : 'warning'}
-                                    size="small"
-                                  />
-                                  <Chip 
-                                    label={`Impact: ${risk.impact}`} 
-                                    color={risk.impact === 'High' ? 'error' : 'warning'}
-                                    size="small"
-                                  />
-                                </Box>
-                              </Box>
-                            ))}
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    </Grid>
-                  ) : (
-                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', p: 3 }}>
-                      No strategic intelligence data available
-                    </Typography>
-                  )}
-                </TabPanel>
-
-                {/* Keyword Research Tab */}
-                <TabPanel value={tabValue} index={3}>
-                  {dataLoading.keywordResearch ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                      <CircularProgress />
-                    </Box>
-                  ) : keywordResearch && keywordResearch.trend_analysis ? (
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                        <Card>
-                          <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                              High Volume Keywords
-                            </Typography>
-                            <TableContainer>
-                              <Table size="small">
-                                <TableHead>
-                                  <TableRow>
-                                    <TableCell>Keyword</TableCell>
-                                    <TableCell>Volume</TableCell>
-                                    <TableCell>Difficulty</TableCell>
-                                  </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                  {(keywordResearch.trend_analysis.high_volume_keywords || []).map((keyword: any, index: number) => (
-                                    <TableRow key={index}>
-                                      <TableCell>{keyword.keyword}</TableCell>
-                                      <TableCell>{keyword.volume}</TableCell>
-                                      <TableCell>
-                                        <Chip 
-                                          label={keyword.difficulty} 
-                                          color={keyword.difficulty === 'Low' ? 'success' : keyword.difficulty === 'Medium' ? 'warning' : 'error'}
-                                          size="small"
-                                        />
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </TableContainer>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-
-                      <Grid item xs={12} md={6}>
-                        <Card>
-                          <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                              Trending Keywords
-                            </Typography>
-                            {(keywordResearch.trend_analysis.trending_keywords || []).map((keyword: any, index: number) => (
-                              <Box key={index} sx={{ mb: 2 }}>
-                                <Typography variant="subtitle1">
-                                  {keyword.keyword}
-                                </Typography>
-                                <Box sx={{ display: 'flex', gap: 1 }}>
-                                  <Chip 
-                                    label={keyword.growth} 
-                                    color="success"
-                                    size="small"
-                                  />
-                                  <Chip 
-                                    label={keyword.opportunity} 
-                                    color={keyword.opportunity === 'High' ? 'success' : 'primary'}
-                                    size="small"
-                                  />
-                                </Box>
-                              </Box>
-                            ))}
-                          </CardContent>
-                        </Card>
-                      </Grid>
-
-                      <Grid item xs={12}>
-                        <Card>
-                          <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                              Keyword Opportunities
-                            </Typography>
-                            <TableContainer>
-                              <Table>
-                                <TableHead>
-                                  <TableRow>
-                                    <TableCell>Keyword</TableCell>
-                                    <TableCell>Search Volume</TableCell>
-                                    <TableCell>Competition</TableCell>
-                                    <TableCell>CPC</TableCell>
-                                    <TableCell>Action</TableCell>
-                                  </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                  {(keywordResearch.opportunities || []).map((opportunity: any, index: number) => (
-                                    <TableRow key={index}>
-                                      <TableCell>{opportunity.keyword}</TableCell>
-                                      <TableCell>{opportunity.search_volume}</TableCell>
-                                      <TableCell>
-                                        <Chip 
-                                          label={opportunity.competition} 
-                                          color={opportunity.competition === 'Low' ? 'success' : opportunity.competition === 'Medium' ? 'warning' : 'error'}
-                                          size="small"
-                                        />
-                                      </TableCell>
-                                      <TableCell>${opportunity.cpc}</TableCell>
-                                      <TableCell>
-                                        <Button size="small" variant="outlined">
-                                          Add to Strategy
-                                        </Button>
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </TableContainer>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    </Grid>
-                  ) : (
-                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', p: 3 }}>
-                      No keyword research data available
-                    </Typography>
-                  )}
-                </TabPanel>
-
-                {/* Performance Analytics Tab */}
-                <TabPanel value={tabValue} index={4}>
-                  {performanceMetrics ? (
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                        <Card>
-                          <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                              Content Performance by Type
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              No content performance data available
-                            </Typography>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-
-                      <Grid item xs={12} md={6}>
-                        <Card>
-                          <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                              Growth Trends
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              No trend data available
-                            </Typography>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    </Grid>
-                  ) : (
-                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', p: 3 }}>
-                      No performance analytics data available
-                    </Typography>
-                  )}
-                </TabPanel>
-
-                {/* Content Pillars Tab */}
-                <TabPanel value={tabValue} index={5}>
-                  {dataLoading.pillars ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                      <CircularProgress />
-                    </Box>
-                  ) : contentPillars.length > 0 ? (
-                    <Grid container spacing={3}>
-                      <Grid item xs={12}>
-                        <Typography variant="h6" gutterBottom>
-                          Content Pillars Overview
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                          Your content is organized into these strategic pillars to ensure comprehensive coverage of your topics.
-                        </Typography>
-                      </Grid>
-
-                      {contentPillars.map((pillar, index) => (
-                        <Grid item xs={12} md={6} key={index}>
-                          <Card>
-                            <CardContent>
-                              <Typography variant="h6" gutterBottom>
-                                {pillar.name}
-                              </Typography>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                                <Typography variant="body2" color="text.secondary">
-                                  Content Count
-                                </Typography>
-                                <Typography variant="h6">
-                                  {pillar.content_count}
-                                </Typography>
-                              </Box>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                                <Typography variant="body2" color="text.secondary">
-                                  Avg. Engagement
-                                </Typography>
-                                <Typography variant="h6">
-                                  {pillar.avg_engagement}%
-                                </Typography>
-                              </Box>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <Typography variant="body2" color="text.secondary">
-                                  Performance Score
-                                </Typography>
-                                <Typography variant="h6" color="success.main">
-                                  {pillar.performance_score}/100
-                                </Typography>
-                              </Box>
-                            </CardContent>
-                            <CardActions>
-                              <Button size="small">View Content</Button>
-                              <Button size="small">Optimize</Button>
-                            </CardActions>
-                          </Card>
-                        </Grid>
-                      ))}
-                    </Grid>
-                  ) : (
-                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', p: 3 }}>
-                      No content pillars data available
-                    </Typography>
-                  )}
-                </TabPanel>
-              </Paper>
-            </Grid>
-          </Grid>
+          <ContentStrategyBuilder />
         </TabPanel>
 
         {/* Strategic Intelligence Tab */}
-        <TabPanel value={tabValue} index={2}>
-          {/* Content moved to Legacy Strategy Builder */}
+        <TabPanel value={tabValue} index={1}>
+          {dataLoading.strategicIntelligence ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+              <CircularProgress />
+            </Box>
+          ) : strategicIntelligence && strategicIntelligence.market_positioning ? (
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Market Positioning
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <CircularProgress
+                        variant="determinate"
+                        value={strategicIntelligence.market_positioning.score || 0}
+                        size={60}
+                        color="primary"
+                      />
+                      <Typography variant="h4" sx={{ ml: 2 }}>
+                        {strategicIntelligence.market_positioning.score || 0}/100
+                      </Typography>
+                    </Box>
+                    
+                    <Typography variant="subtitle2" gutterBottom>
+                      Strengths:
+                    </Typography>
+                    <List dense>
+                      {(strategicIntelligence.market_positioning.strengths || []).map((strength: string, index: number) => (
+                        <ListItem key={index}>
+                          <ListItemIcon>
+                            <CheckCircleIcon color="success" />
+                          </ListItemIcon>
+                          <ListItemText primary={strength} />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Competitive Advantages
+                    </Typography>
+                    {(strategicIntelligence.competitive_advantages || []).map((advantage: any, index: number) => (
+                      <Box key={index} sx={{ mb: 2 }}>
+                        <Typography variant="subtitle1">
+                          {advantage.advantage}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                          <Chip 
+                            label={advantage.impact} 
+                            color={advantage.impact === 'High' ? 'success' : 'primary'}
+                            size="small"
+                          />
+                          <Chip 
+                            label={advantage.implementation} 
+                            variant="outlined"
+                            size="small"
+                          />
+                        </Box>
+                      </Box>
+                    ))}
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Strategic Risks
+                    </Typography>
+                    {(strategicIntelligence.strategic_risks || []).map((risk: any, index: number) => (
+                      <Box key={index} sx={{ mb: 2 }}>
+                        <Typography variant="subtitle1">
+                          {risk.risk}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                          <Chip 
+                            label={`Probability: ${risk.probability}`} 
+                            color={risk.probability === 'High' ? 'error' : 'warning'}
+                            size="small"
+                          />
+                          <Chip 
+                            label={`Impact: ${risk.impact}`} 
+                            color={risk.impact === 'High' ? 'error' : 'warning'}
+                            size="small"
+                          />
+                        </Box>
+                      </Box>
+                    ))}
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', p: 3 }}>
+              No strategic intelligence data available
+            </Typography>
+          )}
         </TabPanel>
 
         {/* Keyword Research Tab */}
-        <TabPanel value={tabValue} index={3}>
-          {/* Content moved to Legacy Strategy Builder */}
+        <TabPanel value={tabValue} index={2}>
+          {dataLoading.keywordResearch ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+              <CircularProgress />
+            </Box>
+          ) : keywordResearch && keywordResearch.trend_analysis ? (
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      High Volume Keywords
+                    </Typography>
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Keyword</TableCell>
+                            <TableCell>Volume</TableCell>
+                            <TableCell>Difficulty</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {(keywordResearch.trend_analysis.high_volume_keywords || []).map((keyword: any, index: number) => (
+                            <TableRow key={index}>
+                              <TableCell>{keyword.keyword}</TableCell>
+                              <TableCell>{keyword.volume}</TableCell>
+                              <TableCell>
+                                <Chip 
+                                  label={keyword.difficulty} 
+                                  color={keyword.difficulty === 'Low' ? 'success' : keyword.difficulty === 'Medium' ? 'warning' : 'error'}
+                                  size="small"
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Trending Keywords
+                    </Typography>
+                    {(keywordResearch.trend_analysis.trending_keywords || []).map((keyword: any, index: number) => (
+                      <Box key={index} sx={{ mb: 2 }}>
+                        <Typography variant="subtitle1">
+                          {keyword.keyword}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Chip 
+                            label={keyword.growth} 
+                            color="success"
+                            size="small"
+                          />
+                          <Chip 
+                            label={keyword.opportunity} 
+                            color={keyword.opportunity === 'High' ? 'success' : 'primary'}
+                            size="small"
+                          />
+                        </Box>
+                      </Box>
+                    ))}
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Keyword Opportunities
+                    </Typography>
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Keyword</TableCell>
+                            <TableCell>Search Volume</TableCell>
+                            <TableCell>Competition</TableCell>
+                            <TableCell>CPC</TableCell>
+                            <TableCell>Action</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {(keywordResearch.opportunities || []).map((opportunity: any, index: number) => (
+                            <TableRow key={index}>
+                              <TableCell>{opportunity.keyword}</TableCell>
+                              <TableCell>{opportunity.search_volume}</TableCell>
+                              <TableCell>
+                                <Chip 
+                                  label={opportunity.competition} 
+                                  color={opportunity.competition === 'Low' ? 'success' : opportunity.competition === 'Medium' ? 'warning' : 'error'}
+                                  size="small"
+                                />
+                              </TableCell>
+                              <TableCell>${opportunity.cpc}</TableCell>
+                              <TableCell>
+                                <Button size="small" variant="outlined">
+                                  Add to Strategy
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', p: 3 }}>
+              No keyword research data available
+            </Typography>
+          )}
         </TabPanel>
 
         {/* Performance Analytics Tab */}
-        <TabPanel value={tabValue} index={4}>
-          {/* Content moved to Legacy Strategy Builder */}
+        <TabPanel value={tabValue} index={3}>
+          {performanceMetrics ? (
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Content Performance by Type
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      No content performance data available
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Growth Trends
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      No trend data available
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', p: 3 }}>
+              No performance analytics data available
+            </Typography>
+          )}
         </TabPanel>
 
         {/* Content Pillars Tab */}
-        <TabPanel value={tabValue} index={5}>
-          {/* Content moved to Legacy Strategy Builder */}
+        <TabPanel value={tabValue} index={4}>
+          {dataLoading.pillars ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+              <CircularProgress />
+            </Box>
+          ) : contentPillars.length > 0 ? (
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>
+                  Content Pillars Overview
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Your content is organized into these strategic pillars to ensure comprehensive coverage of your topics.
+                </Typography>
+              </Grid>
+
+              {contentPillars.map((pillar, index) => (
+                <Grid item xs={12} md={6} key={index}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        {pillar.name}
+                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Content Count
+                        </Typography>
+                        <Typography variant="h6">
+                          {pillar.content_count}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Avg. Engagement
+                        </Typography>
+                        <Typography variant="h6">
+                          {pillar.avg_engagement}%
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Performance Score
+                        </Typography>
+                        <Typography variant="h6" color="success.main">
+                          {pillar.performance_score}/100
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                    <CardActions>
+                      <Button size="small">View Content</Button>
+                      <Button size="small">Optimize</Button>
+                    </CardActions>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', p: 3 }}>
+              No content pillars data available
+            </Typography>
+          )}
         </TabPanel>
       </Paper>
     </Box>

@@ -918,11 +918,33 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
     const requiredFields = STRATEGIC_INPUT_FIELDS.filter(field => field.required);
     const filledRequiredFields = requiredFields.filter(field => {
       const value = formData[field.id];
-      const isValid = value && 
-        (typeof value === 'string' ? value.trim() !== '' : true) &&
-        (!Array.isArray(value) || value.length > 0);
       
-      console.log(`📊 Field ${field.id}: ${isValid ? '✅' : '❌'} (${value})`);
+      // Enhanced validation logic for different field types
+      let isValid = false;
+      
+      if (value) {
+        if (field.type === 'multiselect') {
+          // For multiselect, check if it's an array with at least one item
+          isValid = Array.isArray(value) && value.length > 0;
+        } else if (field.type === 'select') {
+          // For select, check if it's a non-empty string
+          isValid = typeof value === 'string' && value.trim() !== '';
+        } else if (typeof value === 'string') {
+          // For text fields, check if it's not empty
+          isValid = value.trim() !== '';
+        } else if (typeof value === 'number') {
+          // For number fields, check if it's not null/undefined
+          isValid = value !== null && value !== undefined;
+        } else if (Array.isArray(value)) {
+          // For arrays (json fields), check if it has items
+          isValid = value.length > 0;
+        } else {
+          // For other types, just check if it exists
+          isValid = true;
+        }
+      }
+      
+      console.log(`📊 Field ${field.id}: ${isValid ? '✅' : '❌'} (${value}) [Type: ${field.type}]`);
       return isValid;
     });
     
@@ -940,19 +962,57 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
     
     categories.forEach(category => {
       const categoryFields = STRATEGIC_INPUT_FIELDS.filter(field => field.category === category);
-      const filledFields = categoryFields.filter(field => 
-        formData[field.id] && 
-        (typeof formData[field.id] === 'string' ? formData[field.id].trim() !== '' : true)
-      );
+      const filledFields = categoryFields.filter(field => {
+        const value = formData[field.id];
+        
+        if (!value) return false;
+        
+        // Enhanced validation logic for different field types
+        if (field.type === 'multiselect') {
+          // For multiselect, check if it's an array with at least one item
+          return Array.isArray(value) && value.length > 0;
+        } else if (field.type === 'select') {
+          // For select, check if it's a non-empty string
+          return typeof value === 'string' && value.trim() !== '';
+        } else if (typeof value === 'string') {
+          // For text fields, check if it's not empty
+          return value.trim() !== '';
+        } else if (typeof value === 'number') {
+          // For number fields, check if it's not null/undefined
+          return value !== null && value !== undefined;
+        } else if (Array.isArray(value)) {
+          // For arrays (json fields), check if it has items
+          return value.length > 0;
+        } else {
+          // For other types, just check if it exists
+          return true;
+        }
+      });
       
       category_completion[category] = (filledFields.length / categoryFields.length) * 100;
     });
     
     const total_fields = STRATEGIC_INPUT_FIELDS.length;
-    const filled_fields = STRATEGIC_INPUT_FIELDS.filter(field => 
-      formData[field.id] && 
-      (typeof formData[field.id] === 'string' ? formData[field.id].trim() !== '' : true)
-    ).length;
+    const filled_fields = STRATEGIC_INPUT_FIELDS.filter(field => {
+      const value = formData[field.id];
+      
+      if (!value) return false;
+      
+      // Enhanced validation logic for different field types
+      if (field.type === 'multiselect') {
+        return Array.isArray(value) && value.length > 0;
+      } else if (field.type === 'select') {
+        return typeof value === 'string' && value.trim() !== '';
+      } else if (typeof value === 'string') {
+        return value.trim() !== '';
+      } else if (typeof value === 'number') {
+        return value !== null && value !== undefined;
+      } else if (Array.isArray(value)) {
+        return value.length > 0;
+      } else {
+        return true;
+      }
+    }).length;
     
     return {
       total_fields,

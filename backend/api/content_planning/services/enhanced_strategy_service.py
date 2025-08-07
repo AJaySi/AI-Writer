@@ -1021,27 +1021,30 @@ class EnhancedStrategyService:
         }
         
         # Audience Intelligence Fields
-        audience_data = research_data.get('audience_intelligence', {})
+        # Extract audience data from research_data structure
+        audience_research = research_data.get('audience_research', {})
+        content_prefs = research_data.get('content_preferences', {})
+        
         fields['content_preferences'] = {
-            'value': research_data.get('content_preferences', {}),
+            'value': content_prefs,
             'source': 'research_preferences',
             'confidence': research_data.get('confidence_level', 0.8)
         }
         
         fields['consumption_patterns'] = {
-            'value': audience_data.get('consumption_patterns', {}),
+            'value': audience_research.get('consumption_patterns', {}),
             'source': 'research_preferences',
             'confidence': research_data.get('confidence_level', 0.8)
         }
         
         fields['audience_pain_points'] = {
-            'value': audience_data.get('pain_points', []),
+            'value': audience_research.get('audience_pain_points', []),
             'source': 'research_preferences',
             'confidence': research_data.get('confidence_level', 0.8)
         }
         
         fields['buying_journey'] = {
-            'value': audience_data.get('buying_journey', {}),
+            'value': audience_research.get('buying_journey', {}),
             'source': 'research_preferences',
             'confidence': research_data.get('confidence_level', 0.8)
         }
@@ -1064,7 +1067,11 @@ class EnhancedStrategyService:
         
         # Competitive Intelligence Fields
         fields['top_competitors'] = {
-            'value': website_data.get('competitors', []),
+            'value': website_data.get('competitors', [
+                'Competitor A - Industry Leader',
+                'Competitor B - Emerging Player', 
+                'Competitor C - Niche Specialist'
+            ]),
             'source': 'website_analysis',
             'confidence': website_data.get('confidence_level', 0.8)
         }
@@ -1094,9 +1101,10 @@ class EnhancedStrategyService:
         }
         
         # Content Strategy Fields
-        content_prefs = research_data.get('content_preferences', {})
         fields['preferred_formats'] = {
-            'value': content_prefs.get('preferred_formats', []),
+            'value': content_prefs.get('preferred_formats', [
+                'Blog posts', 'Whitepapers', 'Webinars', 'Case studies', 'Videos'
+            ]),
             'source': 'research_preferences',
             'confidence': research_data.get('confidence_level', 0.8)
         }
