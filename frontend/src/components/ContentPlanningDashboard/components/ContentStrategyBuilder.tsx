@@ -78,6 +78,7 @@ const ContentStrategyBuilder: React.FC = () => {
     formErrors,
     autoPopulatedFields,
     dataSources,
+    inputDataPoints, // Add inputDataPoints from store
     loading,
     error,
     saving,
@@ -369,7 +370,7 @@ const ContentStrategyBuilder: React.FC = () => {
       <Grid container spacing={3}>
         {/* Category Overview Panel */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 3, height: 'fit-content', position: 'sticky', top: 20 }}>
+          <Paper sx={{ p: 3, height: 'fit-content', position: 'sticky', top: 20, background: 'linear-gradient(180deg, #f7f9fc, #eef3fb)' }}>
             {/* Enhanced Completion Tracker - Integrated into Category List */}
             <ProgressTracker
               reviewProgressPercentage={reviewProgressPercentage}
@@ -439,7 +440,7 @@ const ContentStrategyBuilder: React.FC = () => {
 
         {/* Main Content Area */}
         <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 3, minHeight: '600px' }}>
+          <Paper sx={{ p: 3, minHeight: '600px', background: 'linear-gradient(180deg, #faf7ff, #f1f0ff)' }}>
             {activeCategory ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -515,38 +516,46 @@ const ContentStrategyBuilder: React.FC = () => {
                 </Dialog>
 
                 {/* Category Fields */}
-                <Grid container spacing={1.5}>
-                  {STRATEGIC_INPUT_FIELDS
-                    .filter(field => field.category === activeCategory)
-                    .map((field) => {
-                      // Group number-based fields together
-                      const isNumberField = field.type === 'number' || 
-                        field.id.includes('budget') || 
-                        field.id.includes('size') || 
-                        field.id.includes('timeline') ||
-                        field.id.includes('metrics');
-                      
-                      // Determine grid size based on field type
-                      const gridSize = isNumberField ? 6 : 12;
-                      
-                      return (
-                        <Grid item xs={12} md={gridSize} key={field.id}>
-                          <StrategicInputField
-                            fieldId={field.id}
-                            value={formData[field.id]}
-                            error={formErrors[field.id]}
-                            autoPopulated={!!autoPopulatedFields[field.id]}
-                            dataSource={dataSources[field.id]}
-                            confidenceLevel={autoPopulatedFields[field.id] ? 0.8 : undefined}
-                            dataQuality={autoPopulatedFields[field.id] ? 'High Quality' : undefined}
-                            onChange={(value: any) => updateFormField(field.id, value)}
-                            onValidate={() => validateFormField(field.id)}
-                            onShowTooltip={() => setShowTooltip(field.id)}
-                          />
-                        </Grid>
-                      );
-                    })}
-                </Grid>
+                <Box sx={{ mt: 1 }}>
+                  <Grid container spacing={2}>
+                    {STRATEGIC_INPUT_FIELDS
+                      .filter(field => field.category === activeCategory)
+                      .map((field, index) => {
+                        // Determine grid size based on field type for better layout organization
+                        const type = field.type;
+                        const isWideField = type === 'json';
+                        const isMediumField = type === 'multiselect' || type === 'select' || type === 'text';
+                        const isCompactField = type === 'number' || type === 'boolean';
+                        const forceFullWidth = field.id === 'content_budget' || field.id === 'team_size';
+
+                        const gridMd = forceFullWidth ? 12 : (isWideField ? 12 : isMediumField ? 6 : 4);
+                        const gridLg = forceFullWidth ? 12 : (isWideField ? 12 : isMediumField ? 6 : 4);
+                        const gridSm = 12;
+
+                        return (
+                          <Grid item xs={12} sm={gridSm} md={gridMd} lg={gridLg} key={field.id}>
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
+                              <StrategicInputField
+                                fieldId={field.id}
+                                value={formData[field.id]}
+                                error={formErrors[field.id]}
+                                autoPopulated={!!autoPopulatedFields[field.id]}
+                                dataSource={dataSources[field.id]}
+                                confidenceLevel={autoPopulatedFields[field.id] ? 0.8 : undefined}
+                                dataQuality={autoPopulatedFields[field.id] ? 'High Quality' : undefined}
+                                onChange={(value: any) => updateFormField(field.id, value)}
+                                onValidate={() => validateFormField(field.id)}
+                                onShowTooltip={() => setShowTooltip(field.id)}
+                                onViewDataSource={() => setShowDataSourceTransparency(true)}
+                                accentColorKey={getCategoryColor(activeCategory) as any}
+                                isCompact={isCompactField}
+                              />
+                            </motion.div>
+                          </Grid>
+                        );
+                      })}
+                  </Grid>
+                </Box>
 
                 {/* Category Actions */}
                 <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
@@ -681,6 +690,7 @@ const ContentStrategyBuilder: React.FC = () => {
           <DataSourceTransparency 
             autoPopulatedFields={autoPopulatedFields}
             dataSources={dataSources}
+            inputDataPoints={inputDataPoints} // Use real input data points from store
           />
         </DialogContent>
         <DialogActions>

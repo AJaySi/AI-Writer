@@ -26,7 +26,7 @@ export const getCategoryColor = (categoryId: string): string => {
     case 'competitive_intelligence': return 'success';
     case 'content_strategy': return 'warning';
     case 'performance_analytics': return 'info';
-    default: return 'default';
+    default: return 'primary';
   }
 };
 

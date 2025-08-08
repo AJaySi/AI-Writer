@@ -1,0 +1,24 @@
+/* Subtle, modern styles for strategy input cards */
+
+:root {
+  --csb-card-radius: 12px;
+  --csb-card-border: 1px;
+  --csb-card-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+.csb-card {
+  border-radius: var(--csb-card-radius);
+  border: var(--csb-card-border) solid rgba(148, 163, 184, 0.25);
+  background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(249,250,251,0.9) 100%);
+  box-shadow: var(--csb-card-shadow);
+  transition: box-shadow .2s ease, border-color .2s ease, transform .15s ease;
+}
+
+.csb-card:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  border-color: rgba(59,130,246,0.35);
+}
+
+.csb-section {
+  padding: 8px 12px;
+} 

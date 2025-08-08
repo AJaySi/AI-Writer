@@ -158,6 +158,7 @@ interface EnhancedStrategyStore {
   formErrors: Record<string, string>;
   autoPopulatedFields: Record<string, any>;
   dataSources: Record<string, string>;
+  inputDataPoints: Record<string, any>; // Detailed input data points from backend
   
   // UI State
   loading: boolean;
@@ -600,6 +601,7 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
   formErrors: {},
   autoPopulatedFields: {},
   dataSources: {},
+  inputDataPoints: {}, // Initialize inputDataPoints
   
   // UI State
   loading: false,
@@ -719,6 +721,7 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
       formErrors: {},
       autoPopulatedFields: {},
       dataSources: {},
+      inputDataPoints: {}, // Reset inputDataPoints
       currentStep: 0,
       completedSteps: []
     });
@@ -768,9 +771,11 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
       // Extract field values and sources from the new backend format
       const fields = response.data?.fields || {};
       const sources = response.data?.sources || {};
+      const inputDataPoints = response.data?.input_data_points || {};
       
       console.log('📋 Extracted fields:', fields);
       console.log('🔗 Data sources:', sources);
+      console.log('📝 Input data points:', inputDataPoints);
       
       // Transform the fields object to extract values for formData
       const fieldValues: Record<string, any> = {};
@@ -795,6 +800,7 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
       set((state) => ({
         autoPopulatedFields,
         dataSources: sources,
+        inputDataPoints, // Store the detailed input data points
         formData: { ...state.formData, ...fieldValues }
       }));
       

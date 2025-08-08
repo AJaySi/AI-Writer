@@ -14,7 +14,8 @@ import {
   Typography,
   Alert,
   Autocomplete,
-  InputAdornment
+  InputAdornment,
+  Button
 } from '@mui/material';
 import {
   Help as HelpIcon,
@@ -37,6 +38,9 @@ interface StrategicInputFieldProps {
   onChange: (value: any) => void;
   onValidate: () => boolean;
   onShowTooltip: () => void;
+  onViewDataSource?: () => void; // Add callback for viewing data source
+  accentColorKey?: 'primary' | 'secondary' | 'success' | 'warning' | 'info' | 'error';
+  isCompact?: boolean;
 }
 
 // Define proper types for field configurations
@@ -78,10 +82,15 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
   dataQuality,
   onChange,
   onValidate,
-  onShowTooltip
+  onShowTooltip,
+  onViewDataSource,
+  accentColorKey = 'primary',
+  isCompact = false
 }) => {
   const { getTooltipData } = useEnhancedStrategyStore();
   const [isEditing, setIsEditing] = useState(false);
+
+  const getAccent = (theme: any) => (theme?.palette?.[accentColorKey] ?? theme?.palette?.primary);
   
   // Get field configuration from store with proper null checking
   const tooltipData = getTooltipData(fieldId);
@@ -484,16 +493,17 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
   return (
     <Box sx={{ 
       position: 'relative',
-      mb: 1.5,
-      p: 1.5,
-      borderRadius: 1.5,
-      bgcolor: 'background.paper',
+      mb: isCompact ? 1.25 : 2,
+      p: isCompact ? 1 : 1.5,
+      borderRadius: 2,
+      bgcolor: 'rgba(255,255,255,0.9)',
       border: '1px solid',
-      borderColor: error ? 'error.main' : autoPopulated ? 'info.main' : 'divider',
+      borderColor: error ? 'error.main' : 'rgba(148, 163, 184, 0.35)',
+      boxShadow: '0 6px 18px rgba(0,0,0,0.06)',
+      transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
       '&:hover': {
-        borderColor: 'primary.main',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        transition: 'all 0.2s ease'
+        borderColor: (theme) => getAccent(theme).main,
+        boxShadow: (theme) => `0 10px 24px rgba(0,0,0,0.08), 0 0 0 2px ${getAccent(theme).main}22`
       }
     }}>
       {/* Field input - Enhanced styling */}
@@ -501,19 +511,28 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
         '& .MuiTextField-root, & .MuiFormControl-root': {
           '& .MuiInputBase-root': {
             borderRadius: 1,
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: (theme) => getAccent(theme).main,
+              boxShadow: (theme) => `0 0 0 2px ${getAccent(theme).main}22`
+            },
             '&:hover': {
               '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'primary.main'
+                borderColor: (theme) => getAccent(theme).main
               }
             }
           },
           '& .MuiInputLabel-root': {
-            fontSize: '0.8rem',
-            fontWeight: 500
+            fontSize: '0.9rem',
+            fontWeight: 600,
+            letterSpacing: '0.15px',
+            color: (theme) => theme.palette.text.primary,
+            '&.Mui-focused': {
+              color: (theme) => getAccent(theme).main
+            }
           },
           '& .MuiInputBase-input': {
-            fontSize: '0.85rem',
-            padding: '8px 12px'
+            fontSize: '0.92rem',
+            padding: isCompact ? '7px 10px' : '8px 12px'
           }
         }
       }}>
@@ -534,7 +553,7 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
           {/* Validation status */}
           {value && !error && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <CheckCircleIcon color="success" sx={{ fontSize: 14 }} />
+              <CheckCircleIcon sx={{ fontSize: 14, color: (theme) => getAccent(theme).main }} />
               <Typography variant="caption" color="success.main" sx={{ fontSize: '0.7rem' }}>
                 Valid
               </Typography>
@@ -548,7 +567,7 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
               label={dataQuality}
               size="small"
               variant="outlined"
-              color="primary"
+              color={accentColorKey as any}
               sx={{ 
                 fontSize: '0.6rem',
                 height: 20,
@@ -557,8 +576,8 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
             />
           )}
 
-          {/* Confidence Level indicator */}
-          {confidenceLevel && (
+          {/* Confidence Level indicator - REMOVED (Area 1) */}
+          {/* {confidenceLevel && (
             <Chip
               label={`${Math.round(confidenceLevel * 100)}% confidence`}
               size="small"
@@ -570,11 +589,11 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
                 '& .MuiChip-label': { px: 1 }
               }}
             />
-          )}
+          )} */}
         </Box>
 
-        {/* Right side - Auto-population indicator */}
-        {autoPopulated && (
+        {/* Right side - Auto-population indicator - REMOVED (Area 2) */}
+        {/* {autoPopulated && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Chip
               icon={<AutoAwesomeIcon sx={{ fontSize: 12 }} />}
@@ -594,6 +613,58 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
                   <EditIcon sx={{ fontSize: 12 }} />
                 </IconButton>
               </Tooltip>
+            )}
+          </Box>
+        )} */}
+
+        {/* Enhanced Data Source Information */}
+        {autoPopulated && dataSource && (
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 0.5,
+            mt: 0.5,
+            p: 0.5,
+            bgcolor: (theme) => `${getAccent(theme).main}0D`,
+            borderRadius: 1,
+            border: (theme) => `1px solid ${getAccent(theme).main}33`
+          }}>
+            <InfoIcon sx={{ fontSize: 12, color: (theme) => getAccent(theme).main }} />
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6rem' }}>
+              Data from: {dataSource.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </Typography>
+            {confidenceLevel && (
+              <Chip
+                label={`${Math.round(confidenceLevel * 100)}% confidence`}
+                size="small"
+                variant="outlined"
+                color={confidenceLevel > 0.8 ? 'success' : confidenceLevel > 0.6 ? 'warning' : 'error'}
+                sx={{ 
+                  fontSize: '0.5rem',
+                  height: 16,
+                  '& .MuiChip-label': { px: 0.5 }
+                }}
+              />
+            )}
+            {onViewDataSource && (
+              <Button
+                size="small"
+                variant="text"
+                onClick={onViewDataSource}
+                sx={{ 
+                  fontSize: '0.6rem',
+                  minWidth: 'auto',
+                  px: 1,
+                  py: 0.25,
+                  color: (theme) => getAccent(theme).main,
+                  textTransform: 'none',
+                  '&:hover': {
+                    bgcolor: (theme) => `${getAccent(theme).main}1A`
+                  }
+                }}
+              >
+                View details
+              </Button>
             )}
           </Box>
         )}

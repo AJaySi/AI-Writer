@@ -73,8 +73,8 @@ const CategoryList: React.FC<CategoryListProps> = ({
           >
             <ListItem 
               sx={{ 
-                p: 1.5, // 50% more compact padding
-                mb: 0.5, // Reduced margin
+                p: 1.25,
+                mb: 0.4,
                 borderRadius: 2,
                 bgcolor: isSelected ? 'action.hover' : isNextInSequenceCategory ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
                 border: isSelected ? '2px solid' : isNextInSequenceCategory ? '1px solid' : '1px solid',
@@ -106,7 +106,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
               }}
             >
               {/* Category Header - Compact */}
-              <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 0.5, position: 'relative', zIndex: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 0.4, position: 'relative', zIndex: 1 }}>
                 <ListItemIcon sx={{ minWidth: 32 }}>
                   {getCategoryIcon(categoryId)}
                 </ListItemIcon>
@@ -120,8 +120,8 @@ const CategoryList: React.FC<CategoryListProps> = ({
                           size="small"
                           color="primary"
                           sx={{ 
-                            height: 16,
-                            fontSize: '0.6rem',
+                            height: 15,
+                            fontSize: '0.58rem',
                             '& .MuiChip-label': { px: 0.5 }
                           }}
                         />
@@ -131,8 +131,8 @@ const CategoryList: React.FC<CategoryListProps> = ({
                   secondary={`${Math.round(percentageValue)}% complete`}
                   sx={{ 
                     flex: 1,
-                    '& .MuiListItemText-primary': { fontSize: '0.9rem', fontWeight: 500 },
-                    '& .MuiListItemText-secondary': { fontSize: '0.7rem' }
+                    '& .MuiListItemText-primary': { fontSize: '0.88rem', fontWeight: 500 },
+                    '& .MuiListItemText-secondary': { fontSize: '0.68rem' }
                   }}
                 />
                 <Chip 
