@@ -13,7 +13,13 @@ from enum import Enum
 
 # Import AI providers
 from llm_providers.main_text_generation import llm_text_gen
-from llm_providers.gemini_provider import gemini_structured_json_response
+# Prefer the extended gemini provider if available; fallback to base
+try:
+    from services.llm_providers.gemini_provider import gemini_structured_json_response as _gemini_fn
+    _GEMINI_EXTENDED = True
+except Exception:
+    from llm_providers.gemini_provider import gemini_structured_json_response as _gemini_fn
+    _GEMINI_EXTENDED = False
 
 class AIServiceType(Enum):
     """AI service types for monitoring."""
@@ -54,14 +60,16 @@ class AIServiceManager:
     def _load_ai_configuration(self) -> Dict[str, Any]:
         """Load AI configuration settings."""
         return {
-            'max_retries': 3,
-            'timeout_seconds': 30,
-            'temperature': 0.7,
-            'max_tokens': 2048,
+            'max_retries': 2,  # Reduced from 3
+            'timeout_seconds': 45,  # increased from 15 to accommodate structured 30+ fields
+            'temperature': 0.3,  # more deterministic for schema-constrained JSON
+            'top_p': 0.9,
+            'top_k': 40,
+            'max_tokens': 2048,  # increased from 1024 for larger structured outputs
             'enable_caching': True,
             'cache_duration_minutes': 60,
             'performance_monitoring': True,
-            'fallback_enabled': True
+            'fallback_enabled': False  # Disabled fallback to prevent false positives
         } 
     
     def _load_centralized_prompts(self) -> Dict[str, str]:
@@ -448,46 +456,119 @@ Format as structured JSON with detailed assessment and optimization guidance.
         
         try:
             logger.info(f"🤖 Executing AI call for {service_type.value}")
+            logger.debug(f"Using gemini provider extended={_GEMINI_EXTENDED}")
             
-            # Execute AI call with timeout
+            # Execute AI call with timeout (run sync provider in a thread)
             response = await asyncio.wait_for(
-                gemini_structured_json_response(
-                    prompt=prompt,
-                    schema=schema,
-                    temperature=self.config['temperature'],
-                    max_tokens=self.config['max_tokens']
+                asyncio.to_thread(
+                    self._call_gemini_structured,
+                    prompt,
+                    schema,
                 ),
                 timeout=self.config['timeout_seconds']
             )
             
             # Parse response
-            result = json.loads(response)
+            if isinstance(response, dict):
+                result = response
+            elif isinstance(response, str):
+                try:
+                    result = json.loads(response)
+                except json.JSONDecodeError:
+                    # Return raw string if not valid JSON
+                    result = {"raw_response": response}
+            else:
+                # Fallback to string conversion
+                result = {"raw_response": str(response)}
+ 
+            # Treat provider-reported errors or empty results as failures
+            if isinstance(result, dict) and ('error' in result or not result):
+                error_message = result.get('error', 'Empty AI response') if isinstance(result, dict) else 'Empty AI response'
+                # record metrics and raise
+                response_time = (datetime.utcnow() - start_time).total_seconds()
+                metrics = AIServiceMetrics(
+                    service_type=service_type,
+                    response_time=response_time,
+                    success=False,
+                    error_message=error_message
+                )
+                self.metrics.append(metrics)
+                raise Exception(error_message)
+
             success = True
             logger.info(f"✅ AI call for {service_type.value} completed successfully")
             
         except asyncio.TimeoutError:
             error_message = f"AI call timeout for {service_type.value}"
             logger.error(error_message)
+            # record metrics and raise
+            response_time = (datetime.utcnow() - start_time).total_seconds()
+            metrics = AIServiceMetrics(
+                service_type=service_type,
+                response_time=response_time,
+                success=False,
+                error_message=error_message
+            )
+            self.metrics.append(metrics)
+            raise Exception(error_message)
         except json.JSONDecodeError as e:
             error_message = f"JSON decode error for {service_type.value}: {str(e)}"
             logger.error(error_message)
+            response_time = (datetime.utcnow() - start_time).total_seconds()
+            metrics = AIServiceMetrics(
+                service_type=service_type,
+                response_time=response_time,
+                success=False,
+                error_message=error_message
+            )
+            self.metrics.append(metrics)
+            raise Exception(error_message)
         except Exception as e:
             error_message = f"AI call error for {service_type.value}: {str(e)}"
             logger.error(error_message)
+            response_time = (datetime.utcnow() - start_time).total_seconds()
+            metrics = AIServiceMetrics(
+                service_type=service_type,
+                response_time=response_time,
+                success=False,
+                error_message=error_message
+            )
+            self.metrics.append(metrics)
+            raise
         
-        # Calculate response time
+        # Calculate response time and record metrics for successful calls
         response_time = (datetime.utcnow() - start_time).total_seconds()
-        
-        # Record metrics
         metrics = AIServiceMetrics(
             service_type=service_type,
             response_time=response_time,
             success=success,
-            error_message=error_message
+            error_message=None
         )
         self.metrics.append(metrics)
-        
         return result
+    
+    def _call_gemini_structured(self, prompt: str, schema: Dict[str, Any]):
+        """Call gemini structured JSON with flexible signature support.
+        Tries extended signature first; falls back to minimal signature to avoid TypeError.
+        """
+        try:
+            # Attempt extended signature (temperature/top_p/top_k/max_tokens/system_prompt)
+            return _gemini_fn(
+                prompt,
+                schema,
+                self.config['temperature'],
+                self.config['top_p'],
+                self.config.get('top_k', 40),
+                self.config['max_tokens'],
+                None
+            )
+        except TypeError:
+            logger.debug("Falling back to base gemini provider signature (prompt, schema)")
+            return _gemini_fn(prompt, schema)
+
+    async def execute_structured_json_call(self, service_type: AIServiceType, prompt: str, schema: Dict[str, Any]) -> Dict[str, Any]:
+        """Public wrapper to execute a structured JSON AI call with a provided schema."""
+        return await self._execute_ai_call(service_type, prompt, schema)
     
     async def generate_content_gap_analysis(self, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -520,11 +601,11 @@ Format as structured JSON with detailed assessment and optimization guidance.
                 self.schemas['content_gap_analysis']
             )
             
-            return result if result else self._get_fallback_content_gap_analysis()
+            return result if result else {}
             
         except Exception as e:
             logger.error(f"Error in content gap analysis: {str(e)}")
-            return self._get_fallback_content_gap_analysis()
+            raise Exception(f"Failed to generate content gap analysis: {str(e)}")
     
     async def generate_market_position_analysis(self, market_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -553,11 +634,11 @@ Format as structured JSON with detailed assessment and optimization guidance.
                 self.schemas['market_position_analysis']
             )
             
-            return result if result else self._get_fallback_market_position_analysis()
+            return result if result else {}
             
         except Exception as e:
             logger.error(f"Error in market position analysis: {str(e)}")
-            return self._get_fallback_market_position_analysis()
+            raise Exception(f"Failed to generate market position analysis: {str(e)}")
     
     async def generate_keyword_analysis(self, keyword_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -586,11 +667,11 @@ Format as structured JSON with detailed assessment and optimization guidance.
                 self.schemas['keyword_analysis']
             )
             
-            return result if result else self._get_fallback_keyword_analysis()
+            return result if result else {}
             
         except Exception as e:
             logger.error(f"Error in keyword analysis: {str(e)}")
-            return self._get_fallback_keyword_analysis()
+            raise Exception(f"Failed to generate keyword analysis: {str(e)}")
     
     async def generate_performance_prediction(self, content_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -618,11 +699,11 @@ Format as structured JSON with detailed assessment and optimization guidance.
                 self.schemas['performance_prediction']
             )
             
-            return result if result else self._get_fallback_performance_prediction()
+            return result if result else {}
             
         except Exception as e:
             logger.error(f"Error in performance prediction: {str(e)}")
-            return self._get_fallback_performance_prediction()
+            raise Exception(f"Failed to generate performance prediction: {str(e)}")
     
     async def generate_strategic_intelligence(self, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -651,11 +732,11 @@ Format as structured JSON with detailed assessment and optimization guidance.
                 self.schemas['strategic_intelligence']
             )
             
-            return result if result else self._get_fallback_strategic_intelligence()
+            return result if result else {}
             
         except Exception as e:
             logger.error(f"Error in strategic intelligence: {str(e)}")
-            return self._get_fallback_strategic_intelligence()
+            raise Exception(f"Failed to generate strategic intelligence: {str(e)}")
     
     async def generate_content_quality_assessment(self, content_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -684,11 +765,11 @@ Format as structured JSON with detailed assessment and optimization guidance.
                 self.schemas['content_quality_assessment']
             )
             
-            return result if result else self._get_fallback_content_quality_assessment()
+            return result if result else {}
             
         except Exception as e:
             logger.error(f"Error in content quality assessment: {str(e)}")
-            return self._get_fallback_content_quality_assessment()
+            raise Exception(f"Failed to generate content quality assessment: {str(e)}")
     
     async def generate_content_schedule(self, prompt: str) -> Dict[str, Any]:
         """
@@ -732,109 +813,6 @@ Format as structured JSON with detailed assessment and optimization guidance.
         except Exception as e:
             logger.error(f"Error generating content schedule: {str(e)}")
             return {"schedule": []}
-    
-    # Fallback methods
-    def _get_fallback_content_gap_analysis(self) -> Dict[str, Any]:
-        """Fallback content gap analysis."""
-        return {
-            'strategic_insights': [
-                {
-                    'type': 'content_strategy',
-                    'insight': 'Focus on educational content to build authority',
-                    'confidence': 0.85,
-                    'priority': 'high',
-                    'estimated_impact': 'Authority building',
-                    'implementation_time': '3-6 months',
-                    'risk_level': 'low'
-                }
-            ],
-            'content_recommendations': [
-                {
-                    'type': 'content_creation',
-                    'recommendation': 'Create comprehensive guides for high-opportunity keywords',
-                    'priority': 'high',
-                    'estimated_traffic': '5K+ monthly',
-                    'implementation_time': '2-3 weeks',
-                    'roi_estimate': 'High ROI potential',
-                    'success_metrics': ['Traffic increase', 'Authority building', 'Lead generation']
-                }
-            ]
-        }
-    
-    def _get_fallback_market_position_analysis(self) -> Dict[str, Any]:
-        """Fallback market position analysis."""
-        return {
-            'market_leader': 'competitor1.com',
-            'content_leader': 'competitor2.com',
-            'quality_leader': 'competitor3.com',
-            'market_gaps': ['Video content', 'Interactive content', 'Expert interviews'],
-            'opportunities': ['Niche content development', 'Expert interviews', 'Industry reports'],
-            'competitive_advantages': ['Technical expertise', 'Comprehensive guides', 'Industry insights']
-        }
-    
-    def _get_fallback_keyword_analysis(self) -> Dict[str, Any]:
-        """Fallback keyword analysis."""
-        return {
-            'keyword_opportunities': [
-                {
-                    'keyword': 'industry best practices',
-                    'search_volume': 3000,
-                    'competition_level': 'low',
-                    'difficulty_score': 35,
-                    'trend': 'rising',
-                    'intent': 'informational',
-                    'opportunity_score': 85,
-                    'recommended_format': 'comprehensive_guide',
-                    'estimated_traffic': '2K+ monthly',
-                    'implementation_priority': 'high'
-                }
-            ]
-        }
-    
-    def _get_fallback_performance_prediction(self) -> Dict[str, Any]:
-        """Fallback performance prediction."""
-        return {
-            "traffic_predictions": {
-                "estimated_monthly_traffic": "10K+",
-                "traffic_growth_rate": "10%",
-                "peak_traffic_month": "June",
-                "confidence_level": "high"
-            },
-            "engagement_predictions": {
-                "estimated_time_on_page": "5 min",
-                "estimated_bounce_rate": "20%",
-                "estimated_social_shares": "100+",
-                "estimated_comments": "50+",
-                "confidence_level": "medium"
-            }
-        }
-    
-    def _get_fallback_strategic_intelligence(self) -> Dict[str, Any]:
-        """Fallback strategic intelligence."""
-        return {
-            "strategic_insights": [
-                {
-                    "type": "content_strategy",
-                    "insight": "Focus on educational content to build authority",
-                    "reasoning": "Educational content is highly shareable and can attract a targeted audience.",
-                    "priority": "high",
-                    "estimated_impact": "Authority building",
-                    "implementation_time": "3-6 months",
-                    "confidence_level": "high"
-                }
-            ]
-        }
-    
-    def _get_fallback_content_quality_assessment(self) -> Dict[str, Any]:
-        """Fallback content quality assessment."""
-        return {
-            "overall_score": 88.0,
-            "readability_score": 92.0,
-            "seo_score": 95.0,
-            "engagement_potential": "High engagement and retention",
-            "improvement_suggestions": ["Add more internal links", "Optimize images for SEO"],
-            "timestamp": datetime.utcnow().isoformat()
-        }
     
     def get_performance_metrics(self) -> Dict[str, Any]:
         """

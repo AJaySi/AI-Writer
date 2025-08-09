@@ -192,7 +192,7 @@ interface EnhancedStrategyStore {
   getPreviousStep: () => ProgressiveDisclosureStep | null;
   
   // Auto-population actions
-  autoPopulateFromOnboarding: () => Promise<void>;
+  autoPopulateFromOnboarding: (forceRefresh?: boolean) => Promise<void>;
   updateAutoPopulatedField: (fieldId: string, value: any, source: string) => void;
   overrideAutoPopulatedField: (fieldId: string, value: any) => void;
   
@@ -759,12 +759,21 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
   },
   
   // Auto-population actions
-  autoPopulateFromOnboarding: async () => {
+  autoPopulateFromOnboarding: async (forceRefresh: boolean = false) => {
     set({ loading: true });
     try {
       console.log('🔄 Starting auto-population from onboarding data...');
-      
-      // This would call the backend to get onboarding data and auto-populate fields
+      // Optionally clear backend caches to force fresh values
+      if (forceRefresh) {
+        try {
+          await contentPlanningApi.clearEnhancedCache(1);
+          console.log('♻️ Cleared enhanced strategy cache for fresh onboarding data');
+        } catch (e) {
+          console.warn('Cache clear failed (non-blocking):', e);
+        }
+      }
+
+      // Fetch onboarding data to auto-populate fields
       const response = await contentPlanningApi.getOnboardingData();
       console.log('📡 Backend response:', response);
       

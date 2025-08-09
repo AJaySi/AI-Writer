@@ -24,6 +24,8 @@ import asyncio
 import json
 import re
 
+from typing import Optional, Dict, Any
+
 # Configure standard logging
 import logging
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s-%(levelname)s-%(module)s-%(lineno)d]- %(message)s')
@@ -170,63 +172,107 @@ def gemini_pro_text_gen(prompt, temperature=0.7, top_p=0.9, top_k=40, max_tokens
         logger.error(f"Error in Gemini Pro text generation: {e}")
         return str(e)
 
+def _dict_to_types_schema(schema: Dict[str, Any]) -> types.Schema:
+    """Convert a lightweight dict schema to google.genai.types.Schema."""
+    if not isinstance(schema, dict):
+        raise ValueError("response_schema must be a dict compatible with types.Schema")
+
+    def _convert(node: Dict[str, Any]) -> types.Schema:
+        node_type = (node.get("type") or "OBJECT").upper()
+        if node_type == "OBJECT":
+            props = node.get("properties") or {}
+            props_types: Dict[str, types.Schema] = {}
+            for key, prop in props.items():
+                if isinstance(prop, dict):
+                    props_types[key] = _convert(prop)
+                else:
+                    props_types[key] = types.Schema(type=types.Type.STRING)
+            return types.Schema(type=types.Type.OBJECT, properties=props_types if props_types else None)
+        elif node_type == "ARRAY":
+            items_node = node.get("items")
+            if isinstance(items_node, dict):
+                item_schema = _convert(items_node)
+            else:
+                item_schema = types.Schema(type=types.Type.STRING)
+            return types.Schema(type=types.Type.ARRAY, items=item_schema)
+        elif node_type == "NUMBER":
+            return types.Schema(type=types.Type.NUMBER)
+        elif node_type == "BOOLEAN":
+            return types.Schema(type=types.Type.BOOLEAN)
+        else:
+            return types.Schema(type=types.Type.STRING)
+
+    return _convert(schema)
+
+@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
 def gemini_structured_json_response(prompt, schema, temperature=0.7, top_p=0.9, top_k=40, max_tokens=2048, system_prompt=None):
     """
     Generate structured JSON response using Google's Gemini Pro model.
-    
-    Args:
-        prompt (str): The input text to generate completion for
-        schema (dict): The JSON schema to follow for the response
-        temperature (float, optional): Controls randomness. Defaults to 0.7
-        top_p (float, optional): Controls diversity. Defaults to 0.9
-        top_k (int, optional): Controls vocabulary size. Defaults to 40
-        max_tokens (int, optional): Maximum number of tokens to generate. Defaults to 2048
-        system_prompt (str, optional): System instructions for the model
-        
-    Returns:
-        dict: The generated structured JSON response
     """
     try:
-        # Configure the model
         client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
-        
-        # Set up generation config
-        generation_config = {
-            "temperature": temperature,
-            "top_p": top_p,
-            "top_k": top_k,
-            "max_output_tokens": max_tokens,
-        }
-        
-        # Generate content with structured response
-        response = client.models.generate_content(
-            model='gemini-2.5-pro',
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-                max_output_tokens=max_tokens,
-                temperature=temperature,
-                top_p=top_p,
-                top_k=top_k,
-                response_mime_type='application/json',
-                response_schema=schema
-            ),
-        )
-        
-        # Parse the response
+
+        # Build config using official SDK schema type
         try:
-            # First try to get the parsed response
-            if hasattr(response, 'parsed'):
-                return response.parsed
-            
-            # If parsed is not available, try to parse the text
-            response_text = response.text
-            return json.loads(response_text)
-            
-        except json.JSONDecodeError as e:
-            logger.error(f"Error parsing JSON response: {e}")
-            return {"error": f"Failed to parse JSON response: {e}", "raw_response": response_text}
-            
+            types_schema = _dict_to_types_schema(schema) if isinstance(schema, dict) else schema
+        except Exception as conv_err:
+            logger.warning(f"Schema conversion warning, defaulting to OBJECT: {conv_err}")
+            types_schema = types.Schema(type=types.Type.OBJECT)
+
+        generation_config = types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            max_output_tokens=max_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            top_k=top_k,
+            response_mime_type='application/json',
+            response_schema=types_schema
+        )
+
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=generation_config,
+        )
+
+        # Prefer parsed if present and non-empty; otherwise parse text with fallbacks
+        try:
+            parsed = getattr(response, 'parsed', None)
+            if parsed:
+                return parsed if isinstance(parsed, dict) else json.loads(json.dumps(parsed))
+            text = (response.text or '').strip()
+            # Strip markdown code fences if present
+            if text.startswith('```'):
+                # remove leading ```json or ``` and trailing ```
+                if text.lower().startswith('```json'):
+                    text = text[7:]
+                else:
+                    text = text[3:]
+                if text.endswith('```'):
+                    text = text[:-3]
+                text = text.strip()
+            try:
+                return json.loads(text)
+            except json.JSONDecodeError:
+                # Fallback: extract likely JSON object substring
+                first = text.find('{')
+                last = text.rfind('}')
+                if first != -1 and last != -1 and last > first:
+                    candidate = text[first:last+1]
+                    try:
+                        return json.loads(candidate)
+                    except json.JSONDecodeError:
+                        pass
+                # Final fallback: regex any object
+                import re
+                match = re.search(r'\{[\s\S]*\}', text)
+                if match:
+                    return json.loads(match.group(0))
+                raise
+        except Exception as e:
+            logger.error(f"Error parsing structured response: {e}")
+            return {"error": f"Failed to parse JSON response: {e}", "raw_response": (response.text or '')}
+
     except Exception as e:
         logger.error(f"Error in Gemini Pro structured JSON generation: {e}")
         return {"error": str(e)}

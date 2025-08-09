@@ -1,10 +1,18 @@
 """
 AI Analysis Module
-AI recommendation generation and analysis services.
+AI recommendation generation and analysis.
 """
 
 from .ai_recommendations import AIRecommendationsService
-from .prompt_engineering import PromptEngineeringService
 from .quality_validation import QualityValidationService
+from .prompt_engineering import PromptEngineeringService
+from .strategic_intelligence_analyzer import StrategicIntelligenceAnalyzer
+from .content_distribution_analyzer import ContentDistributionAnalyzer
 
-__all__ = ['AIRecommendationsService', 'PromptEngineeringService', 'QualityValidationService'] 
+__all__ = [
+    'AIRecommendationsService',
+    'QualityValidationService', 
+    'PromptEngineeringService',
+    'StrategicIntelligenceAnalyzer',
+    'ContentDistributionAnalyzer'
+] 

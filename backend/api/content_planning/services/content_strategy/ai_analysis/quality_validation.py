@@ -14,6 +14,45 @@ class QualityValidationService:
     def __init__(self):
         pass
     
+    def validate_against_schema(self, data: Dict[str, Any], schema: Dict[str, Any]) -> None:
+        """Validate data against a minimal JSON-like schema definition.
+        Raises ValueError on failure.
+        Schema format example:
+        {"type": "object", "required": ["strategy_brief", "channels"], "properties": {"strategy_brief": {"type": "object"}, "channels": {"type": "array"}}}
+        """
+        def _check(node, sch, path="$"):
+            t = sch.get("type")
+            if t == "object":
+                if not isinstance(node, dict):
+                    raise ValueError(f"Schema error at {path}: expected object")
+                for req in sch.get("required", []):
+                    if req not in node or node[req] in (None, ""):
+                        raise ValueError(f"Schema error at {path}.{req}: required field missing")
+                for key, sub in sch.get("properties", {}).items():
+                    if key in node:
+                        _check(node[key], sub, f"{path}.{key}")
+            elif t == "array":
+                if not isinstance(node, list):
+                    raise ValueError(f"Schema error at {path}: expected array")
+                item_s = sch.get("items")
+                if item_s:
+                    for i, item in enumerate(node):
+                        _check(item, item_s, f"{path}[{i}]")
+            elif t == "string":
+                if not isinstance(node, str) or not node.strip():
+                    raise ValueError(f"Schema error at {path}: expected non-empty string")
+            elif t == "number":
+                if not isinstance(node, (int, float)):
+                    raise ValueError(f"Schema error at {path}: expected number")
+            elif t == "boolean":
+                if not isinstance(node, bool):
+                    raise ValueError(f"Schema error at {path}: expected boolean")
+            elif t == "any":
+                return
+            else:
+                return
+        _check(data, schema)
+
     def calculate_strategic_scores(self, ai_recommendations: Dict[str, Any]) -> Dict[str, float]:
         """Calculate strategic performance scores from AI recommendations."""
         scores = {

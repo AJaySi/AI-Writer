@@ -658,6 +658,36 @@ class ContentPlanningAPI {
     return new EventSource(url);
   }
 
+  // Clear enhanced strategy streaming/cache for a user (best-effort refresh)
+  async clearEnhancedCache(userId?: number): Promise<any> {
+    const params: any = {};
+    if (userId) params.user_id = userId;
+    const response = await apiClient.post(`${this.baseURL}/enhanced-strategies/cache/clear`, null, { params });
+    return response.data;
+  }
+
+  // Stream AI generation/status updates for a specific strategy (best-effort)
+  async streamAIGenerationStatus(strategyId: number | string): Promise<EventSource> {
+    const url = `${this.baseURL}/enhanced-strategies/stream/strategies?strategy_id=${strategyId}`;
+    return new EventSource(url);
+  }
+
+  async streamAutofillRefresh(userId?: number, useAI: boolean = true, aiOnly: boolean = false): Promise<EventSource> {
+    const params = new URLSearchParams();
+    if (userId) params.append('user_id', String(userId));
+    params.append('use_ai', String(useAI));
+    params.append('ai_only', String(aiOnly));
+    const url = `${this.baseURL}/enhanced-strategies/autofill/refresh/stream?${params.toString()}`;
+    return new EventSource(url);
+  }
+
+  async refreshAutofill(userId?: number, useAI: boolean = true, aiOnly: boolean = false): Promise<any> {
+    const params: any = { use_ai: useAI, ai_only: aiOnly };
+    if (userId) params.user_id = userId;
+    const response = await apiClient.post(`${this.baseURL}/enhanced-strategies/autofill/refresh`, null, { params });
+    return response.data;
+  }
+
   // Helper method to handle SSE data
   handleSSEData(eventSource: EventSource, onData: (data: any) => void, onError?: (error: any) => void, onComplete?: () => void) {
     eventSource.onmessage = (event) => {

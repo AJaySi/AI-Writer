@@ -446,7 +446,7 @@ class EnhancedStrategyService:
             
         except Exception as e:
             logger.error(f"Error generating {analysis_type} recommendations: {str(e)}")
-            return self._get_fallback_recommendations(analysis_type)
+            raise
     
     def _create_specialized_prompt(self, strategy: EnhancedContentStrategy, analysis_type: str) -> str:
         """Create specialized AI prompts for each analysis type."""
@@ -601,14 +601,7 @@ class EnhancedStrategyService:
     
     async def _call_ai_service(self, prompt: str, analysis_type: str) -> Dict[str, Any]:
         """Call AI service to generate recommendations."""
-        # Placeholder implementation - integrate with actual AI service
-        # For now, return structured mock data
-        return {
-            'analysis_type': analysis_type,
-            'recommendations': f"AI recommendations for {analysis_type}",
-            'insights': f"Key insights for {analysis_type}",
-            'metrics': {'score': 85, 'confidence': 0.9}
-        }
+        raise RuntimeError("AI service integration not implemented. Real AI response required.")
     
     def _parse_ai_response(self, ai_response: Dict[str, Any], analysis_type: str) -> Dict[str, Any]:
         """Parse and structure AI response."""
@@ -621,40 +614,7 @@ class EnhancedStrategyService:
         }
     
     def _get_fallback_recommendations(self, analysis_type: str) -> Dict[str, Any]:
-        """Get fallback recommendations when AI service fails."""
-        fallback_data = {
-            'comprehensive_strategy': {
-                'recommendations': ['Focus on core content pillars', 'Develop audience personas'],
-                'insights': ['Strategy needs more specific objectives', 'Consider expanding content mix'],
-                'metrics': {'score': 70, 'confidence': 0.6}
-            },
-            'audience_intelligence': {
-                'recommendations': ['Conduct audience research', 'Analyze content preferences'],
-                'insights': ['Limited audience data available', 'Need more engagement metrics'],
-                'metrics': {'score': 65, 'confidence': 0.5}
-            },
-            'competitive_intelligence': {
-                'recommendations': ['Analyze competitor content', 'Identify market gaps'],
-                'insights': ['Competitive analysis needed', 'Market positioning unclear'],
-                'metrics': {'score': 60, 'confidence': 0.4}
-            },
-            'performance_optimization': {
-                'recommendations': ['Set up analytics tracking', 'Implement A/B testing'],
-                'insights': ['Performance data limited', 'Need baseline metrics'],
-                'metrics': {'score': 55, 'confidence': 0.3}
-            },
-            'content_calendar_optimization': {
-                'recommendations': ['Create publishing schedule', 'Optimize content mix'],
-                'insights': ['Calendar optimization needed', 'Frequency planning required'],
-                'metrics': {'score': 50, 'confidence': 0.2}
-            }
-        }
-        
-        return fallback_data.get(analysis_type, {
-            'recommendations': ['General strategy improvement needed'],
-            'insights': ['Analysis incomplete'],
-            'metrics': {'score': 50, 'confidence': 0.1}
-        })
+        raise RuntimeError("Fallback recommendations are disabled. Real AI required.")
     
     def _extract_content_preferences_from_style(self, writing_style: Dict[str, Any]) -> Dict[str, Any]:
         """Extract content preferences from writing style analysis."""
@@ -706,83 +666,17 @@ class EnhancedStrategyService:
         return scores
     
     def _calculate_confidence_levels(self, auto_populated_fields: Dict[str, str]) -> Dict[str, float]:
-        """Calculate confidence levels for auto-populated fields."""
-        confidence_levels = {}
-        for field, source in auto_populated_fields.items():
-            # Base confidence on data source
-            base_confidence = {
-                'website_analysis': 0.8,
-                'research_preferences': 0.7,
-                'api_keys': 0.6
-            }
-            confidence_levels[field] = base_confidence.get(source, 0.5)
-        return confidence_levels
-    
-    def _calculate_confidence_levels_from_data(self, data_sources: Dict[str, Any]) -> Dict[str, float]:
-        """Calculate confidence levels from data sources."""
-        confidence_levels = {}
-        
-        # Website analysis confidence
-        if data_sources.get('website_analysis'):
-            website_data = data_sources['website_analysis']
-            confidence_levels['website_analysis'] = website_data.get('confidence_level', 0.8)
-        
-        # Research preferences confidence
-        if data_sources.get('research_preferences'):
-            research_data = data_sources['research_preferences']
-            confidence_levels['research_preferences'] = research_data.get('confidence_level', 0.7)
-        
-        # API keys confidence
-        if data_sources.get('api_keys_data'):
-            api_data = data_sources['api_keys_data']
-            confidence_levels['api_keys_data'] = api_data.get('confidence_level', 0.6)
-        
-        return confidence_levels
-    
-    def _calculate_data_freshness(self, onboarding_data: Union[OnboardingSession, Dict[str, Any]]) -> Dict[str, str]:
-        """Calculate data freshness for onboarding data."""
-        try:
-            # Handle both OnboardingSession objects and dictionaries
-            if hasattr(onboarding_data, 'updated_at'):
-                # It's an OnboardingSession object
-                updated_at = onboarding_data.updated_at
-            elif isinstance(onboarding_data, dict):
-                # It's a dictionary - look for last_updated or updated_at
-                updated_at = onboarding_data.get('last_updated') or onboarding_data.get('updated_at')
-            else:
-                updated_at = None
-            
-            if not updated_at:
-                return {'status': 'unknown', 'age_days': 'unknown'}
-            
-            # Convert string to datetime if needed
-            if isinstance(updated_at, str):
-                try:
-                    updated_at = datetime.fromisoformat(updated_at.replace('Z', '+00:00'))
-                except ValueError:
-                    return {'status': 'unknown', 'age_days': 'unknown'}
-            
-            age_days = (datetime.utcnow() - updated_at).days
-            
-            if age_days <= 7:
-                status = 'fresh'
-            elif age_days <= 30:
-                status = 'recent'
-            elif age_days <= 90:
-                status = 'aging'
-            else:
-                status = 'stale'
-            
-            return {
-                'status': status,
-                'age_days': age_days,
-                'last_updated': updated_at.isoformat() if hasattr(updated_at, 'isoformat') else str(updated_at)
-            }
-            
-        except Exception as e:
-            logger.error(f"Error calculating data freshness: {str(e)}")
-            return {'status': 'unknown', 'age_days': 'unknown'}
+        # deprecated; not used
+        raise RuntimeError("Deprecated: use AutoFillService.quality")
 
+    def _calculate_confidence_levels_from_data(self, data_sources: Dict[str, Any]) -> Dict[str, float]:
+        # deprecated; not used
+        raise RuntimeError("Deprecated: use AutoFillService.quality")
+
+    def _calculate_data_freshness(self, onboarding_data: Union[OnboardingSession, Dict[str, Any]]) -> Dict[str, str]:
+        # deprecated; not used
+        raise RuntimeError("Deprecated: use AutoFillService.quality")
+    
     def _calculate_strategic_scores(self, ai_recommendations: Dict[str, Any]) -> Dict[str, float]:
         """Calculate strategic performance scores from AI recommendations."""
         scores = {
@@ -816,7 +710,7 @@ class EnhancedStrategyService:
         scores['innovation_score'] = scores['overall_score'] * 1.05
         
         return scores
-
+    
     def _extract_market_positioning(self, ai_recommendations: Dict[str, Any]) -> Dict[str, Any]:
         """Extract market positioning from AI recommendations."""
         return {
@@ -825,7 +719,7 @@ class EnhancedStrategyService:
             'market_share': '2.5%',
             'positioning_score': 4
         }
-
+    
     def _extract_competitive_advantages(self, ai_recommendations: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Extract competitive advantages from AI recommendations."""
         return [
@@ -840,7 +734,7 @@ class EnhancedStrategyService:
                 'implementation': 'Complete'
             }
         ]
-
+    
     def _extract_strategic_risks(self, ai_recommendations: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Extract strategic risks from AI recommendations."""
         return [
@@ -855,7 +749,7 @@ class EnhancedStrategyService:
                 'impact': 'Medium'
             }
         ]
-
+    
     def _extract_opportunity_analysis(self, ai_recommendations: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Extract opportunity analysis from AI recommendations."""
         return [
@@ -870,7 +764,7 @@ class EnhancedStrategyService:
                 'implementation_ease': 'High'
             }
         ]
-
+    
     async def _get_latest_ai_analysis(self, strategy_id: int, db: Session) -> Optional[Dict[str, Any]]:
         """Get the latest AI analysis for a strategy."""
         try:
@@ -883,7 +777,7 @@ class EnhancedStrategyService:
         except Exception as e:
             logger.error(f"Error getting latest AI analysis: {str(e)}")
             return None
-
+    
     async def _get_onboarding_integration(self, strategy_id: int, db: Session) -> Optional[Dict[str, Any]]:
         """Get onboarding data integration for a strategy."""
         try:
@@ -895,73 +789,25 @@ class EnhancedStrategyService:
             
         except Exception as e:
             logger.error(f"Error getting onboarding integration: {str(e)}")
-            return None
- 
+            return None 
+
     async def _get_onboarding_data(self, user_id: int) -> Dict[str, Any]:
-        """Get comprehensive onboarding data for intelligent auto-population"""
+        """Get comprehensive onboarding data for intelligent auto-population via AutoFillService"""
         try:
-            # Use the real onboarding data integration service
-            from .content_strategy.onboarding.data_integration import OnboardingDataIntegrationService
-            
-            # Create a temporary database session for this operation
             from services.database import get_db_session
+            from .content_strategy.autofill import AutoFillService
             temp_db = get_db_session()
-            
             try:
-                integration_service = OnboardingDataIntegrationService()
-                integrated_data = await integration_service.process_onboarding_data(user_id, temp_db)
-                
-                if not integrated_data:
-                    logger.warning(f"No onboarding data found for user {user_id}, using fallback")
-                    return self._get_fallback_onboarding_data()
-                
-                # Transform the integrated data into the expected format
-                website_data = integrated_data.get('website_analysis', {})
-                research_data = integrated_data.get('research_preferences', {})
-                api_data = integrated_data.get('api_keys_data', {})
-                session_data = integrated_data.get('onboarding_session', {})
-                
-                # Process and enhance the data
-                processed_data = {
-                    'website_analysis': await self._process_website_analysis(website_data),
-                    'research_preferences': await self._process_research_preferences(research_data),
-                    'api_keys_data': await self._process_api_keys_data(api_data),
-                    'data_quality_scores': self._calculate_data_quality_scores({
-                        'website_analysis': website_data,
-                        'research_preferences': research_data,
-                        'api_keys_data': api_data
-                    }),
-                    'confidence_levels': self._calculate_confidence_levels_from_data({
-                        'website_analysis': website_data,
-                        'research_preferences': research_data,
-                        'api_keys_data': api_data
-                    }),
-                    'data_freshness': self._calculate_data_freshness(session_data)
-                }
-                
-                # Transform data into frontend-expected format
-                auto_populated_fields = self._transform_onboarding_data_to_fields(processed_data)
-                
-                # Add detailed input data points for transparency
-                input_data_points = self._get_detailed_input_data_points(processed_data)
-                
+                service = AutoFillService(temp_db)
+                payload = await service.get_autofill(user_id)
                 logger.info(f"Retrieved comprehensive onboarding data for user {user_id}")
-                return {
-                    'fields': auto_populated_fields,
-                    'sources': self._get_data_sources(processed_data),
-                    'quality_scores': processed_data['data_quality_scores'],
-                    'confidence_levels': processed_data['confidence_levels'],
-                    'data_freshness': processed_data['data_freshness'],
-                    'input_data_points': input_data_points  # Add detailed input data
-                }
-                
+                return payload
             finally:
                 temp_db.close()
-                
         except Exception as e:
             logger.error(f"Error getting onboarding data: {str(e)}")
-            return self._get_fallback_onboarding_data()
- 
+            raise
+
     def _transform_onboarding_data_to_fields(self, processed_data: Dict[str, Any]) -> Dict[str, Any]:
         """Transform processed onboarding data into field-specific format for frontend"""
         fields = {}
@@ -969,53 +815,84 @@ class EnhancedStrategyService:
         website_data = processed_data.get('website_analysis', {})
         research_data = processed_data.get('research_preferences', {})
         api_data = processed_data.get('api_keys_data', {})
+        session_data = processed_data.get('onboarding_session', {})
         
         # Business Context Fields
-        fields['business_objectives'] = {
-            'value': website_data.get('content_goals', ['Lead Generation', 'Brand Awareness']),
+        if 'content_goals' in website_data and website_data.get('content_goals'):
+            fields['business_objectives'] = {
+                'value': website_data.get('content_goals'),
             'source': 'website_analysis',
-            'confidence': website_data.get('confidence_level', 0.8)
+                'confidence': website_data.get('confidence_level')
         }
         
-        fields['target_metrics'] = {
-            'value': {
-                'traffic_growth': '30%',
-                'engagement_rate': '5%',
-                'conversion_rate': '2%',
-                'lead_generation': '100 leads/month'
-            },
+        # Prefer explicit target_metrics; otherwise derive from performance_metrics
+        if website_data.get('target_metrics'):
+            fields['target_metrics'] = {
+                'value': website_data.get('target_metrics'),
             'source': 'website_analysis',
-            'confidence': website_data.get('confidence_level', 0.8)
-        }
+                'confidence': website_data.get('confidence_level')
+            }
+        elif website_data.get('performance_metrics'):
+            fields['target_metrics'] = {
+                'value': website_data.get('performance_metrics'),
+                'source': 'website_analysis',
+                'confidence': website_data.get('confidence_level')
+            }
         
-        fields['content_budget'] = {
-            'value': 5000,  # Default budget
+        # Content budget: website data preferred, else onboarding session budget
+        if website_data.get('content_budget') is not None:
+            fields['content_budget'] = {
+                'value': website_data.get('content_budget'),
             'source': 'website_analysis',
+                'confidence': website_data.get('confidence_level')
+            }
+        elif isinstance(session_data, dict) and session_data.get('budget') is not None:
+            fields['content_budget'] = {
+                'value': session_data.get('budget'),
+                'source': 'onboarding_session',
             'confidence': 0.7
         }
         
-        fields['team_size'] = {
-            'value': 3,  # Default team size
+        # Team size: website data preferred, else onboarding session team_size
+        if website_data.get('team_size') is not None:
+            fields['team_size'] = {
+                'value': website_data.get('team_size'),
             'source': 'website_analysis',
+                'confidence': website_data.get('confidence_level')
+            }
+        elif isinstance(session_data, dict) and session_data.get('team_size') is not None:
+            fields['team_size'] = {
+                'value': session_data.get('team_size'),
+                'source': 'onboarding_session',
             'confidence': 0.7
         }
         
-        fields['implementation_timeline'] = {
-            'value': '6 months',
+        # Implementation timeline: website data preferred, else onboarding session timeline
+        if website_data.get('implementation_timeline'):
+            fields['implementation_timeline'] = {
+                'value': website_data.get('implementation_timeline'),
             'source': 'website_analysis',
-            'confidence': 0.8
-        }
+                'confidence': website_data.get('confidence_level')
+            }
+        elif isinstance(session_data, dict) and session_data.get('timeline'):
+            fields['implementation_timeline'] = {
+                'value': session_data.get('timeline'),
+                'source': 'onboarding_session',
+                'confidence': 0.7
+            }
         
-        fields['market_share'] = {
-            'value': '15%',
+        # Market share: explicit if present; otherwise derive rough share from performance metrics if available
+        if website_data.get('market_share'):
+            fields['market_share'] = {
+                'value': website_data.get('market_share'),
             'source': 'website_analysis',
-            'confidence': website_data.get('confidence_level', 0.7)
-        }
-        
-        fields['competitive_position'] = {
-            'value': website_data.get('market_position', 'Emerging'),
+                'confidence': website_data.get('confidence_level')
+            }
+        elif website_data.get('performance_metrics'):
+            fields['market_share'] = {
+                'value': website_data.get('performance_metrics').get('estimated_market_share', None),
             'source': 'website_analysis',
-            'confidence': website_data.get('confidence_level', 0.8)
+                'confidence': website_data.get('confidence_level')
         }
         
         fields['performance_metrics'] = {
@@ -1205,7 +1082,7 @@ class EnhancedStrategyService:
         }
         
         return fields
- 
+
     def _get_data_sources(self, processed_data: Dict[str, Any]) -> Dict[str, str]:
         """Get data sources for each field"""
         sources = {}
@@ -1216,1317 +1093,91 @@ class EnhancedStrategyService:
                          'performance_metrics', 'engagement_metrics', 'top_competitors', 
                          'competitor_content_strategies', 'market_gaps', 'industry_trends', 
                          'emerging_trends', 'traffic_sources', 'conversion_rates', 'content_roi_targets']
-         
+        
         research_fields = ['content_preferences', 'consumption_patterns', 'audience_pain_points', 
                           'buying_journey', 'seasonal_trends', 'preferred_formats', 'content_mix', 
                           'content_frequency', 'optimal_timing', 'quality_metrics', 'editorial_guidelines', 
                           'brand_voice']
-         
+        
         api_fields = ['ab_testing_capabilities']
-         
+        
         for field in website_fields:
             sources[field] = 'website_analysis'
-         
+        
         for field in research_fields:
             sources[field] = 'research_preferences'
-         
+        
         for field in api_fields:
             sources[field] = 'api_keys_data'
-         
+        
         return sources
- 
+
     async def _get_website_analysis_data(self, user_id: int) -> Dict[str, Any]:
         """Get website analysis data from onboarding"""
         try:
-            # TODO: Implement actual website analysis data retrieval
-            # For now, return mock data
-            return {
-                'website_url': 'https://example.com',
-                'industry': 'Technology',
-                'business_size': 'Medium',
-                'market_position': 'Emerging',
-                'target_audience': 'B2B Professionals',
-                'content_goals': ['Lead Generation', 'Brand Awareness', 'Thought Leadership'],
-                'performance_data': {
-                    'monthly_traffic': 15000,
-                    'conversion_rate': 3.2,
-                    'bounce_rate': 45.5,
-                    'avg_session_duration': 180,
-                    'top_pages': ['/blog', '/about', '/services'],
-                    'traffic_sources': {
-                        'organic': 60,
-                        'social': 25,
-                        'direct': 10,
-                        'referral': 5
-                    }
-                },
-                'content_analysis': {
-                    'content_gaps': ['Educational content', 'Case studies', 'Industry insights'],
-                    'topics': ['Digital transformation', 'AI/ML', 'Cloud computing'],
-                    'content_quality_score': 7.5,
-                    'seo_opportunities': ['Long-tail keywords', 'Featured snippets', 'Voice search']
-                },
-                'competitor_analysis': {
-                    'top_competitors': ['Competitor A', 'Competitor B', 'Competitor C'],
-                    'competitive_advantages': ['Technical expertise', 'Industry experience', 'Customer success'],
-                    'market_gaps': ['Practical implementation guides', 'Industry-specific insights']
-                },
-                'last_updated': '2024-01-15T10:30:00Z'
-            }
+            raise RuntimeError("Website analysis data retrieval not implemented. Real data required.")
         except Exception as e:
             logger.error(f"Error getting website analysis data: {str(e)}")
-            return {}
- 
+            raise
+
     async def _get_research_preferences_data(self, user_id: int) -> Dict[str, Any]:
         """Get research preferences data from onboarding"""
         try:
-            # TODO: Implement actual research preferences data retrieval
-            # For now, return mock data
-            return {
-                'content_preferences': {
-                    'preferred_formats': ['Blog posts', 'Whitepapers', 'Webinars', 'Case studies'],
-                    'content_topics': ['Industry trends', 'Best practices', 'Technical guides', 'Success stories'],
-                    'content_style': ['Educational', 'Professional', 'Data-driven', 'Practical'],
-                    'content_length': 'Medium (1000-2000 words)',
-                    'visual_preferences': ['Infographics', 'Charts', 'Diagrams', 'Videos']
-                },
-                'audience_research': {
-                    'target_audience': ['B2B professionals', 'Decision makers', 'Technical leaders'],
-                    'audience_pain_points': [
-                        'Information overload',
-                        'Time constraints',
-                        'Decision paralysis',
-                        'Keeping up with trends'
-                    ],
-                    'buying_journey': {
-                        'awareness': 'Educational content and thought leadership',
-                        'consideration': 'Case studies and comparisons',
-                        'decision': 'Product demos and testimonials',
-                        'retention': 'Ongoing support and updates'
-                    },
-                    'consumption_patterns': {
-                        'blogs': 60,
-                        'videos': 25,
-                        'podcasts': 10,
-                        'social_media': 5
-                    }
-                },
-                'research_goals': {
-                    'primary_goals': ['Lead generation', 'Brand awareness', 'Thought leadership'],
-                    'secondary_goals': ['Customer education', 'Industry influence', 'Partnership development'],
-                    'success_metrics': ['Website traffic', 'Lead quality', 'Engagement rates', 'Brand mentions']
-                },
-                'last_updated': '2024-01-15T10:30:00Z'
-            }
+            raise RuntimeError("Research preferences data retrieval not implemented. Real data required.")
         except Exception as e:
             logger.error(f"Error getting research preferences data: {str(e)}")
-            return {}
- 
+            raise
+
     async def _get_api_keys_data(self, user_id: int) -> Dict[str, Any]:
         """Get API keys and external data from onboarding"""
         try:
-            # TODO: Implement actual API keys data retrieval
-            # For now, return mock data
-            return {
-                'google_analytics': {
-                    'connected': True,
-                    'data_available': True,
-                    'metrics': {
-                        'sessions': 15000,
-                        'users': 12000,
-                        'pageviews': 45000,
-                        'avg_session_duration': 180,
-                        'bounce_rate': 45.5
-                    }
-                },
-                'google_search_console': {
-                    'connected': True,
-                    'data_available': True,
-                    'metrics': {
-                        'clicks': 5000,
-                        'impressions': 25000,
-                        'ctr': 2.0,
-                        'avg_position': 15.5
-                    }
-                },
-                'social_media_apis': {
-                    'linkedin': {'connected': True, 'followers': 5000},
-                    'twitter': {'connected': True, 'followers': 3000},
-                    'facebook': {'connected': False, 'followers': 0}
-                },
-                'competitor_tools': {
-                    'semrush': {'connected': True, 'competitors_analyzed': 10},
-                    'ahrefs': {'connected': False, 'competitors_analyzed': 0},
-                    'moz': {'connected': False, 'competitors_analyzed': 0}
-                },
-                'last_updated': '2024-01-15T10:30:00Z'
-            }
+            raise RuntimeError("API keys/external data retrieval not implemented. Real data required.")
         except Exception as e:
             logger.error(f"Error getting API keys data: {str(e)}")
-            return {}
- 
+            raise
+
     async def _process_website_analysis(self, website_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Process and enhance website analysis data"""
-        try:
-            if not website_data:
-                return {}
-            
-            # Extract data from the real website analysis model
-            processed_data = {
-                'website_url': website_data.get('website_url'),
-                'industry': website_data.get('target_audience', {}).get('industry_focus'),
-                'market_position': 'Emerging',  # Default value
-                'business_size': 'Medium',  # Default value
-                'target_audience': website_data.get('target_audience', {}).get('demographics'),
-                'content_goals': website_data.get('content_type', {}).get('purpose', []),
-                'performance_metrics': {
-                    'traffic': 10000,  # Default value
-                    'conversion_rate': 2.5,  # Default value
-                    'bounce_rate': 50.0,  # Default value
-                    'avg_session_duration': 150  # Default value
-                },
-                'traffic_sources': {
-                    'organic': 70,
-                    'social': 20,
-                    'direct': 7,
-                    'referral': 3
-                },
-                'content_gaps': website_data.get('style_guidelines', {}).get('content_gaps', []),
-                'topics': website_data.get('content_type', {}).get('primary_type', []),
-                'content_quality_score': 7.5,  # Default value
-                'seo_opportunities': website_data.get('style_guidelines', {}).get('seo_opportunities', []),
-                'competitors': [],  # Would need competitor analysis data
-                'competitive_advantages': website_data.get('style_guidelines', {}).get('advantages', []),
-                'market_gaps': website_data.get('style_guidelines', {}).get('market_gaps', []),
-                'data_quality': self._assess_data_quality(website_data),
-                'confidence_level': website_data.get('confidence_level', 0.8),
-                'data_freshness': website_data.get('data_freshness', 0.8)
-            }
-            
-            return processed_data
-            
-        except Exception as e:
-            logger.error(f"Error processing website analysis: {str(e)}")
-            return {}
+        # deprecated; not used
+        raise RuntimeError("Deprecated: use AutoFillService normalizers")
 
     async def _process_research_preferences(self, research_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Process and enhance research preferences data"""
-        try:
-            if not research_data:
-                return {}
-            
-            # Extract data from the real research preferences model
-            processed_data = {
-                'content_preferences': {
-                    'preferred_formats': research_data.get('content_types', []),
-                    'content_topics': research_data.get('research_topics', []),
-                    'content_style': research_data.get('writing_style', {}).get('tone', []),
-                    'content_length': 'Medium (1000-2000 words)',  # Default value
-                    'visual_preferences': ['Infographics', 'Charts', 'Diagrams']  # Default value
-                },
-                'audience_intelligence': {
-                    'target_audience': research_data.get('target_audience', {}).get('demographics', []),
-                    'pain_points': research_data.get('target_audience', {}).get('pain_points', []),
-                    'buying_journey': research_data.get('target_audience', {}).get('buying_journey', {}),
-                    'consumption_patterns': research_data.get('target_audience', {}).get('consumption_patterns', {})
-                },
-                'research_goals': {
-                    'primary_goals': research_data.get('research_topics', []),
-                    'secondary_goals': research_data.get('content_types', []),
-                    'success_metrics': ['Website traffic', 'Lead quality', 'Engagement rates']  # Default value
-                },
-                'data_quality': self._assess_data_quality(research_data),
-                'confidence_level': research_data.get('confidence_level', 0.8),
-                'data_freshness': research_data.get('data_freshness', 0.8)
-            }
-            
-            return processed_data
-            
-        except Exception as e:
-            logger.error(f"Error processing research preferences: {str(e)}")
-            return {}
+        # deprecated; not used
+        raise RuntimeError("Deprecated: use AutoFillService normalizers")
 
     async def _process_api_keys_data(self, api_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Process and enhance API keys data"""
-        try:
-            if not api_data:
-                return {}
-            
-            # Extract data from the real API keys model
-            api_keys = api_data.get('api_keys', [])
-            providers = api_data.get('providers', [])
-            
-            processed_data = {
-                'analytics_data': {
-                    'google_analytics': {
-                        'connected': 'google_analytics' in providers,
-                        'metrics': {
-                            'sessions': 15000,
-                            'users': 12000,
-                            'pageviews': 45000,
-                            'avg_session_duration': 180,
-                            'bounce_rate': 45.5
-                        }
-                    },
-                    'google_search_console': {
-                        'connected': 'google_search_console' in providers,
-                        'metrics': {
-                            'clicks': 5000,
-                            'impressions': 25000,
-                            'ctr': 2.0,
-                            'avg_position': 15.5
-                        }
-                    }
-                },
-                'social_media_data': {
-                    'linkedin': {'connected': 'linkedin' in providers, 'followers': 5000},
-                    'twitter': {'connected': 'twitter' in providers, 'followers': 3000},
-                    'facebook': {'connected': 'facebook' in providers, 'followers': 0}
-                },
-                'competitor_data': {
-                    'semrush': {'connected': 'semrush' in providers, 'competitors_analyzed': 10},
-                    'ahrefs': {'connected': 'ahrefs' in providers, 'competitors_analyzed': 0},
-                    'moz': {'connected': 'moz' in providers, 'competitors_analyzed': 0}
-                },
-                'data_quality': self._assess_data_quality(api_data),
-                'confidence_level': api_data.get('confidence_level', 0.8),
-                'data_freshness': api_data.get('data_freshness', 0.8)
-            }
-            
-            return processed_data
-            
-        except Exception as e:
-            logger.error(f"Error processing API keys data: {str(e)}")
-            return {}
- 
-    def _assess_data_quality(self, data: Dict[str, Any]) -> float:
-        """Assess the quality of data based on completeness and validity"""
-        try:
-            if not data:
-                return 0.0
-            
-            # Check for required fields based on data type
-            required_fields = self._get_required_fields_for_data_type(data)
-            present_fields = sum(1 for field in required_fields if data.get(field))
-            
-            completeness_score = present_fields / len(required_fields) if required_fields else 0.0
-            
-            # Check data validity (basic checks)
-            validity_score = self._check_data_validity(data)
-            
-            # Combined quality score
-            quality_score = (completeness_score * 0.7) + (validity_score * 0.3)
-            
-            return min(1.0, max(0.0, quality_score))
-            
-        except Exception as e:
-            logger.error(f"Error assessing data quality: {str(e)}")
-            return 0.0
- 
-    def _get_required_fields_for_data_type(self, data: Dict[str, Any]) -> List[str]:
-        """Get required fields based on data type"""
-        if 'website_url' in data:
-            return ['website_url', 'industry', 'business_size', 'target_audience']
-        elif 'content_preferences' in data:
-            return ['content_preferences', 'audience_research', 'research_goals']
-        elif 'google_analytics' in data:
-            return ['google_analytics', 'google_search_console', 'social_media_apis']
-        else:
-            return []
- 
-    def _check_data_validity(self, data: Dict[str, Any]) -> float:
-        """Check data validity with basic validation rules"""
-        try:
-            validity_score = 0.0
-            checks_passed = 0
-            total_checks = 0
-            
-            # Website analysis validity checks
-            if 'website_url' in data:
-                total_checks += 1
-                if data.get('website_url') and isinstance(data['website_url'], str):
-                    checks_passed += 1
-                
-                total_checks += 1
-                if data.get('industry') and isinstance(data['industry'], str):
-                    checks_passed += 1
-             
-            # Research preferences validity checks
-            if 'content_preferences' in data:
-                total_checks += 1
-                if isinstance(data['content_preferences'], dict):
-                    checks_passed += 1
-                 
-                total_checks += 1
-                if 'audience_research' in data and isinstance(data['audience_research'], dict):
-                    checks_passed += 1
-             
-            # API data validity checks
-            if 'google_analytics' in data:
-                total_checks += 1
-                if isinstance(data['google_analytics'], dict):
-                    checks_passed += 1
-             
-            validity_score = checks_passed / total_checks if total_checks > 0 else 0.0
-            return validity_score
-             
-        except Exception as e:
-            logger.error(f"Error checking data validity: {str(e)}")
-            return 0.0
- 
-    def _calculate_confidence_level(self, data: Dict[str, Any]) -> float:
-        """Calculate confidence level based on data quality and completeness"""
-        try:
-            if not data:
-                return 0.0
-            
-            # Base confidence on data quality
-            quality_score = self._assess_data_quality(data)
-            
-            # Adjust confidence based on data freshness
-            freshness_score = self._calculate_freshness(data.get('last_updated'))
-            
-            # Combined confidence score
-            confidence_score = (quality_score * 0.8) + (freshness_score * 0.2)
-            
-            return min(1.0, max(0.0, confidence_score))
-            
-        except Exception as e:
-            logger.error(f"Error calculating confidence level: {str(e)}")
-            return 0.0
- 
-    def _calculate_freshness(self, last_updated: Optional[str]) -> float:
-        """Calculate data freshness score based on last update time"""
-        try:
-            if not last_updated:
-                return 0.0
-            
-            from datetime import datetime, timezone
-            try:
-                last_update = datetime.fromisoformat(last_updated.replace('Z', '+00:00'))
-                now = datetime.now(timezone.utc)
-                days_old = (now - last_update).days
-                
-                # Freshness scoring: 1.0 for same day, decreasing over time
-                if days_old == 0:
-                    return 1.0
-                elif days_old <= 7:
-                    return 0.9
-                elif days_old <= 30:
-                    return 0.7
-                elif days_old <= 90:
-                    return 0.5
-                else:
-                    return 0.3
-                     
-            except ValueError:
-                return 0.0
-                 
-        except Exception as e:
-            logger.error(f"Error calculating freshness: {str(e)}")
-            return 0.0
+        # deprecated; not used
+        raise RuntimeError("Deprecated: use AutoFillService normalizers")
 
-    # Performance Optimization Methods (Phase 3.3)
-    
-    def _initialize_caches(self):
-        """Initialize caching systems for performance optimization"""
-        try:
-            # In-memory caches for different data types
-            self.ai_analysis_cache = {}
-            self.onboarding_data_cache = {}
-            self.strategy_cache = {}
-            self.prompt_cache = {}
-            
-            # Cache statistics
-            self.cache_stats = {
-                'ai_analysis_cache': {'hits': 0, 'misses': 0, 'size': 0},
-                'onboarding_data_cache': {'hits': 0, 'misses': 0, 'size': 0},
-                'strategy_cache': {'hits': 0, 'misses': 0, 'size': 0},
-                'prompt_cache': {'hits': 0, 'misses': 0, 'size': 0}
-            }
-            
-            logger.info("Performance optimization caches initialized successfully")
-            
-        except Exception as e:
-            logger.error(f"Error initializing caches: {str(e)}")
+    def _transform_onboarding_data_to_fields(self, processed_data: Dict[str, Any]) -> Dict[str, Any]:
+        # deprecated; not used
+        raise RuntimeError("Deprecated: use AutoFillService.transformer")
 
-    async def get_cached_ai_analysis(self, strategy_id: str, analysis_type: str) -> Optional[Dict[str, Any]]:
-        """Get cached AI analysis if available and not expired"""
-        try:
-            cache_key = f"{strategy_id}_{analysis_type}"
-            
-            if cache_key in self.ai_analysis_cache:
-                cached_data = self.ai_analysis_cache[cache_key]
-                
-                # Check if cache is still valid
-                if self._is_cache_valid(cached_data, self.cache_settings['ai_analysis_cache_ttl']):
-                    self.cache_stats['ai_analysis_cache']['hits'] += 1
-                    logger.debug(f"Cache hit for AI analysis: {cache_key}")
-                    return cached_data['data']
-                else:
-                    # Remove expired cache entry
-                    del self.ai_analysis_cache[cache_key]
-                    self.cache_stats['ai_analysis_cache']['size'] -= 1
-            
-            self.cache_stats['ai_analysis_cache']['misses'] += 1
-            return None
-            
-        except Exception as e:
-            logger.error(f"Error getting cached AI analysis: {str(e)}")
-            return None
-
-    async def cache_ai_analysis(self, strategy_id: str, analysis_type: str, analysis_data: Dict[str, Any]):
-        """Cache AI analysis results for performance optimization"""
-        try:
-            cache_key = f"{strategy_id}_{analysis_type}"
-            
-            # Check cache size limit
-            if len(self.ai_analysis_cache) >= self.cache_settings['max_cache_size']:
-                self._evict_oldest_cache_entry('ai_analysis_cache')
-            
-            # Cache the analysis data
-            self.ai_analysis_cache[cache_key] = {
-                'data': analysis_data,
-                'timestamp': datetime.now(),
-                'ttl': self.cache_settings['ai_analysis_cache_ttl']
-            }
-            
-            self.cache_stats['ai_analysis_cache']['size'] += 1
-            logger.debug(f"Cached AI analysis: {cache_key}")
-            
-        except Exception as e:
-            logger.error(f"Error caching AI analysis: {str(e)}")
-
-    async def get_cached_onboarding_data(self, user_id: int) -> Optional[Dict[str, Any]]:
-        """Get cached onboarding data if available and not expired"""
-        try:
-            cache_key = f"onboarding_{user_id}"
-            
-            if cache_key in self.onboarding_data_cache:
-                cached_data = self.onboarding_data_cache[cache_key]
-                
-                # Check if cache is still valid
-                if self._is_cache_valid(cached_data, self.cache_settings['onboarding_data_cache_ttl']):
-                    self.cache_stats['onboarding_data_cache']['hits'] += 1
-                    logger.debug(f"Cache hit for onboarding data: {cache_key}")
-                    return cached_data['data']
-                else:
-                    # Remove expired cache entry
-                    del self.onboarding_data_cache[cache_key]
-                    self.cache_stats['onboarding_data_cache']['size'] -= 1
-            
-            self.cache_stats['onboarding_data_cache']['misses'] += 1
-            return None
-            
-        except Exception as e:
-            logger.error(f"Error getting cached onboarding data: {str(e)}")
-            return None
-
-    async def cache_onboarding_data(self, user_id: int, onboarding_data: Dict[str, Any]):
-        """Cache onboarding data for performance optimization"""
-        try:
-            cache_key = f"onboarding_{user_id}"
-            
-            # Check cache size limit
-            if len(self.onboarding_data_cache) >= self.cache_settings['max_cache_size']:
-                self._evict_oldest_cache_entry('onboarding_data_cache')
-            
-            # Cache the onboarding data
-            self.onboarding_data_cache[cache_key] = {
-                'data': onboarding_data,
-                'timestamp': datetime.now(),
-                'ttl': self.cache_settings['onboarding_data_cache_ttl']
-            }
-            
-            self.cache_stats['onboarding_data_cache']['size'] += 1
-            logger.debug(f"Cached onboarding data: {cache_key}")
-            
-        except Exception as e:
-            logger.error(f"Error caching onboarding data: {str(e)}")
-
-    def _is_cache_valid(self, cached_data: Dict[str, Any], ttl_seconds: int) -> bool:
-        """Check if cached data is still valid based on TTL"""
-        try:
-            timestamp = cached_data.get('timestamp')
-            if not timestamp:
-                return False
-            
-            elapsed = (datetime.now() - timestamp).total_seconds()
-            return elapsed < ttl_seconds
-            
-        except Exception as e:
-            logger.error(f"Error checking cache validity: {str(e)}")
-            return False
-
-    def _evict_oldest_cache_entry(self, cache_name: str):
-        """Evict the oldest cache entry when cache is full"""
-        try:
-            cache = getattr(self, f"{cache_name}")
-            if not cache:
-                return
-            
-            # Find oldest entry
-            oldest_key = min(cache.keys(), key=lambda k: cache[k].get('timestamp', datetime.min))
-            
-            # Remove oldest entry
-            del cache[oldest_key]
-            self.cache_stats[cache_name]['size'] -= 1
-            
-            logger.debug(f"Evicted oldest cache entry from {cache_name}: {oldest_key}")
-            
-        except Exception as e:
-            logger.error(f"Error evicting cache entry: {str(e)}")
-
-    async def optimize_response_time(self, operation: str, start_time: datetime) -> Dict[str, Any]:
-        """Optimize response time and track performance metrics"""
-        try:
-            end_time = datetime.now()
-            response_time = (end_time - start_time).total_seconds()
-            
-            # Track response time
-            self.performance_metrics['response_times'].append({
-                'operation': operation,
-                'response_time': response_time,
-                'timestamp': end_time
-            })
-            
-            # Keep only last 1000 response times for memory optimization
-            if len(self.performance_metrics['response_times']) > 1000:
-                self.performance_metrics['response_times'] = self.performance_metrics['response_times'][-1000:]
-            
-            # Check if response time exceeds threshold
-            if response_time > self.quality_thresholds['max_response_time']:
-                logger.warning(f"Slow response time for {operation}: {response_time}s")
-            
-            return {
-                'operation': operation,
-                'response_time': response_time,
-                'performance_status': 'optimal' if response_time <= 2.0 else 'acceptable' if response_time <= 5.0 else 'slow'
-            }
-            
-        except Exception as e:
-            logger.error(f"Error optimizing response time: {str(e)}")
-            return {'operation': operation, 'response_time': 0.0, 'performance_status': 'error'}
-
-    async def get_performance_metrics(self) -> Dict[str, Any]:
-        """Get comprehensive performance metrics"""
-        try:
-            # Calculate average response times
-            response_times = self.performance_metrics['response_times']
-            if response_times:
-                avg_response_time = sum(rt['response_time'] for rt in response_times) / len(response_times)
-                max_response_time = max(rt['response_time'] for rt in response_times)
-                min_response_time = min(rt['response_time'] for rt in response_times)
-            else:
-                avg_response_time = max_response_time = min_response_time = 0.0
-            
-            # Calculate cache hit rates
-            cache_hit_rates = {}
-            for cache_name, stats in self.cache_stats.items():
-                total_requests = stats['hits'] + stats['misses']
-                hit_rate = (stats['hits'] / total_requests * 100) if total_requests > 0 else 0.0
-                cache_hit_rates[cache_name] = {
-                    'hit_rate': hit_rate,
-                    'total_requests': total_requests,
-                    'cache_size': stats['size']
-                }
-            
-            # Calculate error rates (placeholder - implement actual error tracking)
-            error_rates = {
-                'ai_analysis_errors': 0.05,  # 5% error rate
-                'onboarding_data_errors': 0.02,  # 2% error rate
-                'strategy_creation_errors': 0.01  # 1% error rate
-            }
-            
-            # Calculate throughput metrics
-            throughput_metrics = {
-                'requests_per_minute': len(response_times) / 60 if response_times else 0,
-                'successful_requests': len([rt for rt in response_times if rt.get('performance_status') != 'error']),
-                'failed_requests': len([rt for rt in response_times if rt.get('performance_status') == 'error'])
-            }
-            
-            return {
-                'response_time_metrics': {
-                    'average_response_time': avg_response_time,
-                    'max_response_time': max_response_time,
-                    'min_response_time': min_response_time,
-                    'response_time_threshold': self.quality_thresholds['max_response_time']
-                },
-                'cache_metrics': cache_hit_rates,
-                'error_metrics': error_rates,
-                'throughput_metrics': throughput_metrics,
-                'system_health': {
-                    'cache_utilization': sum(stats['size'] for stats in self.cache_stats.values()) / self.cache_settings['max_cache_size'],
-                    'memory_usage': len(response_times) / 1000,  # Simplified memory usage
-                    'overall_performance': 'optimal' if avg_response_time <= 2.0 else 'acceptable' if avg_response_time <= 5.0 else 'needs_optimization'
-                }
-            }
-            
-        except Exception as e:
-            logger.error(f"Error getting performance metrics: {str(e)}")
-            return {}
-
-    async def optimize_database_queries(self, query_type: str, query_params: Dict[str, Any]) -> Dict[str, Any]:
-        """Optimize database queries for better performance"""
-        try:
-            # Query optimization strategies
-            optimization_strategies = {
-                'strategy_retrieval': {
-                    'use_indexes': True,
-                    'limit_results': 50,
-                    'select_specific_fields': True,
-                    'use_pagination': True
-                },
-                'ai_analysis_retrieval': {
-                    'use_indexes': True,
-                    'limit_results': 20,
-                    'select_specific_fields': True,
-                    'use_pagination': True
-                },
-                'onboarding_data_retrieval': {
-                    'use_indexes': True,
-                    'limit_results': 10,
-                    'select_specific_fields': True,
-                    'use_pagination': False
-                }
-            }
-            
-            strategy = optimization_strategies.get(query_type, {})
-            
-            # Apply optimization strategies
-            optimized_params = query_params.copy()
-            if strategy.get('limit_results'):
-                optimized_params['limit'] = strategy['limit_results']
-            
-            if strategy.get('select_specific_fields'):
-                optimized_params['select_fields'] = self._get_optimized_fields(query_type)
-            
-            return {
-                'query_type': query_type,
-                'optimization_applied': strategy,
-                'optimized_params': optimized_params,
-                'expected_performance_improvement': '20-30%'
-            }
-            
-        except Exception as e:
-            logger.error(f"Error optimizing database queries: {str(e)}")
-            return {'query_type': query_type, 'optimization_applied': {}, 'optimized_params': query_params}
-
-    def _get_optimized_fields(self, query_type: str) -> List[str]:
-        """Get optimized field selection for different query types"""
-        field_mappings = {
-            'strategy_retrieval': [
-                'id', 'name', 'industry', 'completion_percentage', 'created_at', 'updated_at'
-            ],
-            'ai_analysis_retrieval': [
-                'id', 'analysis_type', 'ai_service_status', 'created_at', 'data_confidence_scores'
-            ],
-            'onboarding_data_retrieval': [
-                'id', 'user_id', 'website_analysis_data', 'research_preferences_data', 'created_at'
-            ]
-        }
-        
-        return field_mappings.get(query_type, ['*'])
-
-    async def implement_scalability_planning(self) -> Dict[str, Any]:
-        """Implement scalability planning and recommendations"""
-        try:
-            # Analyze current performance metrics
-            performance_metrics = await self.get_performance_metrics()
-            
-            # Scalability recommendations based on current metrics
-            scalability_recommendations = {
-                'horizontal_scaling': {
-                    'recommended': performance_metrics.get('throughput_metrics', {}).get('requests_per_minute', 0) > 100,
-                    'reason': 'High request volume detected',
-                    'implementation': 'Load balancer with multiple service instances'
-                },
-                'database_optimization': {
-                    'recommended': performance_metrics.get('response_time_metrics', {}).get('average_response_time', 0) > 3.0,
-                    'reason': 'Slow database response times',
-                    'implementation': 'Database indexing and query optimization'
-                },
-                'caching_expansion': {
-                    'recommended': performance_metrics.get('cache_metrics', {}).get('ai_analysis_cache', {}).get('hit_rate', 0) < 70,
-                    'reason': 'Low cache hit rates',
-                    'implementation': 'Expand cache size and implement distributed caching'
-                },
-                'auto_scaling': {
-                    'recommended': performance_metrics.get('system_health', {}).get('overall_performance') == 'needs_optimization',
-                    'reason': 'Performance degradation detected',
-                    'implementation': 'Auto-scaling based on CPU and memory usage'
-                }
-            }
-            
-            # Resource usage optimization
-            resource_optimization = {
-                'memory_optimization': {
-                    'cache_cleanup_frequency': 'Every 30 minutes',
-                    'max_cache_size': self.cache_settings['max_cache_size'],
-                    'response_time_history_limit': 1000
-                },
-                'cpu_optimization': {
-                    'async_operations': True,
-                    'batch_processing': True,
-                    'connection_pooling': True
-                },
-                'network_optimization': {
-                    'compression_enabled': True,
-                    'connection_keepalive': True,
-                    'request_timeout': 30
-                }
-            }
-            
-            return {
-                'scalability_recommendations': scalability_recommendations,
-                'resource_optimization': resource_optimization,
-                'current_performance': performance_metrics,
-                'scaling_triggers': {
-                    'high_load_threshold': 100,  # requests per minute
-                    'response_time_threshold': 3.0,  # seconds
-                    'error_rate_threshold': 0.05,  # 5%
-                    'cache_hit_rate_threshold': 0.7  # 70%
-                }
-            }
-            
-        except Exception as e:
-            logger.error(f"Error implementing scalability planning: {str(e)}")
-            return {}
-
-    async def monitor_system_health(self) -> Dict[str, Any]:
-        """Monitor system health and performance"""
-        try:
-            # Get current performance metrics
-            performance_metrics = await self.get_performance_metrics()
-            
-            # Health checks
-            health_checks = {
-                'database_connectivity': await self._check_database_health(),
-                'cache_functionality': await self._check_cache_health(),
-                'ai_service_availability': await self._check_ai_service_health(),
-                'response_time_health': await self._check_response_time_health(performance_metrics),
-                'error_rate_health': await self._check_error_rate_health(performance_metrics)
-            }
-            
-            # Overall health status
-            overall_health = 'healthy'
-            if any(check.get('status') == 'critical' for check in health_checks.values()):
-                overall_health = 'critical'
-            elif any(check.get('status') == 'warning' for check in health_checks.values()):
-                overall_health = 'warning'
-            
-            return {
-                'overall_health': overall_health,
-                'health_checks': health_checks,
-                'performance_metrics': performance_metrics,
-                'recommendations': self._generate_health_recommendations(health_checks, performance_metrics)
-            }
-            
-        except Exception as e:
-            logger.error(f"Error monitoring system health: {str(e)}")
-            return {'overall_health': 'unknown', 'error': str(e)}
-
-    async def _check_database_health(self) -> Dict[str, Any]:
-        """Check database connectivity and performance"""
-        try:
-            # TODO: Implement actual database health check
-            return {
-                'status': 'healthy',
-                'response_time': 0.1,
-                'connection_pool_size': 10,
-                'active_connections': 5
-            }
-        except Exception as e:
-            return {'status': 'critical', 'error': str(e)}
-
-    async def _check_cache_health(self) -> Dict[str, Any]:
-        """Check cache functionality and performance"""
-        try:
-            total_cache_size = sum(stats['size'] for stats in self.cache_stats.values())
-            cache_utilization = total_cache_size / self.cache_settings['max_cache_size']
-            
-            return {
-                'status': 'healthy' if cache_utilization < 0.8 else 'warning',
-                'utilization': cache_utilization,
-                'total_items': total_cache_size,
-                'max_capacity': self.cache_settings['max_cache_size']
-            }
-        except Exception as e:
-            return {'status': 'critical', 'error': str(e)}
-
-    async def _check_ai_service_health(self) -> Dict[str, Any]:
-        """Check AI service availability and performance"""
-        try:
-            # TODO: Implement actual AI service health check
-            return {
-                'status': 'healthy',
-                'response_time': 2.5,
-                'availability': 0.99
-            }
-        except Exception as e:
-            return {'status': 'critical', 'error': str(e)}
-
-    async def _check_response_time_health(self, performance_metrics: Dict[str, Any]) -> Dict[str, Any]:
-        """Check response time health"""
-        try:
-            avg_response_time = performance_metrics.get('response_time_metrics', {}).get('average_response_time', 0)
-            
-            if avg_response_time <= 2.0:
-                status = 'healthy'
-            elif avg_response_time <= 5.0:
-                status = 'warning'
-            else:
-                status = 'critical'
-            
-            return {
-                'status': status,
-                'average_response_time': avg_response_time,
-                'threshold': self.quality_thresholds['max_response_time']
-            }
-        except Exception as e:
-            return {'status': 'critical', 'error': str(e)}
-
-    async def _check_error_rate_health(self, performance_metrics: Dict[str, Any]) -> Dict[str, Any]:
-        """Check error rate health"""
-        try:
-            # Calculate overall error rate
-            total_requests = performance_metrics.get('throughput_metrics', {}).get('successful_requests', 0) + \
-                           performance_metrics.get('throughput_metrics', {}).get('failed_requests', 0)
-            
-            if total_requests > 0:
-                error_rate = performance_metrics.get('throughput_metrics', {}).get('failed_requests', 0) / total_requests
-            else:
-                error_rate = 0.0
-            
-            if error_rate <= 0.01:  # 1%
-                status = 'healthy'
-            elif error_rate <= 0.05:  # 5%
-                status = 'warning'
-            else:
-                status = 'critical'
-            
-            return {
-                'status': status,
-                'error_rate': error_rate,
-                'threshold': 0.05
-            }
-        except Exception as e:
-            return {'status': 'critical', 'error': str(e)}
-
-    def _generate_health_recommendations(self, health_checks: Dict[str, Any], performance_metrics: Dict[str, Any]) -> List[str]:
-        """Generate health recommendations based on current status"""
-        recommendations = []
-        
-        for check_name, check_data in health_checks.items():
-            if check_data.get('status') == 'critical':
-                recommendations.append(f"Immediate attention required for {check_name}")
-            elif check_data.get('status') == 'warning':
-                recommendations.append(f"Monitor {check_name} for potential issues")
-        
-        # Performance-based recommendations
-        avg_response_time = performance_metrics.get('response_time_metrics', {}).get('average_response_time', 0)
-        if avg_response_time > 3.0:
-            recommendations.append("Consider database optimization and caching improvements")
-        
-        cache_hit_rate = performance_metrics.get('cache_metrics', {}).get('ai_analysis_cache', {}).get('hit_rate', 0)
-        if cache_hit_rate < 70:
-            recommendations.append("Expand cache size and implement more aggressive caching")
-        
-        return recommendations 
-
-    def _get_fallback_onboarding_data(self) -> Dict[str, Any]:
-        """Get fallback onboarding data when primary data is unavailable"""
-        try:
-            logger.info("Using fallback onboarding data")
-            
-            # Return comprehensive fallback data for all 30+ strategic inputs
-            return {
-                'fields': {
-                    'business_objectives': {
-                        'value': ['Lead Generation', 'Brand Awareness', 'Thought Leadership'],
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'target_metrics': {
-                        'value': {
-                            'traffic_growth': '25%',
-                            'engagement_rate': '4%',
-                            'conversion_rate': '2%',
-                            'lead_generation': '50 leads/month'
-                        },
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'content_budget': {
-                        'value': 3000,
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'team_size': {
-                        'value': 2,
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'implementation_timeline': {
-                        'value': '3 months',
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'market_share': {
-                        'value': '10%',
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'competitive_position': {
-                        'value': 'Emerging',
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'performance_metrics': {
-                        'value': {
-                            'monthly_traffic': 10000,
-                            'conversion_rate': 2.5,
-                            'bounce_rate': 50.0,
-                            'avg_session_duration': 150
-                        },
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'content_preferences': {
-                        'value': {
-                            'preferred_formats': ['Blog posts', 'Whitepapers', 'Case studies'],
-                            'content_topics': ['Industry trends', 'Best practices', 'Success stories'],
-                            'content_style': ['Educational', 'Professional', 'Practical'],
-                            'content_length': 'Medium (1000-2000 words)',
-                            'visual_preferences': ['Infographics', 'Charts', 'Diagrams']
-                        },
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'consumption_patterns': {
-                        'value': {
-                            'blogs': 70,
-                            'videos': 20,
-                            'podcasts': 5,
-                            'social_media': 5
-                        },
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'audience_pain_points': {
-                        'value': [
-                            'Information overload',
-                            'Time constraints',
-                            'Decision paralysis',
-                            'Keeping up with trends'
-                        ],
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'buying_journey': {
-                        'value': {
-                            'awareness': 'Educational content and thought leadership',
-                            'consideration': 'Case studies and comparisons',
-                            'decision': 'Product demos and testimonials',
-                            'retention': 'Ongoing support and updates'
-                        },
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'seasonal_trends': {
-                        'value': ['Q1: Planning', 'Q2: Execution', 'Q3: Optimization', 'Q4: Review'],
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'engagement_metrics': {
-                        'value': {
-                            'avg_session_duration': 150,
-                            'bounce_rate': 50.0,
-                            'pages_per_session': 2.0
-                        },
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'top_competitors': {
-                        'value': ['Competitor A', 'Competitor B', 'Competitor C'],
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'competitor_content_strategies': {
-                        'value': ['Educational content', 'Case studies', 'Thought leadership'],
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'market_gaps': {
-                        'value': ['Practical implementation guides', 'Industry-specific insights'],
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'industry_trends': {
-                        'value': ['Digital transformation', 'AI/ML adoption', 'Remote work'],
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'emerging_trends': {
-                        'value': ['Voice search optimization', 'Video content', 'Interactive content'],
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'preferred_formats': {
-                        'value': ['Blog posts', 'Whitepapers', 'Case studies'],
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'content_mix': {
-                        'value': {
-                            'blog_posts': 50,
-                            'whitepapers': 25,
-                            'case_studies': 15,
-                            'videos': 10
-                        },
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'content_frequency': {
-                        'value': 'Weekly',
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'optimal_timing': {
-                        'value': {
-                            'best_days': ['Tuesday', 'Wednesday', 'Thursday'],
-                            'best_times': ['9:00 AM', '1:00 PM', '3:00 PM']
-                        },
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'quality_metrics': {
-                        'value': {
-                            'readability_score': 8.0,
-                            'engagement_target': 4.0,
-                            'conversion_target': 2.0
-                        },
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'editorial_guidelines': {
-                        'value': {
-                            'tone': ['Professional', 'Educational'],
-                            'length': 'Medium (1000-2000 words)',
-                            'formatting': ['Use headers', 'Include visuals', 'Add CTAs']
-                        },
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'brand_voice': {
-                        'value': {
-                            'tone': 'Professional yet approachable',
-                            'style': 'Educational and authoritative',
-                            'personality': 'Expert, helpful, trustworthy'
-                        },
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'traffic_sources': {
-                        'value': {
-                            'organic': 70,
-                            'social': 20,
-                            'direct': 7,
-                            'referral': 3
-                        },
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'conversion_rates': {
-                        'value': {
-                            'overall': 2.5,
-                            'blog': 2.0,
-                            'landing_pages': 3.5,
-                            'email': 4.5
-                        },
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'content_roi_targets': {
-                        'value': {
-                            'target_roi': 250,
-                            'cost_per_lead': 40,
-                            'lifetime_value': 400
-                        },
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    },
-                    'ab_testing_capabilities': {
-                        'value': False,
-                        'source': 'fallback',
-                        'confidence': 0.5
-                    }
-                },
-                'sources': {
-                    'business_objectives': 'fallback',
-                    'target_metrics': 'fallback',
-                    'content_budget': 'fallback',
-                    'team_size': 'fallback',
-                    'implementation_timeline': 'fallback',
-                    'market_share': 'fallback',
-                    'competitive_position': 'fallback',
-                    'performance_metrics': 'fallback',
-                    'content_preferences': 'fallback',
-                    'consumption_patterns': 'fallback',
-                    'audience_pain_points': 'fallback',
-                    'buying_journey': 'fallback',
-                    'seasonal_trends': 'fallback',
-                    'engagement_metrics': 'fallback',
-                    'top_competitors': 'fallback',
-                    'competitor_content_strategies': 'fallback',
-                    'market_gaps': 'fallback',
-                    'industry_trends': 'fallback',
-                    'emerging_trends': 'fallback',
-                    'preferred_formats': 'fallback',
-                    'content_mix': 'fallback',
-                    'content_frequency': 'fallback',
-                    'optimal_timing': 'fallback',
-                    'quality_metrics': 'fallback',
-                    'editorial_guidelines': 'fallback',
-                    'brand_voice': 'fallback',
-                    'traffic_sources': 'fallback',
-                    'conversion_rates': 'fallback',
-                    'content_roi_targets': 'fallback',
-                    'ab_testing_capabilities': 'fallback'
-                },
-                'quality_scores': {
-                    'website_analysis': 0.0,
-                    'research_preferences': 0.0,
-                    'api_keys_data': 0.0
-                },
-                'confidence_levels': {
-                    'business_objectives': 0.5,
-                    'target_metrics': 0.5,
-                    'content_budget': 0.5,
-                    'team_size': 0.5,
-                    'implementation_timeline': 0.5,
-                    'market_share': 0.5,
-                    'competitive_position': 0.5,
-                    'performance_metrics': 0.5,
-                    'content_preferences': 0.5,
-                    'consumption_patterns': 0.5,
-                    'audience_pain_points': 0.5,
-                    'buying_journey': 0.5,
-                    'seasonal_trends': 0.5,
-                    'engagement_metrics': 0.5,
-                    'top_competitors': 0.5,
-                    'competitor_content_strategies': 0.5,
-                    'market_gaps': 0.5,
-                    'industry_trends': 0.5,
-                    'emerging_trends': 0.5,
-                    'preferred_formats': 0.5,
-                    'content_mix': 0.5,
-                    'content_frequency': 0.5,
-                    'optimal_timing': 0.5,
-                    'quality_metrics': 0.5,
-                    'editorial_guidelines': 0.5,
-                    'brand_voice': 0.5,
-                    'traffic_sources': 0.5,
-                    'conversion_rates': 0.5,
-                    'content_roi_targets': 0.5,
-                    'ab_testing_capabilities': 0.5
-                },
-                'data_freshness': {
-                    'status': 'unknown',
-                    'age_days': 'unknown',
-                    'last_updated': None
-                }
-            }
-            
-        except Exception as e:
-            logger.error(f"Error getting fallback onboarding data: {str(e)}")
-            return {
-                'fields': {},
-                'sources': {},
-                'quality_scores': {},
-                'confidence_levels': {},
-                'data_freshness': {'status': 'unknown', 'age_days': 'unknown'}
-            }
+    def _get_data_sources(self, processed_data: Dict[str, Any]) -> Dict[str, str]:
+        # deprecated; not used
+        raise RuntimeError("Deprecated: use AutoFillService.transparency")
 
     def _get_detailed_input_data_points(self, processed_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Get detailed input data points that were used to generate each field"""
-        input_data_points = {}
-        
-        website_data = processed_data.get('website_analysis', {})
-        research_data = processed_data.get('research_preferences', {})
-        api_data = processed_data.get('api_keys_data', {})
-        
-        # Business Objectives - from website analysis
-        if website_data:
-            input_data_points['business_objectives'] = {
-                'website_content': website_data.get('content_goals', 'Not available'),
-                'meta_description': website_data.get('meta_description', 'Not available'),
-                'about_page': website_data.get('about_page_content', 'Not available'),
-                'page_title': website_data.get('page_title', 'Not available'),
-                'content_analysis': website_data.get('content_analysis', {})
+        # deprecated; not used
+        raise RuntimeError("Deprecated: use AutoFillService.transparency")
+
+    def _get_fallback_onboarding_data(self) -> Dict[str, Any]:
+        """Deprecated: fallbacks are no longer permitted. Kept for compatibility; always raises."""
+        raise RuntimeError("Fallback onboarding data is disabled. Real data required.")
+
+    def _initialize_caches(self) -> None:
+        """Initialize in-memory caches as a no-op placeholder.
+        This prevents attribute errors in legacy code paths. Real caching has been
+        moved to the modular CachingService; this is only for backward compatibility.
+        """
+        # Simple placeholders to satisfy legacy references
+        if not hasattr(self, "_cache"):
+            self._cache = {}
+        if not hasattr(self, "performance_metrics"):
+            self.performance_metrics = {
+                'response_times': [],
+                'cache_hit_rates': {},
+                'error_rates': {},
+                'throughput_metrics': {}
             }
-        
-        # Target Metrics - from research preferences and industry analysis
-        if research_data:
-            input_data_points['target_metrics'] = {
-                'research_preferences': research_data.get('target_audience', 'Not available'),
-                'industry_benchmarks': research_data.get('industry_benchmarks', 'Not available'),
-                'competitor_analysis': research_data.get('competitor_analysis', 'Not available'),
-                'market_research': research_data.get('market_research', 'Not available')
-            }
-        
-        # Content Preferences - from research preferences
-        if research_data:
-            input_data_points['content_preferences'] = {
-                'user_preferences': research_data.get('content_types', 'Not available'),
-                'industry_trends': research_data.get('industry_trends', 'Not available'),
-                'consumption_patterns': research_data.get('consumption_patterns', 'Not available'),
-                'audience_research': research_data.get('audience_research', 'Not available')
-            }
-        
-        # Preferred Formats - from website analysis and research
-        if website_data or research_data:
-            input_data_points['preferred_formats'] = {
-                'existing_content': website_data.get('existing_content_types', 'Not available'),
-                'engagement_metrics': website_data.get('engagement_metrics', 'Not available'),
-                'platform_analysis': research_data.get('platform_preferences', 'Not available'),
-                'content_performance': website_data.get('content_performance', 'Not available')
-            }
-        
-        # Content Frequency - from research preferences
-        if research_data:
-            input_data_points['content_frequency'] = {
-                'audience_research': research_data.get('content_frequency_preferences', 'Not available'),
-                'industry_standards': research_data.get('industry_frequency', 'Not available'),
-                'competitor_frequency': research_data.get('competitor_frequency', 'Not available'),
-                'optimal_timing': research_data.get('optimal_timing', 'Not available')
-            }
-        
-        # Content Budget - from website analysis and industry standards
-        if website_data:
-            input_data_points['content_budget'] = {
-                'website_analysis': website_data.get('budget_indicators', 'Not available'),
-                'industry_standards': website_data.get('industry_budget', 'Not available'),
-                'company_size': website_data.get('company_size', 'Not available'),
-                'market_position': website_data.get('market_position', 'Not available')
-            }
-        
-        # Team Size - from website analysis and company profile
-        if website_data:
-            input_data_points['team_size'] = {
-                'company_profile': website_data.get('company_profile', 'Not available'),
-                'content_volume': website_data.get('content_volume', 'Not available'),
-                'industry_standards': website_data.get('industry_team_size', 'Not available'),
-                'budget_constraints': website_data.get('budget_constraints', 'Not available')
-            }
-        
-        # Implementation Timeline - from research and industry analysis
-        if research_data:
-            input_data_points['implementation_timeline'] = {
-                'project_scope': research_data.get('project_scope', 'Not available'),
-                'resource_availability': research_data.get('resource_availability', 'Not available'),
-                'industry_timeline': research_data.get('industry_timeline', 'Not available'),
-                'complexity_assessment': research_data.get('complexity_assessment', 'Not available')
-            }
-        
-        return input_data_points
+        # No further action required
+        return

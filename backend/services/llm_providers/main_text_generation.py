@@ -79,8 +79,8 @@ def llm_text_gen(prompt: str, system_prompt: Optional[str] = None, json_struct: 
                 elif gpt_provider == "deepseek":
                     model = "deepseek-chat"
             else:
-                logger.warning("[llm_text_gen] No API keys found, using mock response")
-                return _get_mock_response(prompt)
+                logger.error("[llm_text_gen] No API keys found. Structured mock responses are disabled.")
+                raise RuntimeError("No LLM API keys configured. Configure provider API keys to enable AI responses.")
                 
             logger.debug(f"[llm_text_gen] Using provider: {gpt_provider}, model: {model}")
             
@@ -163,7 +163,7 @@ def llm_text_gen(prompt: str, system_prompt: Optional[str] = None, json_struct: 
                 )
             else:
                 logger.error(f"[llm_text_gen] Unknown provider: {gpt_provider}")
-                return _get_mock_response(prompt)
+                raise RuntimeError("Unknown LLM provider.")
         except Exception as provider_error:
             logger.error(f"[llm_text_gen] Provider {gpt_provider} failed: {str(provider_error)}")
             # Try to fallback to another provider
@@ -203,85 +203,13 @@ def llm_text_gen(prompt: str, system_prompt: Optional[str] = None, json_struct: 
                         logger.error(f"[llm_text_gen] Fallback provider {fallback_provider} also failed: {str(fallback_error)}")
                         continue
             
-            # If all providers fail, return mock response
-            logger.warning("[llm_text_gen] All providers failed, using mock response")
-            return _get_mock_response(prompt)
+            # If all providers fail, raise an error (no mock)
+            logger.error("[llm_text_gen] All providers failed. Structured mock responses are disabled.")
+            raise RuntimeError("All LLM providers failed to generate a response.")
 
     except Exception as e:
         logger.error(f"[llm_text_gen] Error during text generation: {str(e)}")
-        return _get_mock_response(prompt)
-
-def _get_mock_response(prompt: str) -> str:
-    """Get a mock response when no API keys are available."""
-    logger.warning("[llm_text_gen] Using mock response - no API keys configured")
-    
-    # Return a structured mock response for style detection
-    if "style analysis" in prompt.lower() or "writing style" in prompt.lower():
-        return json.dumps({
-            "writing_style": {
-                "tone": "professional",
-                "voice": "active",
-                "complexity": "moderate",
-                "engagement_level": "high"
-            },
-            "content_characteristics": {
-                "sentence_structure": "well-structured",
-                "vocabulary_level": "intermediate",
-                "paragraph_organization": "logical flow",
-                "content_flow": "smooth transitions"
-            },
-            "target_audience": {
-                "demographics": ["professionals", "business users"],
-                "expertise_level": "intermediate",
-                "industry_focus": "technology",
-                "geographic_focus": "global"
-            },
-            "content_type": {
-                "primary_type": "blog",
-                "secondary_types": ["article", "guide"],
-                "purpose": "inform",
-                "call_to_action": "moderate"
-            },
-            "recommended_settings": {
-                "writing_tone": "professional",
-                "target_audience": "business professionals",
-                "content_type": "blog",
-                "creativity_level": "medium",
-                "geographic_location": "global"
-            }
-        })
-    
-    # Handle pattern analysis requests
-    if "pattern" in prompt.lower() or "recurring" in prompt.lower():
-        return json.dumps({
-            "patterns": {
-                "sentence_length": "medium",
-                "vocabulary_patterns": ["technical terms", "professional language"],
-                "rhetorical_devices": ["examples", "analogies"],
-                "paragraph_structure": "topic sentence followed by supporting details",
-                "transition_phrases": ["furthermore", "additionally", "however"]
-            },
-            "style_consistency": "high",
-            "unique_elements": ["clear structure", "professional tone", "evidence-based content"]
-        })
-    
-    # Handle guidelines generation requests
-    if "guidelines" in prompt.lower() or "recommendations" in prompt.lower():
-        return json.dumps({
-            "guidelines": {
-                "tone_recommendations": ["maintain professional tone", "use clear language"],
-                "structure_guidelines": ["start with introduction", "use headings", "conclude with summary"],
-                "vocabulary_suggestions": ["avoid jargon", "use industry-specific terms appropriately"],
-                "engagement_tips": ["include examples", "use active voice", "ask questions"],
-                "audience_considerations": ["consider technical level", "provide context"]
-            },
-            "best_practices": ["research thoroughly", "cite sources", "update regularly"],
-            "avoid_elements": ["overly technical language", "long paragraphs", "passive voice"],
-            "content_strategy": "focus on providing value while maintaining professional credibility"
-        })
-    
-    # Generic mock response for other content generation
-    return "This is a mock response. Please configure API keys for real content generation. To get started, visit the onboarding process and configure your AI provider API keys."
+        raise
 
 def check_gpt_provider(gpt_provider: str) -> bool:
     """Check if the specified GPT provider is supported."""

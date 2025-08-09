@@ -26,6 +26,7 @@ export class ContentPlanningOrchestrator {
   private serviceStatuses: Map<string, ServiceStatus> = new Map();
   private onProgressUpdate?: (statuses: ServiceStatus[]) => void;
   private onDataUpdate?: (data: Partial<DashboardData>) => void;
+  private latestDashboardData: DashboardData | null = null;
 
   constructor() {
     this.initializeServiceStatuses();
@@ -128,6 +129,7 @@ export class ContentPlanningOrchestrator {
       }
     });
 
+    this.latestDashboardData = dashboardData;
     return dashboardData;
   }
 
@@ -227,51 +229,77 @@ export class ContentPlanningOrchestrator {
         message: 'Initializing AI analysis...'
       });
 
-      return new Promise<{ aiInsights: any[]; aiRecommendations: any[] }>((resolve, reject) => {
-        contentPlanningApi.streamAIAnalytics(
-          // Progress callback
-          (progressData) => {
-            this.updateServiceStatus('aiAnalytics', {
-              progress: progressData.progress,
-              message: progressData.message || 'AI analysis in progress...'
-            });
-          },
-          // Complete callback
-          (aiData) => {
-            this.updateServiceStatus('aiAnalytics', {
-              status: 'success',
-              progress: 100,
-              message: `Generated ${aiData.insights?.length || 0} insights and ${aiData.recommendations?.length || 0} recommendations`,
-              data: aiData
-            });
-
-            this.notifyDataUpdate({
-              aiInsights: aiData.insights || [],
-              aiRecommendations: aiData.recommendations || []
-            });
-
-            resolve({
-              aiInsights: aiData.insights || [],
-              aiRecommendations: aiData.recommendations || []
-            });
-          },
-          // Error callback
-          (error) => {
-            this.updateServiceStatus('aiAnalytics', {
-              status: 'error',
-              progress: 0,
-              message: 'AI analysis failed',
-              error: error.message
-            });
-            reject(error);
+      // New approach: stream strategic intelligence data and show status from AI generation SSE
+      return await new Promise<{ aiInsights: any[]; aiRecommendations: any[] }>(async (resolve) => {
+        // 1) Execution status stream (best-effort; ignore if no active strategy)
+        try {
+          const currentStrategyId = this.latestDashboardData?.strategies?.[0]?.id;
+          if (currentStrategyId) {
+            const statusSource = await contentPlanningApi.streamAIGenerationStatus(currentStrategyId);
+            statusSource.onmessage = (event: MessageEvent) => {
+              try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'progress') {
+                  this.updateServiceStatus('aiAnalytics', {
+                    status: 'loading',
+                    progress: Math.min(99, data.progress || 20),
+                    message: data.detail || 'AI generation in progress...'
+                  });
+                }
+                if (data.type === 'result') {
+                  this.updateServiceStatus('aiAnalytics', {
+                    status: data.status === 'completed' ? 'success' : 'error',
+                    progress: 100,
+                    message: data.status === 'completed' ? 'AI generation completed' : 'AI generation failed'
+                  });
+                  statusSource.close();
+                }
+              } catch {}
+            };
+            statusSource.onerror = () => statusSource.close();
           }
-        );
+        } catch {}
+
+        // 2) Data stream for insights (Strategic Intelligence)
+        const intelSource = await contentPlanningApi.streamStrategicIntelligence(1);
+          contentPlanningApi.handleSSEData(
+            intelSource,
+            (data) => {
+              if (data.type === 'progress') {
+                this.updateServiceStatus('aiAnalytics', {
+                  status: 'loading',
+                  progress: Math.max(20, data.progress || 40),
+                  message: data.message || 'Analyzing strategic intelligence...'
+                });
+              } else if (data.type === 'result' && data.status === 'success') {
+                this.updateServiceStatus('aiAnalytics', {
+                  status: 'success',
+                  progress: 100,
+                  message: 'Strategic intelligence ready',
+                  data: data.data
+                });
+                // Map to orchestrator fields if needed
+                this.notifyDataUpdate({ aiInsights: data.data?.recommendations || [], aiRecommendations: [] });
+                resolve({ aiInsights: data.data?.recommendations || [], aiRecommendations: [] });
+              } else if (data.type === 'error') {
+                this.updateServiceStatus('aiAnalytics', {
+                  status: 'error',
+                  progress: 0,
+                  message: data.message || 'Failed to load strategic intelligence'
+                });
+                resolve({ aiInsights: [], aiRecommendations: [] });
+              }
+            },
+            () => {
+              resolve({ aiInsights: [], aiRecommendations: [] });
+            }
+          );
       });
     } catch (error: any) {
       this.updateServiceStatus('aiAnalytics', {
         status: 'error',
         progress: 0,
-        message: 'AI analysis failed',
+        message: 'Failed to load AI analytics',
         error: error.message
       });
       return { aiInsights: [], aiRecommendations: [] };

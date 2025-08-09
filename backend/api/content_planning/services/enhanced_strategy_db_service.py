@@ -12,6 +12,7 @@ from sqlalchemy import and_, or_
 
 # Import database models
 from models.enhanced_strategy_models import EnhancedContentStrategy, EnhancedAIAnalysisResult, OnboardingDataIntegration
+from models.enhanced_strategy_models import ContentStrategyAutofillInsights
 
 logger = logging.getLogger(__name__)
 
@@ -229,4 +230,50 @@ class EnhancedStrategyDBService:
             }
         except Exception as e:
             logger.error(f"Error getting strategy export data for strategy {strategy_id}: {str(e)}")
+            return None 
+
+    async def save_autofill_insights(self, *, strategy_id: int, user_id: int, payload: Dict[str, Any]) -> Optional[ContentStrategyAutofillInsights]:
+        """Persist accepted auto-fill inputs used to create a strategy."""
+        try:
+            record = ContentStrategyAutofillInsights(
+                strategy_id=strategy_id,
+                user_id=user_id,
+                accepted_fields=payload.get('accepted_fields') or {},
+                sources=payload.get('sources') or {},
+                input_data_points=payload.get('input_data_points') or {},
+                quality_scores=payload.get('quality_scores') or {},
+                confidence_levels=payload.get('confidence_levels') or {},
+                data_freshness=payload.get('data_freshness') or {}
+            )
+            self.db.add(record)
+            self.db.commit()
+            self.db.refresh(record)
+            return record
+        except Exception as e:
+            logger.error(f"Error saving autofill insights for strategy {strategy_id}: {str(e)}")
+            self.db.rollback()
+            return None
+
+    async def get_latest_autofill_insights(self, strategy_id: int) -> Optional[Dict[str, Any]]:
+        """Fetch the most recent accepted auto-fill snapshot for a strategy."""
+        try:
+            record = self.db.query(ContentStrategyAutofillInsights).filter(
+                ContentStrategyAutofillInsights.strategy_id == strategy_id
+            ).order_by(ContentStrategyAutofillInsights.created_at.desc()).first()
+            if not record:
+                return None
+            return {
+                'id': record.id,
+                'strategy_id': record.strategy_id,
+                'user_id': record.user_id,
+                'accepted_fields': record.accepted_fields,
+                'sources': record.sources,
+                'input_data_points': record.input_data_points,
+                'quality_scores': record.quality_scores,
+                'confidence_levels': record.confidence_levels,
+                'data_freshness': record.data_freshness,
+                'created_at': record.created_at.isoformat() if record.created_at else None
+            }
+        except Exception as e:
+            logger.error(f"Error fetching latest autofill insights for strategy {strategy_id}: {str(e)}")
             return None 

@@ -305,19 +305,28 @@ class OnboardingDataIntegrationService:
             ).first()
 
             if existing_record:
-                existing_record.website_analysis_data = integrated_data.get('website_analysis', {})
-                existing_record.research_preferences_data = integrated_data.get('research_preferences', {})
-                existing_record.api_keys_data = integrated_data.get('api_keys_data', {})
+                # Use legacy columns that are known to exist
+                if hasattr(existing_record, 'website_analysis_data'):
+                    existing_record.website_analysis_data = integrated_data.get('website_analysis', {})
+                if hasattr(existing_record, 'research_preferences_data'):
+                    existing_record.research_preferences_data = integrated_data.get('research_preferences', {})
+                if hasattr(existing_record, 'api_keys_data'):
+                    existing_record.api_keys_data = integrated_data.get('api_keys_data', {})
                 existing_record.updated_at = datetime.utcnow()
             else:
-                new_record = OnboardingDataIntegration(
-                    user_id=user_id,
-                    website_analysis_data=integrated_data.get('website_analysis', {}),
-                    research_preferences_data=integrated_data.get('research_preferences', {}),
-                    api_keys_data=integrated_data.get('api_keys_data', {}),
-                    created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow()
-                )
+                new_kwargs = {
+                    'user_id': user_id,
+                    'created_at': datetime.utcnow(),
+                    'updated_at': datetime.utcnow()
+                }
+                if 'website_analysis' in integrated_data:
+                    new_kwargs['website_analysis_data'] = integrated_data.get('website_analysis', {})
+                if 'research_preferences' in integrated_data:
+                    new_kwargs['research_preferences_data'] = integrated_data.get('research_preferences', {})
+                if 'api_keys_data' in integrated_data:
+                    new_kwargs['api_keys_data'] = integrated_data.get('api_keys_data', {})
+
+                new_record = OnboardingDataIntegration(**new_kwargs)
                 db.add(new_record)
 
             db.commit()
@@ -326,6 +335,8 @@ class OnboardingDataIntegrationService:
         except Exception as e:
             logger.error(f"Error storing integrated data for user {user_id}: {str(e)}")
             db.rollback()
+            # Soft-fail storage: do not break the refresh path
+            return
 
     def _get_fallback_data(self) -> Dict[str, Any]:
         """Get fallback data when processing fails."""

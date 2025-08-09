@@ -71,6 +71,7 @@ import { getEducationalContent } from './ContentStrategyBuilder/utils/educationa
 import CategoryList from './ContentStrategyBuilder/components/CategoryList';
 import ProgressTracker from './ContentStrategyBuilder/components/ProgressTracker';
 import HeaderSection from './ContentStrategyBuilder/components/HeaderSection';
+import { contentPlanningApi } from '../../../services/contentPlanningApi';
 
 const ContentStrategyBuilder: React.FC = () => {
   const {
@@ -112,6 +113,10 @@ const ContentStrategyBuilder: React.FC = () => {
   const [showEducationalInfo, setShowEducationalInfo] = useState<string | null>(null);
   const [showAIRecommendations, setShowAIRecommendations] = useState(false);
   const [showDataSourceTransparency, setShowDataSourceTransparency] = useState(false);
+  const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
+  const [refreshProgress, setRefreshProgress] = useState<number>(0);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
 
   // Ref to track if we've already set the default category
   const hasSetDefaultCategory = useRef(false);
@@ -310,8 +315,20 @@ const ContentStrategyBuilder: React.FC = () => {
 
       {/* Error Alert */}
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
+        <Alert
+          severity="error"
+          sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+          action={
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button size="small" variant="outlined" onClick={() => autoPopulateFromOnboarding(true)} startIcon={<RefreshIcon />}>Retry</Button>
+              <Button size="small" variant="contained" color="primary" onClick={() => setShowDataSourceTransparency(true)} startIcon={<InfoIcon />}>Why?</Button>
+            </Box>
+          }
+        >
+          <Box>
+            <Typography variant="subtitle2">Real data required</Typography>
+            <Typography variant="body2">{error || 'We could not auto-populate because required onboarding/analysis data is missing. Connect sources or complete onboarding, then retry.'}</Typography>
+          </Box>
         </Alert>
       )}
 
@@ -380,7 +397,87 @@ const ContentStrategyBuilder: React.FC = () => {
               aiGenerating={aiGenerating}
               onShowAIRecommendations={() => setShowAIRecommendations(true)}
               onShowDataSourceTransparency={() => setShowDataSourceTransparency(true)}
-              onRefreshData={autoPopulateFromOnboarding}
+              onRefreshData={() => autoPopulateFromOnboarding()}
+              onRefreshAI={async () => {
+                try {
+                  setAIGenerating(true);
+                  setIsRefreshing(true);
+                  setRefreshError(null);
+                  setRefreshMessage('Initializing refresh…');
+                  setRefreshProgress(5);
+                  const es = await contentPlanningApi.streamAutofillRefresh(1, true, true);
+                  es.onmessage = (evt: MessageEvent) => {
+                    try {
+                      const data = JSON.parse(evt.data);
+                      if (data.type === 'status' || data.type === 'progress') {
+                        setRefreshMessage(data.message || 'Refreshing…');
+                        if (typeof data.progress === 'number') setRefreshProgress(data.progress);
+                      }
+                      if (data.type === 'result') {
+                        const payload = data.data || {};
+                        const fields = payload.fields || {};
+                        const sources = payload.sources || {};
+                        const inputDataPoints = payload.input_data_points || {};
+                        const meta = payload.meta || {};
+                        const fieldValues: Record<string, any> = {};
+                        Object.keys(fields).forEach((fieldId) => {
+                          const fieldData = fields[fieldId];
+                          if (fieldData && typeof fieldData === 'object' && 'value' in fieldData) {
+                            fieldValues[fieldId] = fieldData.value;
+                          }
+                        });
+                        useEnhancedStrategyStore.setState((state) => ({
+                          autoPopulatedFields: { ...state.autoPopulatedFields, ...fieldValues },
+                          dataSources: { ...state.dataSources, ...sources },
+                          inputDataPoints,
+                          formData: { ...state.formData, ...fieldValues }
+                        }));
+                        if (!meta.ai_used || meta.ai_overrides_count === 0) {
+                          const msg = 'AI did not produce new values. Please try again or complete onboarding data.';
+                          setError(msg);
+                          setRefreshError(msg);
+                          setRefreshMessage('No new AI values available.');
+                        }
+                        es.close();
+                        setAIGenerating(false);
+                        setIsRefreshing(false);
+                        if (!meta || meta.ai_overrides_count > 0) {
+                          setRefreshMessage(null);
+                          setRefreshProgress(0);
+                        }
+                      }
+                      if (data.type === 'error') {
+                        const msg = data.message || 'AI refresh failed.';
+                        setRefreshError(msg);
+                        es.close();
+                        setAIGenerating(false);
+                        setIsRefreshing(false);
+                        setRefreshMessage('Refresh failed.');
+                      }
+                    } catch (err: any) {
+                      console.error('SSE parse error:', err);
+                    }
+                  };
+                  es.onerror = (err: any) => {
+                    console.error('SSE connection error:', err);
+                    es.close();
+                    setAIGenerating(false);
+                    setIsRefreshing(false);
+                    setRefreshError('AI refresh connection lost. Please try again.');
+                    setRefreshMessage('Connection lost.');
+                  };
+                } catch (e) {
+                  console.error('AI refresh error', e);
+                  setAIGenerating(false);
+                  setIsRefreshing(false);
+                  setRefreshError('AI refresh failed. Please try again.');
+                  setRefreshMessage('Refresh failed.');
+                }
+              }}
+              refreshMessage={refreshMessage}
+              refreshProgress={refreshProgress}
+              isRefreshing={isRefreshing}
+              refreshError={refreshError}
             />
 
             {/* Category Progress - Compact with Futuristic Styling */}
@@ -428,7 +525,7 @@ const ContentStrategyBuilder: React.FC = () => {
                   size="small"
                   variant="outlined"
                   startIcon={<RefreshIcon />}
-                  onClick={autoPopulateFromOnboarding}
+                  onClick={() => autoPopulateFromOnboarding(true)}
                   fullWidth
                 >
                   Refresh Data
@@ -518,8 +615,8 @@ const ContentStrategyBuilder: React.FC = () => {
                 {/* Category Fields */}
                 <Box sx={{ mt: 1 }}>
                   <Grid container spacing={2}>
-                    {STRATEGIC_INPUT_FIELDS
-                      .filter(field => field.category === activeCategory)
+                  {STRATEGIC_INPUT_FIELDS
+                    .filter(field => field.category === activeCategory)
                       .map((field, index) => {
                         // Determine grid size based on field type for better layout organization
                         const type = field.type;
@@ -531,30 +628,30 @@ const ContentStrategyBuilder: React.FC = () => {
                         const gridMd = forceFullWidth ? 12 : (isWideField ? 12 : isMediumField ? 6 : 4);
                         const gridLg = forceFullWidth ? 12 : (isWideField ? 12 : isMediumField ? 6 : 4);
                         const gridSm = 12;
-
-                        return (
+                      
+                      return (
                           <Grid item xs={12} sm={gridSm} md={gridMd} lg={gridLg} key={field.id}>
                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
-                              <StrategicInputField
-                                fieldId={field.id}
-                                value={formData[field.id]}
-                                error={formErrors[field.id]}
-                                autoPopulated={!!autoPopulatedFields[field.id]}
-                                dataSource={dataSources[field.id]}
-                                confidenceLevel={autoPopulatedFields[field.id] ? 0.8 : undefined}
-                                dataQuality={autoPopulatedFields[field.id] ? 'High Quality' : undefined}
-                                onChange={(value: any) => updateFormField(field.id, value)}
-                                onValidate={() => validateFormField(field.id)}
-                                onShowTooltip={() => setShowTooltip(field.id)}
+                          <StrategicInputField
+                            fieldId={field.id}
+                            value={formData[field.id]}
+                            error={formErrors[field.id]}
+                            autoPopulated={!!autoPopulatedFields[field.id]}
+                            dataSource={dataSources[field.id]}
+                            confidenceLevel={autoPopulatedFields[field.id] ? 0.8 : undefined}
+                            dataQuality={autoPopulatedFields[field.id] ? 'High Quality' : undefined}
+                            onChange={(value: any) => updateFormField(field.id, value)}
+                            onValidate={() => validateFormField(field.id)}
+                            onShowTooltip={() => setShowTooltip(field.id)}
                                 onViewDataSource={() => setShowDataSourceTransparency(true)}
                                 accentColorKey={getCategoryColor(activeCategory) as any}
                                 isCompact={isCompactField}
-                              />
+                          />
                             </motion.div>
-                          </Grid>
-                        );
-                      })}
-                  </Grid>
+                        </Grid>
+                      );
+                    })}
+                </Grid>
                 </Box>
 
                 {/* Category Actions */}
@@ -567,26 +664,26 @@ const ContentStrategyBuilder: React.FC = () => {
                       reviewedCategories: Array.from(reviewedCategories)
                     });
                     return !isReviewed ? (
-                      <Button
-                        variant="contained"
+                    <Button
+                      variant="contained"
                         onClick={() => {
                           console.log('🔘 Button clicked! activeCategory:', activeCategory);
                           console.log('🔘 reviewedCategories:', Array.from(reviewedCategories));
                           console.log('🔘 isMarkingReviewed:', isMarkingReviewed);
                           handleConfirmCategoryReviewWrapper();
                         }}
-                        startIcon={isMarkingReviewed ? <CircularProgress size={20} /> : <CheckCircleIcon />}
-                        disabled={isMarkingReviewed}
-                      >
-                        {isMarkingReviewed ? 'Marking as Reviewed...' : 'Mark as Reviewed'}
-                      </Button>
-                    ) : (
-                      <Chip
-                        label="Category Reviewed"
-                        color="success"
-                        icon={<CheckCircleIcon />}
-                        sx={{ px: 2, py: 1 }}
-                      />
+                      startIcon={isMarkingReviewed ? <CircularProgress size={20} /> : <CheckCircleIcon />}
+                      disabled={isMarkingReviewed}
+                    >
+                      {isMarkingReviewed ? 'Marking as Reviewed...' : 'Mark as Reviewed'}
+                    </Button>
+                  ) : (
+                    <Chip
+                      label="Category Reviewed"
+                      color="success"
+                      icon={<CheckCircleIcon />}
+                      sx={{ px: 2, py: 1 }}
+                    />
                     );
                   })()}
                   

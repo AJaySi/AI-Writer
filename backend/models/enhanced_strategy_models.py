@@ -80,6 +80,9 @@ class EnhancedContentStrategy(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     completion_percentage = Column(Float, default=0.0)  # Track input completion
     data_source_transparency = Column(JSON, nullable=True)  # Track data sources for auto-population
+
+    # Relationships
+    autofill_insights = relationship("ContentStrategyAutofillInsights", back_populates="strategy", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<EnhancedContentStrategy(id={self.id}, name='{self.name}', industry='{self.industry}')>"
@@ -238,17 +241,17 @@ class OnboardingDataIntegration(Base):
     user_id = Column(Integer, nullable=False)
     strategy_id = Column(Integer, ForeignKey("enhanced_content_strategies.id"), nullable=True)
     
-    # Onboarding data sources
+    # Legacy onboarding storage fields (match existing DB schema)
     website_analysis_data = Column(JSON, nullable=True)  # Data from website analysis
     research_preferences_data = Column(JSON, nullable=True)  # Data from research preferences
     api_keys_data = Column(JSON, nullable=True)  # API configuration data
     
-    # Integration mapping
+    # Integration mapping and user edits
     field_mappings = Column(JSON, nullable=True)  # Mapping of onboarding fields to strategy fields
     auto_populated_fields = Column(JSON, nullable=True)  # Fields auto-populated from onboarding
     user_overrides = Column(JSON, nullable=True)  # Fields manually overridden by user
     
-    # Data quality and confidence
+    # Data quality and transparency
     data_quality_scores = Column(JSON, nullable=True)  # Quality scores for each data source
     confidence_levels = Column(JSON, nullable=True)  # Confidence levels for auto-populated data
     data_freshness = Column(JSON, nullable=True)  # How recent the onboarding data is
@@ -256,12 +259,9 @@ class OnboardingDataIntegration(Base):
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    def __repr__(self):
-        return f"<OnboardingDataIntegration(id={self.id}, user_id={self.user_id}, strategy_id={self.strategy_id})>"
-    
+
     def to_dict(self):
-        """Convert model to dictionary."""
+        """Convert model to dictionary (legacy fields)."""
         return {
             'id': self.id,
             'user_id': self.user_id,
@@ -277,4 +277,25 @@ class OnboardingDataIntegration(Base):
             'data_freshness': self.data_freshness,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
-        } 
+        }
+
+# New model to persist accepted auto-fill inputs used to create a strategy
+class ContentStrategyAutofillInsights(Base):
+    __tablename__ = "content_strategy_autofill_insights"
+
+    id = Column(Integer, primary_key=True)
+    strategy_id = Column(Integer, ForeignKey("enhanced_content_strategies.id"), nullable=False)
+    user_id = Column(Integer, nullable=False)
+
+    # Full snapshot of accepted inputs and transparency at time of strategy creation/confirmation
+    accepted_fields = Column(JSON, nullable=False)
+    sources = Column(JSON, nullable=True)
+    input_data_points = Column(JSON, nullable=True)
+    quality_scores = Column(JSON, nullable=True)
+    confidence_levels = Column(JSON, nullable=True)
+    data_freshness = Column(JSON, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationship back to strategy
+    strategy = relationship("EnhancedContentStrategy", back_populates="autofill_insights") 

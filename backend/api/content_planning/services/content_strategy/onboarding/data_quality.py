@@ -92,7 +92,8 @@ class DataQualityService:
 
         except Exception as e:
             logger.error(f"Error assessing data quality: {str(e)}")
-            return self._get_fallback_quality_assessment()
+            # Raise exception instead of returning fallback data
+            raise Exception(f"Failed to assess data quality: {str(e)}")
 
     def _assess_website_analysis_quality(self, website_data: Dict[str, Any]) -> Dict[str, Any]:
         """Assess quality of website analysis data."""
@@ -500,22 +501,6 @@ class DataQualityService:
         except Exception as e:
             logger.error(f"Error identifying quality issues: {str(e)}")
             return ["Unable to identify issues due to assessment error"]
-
-    def _get_fallback_quality_assessment(self) -> Dict[str, Any]:
-        """Get fallback quality assessment when assessment fails."""
-        return {
-            'overall_score': 0.0,
-            'completeness': 0.0,
-            'freshness': 0.0,
-            'accuracy': 0.0,
-            'relevance': 0.0,
-            'consistency': 0.0,
-            'confidence': 0.0,
-            'quality_level': 'poor',
-            'recommendations': ['Unable to assess data quality'],
-            'issues': ['Quality assessment failed'],
-            'assessment_timestamp': datetime.utcnow().isoformat()
-        }
 
     def validate_field_data(self, field_data: Dict[str, Any]) -> Dict[str, Any]:
         """Validate individual field data."""
