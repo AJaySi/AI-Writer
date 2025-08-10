@@ -13,6 +13,7 @@ import asyncio
 from datetime import datetime, timedelta
 from collections import defaultdict
 import time
+import re
 
 # Import database
 from services.database import get_db_session
@@ -339,24 +340,138 @@ async def create_enhanced_strategy(
     try:
         logger.info("🚀 Creating enhanced content strategy")
         
-        # Validate required fields
+        # Basic required checks
         if not strategy_data.get('user_id'):
             raise HTTPException(status_code=400, detail="user_id is required")
-        
         if not strategy_data.get('name'):
             raise HTTPException(status_code=400, detail="strategy name is required")
-        
-        # Create enhanced strategy
+
+        def parse_float(value: Any) -> Optional[float]:
+            if value is None:
+                return None
+            if isinstance(value, (int, float)):
+                return float(value)
+            if isinstance(value, str):
+                s = value.strip().lower().replace(",", "")
+                # Handle percentage
+                if s.endswith('%'):
+                    try:
+                        return float(s[:-1])
+                    except Exception:
+                        pass
+                # Handle k/m suffix
+                mul = 1.0
+                if s.endswith('k'):
+                    mul = 1_000.0
+                    s = s[:-1]
+                elif s.endswith('m'):
+                    mul = 1_000_000.0
+                    s = s[:-1]
+                m = re.search(r"[-+]?\d*\.?\d+", s)
+                if m:
+                    try:
+                        return float(m.group(0)) * mul
+                    except Exception:
+                        return None
+            return None
+
+        def parse_int(value: Any) -> Optional[int]:
+            f = parse_float(value)
+            if f is None:
+                return None
+            try:
+                return int(round(f))
+            except Exception:
+                return None
+
+        def parse_json(value: Any) -> Optional[Any]:
+            if value is None:
+                return None
+            if isinstance(value, (dict, list)):
+                return value
+            if isinstance(value, str):
+                try:
+                    return json.loads(value)
+                except Exception:
+                    # Accept plain strings in JSON columns
+                    return value
+            return None
+
+        def parse_array(value: Any) -> Optional[list]:
+            if value is None:
+                return None
+            if isinstance(value, list):
+                return value
+            if isinstance(value, str):
+                # Try JSON first
+                try:
+                    j = json.loads(value)
+                    if isinstance(j, list):
+                        return j
+                except Exception:
+                    pass
+                parts = [p.strip() for p in value.split(',') if p.strip()]
+                return parts if parts else None
+            return None
+
+        # Coerce and validate fields
+        warnings: Dict[str, str] = {}
+        cleaned = dict(strategy_data)
+
+        # Numerics
+        content_budget = parse_float(strategy_data.get('content_budget'))
+        if strategy_data.get('content_budget') is not None and content_budget is None:
+            warnings['content_budget'] = 'Could not parse number; saved as null'
+        cleaned['content_budget'] = content_budget
+
+        team_size = parse_int(strategy_data.get('team_size'))
+        if strategy_data.get('team_size') is not None and team_size is None:
+            warnings['team_size'] = 'Could not parse integer; saved as null'
+        cleaned['team_size'] = team_size
+
+        # Arrays
+        preferred_formats = parse_array(strategy_data.get('preferred_formats'))
+        if strategy_data.get('preferred_formats') is not None and preferred_formats is None:
+            warnings['preferred_formats'] = 'Could not parse list; saved as null'
+        cleaned['preferred_formats'] = preferred_formats
+
+        # JSON fields
+        json_fields = [
+            'business_objectives','target_metrics','performance_metrics','content_preferences',
+            'consumption_patterns','audience_pain_points','buying_journey','seasonal_trends',
+            'engagement_metrics','top_competitors','competitor_content_strategies','market_gaps',
+            'industry_trends','emerging_trends','content_mix','optimal_timing','quality_metrics',
+            'editorial_guidelines','brand_voice','traffic_sources','conversion_rates','content_roi_targets',
+            'target_audience','content_pillars','ai_recommendations'
+        ]
+        for field in json_fields:
+            raw = strategy_data.get(field)
+            parsed = parse_json(raw)
+            # parsed may be a plain string; accept it
+            cleaned[field] = parsed
+
+        # Booleans
+        if 'ab_testing_capabilities' in strategy_data:
+            cleaned['ab_testing_capabilities'] = bool(strategy_data.get('ab_testing_capabilities'))
+
+        # Early return on validation errors
+        if warnings:
+            logger.warning(f"ℹ️ Strategy create warnings: {warnings}")
+
+        # Proceed with create using cleaned data
         db_service = EnhancedStrategyDBService(db)
         enhanced_service = EnhancedStrategyService(db_service)
-        created_strategy = await enhanced_service.create_enhanced_strategy(strategy_data, db)
+        created_strategy = await enhanced_service.create_enhanced_strategy(cleaned, db)
         
-        logger.info(f"✅ Enhanced strategy created successfully: {created_strategy.get('id')}")
+        logger.info(f"✅ Enhanced strategy created successfully: {created_strategy.get('id') if isinstance(created_strategy, dict) else getattr(created_strategy,'id', None)}")
         
-        return ResponseBuilder.create_success_response(
+        resp = ResponseBuilder.create_success_response(
             message="Enhanced content strategy created successfully",
             data=created_strategy
         )
+        if warnings:
+            resp['warnings'] = warnings
+        return resp
         
     except HTTPException:
         raise

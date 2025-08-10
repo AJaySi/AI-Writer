@@ -419,31 +419,69 @@ const ContentStrategyBuilder: React.FC = () => {
                         const sources = payload.sources || {};
                         const inputDataPoints = payload.input_data_points || {};
                         const meta = payload.meta || {};
+                        
+                        console.log('🎯 AI Refresh Result - Payload:', payload);
+                        console.log('🎯 AI Refresh Result - Fields:', fields);
+                        console.log('🎯 AI Refresh Result - Meta:', meta);
+                        
                         const fieldValues: Record<string, any> = {};
                         Object.keys(fields).forEach((fieldId) => {
                           const fieldData = fields[fieldId];
                           if (fieldData && typeof fieldData === 'object' && 'value' in fieldData) {
                             fieldValues[fieldId] = fieldData.value;
+                            console.log(`✅ Processed field ${fieldId}:`, fieldData.value);
+                          } else {
+                            console.log(`❌ Skipped field ${fieldId}:`, fieldData);
                           }
                         });
-                        useEnhancedStrategyStore.setState((state) => ({
-                          autoPopulatedFields: { ...state.autoPopulatedFields, ...fieldValues },
-                          dataSources: { ...state.dataSources, ...sources },
-                          inputDataPoints,
-                          formData: { ...state.formData, ...fieldValues }
-                        }));
-                        if (!meta.ai_used || meta.ai_overrides_count === 0) {
-                          const msg = 'AI did not produce new values. Please try again or complete onboarding data.';
+                        
+                        console.log('🎯 Final fieldValues:', fieldValues);
+                        
+                        useEnhancedStrategyStore.setState((state) => {
+                          const newState = {
+                            autoPopulatedFields: { ...state.autoPopulatedFields, ...fieldValues },
+                            dataSources: { ...state.dataSources, ...sources },
+                            inputDataPoints,
+                            formData: { ...state.formData, ...fieldValues }
+                          };
+                          console.log('🎯 Updated store state:', newState);
+                          return newState;
+                        });
+                        
+                        // Enhanced success/error messaging based on retry attempts and success rate
+                        const attempts = meta.attempts || 1;
+                        const successRate = meta.success_rate || 0;
+                        const aiOverridesCount = meta.ai_overrides_count || 0;
+                        
+                        if (!meta.ai_used || aiOverridesCount === 0) {
+                          const msg = meta.error || 'AI did not produce new values. Please try again or complete onboarding data.';
                           setError(msg);
                           setRefreshError(msg);
-                          setRefreshMessage('No new AI values available.');
+                          setRefreshMessage(`No new AI values available. (${attempts} attempt${attempts > 1 ? 's' : ''})`);
+                        } else {
+                          // Show success message with retry info if applicable
+                          if (attempts > 1) {
+                            setRefreshMessage(`AI refresh completed successfully! Generated ${aiOverridesCount} fields in ${attempts} attempts (${successRate.toFixed(1)}% success rate).`);
+                          } else {
+                            setRefreshMessage(`AI refresh completed! Generated ${aiOverridesCount} fields (${successRate.toFixed(1)}% success rate).`);
+                          }
+                          
+                          // Show warning if success rate is low but we got some data
+                          if (successRate < 70 && aiOverridesCount > 0) {
+                            setRefreshError(`Warning: Only ${successRate.toFixed(1)}% of fields were filled. Some fields may need manual input.`);
+                          }
                         }
+                        
                         es.close();
                         setAIGenerating(false);
                         setIsRefreshing(false);
-                        if (!meta || meta.ai_overrides_count > 0) {
-                          setRefreshMessage(null);
-                          setRefreshProgress(0);
+                        
+                        // Clear success message after a delay
+                        if (aiOverridesCount > 0) {
+                          setTimeout(() => {
+                            setRefreshMessage(null);
+                            setRefreshProgress(0);
+                          }, 5000);
                         }
                       }
                       if (data.type === 'error') {

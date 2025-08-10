@@ -522,7 +522,10 @@ Format as structured JSON with detailed assessment and optimization guidance.
                 error_message=error_message
             )
             self.metrics.append(metrics)
-            raise Exception(error_message)
+            # Don't raise JSON decode errors as fatal - let the calling code handle them
+            # The Gemini provider should have already attempted to repair malformed JSON
+            result = {"error": error_message, "raw_response": str(e)}
+            success = False
         except Exception as e:
             error_message = f"AI call error for {service_type.value}: {str(e)}"
             logger.error(error_message)

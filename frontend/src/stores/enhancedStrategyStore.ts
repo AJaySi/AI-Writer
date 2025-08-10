@@ -496,9 +496,9 @@ export const STRATEGIC_INPUT_FIELDS: StrategicInputField[] = [
     label: 'Traffic Sources',
     description: 'Primary traffic sources',
     tooltip: 'Identify your main traffic sources to understand where your audience comes from and optimize accordingly.',
-    type: 'json',
+    type: 'multiselect',
     required: false,
-    placeholder: 'Define traffic sources'
+    options: ['Organic Search', 'Social Media', 'Email Marketing', 'Direct Traffic', 'Referral Traffic', 'Paid Search', 'Display Advertising', 'Content Marketing', 'Influencer Marketing', 'Video Platforms']
   },
   {
     id: 'conversion_rates',

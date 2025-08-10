@@ -54,7 +54,18 @@ class AutoFillRefreshService:
             except Exception as e:
                 logger.error("AI-only structured generation failed | user=%s | err=%s", user_id, repr(e))
                 logger.error("Traceback:\n%s", traceback.format_exc())
-                raise
+                # Return graceful fallback instead of raising
+                return {
+                    'fields': {},
+                    'sources': {},
+                    'meta': {
+                        'ai_used': False,
+                        'ai_overrides_count': 0,
+                        'ai_override_fields': [],
+                        'ai_only': True,
+                        'error': str(e)
+                    }
+                }
 
         # Fallback to previous behavior (DB + sparse overrides)
         payload = await self.autofill.get_autofill(user_id)

@@ -802,6 +802,9 @@ class EnhancedStrategyService:
                 payload = await service.get_autofill(user_id)
                 logger.info(f"Retrieved comprehensive onboarding data for user {user_id}")
                 return payload
+            except Exception as e:
+                logger.error(f"Error getting onboarding data: {str(e)}")
+                raise
             finally:
                 temp_db.close()
         except Exception as e:
@@ -821,15 +824,15 @@ class EnhancedStrategyService:
         if 'content_goals' in website_data and website_data.get('content_goals'):
             fields['business_objectives'] = {
                 'value': website_data.get('content_goals'),
-            'source': 'website_analysis',
+                'source': 'website_analysis',
                 'confidence': website_data.get('confidence_level')
-        }
+            }
         
         # Prefer explicit target_metrics; otherwise derive from performance_metrics
         if website_data.get('target_metrics'):
             fields['target_metrics'] = {
                 'value': website_data.get('target_metrics'),
-            'source': 'website_analysis',
+                'source': 'website_analysis',
                 'confidence': website_data.get('confidence_level')
             }
         elif website_data.get('performance_metrics'):
@@ -843,35 +846,35 @@ class EnhancedStrategyService:
         if website_data.get('content_budget') is not None:
             fields['content_budget'] = {
                 'value': website_data.get('content_budget'),
-            'source': 'website_analysis',
+                'source': 'website_analysis',
                 'confidence': website_data.get('confidence_level')
             }
         elif isinstance(session_data, dict) and session_data.get('budget') is not None:
             fields['content_budget'] = {
                 'value': session_data.get('budget'),
                 'source': 'onboarding_session',
-            'confidence': 0.7
-        }
+                'confidence': 0.7
+            }
         
         # Team size: website data preferred, else onboarding session team_size
         if website_data.get('team_size') is not None:
             fields['team_size'] = {
                 'value': website_data.get('team_size'),
-            'source': 'website_analysis',
+                'source': 'website_analysis',
                 'confidence': website_data.get('confidence_level')
             }
         elif isinstance(session_data, dict) and session_data.get('team_size') is not None:
             fields['team_size'] = {
                 'value': session_data.get('team_size'),
                 'source': 'onboarding_session',
-            'confidence': 0.7
-        }
+                'confidence': 0.7
+            }
         
         # Implementation timeline: website data preferred, else onboarding session timeline
         if website_data.get('implementation_timeline'):
             fields['implementation_timeline'] = {
                 'value': website_data.get('implementation_timeline'),
-            'source': 'website_analysis',
+                'source': 'website_analysis',
                 'confidence': website_data.get('confidence_level')
             }
         elif isinstance(session_data, dict) and session_data.get('timeline'):
@@ -885,15 +888,15 @@ class EnhancedStrategyService:
         if website_data.get('market_share'):
             fields['market_share'] = {
                 'value': website_data.get('market_share'),
-            'source': 'website_analysis',
+                'source': 'website_analysis',
                 'confidence': website_data.get('confidence_level')
             }
         elif website_data.get('performance_metrics'):
             fields['market_share'] = {
                 'value': website_data.get('performance_metrics').get('estimated_market_share', None),
-            'source': 'website_analysis',
+                'source': 'website_analysis',
                 'confidence': website_data.get('confidence_level')
-        }
+            }
         
         fields['performance_metrics'] = {
             'value': website_data.get('performance_metrics', {}),
@@ -1180,4 +1183,3 @@ class EnhancedStrategyService:
                 'throughput_metrics': {}
             }
         # No further action required
-        return

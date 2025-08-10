@@ -241,6 +241,7 @@ def gemini_structured_json_response(prompt, schema, temperature=0.7, top_p=0.9, 
             if parsed:
                 return parsed if isinstance(parsed, dict) else json.loads(json.dumps(parsed))
             text = (response.text or '').strip()
+            
             # Strip markdown code fences if present
             if text.startswith('```'):
                 # remove leading ```json or ``` and trailing ```
@@ -251,10 +252,14 @@ def gemini_structured_json_response(prompt, schema, temperature=0.7, top_p=0.9, 
                 if text.endswith('```'):
                     text = text[:-3]
                 text = text.strip()
+            
+            # Try direct JSON parsing first
             try:
                 return json.loads(text)
-            except json.JSONDecodeError:
-                # Fallback: extract likely JSON object substring
+            except json.JSONDecodeError as e:
+                logger.warning(f"Direct JSON parsing failed: {e}")
+                
+                # Fallback 1: Extract likely JSON object substring
                 first = text.find('{')
                 last = text.rfind('}')
                 if first != -1 and last != -1 and last > first:
@@ -262,13 +267,34 @@ def gemini_structured_json_response(prompt, schema, temperature=0.7, top_p=0.9, 
                     try:
                         return json.loads(candidate)
                     except json.JSONDecodeError:
-                        pass
-                # Final fallback: regex any object
+                        logger.warning("JSON object extraction failed, trying regex")
+                
+                # Fallback 2: Regex any object
                 import re
                 match = re.search(r'\{[\s\S]*\}', text)
                 if match:
-                    return json.loads(match.group(0))
-                raise
+                    try:
+                        return json.loads(match.group(0))
+                    except json.JSONDecodeError:
+                        logger.warning("Regex JSON extraction failed, trying repair")
+                
+                # Fallback 3: Attempt to repair common JSON issues
+                repaired = _repair_json_string(text)
+                if repaired:
+                    try:
+                        return json.loads(repaired)
+                    except json.JSONDecodeError:
+                        logger.warning("JSON repair failed")
+                
+                # Fallback 4: Extract and parse individual key-value pairs
+                extracted = _extract_key_value_pairs(text)
+                if extracted:
+                    return extracted
+                
+                # Final fallback: return error with raw response for debugging
+                logger.error(f"All JSON parsing attempts failed for text: {text[:200]}...")
+                return {"error": f"Failed to parse JSON response: {e}", "raw_response": text[:500]}
+                
         except Exception as e:
             logger.error(f"Error parsing structured response: {e}")
             return {"error": f"Failed to parse JSON response: {e}", "raw_response": (response.text or '')}
@@ -276,3 +302,141 @@ def gemini_structured_json_response(prompt, schema, temperature=0.7, top_p=0.9, 
     except Exception as e:
         logger.error(f"Error in Gemini Pro structured JSON generation: {e}")
         return {"error": str(e)}
+
+
+def _repair_json_string(text: str) -> Optional[str]:
+    """
+    Attempt to repair common JSON issues in AI responses.
+    """
+    if not text:
+        return None
+    
+    # Remove any non-JSON content before first {
+    start = text.find('{')
+    if start == -1:
+        return None
+    text = text[start:]
+    
+    # Remove any content after last }
+    end = text.rfind('}')
+    if end == -1:
+        return None
+    text = text[:end+1]
+    
+    # Fix common issues
+    repaired = text
+    
+    # 1. Fix unterminated arrays (add missing closing brackets)
+    # Count opening and closing brackets
+    open_brackets = repaired.count('[')
+    close_brackets = repaired.count(']')
+    if open_brackets > close_brackets:
+        # Add missing closing brackets
+        missing_brackets = open_brackets - close_brackets
+        repaired = repaired + ']' * missing_brackets
+    
+    # 2. Fix unterminated strings in arrays
+    # Look for patterns like ["item1", "item2" and add missing quote and bracket
+    lines = repaired.split('\n')
+    fixed_lines = []
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        # Check if line ends with an unquoted string in an array
+        if stripped.endswith('"') and i < len(lines) - 1:
+            next_line = lines[i + 1].strip()
+            if next_line.startswith(']'):
+                # This is fine
+                pass
+            elif not next_line.startswith('"') and not next_line.startswith(']'):
+                # Add missing quote and comma
+                line = line + '",'
+        fixed_lines.append(line)
+    repaired = '\n'.join(fixed_lines)
+    
+    # 3. Fix unescaped quotes in string values
+    # This is complex - we'll use a simple approach
+    try:
+        # Try to balance quotes by adding missing ones
+        lines = repaired.split('\n')
+        fixed_lines = []
+        for line in lines:
+            # Count quotes in the line
+            quote_count = line.count('"')
+            if quote_count % 2 == 1:  # Odd number of quotes
+                # Add a quote at the end if it looks like an incomplete string
+                if ':' in line and line.strip().endswith('"'):
+                    line = line + '"'
+                elif ':' in line and not line.strip().endswith('"') and not line.strip().endswith(','):
+                    line = line + '",'
+            fixed_lines.append(line)
+        repaired = '\n'.join(fixed_lines)
+    except Exception:
+        pass
+    
+    # 4. Remove trailing commas before closing braces/brackets
+    repaired = re.sub(r',(\s*[}\]])', r'\1', repaired)
+    
+    # 5. Fix missing commas between object properties
+    repaired = re.sub(r'"(\s*)"', r'",\1"', repaired)
+    
+    return repaired
+
+
+def _extract_key_value_pairs(text: str) -> Optional[Dict[str, Any]]:
+    """
+    Extract key-value pairs from malformed JSON text as a last resort.
+    """
+    if not text:
+        return None
+    
+    result = {}
+    
+    # Look for patterns like "key": "value" or "key": value
+    # This regex looks for quoted keys followed by colons and values
+    pattern = r'"([^"]+)"\s*:\s*(?:"([^"]*)"|([^,}\]]+))'
+    matches = re.findall(pattern, text)
+    
+    for key, quoted_value, unquoted_value in matches:
+        value = quoted_value if quoted_value else unquoted_value.strip()
+        
+        # Clean up the value - remove any trailing content that looks like the next key
+        # This handles cases where the regex captured too much
+        if value and '"' in value:
+            # Split at the first quote that might be the start of the next key
+            parts = value.split('"')
+            if len(parts) > 1:
+                value = parts[0].strip()
+        
+        # Try to parse the value appropriately
+        if value.lower() in ['true', 'false']:
+            result[key] = value.lower() == 'true'
+        elif value.lower() == 'null':
+            result[key] = None
+        elif value.isdigit():
+            result[key] = int(value)
+        elif value.replace('.', '').replace('-', '').isdigit():
+            try:
+                result[key] = float(value)
+            except ValueError:
+                result[key] = value
+        else:
+            result[key] = value
+    
+    # Also try to extract array values
+    array_pattern = r'"([^"]+)"\s*:\s*\[([^\]]*)\]'
+    array_matches = re.findall(array_pattern, text)
+    
+    for key, array_content in array_matches:
+        # Extract individual array items
+        items = []
+        # Look for quoted strings in the array
+        item_pattern = r'"([^"]*)"'
+        item_matches = re.findall(item_pattern, array_content)
+        for item in item_matches:
+            if item.strip():
+                items.append(item.strip())
+        
+        if items:
+            result[key] = items
+    
+    return result if result else None

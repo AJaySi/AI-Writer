@@ -254,9 +254,9 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
       required: false
     },
     traffic_sources: {
-      type: 'json',
+      type: 'multiselect',
       label: 'Traffic Sources',
-      placeholder: 'Define your traffic sources',
+      options: ['Organic Search', 'Social Media', 'Email Marketing', 'Direct Traffic', 'Referral Traffic', 'Paid Search', 'Display Advertising', 'Content Marketing', 'Influencer Marketing', 'Video Platforms'],
       required: false
     },
     conversion_rates: {
