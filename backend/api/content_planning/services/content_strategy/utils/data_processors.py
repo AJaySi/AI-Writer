@@ -1,451 +1,539 @@
 """
-Data Processor Service
-Data processing utilities.
+Data processing utilities for content strategy operations.
+Provides functions for transforming onboarding data into strategy fields,
+managing data sources, and processing various data types.
 """
 
 import logging
-import json
-import re
-from typing import Dict, Any, List, Optional, Union
-from datetime import datetime, timedelta
+from typing import Dict, List, Any, Optional, Union
+from datetime import datetime
+from sqlalchemy.orm import Session
+
+from models.onboarding import OnboardingSession, WebsiteAnalysis, ResearchPreferences, APIKey
 
 logger = logging.getLogger(__name__)
 
+
 class DataProcessorService:
-    """Service for data processing utilities."""
+    """Service for processing and transforming data for content strategy operations."""
 
     def __init__(self):
-        self.cleaning_patterns = {
-            'html_tags': re.compile(r'<[^>]+>'),
-            'extra_whitespace': re.compile(r'\s+'),
-            'special_chars': re.compile(r'[^\w\s\-.,!?;:()]'),
-            'multiple_spaces': re.compile(r'\s{2,}'),
-            'leading_trailing_spaces': re.compile(r'^\s+|\s+$')
+        self.logger = logging.getLogger(__name__)
+    
+    async def get_onboarding_data(self, user_id: int) -> Dict[str, Any]:
+        """
+        Get comprehensive onboarding data for intelligent auto-population via AutoFillService.
+        
+        Args:
+            user_id: The user ID to get onboarding data for
+            
+        Returns:
+            Dictionary containing comprehensive onboarding data
+        """
+        try:
+            from services.database import get_db_session
+            from ..autofill import AutoFillService
+            temp_db = get_db_session()
+            try:
+                service = AutoFillService(temp_db)
+                payload = await service.get_autofill(user_id)
+                self.logger.info(f"Retrieved comprehensive onboarding data for user {user_id}")
+                return payload
+            except Exception as e:
+                self.logger.error(f"Error getting onboarding data: {str(e)}")
+                raise
+            finally:
+                temp_db.close()
+        except Exception as e:
+            self.logger.error(f"Error getting onboarding data: {str(e)}")
+            raise
+    
+    def transform_onboarding_data_to_fields(self, processed_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Transform processed onboarding data into field-specific format for frontend.
+        
+        Args:
+            processed_data: Dictionary containing processed onboarding data
+            
+        Returns:
+            Dictionary with field-specific data for strategy builder
+        """
+        fields = {}
+        
+        website_data = processed_data.get('website_analysis', {})
+        research_data = processed_data.get('research_preferences', {})
+        api_data = processed_data.get('api_keys_data', {})
+        session_data = processed_data.get('onboarding_session', {})
+        
+        # Business Context Fields
+        if 'content_goals' in website_data and website_data.get('content_goals'):
+            fields['business_objectives'] = {
+                'value': website_data.get('content_goals'),
+                'source': 'website_analysis',
+                'confidence': website_data.get('confidence_level')
+            }
+        
+        # Prefer explicit target_metrics; otherwise derive from performance_metrics
+        if website_data.get('target_metrics'):
+            fields['target_metrics'] = {
+                'value': website_data.get('target_metrics'),
+                'source': 'website_analysis',
+                'confidence': website_data.get('confidence_level')
+            }
+        elif website_data.get('performance_metrics'):
+            fields['target_metrics'] = {
+                'value': website_data.get('performance_metrics'),
+                'source': 'website_analysis',
+                'confidence': website_data.get('confidence_level')
+            }
+        
+        # Content budget: website data preferred, else onboarding session budget
+        if website_data.get('content_budget') is not None:
+            fields['content_budget'] = {
+                'value': website_data.get('content_budget'),
+                'source': 'website_analysis',
+                'confidence': website_data.get('confidence_level')
+            }
+        elif isinstance(session_data, dict) and session_data.get('budget') is not None:
+            fields['content_budget'] = {
+                'value': session_data.get('budget'),
+                'source': 'onboarding_session',
+                'confidence': 0.7
+            }
+        
+        # Team size: website data preferred, else onboarding session team_size
+        if website_data.get('team_size') is not None:
+            fields['team_size'] = {
+                'value': website_data.get('team_size'),
+                'source': 'website_analysis',
+                'confidence': website_data.get('confidence_level')
+            }
+        elif isinstance(session_data, dict) and session_data.get('team_size') is not None:
+            fields['team_size'] = {
+                'value': session_data.get('team_size'),
+                'source': 'onboarding_session',
+                'confidence': 0.7
+            }
+        
+        # Implementation timeline: website data preferred, else onboarding session timeline
+        if website_data.get('implementation_timeline'):
+            fields['implementation_timeline'] = {
+                'value': website_data.get('implementation_timeline'),
+                'source': 'website_analysis',
+                'confidence': website_data.get('confidence_level')
+            }
+        elif isinstance(session_data, dict) and session_data.get('timeline'):
+            fields['implementation_timeline'] = {
+                'value': session_data.get('timeline'),
+                'source': 'onboarding_session',
+                'confidence': 0.7
+            }
+        
+        # Market share: explicit if present; otherwise derive rough share from performance metrics if available
+        if website_data.get('market_share'):
+            fields['market_share'] = {
+                'value': website_data.get('market_share'),
+                'source': 'website_analysis',
+                'confidence': website_data.get('confidence_level')
+            }
+        elif website_data.get('performance_metrics'):
+            fields['market_share'] = {
+                'value': website_data.get('performance_metrics').get('estimated_market_share', None),
+                'source': 'website_analysis',
+                'confidence': website_data.get('confidence_level')
+            }
+        
+        fields['performance_metrics'] = {
+            'value': website_data.get('performance_metrics', {}),
+            'source': 'website_analysis',
+            'confidence': website_data.get('confidence_level', 0.8)
         }
-
-    def transform_data_structure(self, data: Union[Dict, List, str], target_format: str = 'dict') -> Union[Dict, List, str]:
-        """Transform data between different structures."""
-        try:
-            if target_format == 'dict':
-                if isinstance(data, dict):
-                    return data
-                elif isinstance(data, list):
-                    return {str(i): item for i, item in enumerate(data)}
-                elif isinstance(data, str):
-                    try:
-                        return json.loads(data)
-                    except json.JSONDecodeError:
-                        return {'value': data}
-                else:
-                    return {'value': str(data)}
+        
+        # Audience Intelligence Fields
+        # Extract audience data from research_data structure
+        audience_research = research_data.get('audience_research', {})
+        content_prefs = research_data.get('content_preferences', {})
+        
+        fields['content_preferences'] = {
+            'value': content_prefs,
+            'source': 'research_preferences',
+            'confidence': research_data.get('confidence_level', 0.8)
+        }
+        
+        fields['consumption_patterns'] = {
+            'value': audience_research.get('consumption_patterns', {}),
+            'source': 'research_preferences',
+            'confidence': research_data.get('confidence_level', 0.8)
+        }
+        
+        fields['audience_pain_points'] = {
+            'value': audience_research.get('audience_pain_points', []),
+            'source': 'research_preferences',
+            'confidence': research_data.get('confidence_level', 0.8)
+        }
+        
+        fields['buying_journey'] = {
+            'value': audience_research.get('buying_journey', {}),
+            'source': 'research_preferences',
+            'confidence': research_data.get('confidence_level', 0.8)
+        }
+        
+        fields['seasonal_trends'] = {
+            'value': ['Q1: Planning', 'Q2: Execution', 'Q3: Optimization', 'Q4: Review'],
+            'source': 'research_preferences',
+            'confidence': research_data.get('confidence_level', 0.7)
+        }
+        
+        fields['engagement_metrics'] = {
+            'value': {
+                'avg_session_duration': website_data.get('performance_metrics', {}).get('avg_session_duration', 180),
+                'bounce_rate': website_data.get('performance_metrics', {}).get('bounce_rate', 45.5),
+                'pages_per_session': 2.5
+            },
+            'source': 'website_analysis',
+            'confidence': website_data.get('confidence_level', 0.8)
+        }
+        
+        # Competitive Intelligence Fields
+        fields['top_competitors'] = {
+            'value': website_data.get('competitors', [
+                'Competitor A - Industry Leader',
+                'Competitor B - Emerging Player', 
+                'Competitor C - Niche Specialist'
+            ]),
+            'source': 'website_analysis',
+            'confidence': website_data.get('confidence_level', 0.8)
+        }
+        
+        fields['competitor_content_strategies'] = {
+            'value': ['Educational content', 'Case studies', 'Thought leadership'],
+            'source': 'website_analysis',
+            'confidence': website_data.get('confidence_level', 0.7)
+        }
+        
+        fields['market_gaps'] = {
+            'value': website_data.get('market_gaps', []),
+            'source': 'website_analysis',
+            'confidence': website_data.get('confidence_level', 0.8)
+        }
+        
+        fields['industry_trends'] = {
+            'value': ['Digital transformation', 'AI/ML adoption', 'Remote work'],
+            'source': 'website_analysis',
+            'confidence': website_data.get('confidence_level', 0.8)
+        }
+        
+        fields['emerging_trends'] = {
+            'value': ['Voice search optimization', 'Video content', 'Interactive content'],
+            'source': 'website_analysis',
+            'confidence': website_data.get('confidence_level', 0.7)
+        }
+        
+        # Content Strategy Fields
+        fields['preferred_formats'] = {
+            'value': content_prefs.get('preferred_formats', [
+                'Blog posts', 'Whitepapers', 'Webinars', 'Case studies', 'Videos'
+            ]),
+            'source': 'research_preferences',
+            'confidence': research_data.get('confidence_level', 0.8)
+        }
+        
+        fields['content_mix'] = {
+            'value': {
+                'blog_posts': 40,
+                'whitepapers': 20,
+                'webinars': 15,
+                'case_studies': 15,
+                'videos': 10
+            },
+            'source': 'research_preferences',
+            'confidence': research_data.get('confidence_level', 0.8)
+        }
+        
+        fields['content_frequency'] = {
+            'value': 'Weekly',
+            'source': 'research_preferences',
+            'confidence': research_data.get('confidence_level', 0.8)
+        }
+        
+        fields['optimal_timing'] = {
+            'value': {
+                'best_days': ['Tuesday', 'Wednesday', 'Thursday'],
+                'best_times': ['9:00 AM', '1:00 PM', '3:00 PM']
+            },
+            'source': 'research_preferences',
+            'confidence': research_data.get('confidence_level', 0.7)
+        }
+        
+        fields['quality_metrics'] = {
+            'value': {
+                'readability_score': 8.5,
+                'engagement_target': 5.0,
+                'conversion_target': 2.0
+            },
+            'source': 'research_preferences',
+            'confidence': research_data.get('confidence_level', 0.8)
+        }
+        
+        fields['editorial_guidelines'] = {
+            'value': {
+                'tone': content_prefs.get('content_style', ['Professional', 'Educational']),
+                'length': content_prefs.get('content_length', 'Medium (1000-2000 words)'),
+                'formatting': ['Use headers', 'Include visuals', 'Add CTAs']
+            },
+            'source': 'research_preferences',
+            'confidence': research_data.get('confidence_level', 0.8)
+        }
+        
+        fields['brand_voice'] = {
+            'value': {
+                'tone': 'Professional yet approachable',
+                'style': 'Educational and authoritative',
+                'personality': 'Expert, helpful, trustworthy'
+            },
+            'source': 'research_preferences',
+            'confidence': research_data.get('confidence_level', 0.8)
+        }
+        
+        # Performance & Analytics Fields
+        fields['traffic_sources'] = {
+            'value': website_data.get('traffic_sources', {}),
+            'source': 'website_analysis',
+            'confidence': website_data.get('confidence_level', 0.8)
+        }
+        
+        fields['conversion_rates'] = {
+            'value': {
+                'overall': website_data.get('performance_metrics', {}).get('conversion_rate', 3.2),
+                'blog': 2.5,
+                'landing_pages': 4.0,
+                'email': 5.5
+            },
+            'source': 'website_analysis',
+            'confidence': website_data.get('confidence_level', 0.8)
+        }
+        
+        fields['content_roi_targets'] = {
+            'value': {
+                'target_roi': 300,
+                'cost_per_lead': 50,
+                'lifetime_value': 500
+            },
+            'source': 'website_analysis',
+            'confidence': website_data.get('confidence_level', 0.7)
+        }
+        
+        fields['ab_testing_capabilities'] = {
+            'value': True,
+            'source': 'api_keys_data',
+            'confidence': api_data.get('confidence_level', 0.8)
+        }
+        
+        return fields
+    
+    def get_data_sources(self, processed_data: Dict[str, Any]) -> Dict[str, str]:
+        """
+        Get data sources for each field.
+        
+        Args:
+            processed_data: Dictionary containing processed data
             
-            elif target_format == 'list':
-                if isinstance(data, list):
-                    return data
-                elif isinstance(data, dict):
-                    return list(data.values())
-                elif isinstance(data, str):
-                    return [data]
-                else:
-                    return [str(data)]
+        Returns:
+            Dictionary mapping field names to their data sources
+        """
+        sources = {}
+        
+        # Map fields to their data sources
+        website_fields = ['business_objectives', 'target_metrics', 'content_budget', 'team_size', 
+                         'implementation_timeline', 'market_share', 'competitive_position', 
+                         'performance_metrics', 'engagement_metrics', 'top_competitors', 
+                         'competitor_content_strategies', 'market_gaps', 'industry_trends', 
+                         'emerging_trends', 'traffic_sources', 'conversion_rates', 'content_roi_targets']
+        
+        research_fields = ['content_preferences', 'consumption_patterns', 'audience_pain_points', 
+                          'buying_journey', 'seasonal_trends', 'preferred_formats', 'content_mix', 
+                          'content_frequency', 'optimal_timing', 'quality_metrics', 'editorial_guidelines', 
+                          'brand_voice']
+        
+        api_fields = ['ab_testing_capabilities']
+        
+        for field in website_fields:
+            sources[field] = 'website_analysis'
+        
+        for field in research_fields:
+            sources[field] = 'research_preferences'
+        
+        for field in api_fields:
+            sources[field] = 'api_keys_data'
+        
+        return sources
+    
+    def get_detailed_input_data_points(self, processed_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Get detailed input data points for transparency.
+        
+        Args:
+            processed_data: Dictionary containing processed data
             
-            elif target_format == 'string':
-                if isinstance(data, str):
-                    return data
-                elif isinstance(data, (dict, list)):
-                    return json.dumps(data, default=str)
-                else:
-                    return str(data)
-            
-            else:
-                logger.warning(f"Unknown target format: {target_format}")
-                return data
-                
-        except Exception as e:
-            logger.error(f"Error transforming data structure: {str(e)}")
-            return data
-
-    def clean_text_data(self, text: str, cleaning_level: str = 'standard') -> str:
-        """Clean and normalize text data."""
-        try:
-            if not isinstance(text, str):
-                text = str(text)
-            
-            if cleaning_level == 'minimal':
-                # Basic cleaning
-                cleaned = self.cleaning_patterns['leading_trailing_spaces'].sub('', text)
-                cleaned = self.cleaning_patterns['multiple_spaces'].sub(' ', cleaned)
-                return cleaned.strip()
-            
-            elif cleaning_level == 'standard':
-                # Standard cleaning
-                cleaned = self.cleaning_patterns['html_tags'].sub('', text)
-                cleaned = self.cleaning_patterns['leading_trailing_spaces'].sub('', cleaned)
-                cleaned = self.cleaning_patterns['multiple_spaces'].sub(' ', cleaned)
-                return cleaned.strip()
-            
-            elif cleaning_level == 'aggressive':
-                # Aggressive cleaning
-                cleaned = self.cleaning_patterns['html_tags'].sub('', text)
-                cleaned = self.cleaning_patterns['special_chars'].sub('', cleaned)
-                cleaned = self.cleaning_patterns['leading_trailing_spaces'].sub('', cleaned)
-                cleaned = self.cleaning_patterns['multiple_spaces'].sub(' ', cleaned)
-                return cleaned.strip()
-            
-            else:
-                logger.warning(f"Unknown cleaning level: {cleaning_level}")
-                return text.strip()
-                
-        except Exception as e:
-            logger.error(f"Error cleaning text data: {str(e)}")
-            return str(text)
-
-    def clean_dict_data(self, data: Dict[str, Any], cleaning_level: str = 'standard') -> Dict[str, Any]:
-        """Clean dictionary data recursively."""
-        try:
-            cleaned_data = {}
-            
-            for key, value in data.items():
-                # Clean key
-                cleaned_key = self.clean_text_data(str(key), cleaning_level)
-                
-                # Clean value
-                if isinstance(value, str):
-                    cleaned_value = self.clean_text_data(value, cleaning_level)
-                elif isinstance(value, dict):
-                    cleaned_value = self.clean_dict_data(value, cleaning_level)
-                elif isinstance(value, list):
-                    cleaned_value = [self.clean_text_data(str(item), cleaning_level) if isinstance(item, str) else item for item in value]
-                else:
-                    cleaned_value = value
-                
-                cleaned_data[cleaned_key] = cleaned_value
-            
-            return cleaned_data
-            
-        except Exception as e:
-            logger.error(f"Error cleaning dict data: {str(e)}")
-            return data
-
-    def enrich_data_with_metadata(self, data: Dict[str, Any], source: str = 'unknown') -> Dict[str, Any]:
-        """Enrich data with metadata."""
-        try:
-            enriched_data = data.copy()
-            
-            # Add metadata
-            enriched_data['_metadata'] = {
-                'processed_at': datetime.utcnow().isoformat(),
-                'source': source,
-                'data_type': self._determine_data_type(data),
-                'size': len(str(data)),
-                'field_count': len(data) if isinstance(data, dict) else 0
+        Returns:
+            Dictionary with detailed data points
+        """
+        return {
+            'website_analysis': {
+                'total_fields': len(processed_data.get('website_analysis', {})),
+                'confidence_level': processed_data.get('website_analysis', {}).get('confidence_level', 0.8),
+                'data_freshness': processed_data.get('website_analysis', {}).get('data_freshness', 'recent')
+            },
+            'research_preferences': {
+                'total_fields': len(processed_data.get('research_preferences', {})),
+                'confidence_level': processed_data.get('research_preferences', {}).get('confidence_level', 0.8),
+                'data_freshness': processed_data.get('research_preferences', {}).get('data_freshness', 'recent')
+            },
+            'api_keys_data': {
+                'total_fields': len(processed_data.get('api_keys_data', {})),
+                'confidence_level': processed_data.get('api_keys_data', {}).get('confidence_level', 0.8),
+                'data_freshness': processed_data.get('api_keys_data', {}).get('data_freshness', 'recent')
             }
+        }
+    
+    def get_fallback_onboarding_data(self) -> Dict[str, Any]:
+        """
+        Get fallback onboarding data for compatibility.
+        
+        Returns:
+            Dictionary with fallback data (raises error as fallbacks are disabled)
+        """
+        raise RuntimeError("Fallback onboarding data is disabled. Real data required.")
+    
+    async def get_website_analysis_data(self, user_id: int) -> Dict[str, Any]:
+        """
+        Get website analysis data from onboarding.
+        
+        Args:
+            user_id: The user ID to get data for
             
-            return enriched_data
-            
-        except Exception as e:
-            logger.error(f"Error enriching data with metadata: {str(e)}")
-            return data
-
-    def _determine_data_type(self, data: Any) -> str:
-        """Determine the type of data."""
+        Returns:
+            Dictionary with website analysis data
+        """
         try:
-            if isinstance(data, dict):
-                return 'object'
-            elif isinstance(data, list):
-                return 'array'
-            elif isinstance(data, str):
-                return 'string'
-            elif isinstance(data, (int, float)):
-                return 'number'
-            elif isinstance(data, bool):
-                return 'boolean'
-            else:
-                return 'unknown'
-                
+            raise RuntimeError("Website analysis data retrieval not implemented. Real data required.")
         except Exception as e:
-            logger.error(f"Error determining data type: {str(e)}")
-            return 'unknown'
-
-    def validate_data_completeness(self, data: Dict[str, Any], required_fields: List[str]) -> Dict[str, Any]:
-        """Validate data completeness against required fields."""
+            self.logger.error(f"Error getting website analysis data: {str(e)}")
+            raise
+    
+    async def get_research_preferences_data(self, user_id: int) -> Dict[str, Any]:
+        """
+        Get research preferences data from onboarding.
+        
+        Args:
+            user_id: The user ID to get data for
+            
+        Returns:
+            Dictionary with research preferences data
+        """
         try:
-            validation_result = {
-                'is_complete': True,
-                'missing_fields': [],
-                'present_fields': [],
-                'completeness_score': 0.0,
-                'validation_timestamp': datetime.utcnow().isoformat()
-            }
-            
-            present_count = 0
-            for field in required_fields:
-                if field in data and data[field] is not None and data[field] != '':
-                    validation_result['present_fields'].append(field)
-                    present_count += 1
-                else:
-                    validation_result['missing_fields'].append(field)
-            
-            # Calculate completeness score
-            if required_fields:
-                validation_result['completeness_score'] = present_count / len(required_fields)
-                validation_result['is_complete'] = validation_result['completeness_score'] >= 0.8
-            
-            return validation_result
-            
+            raise RuntimeError("Research preferences data retrieval not implemented. Real data required.")
         except Exception as e:
-            logger.error(f"Error validating data completeness: {str(e)}")
-            return {
-                'is_complete': False,
-                'missing_fields': required_fields,
-                'present_fields': [],
-                'completeness_score': 0.0,
-                'validation_timestamp': datetime.utcnow().isoformat(),
-                'error': str(e)
-            }
-
-    def normalize_field_values(self, data: Dict[str, Any], field_mappings: Dict[str, str]) -> Dict[str, Any]:
-        """Normalize field values based on mappings."""
+            self.logger.error(f"Error getting research preferences data: {str(e)}")
+            raise
+    
+    async def get_api_keys_data(self, user_id: int) -> Dict[str, Any]:
+        """
+        Get API keys and external data from onboarding.
+        
+        Args:
+            user_id: The user ID to get data for
+            
+        Returns:
+            Dictionary with API keys data
+        """
         try:
-            normalized_data = {}
-            
-            for original_field, normalized_field in field_mappings.items():
-                if original_field in data:
-                    normalized_data[normalized_field] = data[original_field]
-            
-            return normalized_data
-            
+            raise RuntimeError("API keys/external data retrieval not implemented. Real data required.")
         except Exception as e:
-            logger.error(f"Error normalizing field values: {str(e)}")
-            return data
+            self.logger.error(f"Error getting API keys data: {str(e)}")
+            raise
+    
+    async def process_website_analysis(self, website_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Process website analysis data (deprecated).
+        
+        Args:
+            website_data: Raw website analysis data
+            
+        Returns:
+            Processed website analysis data
+        """
+        raise RuntimeError("Deprecated: use AutoFillService normalizers")
+    
+    async def process_research_preferences(self, research_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Process research preferences data (deprecated).
+        
+        Args:
+            research_data: Raw research preferences data
+            
+        Returns:
+            Processed research preferences data
+        """
+        raise RuntimeError("Deprecated: use AutoFillService normalizers")
+    
+    async def process_api_keys_data(self, api_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Process API keys data (deprecated).
+        
+        Args:
+            api_data: Raw API keys data
+            
+        Returns:
+            Processed API keys data
+        """
+        raise RuntimeError("Deprecated: use AutoFillService normalizers")
 
-    def merge_data_sources(self, data_sources: List[Dict[str, Any]], merge_strategy: str = 'prefer_first') -> Dict[str, Any]:
-        """Merge multiple data sources."""
-        try:
-            if not data_sources:
-                return {}
-            
-            if len(data_sources) == 1:
-                return data_sources[0]
-            
-            merged_data = {}
-            
-            if merge_strategy == 'prefer_first':
-                # Prefer first non-empty value
-                for source in data_sources:
-                    for key, value in source.items():
-                        if key not in merged_data or merged_data[key] is None or merged_data[key] == '':
-                            merged_data[key] = value
-            
-            elif merge_strategy == 'prefer_last':
-                # Prefer last non-empty value
-                for source in data_sources:
-                    for key, value in source.items():
-                        if value is not None and value != '':
-                            merged_data[key] = value
-            
-            elif merge_strategy == 'combine':
-                # Combine all values
-                for source in data_sources:
-                    for key, value in source.items():
-                        if key not in merged_data:
-                            merged_data[key] = []
-                        if isinstance(merged_data[key], list):
-                            merged_data[key].append(value)
-                        else:
-                            merged_data[key] = [merged_data[key], value]
-            
-            elif merge_strategy == 'intersection':
-                # Only include fields present in all sources
-                common_keys = set(data_sources[0].keys())
-                for source in data_sources[1:]:
-                    common_keys = common_keys.intersection(set(source.keys()))
-                
-                for key in common_keys:
-                    values = [source[key] for source in data_sources if key in source]
-                    merged_data[key] = values[0] if values else None
-            
-            return merged_data
-            
-        except Exception as e:
-            logger.error(f"Error merging data sources: {str(e)}")
-            return data_sources[0] if data_sources else {}
 
-    def filter_data_by_criteria(self, data: Dict[str, Any], criteria: Dict[str, Any]) -> Dict[str, Any]:
-        """Filter data based on criteria."""
-        try:
-            filtered_data = {}
-            
-            for key, value in data.items():
-                include_field = True
-                
-                # Check if field should be included based on criteria
-                if 'include_fields' in criteria and key not in criteria['include_fields']:
-                    include_field = False
-                
-                if 'exclude_fields' in criteria and key in criteria['exclude_fields']:
-                    include_field = False
-                
-                # Check value-based criteria
-                if 'min_length' in criteria and isinstance(value, str) and len(value) < criteria['min_length']:
-                    include_field = False
-                
-                if 'max_length' in criteria and isinstance(value, str) and len(value) > criteria['max_length']:
-                    include_field = False
-                
-                if 'required_values' in criteria and key in criteria['required_values']:
-                    if value not in criteria['required_values'][key]:
-                        include_field = False
-                
-                if include_field:
-                    filtered_data[key] = value
-            
-            return filtered_data
-            
-        except Exception as e:
-            logger.error(f"Error filtering data by criteria: {str(e)}")
-            return data
+# Standalone functions for backward compatibility
+async def get_onboarding_data(user_id: int) -> Dict[str, Any]:
+    """Get comprehensive onboarding data for intelligent auto-population via AutoFillService."""
+    processor = DataProcessorService()
+    return await processor.get_onboarding_data(user_id)
 
-    def format_data_for_output(self, data: Dict[str, Any], output_format: str = 'json') -> Union[str, Dict[str, Any]]:
-        """Format data for different output formats."""
-        try:
-            if output_format == 'json':
-                return json.dumps(data, indent=2, default=str)
-            
-            elif output_format == 'dict':
-                return data
-            
-            elif output_format == 'csv':
-                # Convert to CSV format (simplified)
-                csv_lines = []
-                if data:
-                    # Headers
-                    headers = list(data.keys())
-                    csv_lines.append(','.join(headers))
-                    
-                    # Values
-                    values = [str(data.get(header, '')) for header in headers]
-                    csv_lines.append(','.join(values))
-                
-                return '\n'.join(csv_lines)
-            
-            elif output_format == 'xml':
-                # Convert to XML format (simplified)
-                xml_lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<data>']
-                
-                for key, value in data.items():
-                    xml_lines.append(f'  <{key}>{value}</{key}>')
-                
-                xml_lines.append('</data>')
-                return '\n'.join(xml_lines)
-            
-            else:
-                logger.warning(f"Unknown output format: {output_format}")
-                return data
-                
-        except Exception as e:
-            logger.error(f"Error formatting data for output: {str(e)}")
-            return str(data)
 
-    def validate_data_types(self, data: Dict[str, Any], type_schema: Dict[str, str]) -> Dict[str, Any]:
-        """Validate data types against a schema."""
-        try:
-            validation_result = {
-                'is_valid': True,
-                'type_errors': [],
-                'validation_timestamp': datetime.utcnow().isoformat()
-            }
-            
-            for field, expected_type in type_schema.items():
-                if field in data:
-                    value = data[field]
-                    actual_type = self._determine_data_type(value)
-                    
-                    if actual_type != expected_type:
-                        validation_result['type_errors'].append({
-                            'field': field,
-                            'expected_type': expected_type,
-                            'actual_type': actual_type,
-                            'value': value
-                        })
-                        validation_result['is_valid'] = False
-            
-            return validation_result
-            
-        except Exception as e:
-            logger.error(f"Error validating data types: {str(e)}")
-            return {
-                'is_valid': False,
-                'type_errors': [{'error': str(e)}],
-                'validation_timestamp': datetime.utcnow().isoformat()
-            }
+def transform_onboarding_data_to_fields(processed_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Transform processed onboarding data into field-specific format for frontend."""
+    processor = DataProcessorService()
+    return processor.transform_onboarding_data_to_fields(processed_data)
 
-    def sanitize_sensitive_data(self, data: Dict[str, Any], sensitive_fields: List[str]) -> Dict[str, Any]:
-        """Sanitize sensitive data fields."""
-        try:
-            sanitized_data = data.copy()
-            
-            for field in sensitive_fields:
-                if field in sanitized_data:
-                    value = sanitized_data[field]
-                    if isinstance(value, str) and len(value) > 4:
-                        # Replace with asterisks, keeping first and last character
-                        sanitized_data[field] = value[0] + '*' * (len(value) - 2) + value[-1]
-                    else:
-                        sanitized_data[field] = '***'
-            
-            return sanitized_data
-            
-        except Exception as e:
-            logger.error(f"Error sanitizing sensitive data: {str(e)}")
-            return data
 
-    def calculate_data_statistics(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Calculate statistics about the data."""
-        try:
-            stats = {
-                'total_fields': len(data),
-                'string_fields': 0,
-                'numeric_fields': 0,
-                'boolean_fields': 0,
-                'object_fields': 0,
-                'array_fields': 0,
-                'null_fields': 0,
-                'empty_fields': 0,
-                'average_field_length': 0.0
-            }
-            
-            total_length = 0
-            field_count = 0
-            
-            for key, value in data.items():
-                if value is None:
-                    stats['null_fields'] += 1
-                elif value == '':
-                    stats['empty_fields'] += 1
-                else:
-                    data_type = self._determine_data_type(value)
-                    if data_type == 'string':
-                        stats['string_fields'] += 1
-                        total_length += len(str(value))
-                        field_count += 1
-                    elif data_type == 'number':
-                        stats['numeric_fields'] += 1
-                    elif data_type == 'boolean':
-                        stats['boolean_fields'] += 1
-                    elif data_type == 'object':
-                        stats['object_fields'] += 1
-                    elif data_type == 'array':
-                        stats['array_fields'] += 1
-            
-            if field_count > 0:
-                stats['average_field_length'] = total_length / field_count
-            
-            return stats
-            
-        except Exception as e:
-            logger.error(f"Error calculating data statistics: {str(e)}")
-            return {
-                'error': str(e),
-                'total_fields': 0
-            } 
+def get_data_sources(processed_data: Dict[str, Any]) -> Dict[str, str]:
+    """Get data sources for each field."""
+    processor = DataProcessorService()
+    return processor.get_data_sources(processed_data)
+
+
+def get_detailed_input_data_points(processed_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Get detailed input data points for transparency."""
+    processor = DataProcessorService()
+    return processor.get_detailed_input_data_points(processed_data)
+
+
+def get_fallback_onboarding_data() -> Dict[str, Any]:
+    """Get fallback onboarding data for compatibility."""
+    processor = DataProcessorService()
+    return processor.get_fallback_onboarding_data()
+
+
+async def get_website_analysis_data(user_id: int) -> Dict[str, Any]:
+    """Get website analysis data from onboarding."""
+    processor = DataProcessorService()
+    return await processor.get_website_analysis_data(user_id)
+
+
+async def get_research_preferences_data(user_id: int) -> Dict[str, Any]:
+    """Get research preferences data from onboarding."""
+    processor = DataProcessorService()
+    return await processor.get_research_preferences_data(user_id)
+
+
+async def get_api_keys_data(user_id: int) -> Dict[str, Any]:
+    """Get API keys and external data from onboarding."""
+    processor = DataProcessorService()
+    return await processor.get_api_keys_data(user_id) 

@@ -65,7 +65,7 @@ class AIServiceManager:
             'temperature': 0.3,  # more deterministic for schema-constrained JSON
             'top_p': 0.9,
             'top_k': 40,
-            'max_tokens': 2048,  # increased from 1024 for larger structured outputs
+            'max_tokens': 8192,  # increased from 4096 to prevent JSON truncation
             'enable_caching': True,
             'cache_duration_minutes': 60,
             'performance_monitoring': True,
@@ -439,26 +439,27 @@ Format as structured JSON with detailed assessment and optimization guidance.
     
     async def _execute_ai_call(self, service_type: AIServiceType, prompt: str, schema: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Execute AI call with performance monitoring.
+        Execute AI call with comprehensive error handling and monitoring.
         
         Args:
-            service_type: Type of AI service
-            prompt: AI prompt
-            schema: JSON schema for response
+            service_type: Type of AI service being called
+            prompt: The prompt to send to AI
+            schema: Expected response schema
             
         Returns:
-            AI response
+            Dictionary with AI response or error information
         """
         start_time = datetime.utcnow()
         success = False
         error_message = None
-        result = {}
         
         try:
             logger.info(f"🤖 Executing AI call for {service_type.value}")
-            logger.debug(f"Using gemini provider extended={_GEMINI_EXTENDED}")
             
-            # Execute AI call with timeout (run sync provider in a thread)
+            # Emit educational content for frontend
+            await self._emit_educational_content(service_type, "start")
+            
+            # Execute the AI call
             response = await asyncio.wait_for(
                 asyncio.to_thread(
                     self._call_gemini_structured,
@@ -468,87 +469,56 @@ Format as structured JSON with detailed assessment and optimization guidance.
                 timeout=self.config['timeout_seconds']
             )
             
-            # Parse response
-            if isinstance(response, dict):
-                result = response
-            elif isinstance(response, str):
-                try:
-                    result = json.loads(response)
-                except json.JSONDecodeError:
-                    # Return raw string if not valid JSON
-                    result = {"raw_response": response}
-            else:
-                # Fallback to string conversion
-                result = {"raw_response": str(response)}
- 
-            # Treat provider-reported errors or empty results as failures
-            if isinstance(result, dict) and ('error' in result or not result):
-                error_message = result.get('error', 'Empty AI response') if isinstance(result, dict) else 'Empty AI response'
-                # record metrics and raise
-                response_time = (datetime.utcnow() - start_time).total_seconds()
-                metrics = AIServiceMetrics(
-                    service_type=service_type,
-                    response_time=response_time,
-                    success=False,
-                    error_message=error_message
-                )
-                self.metrics.append(metrics)
+            # Check for errors in response
+            if response.get("error"):
+                error_message = response["error"]
+                logger.error(f"AI call error for {service_type.value}: {error_message}")
+                await self._emit_educational_content(service_type, "error", error_message)
                 raise Exception(error_message)
-
-            success = True
-            logger.info(f"✅ AI call for {service_type.value} completed successfully")
             
-        except asyncio.TimeoutError:
-            error_message = f"AI call timeout for {service_type.value}"
-            logger.error(error_message)
-            # record metrics and raise
-            response_time = (datetime.utcnow() - start_time).total_seconds()
-            metrics = AIServiceMetrics(
-                service_type=service_type,
-                response_time=response_time,
-                success=False,
-                error_message=error_message
-            )
-            self.metrics.append(metrics)
-            raise Exception(error_message)
-        except json.JSONDecodeError as e:
-            error_message = f"JSON decode error for {service_type.value}: {str(e)}"
-            logger.error(error_message)
-            response_time = (datetime.utcnow() - start_time).total_seconds()
-            metrics = AIServiceMetrics(
-                service_type=service_type,
-                response_time=response_time,
-                success=False,
-                error_message=error_message
-            )
-            self.metrics.append(metrics)
-            # Don't raise JSON decode errors as fatal - let the calling code handle them
-            # The Gemini provider should have already attempted to repair malformed JSON
-            result = {"error": error_message, "raw_response": str(e)}
-            success = False
+            # Validate response structure
+            if not response or not isinstance(response, dict):
+                error_message = "Invalid response structure from AI service"
+                logger.error(f"AI call error for {service_type.value}: {error_message}")
+                await self._emit_educational_content(service_type, "error", error_message)
+                raise Exception(error_message)
+            
+            success = True
+            processing_time = (datetime.utcnow() - start_time).total_seconds()
+            
+            # Emit success educational content
+            await self._emit_educational_content(service_type, "success", processing_time=processing_time)
+            
+            # Record metrics
+            self._record_metrics(service_type, processing_time, success, error_message)
+            
+            logger.info(f"✅ AI call for {service_type.value} completed successfully in {processing_time:.2f}s")
+            
+            return {
+                "data": response,
+                "processing_time": processing_time,
+                "service_type": service_type.value,
+                "success": True
+            }
+            
         except Exception as e:
-            error_message = f"AI call error for {service_type.value}: {str(e)}"
-            logger.error(error_message)
-            response_time = (datetime.utcnow() - start_time).total_seconds()
-            metrics = AIServiceMetrics(
-                service_type=service_type,
-                response_time=response_time,
-                success=False,
-                error_message=error_message
-            )
-            self.metrics.append(metrics)
-            raise
-        
-        # Calculate response time and record metrics for successful calls
-        response_time = (datetime.utcnow() - start_time).total_seconds()
-        metrics = AIServiceMetrics(
-            service_type=service_type,
-            response_time=response_time,
-            success=success,
-            error_message=None
-        )
-        self.metrics.append(metrics)
-        return result
+            processing_time = (datetime.utcnow() - start_time).total_seconds()
+            error_message = str(e)
+            
+            # Emit error educational content
+            await self._emit_educational_content(service_type, "error", error_message)
+            
+            # Record metrics
+            self._record_metrics(service_type, processing_time, success, error_message)
+            
+            logger.error(f"❌ AI call error for {service_type.value}: {error_message}")
+            
+            return {
+                "error": error_message,
+                "processing_time": processing_time,
+                "service_type": service_type.value,
+                "success": False
+            }
     
     def _call_gemini_structured(self, prompt: str, schema: Dict[str, Any]):
         """Call gemini structured JSON with flexible signature support.
@@ -908,3 +878,160 @@ Format as structured JSON with detailed assessment and optimization guidance.
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             } 
+
+    async def _emit_educational_content(self, service_type: AIServiceType, status: str, error_message: str = None, processing_time: float = None):
+        """
+        Emit educational content for frontend during AI calls.
+        
+        Args:
+            service_type: Type of AI service being called
+            status: Current status (start, success, error)
+            error_message: Error message if applicable
+            processing_time: Processing time if applicable
+        """
+        try:
+            educational_content = self._get_educational_content(service_type, status, error_message, processing_time)
+            
+            # Emit to any connected SSE clients
+            # This would integrate with your SSE system
+            logger.info(f"📚 Emitting educational content for {service_type.value}: {status}")
+            
+            # For now, just log the educational content
+            # In a real implementation, this would be sent to connected SSE clients
+            logger.debug(f"Educational content: {educational_content}")
+            
+        except Exception as e:
+            logger.error(f"Error emitting educational content: {e}")
+    
+    def _get_educational_content(self, service_type: AIServiceType, status: str, error_message: str = None, processing_time: float = None) -> Dict[str, Any]:
+        """
+        Generate educational content based on service type and status.
+        
+        Args:
+            service_type: Type of AI service being called
+            status: Current status (start, success, error)
+            error_message: Error message if applicable
+            processing_time: Processing time if applicable
+            
+        Returns:
+            Dictionary with educational content
+        """
+        base_content = {
+            "service_type": service_type.value,
+            "status": status,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        if status == "start":
+            content_map = {
+                AIServiceType.STRATEGIC_INTELLIGENCE: {
+                    "title": "🧠 Strategic Intelligence Analysis",
+                    "description": "AI is analyzing your market position and identifying strategic opportunities.",
+                    "details": [
+                        "🎯 Market positioning analysis",
+                        "💡 Opportunity identification", 
+                        "📈 Growth potential assessment",
+                        "🎪 Competitive advantage mapping"
+                    ],
+                    "insight": "Strategic insights help you understand where you stand in the market and how to differentiate.",
+                    "ai_prompt_preview": "Analyzing market position, identifying strategic opportunities, assessing growth potential, and mapping competitive advantages...",
+                    "estimated_time": "15-20 seconds"
+                },
+                AIServiceType.MARKET_POSITION_ANALYSIS: {
+                    "title": "🔍 Competitive Intelligence Analysis",
+                    "description": "AI is analyzing your competitors to identify gaps and opportunities.",
+                    "details": [
+                        "🏢 Competitor content strategies",
+                        "📊 Market gap analysis",
+                        "🎯 Differentiation opportunities",
+                        "📈 Industry trend analysis"
+                    ],
+                    "insight": "Understanding your competitors helps you find unique angles and underserved market segments.",
+                    "ai_prompt_preview": "Analyzing competitor content strategies, identifying market gaps, finding differentiation opportunities, and assessing industry trends...",
+                    "estimated_time": "20-25 seconds"
+                },
+                AIServiceType.PERFORMANCE_PREDICTION: {
+                    "title": "📊 Performance Forecasting",
+                    "description": "AI is predicting content performance and ROI based on industry data.",
+                    "details": [
+                        "📈 Traffic growth projections",
+                        "💰 ROI predictions",
+                        "🎯 Conversion rate estimates",
+                        "📊 Engagement metrics forecasting"
+                    ],
+                    "insight": "Performance predictions help you set realistic expectations and optimize resource allocation.",
+                    "ai_prompt_preview": "Analyzing industry benchmarks, predicting traffic growth, estimating ROI, forecasting conversion rates, and projecting engagement metrics...",
+                    "estimated_time": "15-20 seconds"
+                },
+                AIServiceType.CONTENT_SCHEDULE_GENERATION: {
+                    "title": "📅 Content Calendar Creation",
+                    "description": "AI is building a comprehensive content schedule optimized for your audience.",
+                    "details": [
+                        "📝 Content piece generation",
+                        "📅 Optimal publishing schedule",
+                        "🎯 Audience engagement timing",
+                        "🔄 Content repurposing strategy"
+                    ],
+                    "insight": "A well-planned content calendar ensures consistent engagement and maximizes content ROI.",
+                    "ai_prompt_preview": "Generating content pieces, optimizing publishing schedule, determining audience engagement timing, and planning content repurposing...",
+                    "estimated_time": "25-30 seconds"
+                }
+            }
+            
+            content = content_map.get(service_type, {
+                "title": "🤖 AI Analysis in Progress",
+                "description": "AI is processing your data and generating insights.",
+                "details": ["Processing data", "Analyzing patterns", "Generating insights"],
+                "insight": "AI analysis provides data-driven insights to improve your strategy.",
+                "estimated_time": "15-20 seconds"
+            })
+            
+            return {**base_content, **content}
+            
+        elif status == "success":
+            return {
+                **base_content,
+                "title": f"✅ {service_type.value.replace('_', ' ').title()} Complete",
+                "description": f"Successfully completed {service_type.value.replace('_', ' ')} analysis.",
+                "achievement": f"Completed in {processing_time:.1f} seconds",
+                "next_step": "Moving to next analysis component..."
+            }
+            
+        elif status == "error":
+            return {
+                **base_content,
+                "title": f"⚠️ {service_type.value.replace('_', ' ').title()} Issue",
+                "description": f"We encountered an issue with {service_type.value.replace('_', ' ')} analysis.",
+                "error": error_message,
+                "fallback": "Will use industry best practices for this component."
+            }
+        
+        return base_content
+
+    def _record_metrics(self, service_type: AIServiceType, processing_time: float, success: bool, error_message: str = None):
+        """
+        Record metrics for AI service calls.
+        
+        Args:
+            service_type: Type of AI service being called
+            processing_time: Time taken for the call
+            success: Whether the call was successful
+            error_message: Error message if applicable
+        """
+        try:
+            metrics = AIServiceMetrics(
+                service_type=service_type,
+                response_time=processing_time,
+                success=success,
+                error_message=error_message
+            )
+            self.metrics.append(metrics)
+            
+            # Log metrics for monitoring
+            if success:
+                logger.debug(f"📊 AI metrics recorded for {service_type.value}: {processing_time:.2f}s")
+            else:
+                logger.warning(f"📊 AI metrics recorded for {service_type.value}: {processing_time:.2f}s (failed)")
+                
+        except Exception as e:
+            logger.error(f"Error recording AI metrics: {e}") 

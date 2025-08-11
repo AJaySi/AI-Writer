@@ -9,12 +9,14 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 # Import database models
-from models.enhanced_strategy_models import EnhancedContentStrategy, EnhancedAIAnalysisResult
+from models.enhanced_strategy_models import EnhancedContentStrategy, EnhancedAIAnalysisResult, OnboardingDataIntegration
+from models.onboarding import OnboardingSession, WebsiteAnalysis, ResearchPreferences, APIKey
 
 # Import modular services
 from ..ai_analysis.ai_recommendations import AIRecommendationsService
 from ..ai_analysis.prompt_engineering import PromptEngineeringService
 from ..ai_analysis.quality_validation import QualityValidationService
+from ..ai_analysis.strategy_analyzer import StrategyAnalyzer
 
 # Import onboarding services
 from ..onboarding.data_integration import OnboardingDataIntegrationService
@@ -29,6 +31,13 @@ from ..performance.health_monitoring import HealthMonitoringService
 # Import utils services
 from ..utils.data_processors import DataProcessorService
 from ..utils.validators import ValidationService
+from ..utils.strategy_utils import (
+    extract_content_preferences_from_style,
+    extract_brand_voice_from_guidelines,
+    extract_editorial_guidelines_from_style,
+    create_field_mappings,
+    calculate_data_quality_scores
+)
 
 # Import core components
 from .field_mappings import STRATEGIC_INPUT_FIELDS
@@ -39,11 +48,15 @@ logger = logging.getLogger(__name__)
 class EnhancedStrategyService:
     """Enhanced content strategy service with modular architecture."""
 
-    def __init__(self):
+    def __init__(self, db_service: Optional[Any] = None):
+        # Store db_service for compatibility
+        self.db_service = db_service
+        
         # Initialize AI analysis services
         self.ai_recommendations_service = AIRecommendationsService()
         self.prompt_engineering_service = PromptEngineeringService()
         self.quality_validation_service = QualityValidationService()
+        self.strategy_analyzer = StrategyAnalyzer()
 
         # Initialize onboarding services
         self.onboarding_data_service = OnboardingDataIntegrationService()
@@ -59,8 +72,292 @@ class EnhancedStrategyService:
         self.data_processor_service = DataProcessorService()
         self.validation_service = ValidationService()
 
-    async def create_enhanced_strategy(self, strategy_data: Dict[str, Any], user_id: int, db: Session) -> EnhancedContentStrategy:
-        """Create enhanced content strategy with all integrations."""
+    async def create_enhanced_strategy(self, strategy_data: Dict[str, Any], db: Session) -> Dict[str, Any]:
+        """Create a new enhanced content strategy with 30+ strategic inputs."""
+        try:
+            logger.info(f"Creating enhanced content strategy: {strategy_data.get('name', 'Unknown')}")
+            
+            # Extract user_id from strategy_data
+            user_id = strategy_data.get('user_id')
+            if not user_id:
+                raise ValueError("user_id is required for creating enhanced strategy")
+            
+            # Create the enhanced strategy
+            enhanced_strategy = EnhancedContentStrategy(
+                user_id=user_id,
+                name=strategy_data.get('name', 'Enhanced Content Strategy'),
+                industry=strategy_data.get('industry'),
+                
+                # Business Context
+                business_objectives=strategy_data.get('business_objectives'),
+                target_metrics=strategy_data.get('target_metrics'),
+                content_budget=strategy_data.get('content_budget'),
+                team_size=strategy_data.get('team_size'),
+                implementation_timeline=strategy_data.get('implementation_timeline'),
+                market_share=strategy_data.get('market_share'),
+                competitive_position=strategy_data.get('competitive_position'),
+                performance_metrics=strategy_data.get('performance_metrics'),
+                
+                # Audience Intelligence
+                content_preferences=strategy_data.get('content_preferences'),
+                consumption_patterns=strategy_data.get('consumption_patterns'),
+                audience_pain_points=strategy_data.get('audience_pain_points'),
+                buying_journey=strategy_data.get('buying_journey'),
+                seasonal_trends=strategy_data.get('seasonal_trends'),
+                engagement_metrics=strategy_data.get('engagement_metrics'),
+                
+                # Competitive Intelligence
+                top_competitors=strategy_data.get('top_competitors'),
+                competitor_content_strategies=strategy_data.get('competitor_content_strategies'),
+                market_gaps=strategy_data.get('market_gaps'),
+                industry_trends=strategy_data.get('industry_trends'),
+                emerging_trends=strategy_data.get('emerging_trends'),
+                
+                # Content Strategy
+                preferred_formats=strategy_data.get('preferred_formats'),
+                content_mix=strategy_data.get('content_mix'),
+                content_frequency=strategy_data.get('content_frequency'),
+                optimal_timing=strategy_data.get('optimal_timing'),
+                quality_metrics=strategy_data.get('quality_metrics'),
+                editorial_guidelines=strategy_data.get('editorial_guidelines'),
+                brand_voice=strategy_data.get('brand_voice'),
+                
+                # Performance & Analytics
+                traffic_sources=strategy_data.get('traffic_sources'),
+                conversion_rates=strategy_data.get('conversion_rates'),
+                content_roi_targets=strategy_data.get('content_roi_targets'),
+                ab_testing_capabilities=strategy_data.get('ab_testing_capabilities', False),
+                
+                # Legacy fields
+                target_audience=strategy_data.get('target_audience'),
+                content_pillars=strategy_data.get('content_pillars'),
+                ai_recommendations=strategy_data.get('ai_recommendations')
+            )
+            
+            # Calculate completion percentage
+            enhanced_strategy.calculate_completion_percentage()
+            
+            # Add to database
+            db.add(enhanced_strategy)
+            db.commit()
+            db.refresh(enhanced_strategy)
+            
+            # Integrate onboarding data if available
+            await self._enhance_strategy_with_onboarding_data(enhanced_strategy, user_id, db)
+            
+            # Generate comprehensive AI recommendations
+            try:
+                # Generate AI recommendations without timeout (allow natural processing time)
+                await self.strategy_analyzer.generate_comprehensive_ai_recommendations(enhanced_strategy, db)
+                logger.info(f"✅ AI recommendations generated successfully for strategy: {enhanced_strategy.id}")
+            except Exception as e:
+                logger.warning(f"⚠️ AI recommendations generation failed for strategy: {enhanced_strategy.id}: {str(e)} - continuing without AI recommendations")
+                # Continue without AI recommendations
+            
+            # Cache the strategy
+            await self.caching_service.cache_strategy(enhanced_strategy.id, enhanced_strategy.to_dict())
+            
+            logger.info(f"✅ Enhanced strategy created successfully: {enhanced_strategy.id}")
+            
+            return {
+                "status": "success",
+                "message": "Enhanced content strategy created successfully",
+                "strategy": enhanced_strategy.to_dict(),
+                "strategy_id": enhanced_strategy.id,
+                "completion_percentage": enhanced_strategy.completion_percentage
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error creating enhanced strategy: {str(e)}")
+            db.rollback()
+            raise
+
+    async def get_enhanced_strategies(self, user_id: Optional[int] = None, strategy_id: Optional[int] = None, db: Session = None) -> Dict[str, Any]:
+        """Get enhanced content strategies with comprehensive data and AI recommendations."""
+        try:
+            logger.info(f"🚀 Starting enhanced strategy analysis for user: {user_id}, strategy: {strategy_id}")
+            
+            # Use db_service if available, otherwise use direct db
+            if self.db_service and hasattr(self.db_service, 'db'):
+                # Use db_service methods
+                if strategy_id:
+                    strategy = await self.db_service.get_enhanced_strategy(strategy_id)
+                    strategies = [strategy] if strategy else []
+                else:
+                    strategies = await self.db_service.get_enhanced_strategies(user_id)
+            else:
+                # Fallback to direct db access
+                if not db:
+                    raise ValueError("Database session is required when db_service is not available")
+                
+                # Build query
+                query = db.query(EnhancedContentStrategy)
+                
+                if user_id:
+                    query = query.filter(EnhancedContentStrategy.user_id == user_id)
+                
+                if strategy_id:
+                    query = query.filter(EnhancedContentStrategy.id == strategy_id)
+                
+                # Get strategies
+                strategies = query.all()
+            
+            if not strategies:
+                logger.warning("⚠️ No enhanced strategies found")
+                return {
+                    "status": "not_found",
+                    "message": "No enhanced content strategies found",
+                    "strategies": [],
+                    "total_count": 0,
+                    "user_id": user_id
+                }
+            
+            # Process each strategy
+            enhanced_strategies = []
+            for strategy in strategies:
+                # Calculate completion percentage
+                if hasattr(strategy, 'calculate_completion_percentage'):
+                    strategy.calculate_completion_percentage()
+                
+                # Get AI analysis results
+                ai_analysis = await self.strategy_analyzer.get_latest_ai_analysis(strategy.id, db) if db else None
+                
+                # Get onboarding data integration
+                onboarding_integration = await self.strategy_analyzer.get_onboarding_integration(strategy.id, db) if db else None
+                
+                strategy_dict = strategy.to_dict() if hasattr(strategy, 'to_dict') else {
+                    'id': strategy.id,
+                    'name': strategy.name,
+                    'industry': strategy.industry,
+                    'user_id': strategy.user_id,
+                    'created_at': strategy.created_at.isoformat() if strategy.created_at else None,
+                    'updated_at': strategy.updated_at.isoformat() if strategy.updated_at else None
+                }
+                
+                strategy_dict.update({
+                    'ai_analysis': ai_analysis,
+                    'onboarding_integration': onboarding_integration,
+                    'completion_percentage': getattr(strategy, 'completion_percentage', 0)
+                })
+                
+                enhanced_strategies.append(strategy_dict)
+            
+            logger.info(f"✅ Retrieved {len(enhanced_strategies)} enhanced strategies")
+            
+            return {
+                "status": "success",
+                "message": "Enhanced content strategies retrieved successfully",
+                "strategies": enhanced_strategies,
+                "total_count": len(enhanced_strategies),
+                "user_id": user_id
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error retrieving enhanced strategies: {str(e)}")
+            raise
+
+    async def _enhance_strategy_with_onboarding_data(self, strategy: EnhancedContentStrategy, user_id: int, db: Session) -> None:
+        """Enhance strategy with intelligent auto-population from onboarding data."""
+        try:
+            logger.info(f"Enhancing strategy with onboarding data for user: {user_id}")
+            
+            # Get onboarding session
+            onboarding_session = db.query(OnboardingSession).filter(
+                OnboardingSession.user_id == user_id
+            ).first()
+            
+            if not onboarding_session:
+                logger.info("No onboarding session found for user")
+                return
+            
+            # Get website analysis data
+            website_analysis = db.query(WebsiteAnalysis).filter(
+                WebsiteAnalysis.session_id == onboarding_session.id
+            ).first()
+            
+            # Get research preferences data
+            research_preferences = db.query(ResearchPreferences).filter(
+                ResearchPreferences.session_id == onboarding_session.id
+            ).first()
+            
+            # Get API keys data
+            api_keys = db.query(APIKey).filter(
+                APIKey.session_id == onboarding_session.id
+            ).all()
+            
+            # Auto-populate fields from onboarding data
+            auto_populated_fields = {}
+            data_sources = {}
+            
+            if website_analysis:
+                # Extract content preferences from writing style
+                if website_analysis.writing_style:
+                    strategy.content_preferences = extract_content_preferences_from_style(
+                        website_analysis.writing_style
+                    )
+                    auto_populated_fields['content_preferences'] = 'website_analysis'
+                
+                # Extract target audience from analysis
+                if website_analysis.target_audience:
+                    strategy.target_audience = website_analysis.target_audience
+                    auto_populated_fields['target_audience'] = 'website_analysis'
+                
+                # Extract brand voice from style guidelines
+                if website_analysis.style_guidelines:
+                    strategy.brand_voice = extract_brand_voice_from_guidelines(
+                        website_analysis.style_guidelines
+                    )
+                    auto_populated_fields['brand_voice'] = 'website_analysis'
+                
+                data_sources['website_analysis'] = website_analysis.to_dict()
+            
+            if research_preferences:
+                # Extract content types from research preferences
+                if research_preferences.content_types:
+                    strategy.preferred_formats = research_preferences.content_types
+                    auto_populated_fields['preferred_formats'] = 'research_preferences'
+                
+                # Extract writing style from preferences
+                if research_preferences.writing_style:
+                    strategy.editorial_guidelines = extract_editorial_guidelines_from_style(
+                        research_preferences.writing_style
+                    )
+                    auto_populated_fields['editorial_guidelines'] = 'research_preferences'
+                
+                data_sources['research_preferences'] = research_preferences.to_dict()
+            
+            # Create onboarding data integration record
+            integration = OnboardingDataIntegration(
+                user_id=user_id,
+                strategy_id=strategy.id,
+                website_analysis_data=data_sources.get('website_analysis'),
+                research_preferences_data=data_sources.get('research_preferences'),
+                api_keys_data=[key.to_dict() for key in api_keys] if api_keys else None,
+                auto_populated_fields=auto_populated_fields,
+                field_mappings=create_field_mappings(),
+                data_quality_scores=calculate_data_quality_scores(data_sources),
+                confidence_levels={},  # Will be calculated by data quality service
+                data_freshness={}  # Will be calculated by data quality service
+            )
+            
+            db.add(integration)
+            db.commit()
+            
+            # Update strategy with onboarding data used
+            strategy.onboarding_data_used = {
+                'auto_populated_fields': auto_populated_fields,
+                'data_sources': list(data_sources.keys()),
+                'integration_id': integration.id
+            }
+            
+            logger.info(f"Strategy enhanced with onboarding data: {len(auto_populated_fields)} fields auto-populated")
+            
+        except Exception as e:
+            logger.error(f"Error enhancing strategy with onboarding data: {str(e)}")
+            # Don't raise error, just log it as this is enhancement, not core functionality
+
+    async def create_enhanced_strategy_legacy(self, strategy_data: Dict[str, Any], user_id: int, db: Session) -> EnhancedContentStrategy:
+        """Create enhanced content strategy with all integrations (legacy method for compatibility)."""
         try:
             logger.info(f"Creating enhanced strategy for user: {user_id}")
 
@@ -98,7 +395,6 @@ class EnhancedStrategyService:
             # Cache strategy data
             await self.caching_service.cache_strategy(strategy.id, strategy.to_dict())
 
-            logger.info(f"Enhanced strategy created successfully: {strategy.id}")
             return strategy
 
         except Exception as e:
@@ -107,12 +403,11 @@ class EnhancedStrategyService:
             raise
 
     async def get_enhanced_strategy(self, strategy_id: int, db: Session) -> Optional[EnhancedContentStrategy]:
-        """Get enhanced strategy with cached data."""
+        """Get a single enhanced strategy by ID."""
         try:
-            # Try to get from cache first
+            # Try cache first
             cached_strategy = await self.caching_service.get_cached_strategy(strategy_id)
             if cached_strategy:
-                logger.info(f"Retrieved strategy {strategy_id} from cache")
                 return cached_strategy
 
             # Get from database
@@ -128,22 +423,20 @@ class EnhancedStrategyService:
 
         except Exception as e:
             logger.error(f"Error getting enhanced strategy: {str(e)}")
-            return None
+            raise
 
     async def update_enhanced_strategy(self, strategy_id: int, update_data: Dict[str, Any], db: Session) -> Optional[EnhancedContentStrategy]:
-        """Update enhanced strategy."""
+        """Update an enhanced strategy."""
         try:
-            strategy = db.query(EnhancedContentStrategy).filter(
-                EnhancedContentStrategy.id == strategy_id
-            ).first()
-
+            # Get existing strategy
+            strategy = await self.get_enhanced_strategy(strategy_id, db)
             if not strategy:
                 return None
 
             # Validate update data
             validation_result = self.validation_service.validate_strategy_data(update_data)
             if not validation_result['is_valid']:
-                logger.error(f"Strategy update validation failed: {validation_result['errors']}")
+                logger.error(f"Update validation failed: {validation_result['errors']}")
                 raise ValueError(f"Invalid update data: {'; '.join(validation_result['errors'])}")
 
             # Update strategy fields
@@ -153,18 +446,17 @@ class EnhancedStrategyService:
 
             strategy.updated_at = datetime.utcnow()
 
+            # Check if AI recommendations should be regenerated
+            if self._should_regenerate_ai_recommendations(update_data):
+                await self.strategy_analyzer.generate_comprehensive_ai_recommendations(strategy, db)
+
             # Save to database
             db.commit()
             db.refresh(strategy)
 
-            # Invalidate cache
-            await self.caching_service.invalidate_cache('strategy_cache', str(strategy_id))
+            # Update cache
+            await self.caching_service.cache_strategy(strategy_id, strategy.to_dict())
 
-            # Regenerate AI recommendations if needed
-            if self._should_regenerate_ai_recommendations(update_data):
-                await self.ai_recommendations_service.generate_comprehensive_recommendations(strategy, db)
-
-            logger.info(f"Enhanced strategy updated successfully: {strategy_id}")
             return strategy
 
         except Exception as e:
@@ -173,177 +465,105 @@ class EnhancedStrategyService:
             raise
 
     async def get_onboarding_data(self, user_id: int, db: Session) -> Dict[str, Any]:
-        """Get onboarding data for auto-population."""
+        """Get onboarding data for a user."""
         try:
-            # Try to get from cache first
-            cached_data = await self.caching_service.get_cached_onboarding_data(user_id)
-            if cached_data:
-                logger.info(f"Retrieved onboarding data for user {user_id} from cache")
-                return cached_data
-
-            # Process onboarding data
-            onboarding_data = await self._process_onboarding_data(user_id, db)
-            
-            # Cache the data
-            await self.caching_service.cache_onboarding_data(user_id, onboarding_data)
-
-            return onboarding_data
-
+            return await self.data_processor_service.get_onboarding_data(user_id)
         except Exception as e:
             logger.error(f"Error getting onboarding data: {str(e)}")
-            return {}
+            raise
 
     async def get_ai_analysis(self, strategy_id: int, analysis_type: str, db: Session) -> Optional[Dict[str, Any]]:
-        """Get AI analysis results."""
+        """Get AI analysis for a strategy."""
         try:
-            # Try to get from cache first
-            cached_analysis = await self.caching_service.get_cached_ai_analysis(strategy_id, analysis_type)
-            if cached_analysis:
-                logger.info(f"Retrieved AI analysis for strategy {strategy_id} from cache")
-                return cached_analysis
-
-            # Get from database
-            analysis = db.query(EnhancedAIAnalysisResult).filter(
-                EnhancedAIAnalysisResult.strategy_id == strategy_id,
-                EnhancedAIAnalysisResult.analysis_type == analysis_type
-            ).order_by(EnhancedAIAnalysisResult.created_at.desc()).first()
-
-            if analysis:
-                analysis_data = analysis.to_dict()
-                # Cache the analysis
-                await self.caching_service.cache_ai_analysis(strategy_id, analysis_type, analysis_data)
-                return analysis_data
-
-            return None
-
+            return await self.strategy_analyzer.get_latest_ai_analysis(strategy_id, db)
         except Exception as e:
             logger.error(f"Error getting AI analysis: {str(e)}")
-            return None
+            raise
 
     async def get_system_health(self, db: Session) -> Dict[str, Any]:
         """Get system health status."""
         try:
-            return await self.health_monitoring_service.check_system_health(
-                db, 
-                self.caching_service, 
-                self.ai_recommendations_service
-            )
+            return await self.health_monitoring_service.get_system_health(db)
         except Exception as e:
             logger.error(f"Error getting system health: {str(e)}")
-            return {
-                'overall_status': 'error',
-                'error': str(e),
-                'timestamp': datetime.utcnow().isoformat()
-            }
+            raise
 
     async def get_performance_report(self) -> Dict[str, Any]:
-        """Get performance optimization report."""
+        """Get performance report."""
         try:
             return await self.performance_optimization_service.get_performance_report()
         except Exception as e:
             logger.error(f"Error getting performance report: {str(e)}")
-            return {
-                'error': str(e),
-                'timestamp': datetime.utcnow().isoformat()
-            }
+            raise
 
     async def _process_onboarding_data(self, user_id: int, db: Session) -> Dict[str, Any]:
-        """Process onboarding data for a user."""
+        """Process onboarding data for strategy creation."""
         try:
-            # Get integrated onboarding data
-            integrated_data = await self.onboarding_data_service.process_onboarding_data(user_id, db)
-            
-            # Assess data quality
-            quality_assessment = self.data_quality_service.assess_onboarding_data_quality(integrated_data)
-            
-            # Add quality assessment to integrated data
-            integrated_data['quality_assessment'] = quality_assessment
-            
-            return integrated_data
-
+            return await self.data_processor_service.get_onboarding_data(user_id)
         except Exception as e:
             logger.error(f"Error processing onboarding data: {str(e)}")
-            return {}
+            raise
 
     def _merge_strategy_with_onboarding(self, strategy_data: Dict[str, Any], field_transformations: Dict[str, Any]) -> Dict[str, Any]:
-        """Merge strategy data with onboarding field transformations."""
-        try:
+        """Merge strategy data with onboarding data."""
             merged_data = strategy_data.copy()
             
-            # Add auto-populated fields from onboarding data
-            if 'fields' in field_transformations:
-                for field_name, field_value in field_transformations['fields'].items():
-                    if field_name not in merged_data or not merged_data[field_name]:
-                        merged_data[field_name] = field_value
-            
-            # Add data sources information
-            if 'sources' in field_transformations:
-                merged_data['data_sources'] = field_transformations['sources']
+        for field, transformation in field_transformations.items():
+            if field not in merged_data or merged_data[field] is None:
+                merged_data[field] = transformation.get('value')
             
             return merged_data
 
-        except Exception as e:
-            logger.error(f"Error merging strategy with onboarding: {str(e)}")
-            return strategy_data
-
     def _should_regenerate_ai_recommendations(self, update_data: Dict[str, Any]) -> bool:
-        """Determine if AI recommendations should be regenerated."""
-        try:
-            # Fields that would trigger AI recommendation regeneration
-            ai_trigger_fields = [
-                'business_objectives', 'target_metrics', 'content_budget',
-                'team_size', 'implementation_timeline', 'market_share',
-                'competitive_position', 'content_preferences', 'audience_pain_points',
-                'top_competitors', 'industry_trends'
+        """Determine if AI recommendations should be regenerated based on updates."""
+        critical_fields = [
+            'business_objectives', 'target_metrics', 'industry', 
+            'content_preferences', 'target_audience', 'competitive_position'
             ]
             
-            return any(field in update_data for field in ai_trigger_fields)
-
-        except Exception as e:
-            logger.error(f"Error checking if AI recommendations should be regenerated: {str(e)}")
-            return False
+        return any(field in update_data for field in critical_fields)
 
     def get_strategic_input_fields(self) -> List[Dict[str, Any]]:
-        """Get strategic input field definitions."""
+        """Get strategic input fields configuration."""
         return STRATEGIC_INPUT_FIELDS
 
     def get_service_constants(self) -> Dict[str, Any]:
-        """Get service configuration constants."""
+        """Get service constants."""
         return SERVICE_CONSTANTS
 
     async def validate_strategy_data(self, strategy_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate strategy data using the validation service."""
+        """Validate strategy data."""
         try:
             return self.validation_service.validate_strategy_data(strategy_data)
         except Exception as e:
             logger.error(f"Error validating strategy data: {str(e)}")
-            return {
-                'is_valid': False,
-                'errors': [f"Validation error: {str(e)}"],
-                'warnings': [],
-                'field_validations': {},
-                'validation_timestamp': datetime.utcnow().isoformat()
-            }
+            raise
 
     async def process_data_for_output(self, data: Dict[str, Any], output_format: str = 'json') -> Union[str, Dict[str, Any]]:
-        """Process data for different output formats."""
+        """Process data for specific output format."""
         try:
-            return self.data_processor_service.format_data_for_output(data, output_format)
+            if output_format == 'json':
+                return data
+            elif output_format == 'xml':
+                # Convert to XML format
+                return self._convert_to_xml(data)
+            else:
+                raise ValueError(f"Unsupported output format: {output_format}")
         except Exception as e:
             logger.error(f"Error processing data for output: {str(e)}")
-            return str(data)
+            raise
 
     async def optimize_strategy_operation(self, operation_name: str, operation_func, *args, **kwargs) -> Dict[str, Any]:
-        """Optimize strategy operations with performance monitoring."""
+        """Optimize strategy operation with performance monitoring."""
         try:
-            return await self.performance_optimization_service.optimize_response_time(
+            return await self.performance_optimization_service.optimize_operation(
                 operation_name, operation_func, *args, **kwargs
             )
         except Exception as e:
             logger.error(f"Error optimizing strategy operation: {str(e)}")
-            return {
-                'result': None,
-                'response_time': 0.0,
-                'optimization_suggestions': ['Error occurred during optimization'],
-                'performance_status': 'error'
-            } 
+            raise
+
+    def _convert_to_xml(self, data: Dict[str, Any]) -> str:
+        """Convert data to XML format (placeholder implementation)."""
+        # This would be implemented with proper XML conversion
+        return f"<strategy>{str(data)}</strategy>" 

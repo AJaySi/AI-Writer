@@ -14,6 +14,9 @@ from .routes import strategies, calendar_events, gap_analysis, ai_analytics, cal
 # Import enhanced strategy routes
 from .enhanced_strategy_routes import router as enhanced_strategy_router
 
+# Import content strategy routes
+from .content_strategy.routes import router as content_strategy_router
+
 # Create main router
 router = APIRouter(prefix="/api/content-planning", tags=["content-planning"])
 
@@ -27,6 +30,9 @@ router.include_router(health_monitoring.router)
 
 # Include enhanced strategy routes with correct prefix
 router.include_router(enhanced_strategy_router, prefix="/enhanced-strategies")
+
+# Include content strategy routes
+router.include_router(content_strategy_router)
 
 # Add health check endpoint
 @router.get("/health")

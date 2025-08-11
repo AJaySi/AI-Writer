@@ -49,7 +49,8 @@ import {
   School as SchoolIcon,
   Lightbulb as LightbulbIcon,
   Psychology as PsychologyIcon,
-  Timeline as TimelineIcon
+  Timeline as TimelineIcon,
+  FiberManualRecord as FiberManualRecordIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEnhancedStrategyStore, STRATEGIC_INPUT_FIELDS } from '../../../stores/enhancedStrategyStore';
@@ -105,7 +106,8 @@ const ContentStrategyBuilder: React.FC = () => {
     setError,
     setCurrentStrategy,
     setAIGenerating,
-    setSaving
+    setSaving,
+    personalizationData
   } = useEnhancedStrategyStore();
 
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
@@ -117,6 +119,10 @@ const ContentStrategyBuilder: React.FC = () => {
   const [refreshProgress, setRefreshProgress] = useState<number>(0);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [showEducationalModal, setShowEducationalModal] = useState(false);
+  const [educationalContent, setEducationalContent] = useState<any>(null);
+  const [generationProgress, setGenerationProgress] = useState<number>(0);
+  const [showAIRecModal, setShowAIRecModal] = useState(false);
 
   // Ref to track if we've already set the default category
   const hasSetDefaultCategory = useRef(false);
@@ -235,28 +241,9 @@ const ContentStrategyBuilder: React.FC = () => {
           };
 
           console.log('Attempting to create strategy with data:', strategyData);
-          const newStrategy = await createEnhancedStrategy(strategyData);
-          console.log('New strategy created:', newStrategy);
-
-          if (newStrategy && newStrategy.id) {
-            console.log('Generating AI recommendations for new strategy ID:', newStrategy.id);
-            await generateAIRecommendations(newStrategy.id);
-            
-            // Set the current strategy and show success message
-            setCurrentStrategy(newStrategy);
-            setError(null); // Clear any previous errors
-            
-            // Show success message
-            setTimeout(() => {
-              setError('Strategy created successfully! Check the Strategic Intelligence tab for detailed insights.');
-            }, 100);
-            
-            // Auto-switch to Strategic Intelligence tab after creation
-            // This would need to be handled by the parent component
-          } else {
-            setError('Failed to create strategy or get strategy ID for AI generation.');
-            console.error('Failed to create strategy or get strategy ID for AI generation.');
-          }
+          
+          // Use SSE streaming endpoint for strategy generation with educational content
+          await generateStrategyWithSSE(strategyData);
         } else {
           setError('Please fill in all required fields before generating AI insights.');
           console.error('Form validation failed. Cannot generate AI insights.');
@@ -267,6 +254,224 @@ const ContentStrategyBuilder: React.FC = () => {
       console.error('Error in handleCreateStrategy:', err);
     } finally {
       setAIGenerating(false);
+    }
+  };
+
+  const generateStrategyWithSSE = async (strategyData: any) => {
+    try {
+      console.log('🚀 Starting SSE strategy generation...');
+      
+      // Initialize progress and educational content
+      setGenerationProgress(0);
+      setEducationalContent({
+        title: '🤖 AI-Powered Strategy Generation',
+        description: 'Initializing AI analysis and preparing educational content...',
+        details: [
+          '🔧 Setting up AI services',
+          '📊 Loading user context',
+          '🎯 Preparing strategy framework',
+          '📚 Generating educational content'
+        ],
+        insight: 'We\'re getting everything ready for your personalized AI strategy generation.',
+        estimated_time: '2-3 minutes total'
+      });
+      
+      // Show educational modal
+      setShowEducationalModal(true);
+
+      // Create basic strategy first
+      const newStrategy = await createEnhancedStrategy(strategyData);
+      console.log('Basic strategy created:', newStrategy);
+
+      if (newStrategy && newStrategy.id) {
+        console.log('Starting AI generation for strategy ID:', newStrategy.id);
+        
+        // Set a timeout for the entire process (5 minutes)
+        const processTimeout = setTimeout(async () => {
+          console.error('⏰ Strategy generation timeout after 5 minutes');
+          
+          // Try to check if the strategy was actually created
+          try {
+            const existingStrategy = await contentPlanningApi.getEnhancedStrategy(newStrategy.id.toString());
+            if (existingStrategy) {
+              console.log('✅ Strategy was created successfully despite SSE timeout');
+              setCurrentStrategy(existingStrategy);
+              setError('Strategy created successfully! The AI generation may still be running in the background. Check the Strategic Intelligence tab for detailed insights.');
+            } else {
+              setError('Strategy generation is taking longer than expected. The process may still be running in the background. Please check the Strategic Intelligence tab for results.');
+            }
+          } catch (checkError) {
+            console.error('Error checking strategy status:', checkError);
+            setError('Strategy generation is taking longer than expected. The process may still be running in the background. Please check the Strategic Intelligence tab for results.');
+          }
+          
+          setShowEducationalModal(false);
+        }, 5 * 60 * 1000); // 5 minutes
+        
+        // Add heartbeat monitoring
+        let lastMessageTime = Date.now();
+        const heartbeatInterval = setInterval(() => {
+          const timeSinceLastMessage = Date.now() - lastMessageTime;
+          if (timeSinceLastMessage > 30000) { // 30 seconds without message
+            console.warn('⚠️ No SSE messages received for 30 seconds');
+            setEducationalContent({
+              title: '🤖 AI-Powered Strategy Generation',
+              description: 'AI analysis is still running in the background. This may take a few more minutes.',
+              details: [
+                '⏳ Processing complex AI analysis',
+                '📊 Analyzing market data',
+                '🎯 Generating strategic insights',
+                '📈 Calculating performance predictions'
+              ],
+              insight: 'The AI is working on comprehensive analysis. This is normal for complex strategies.',
+              estimated_time: 'Additional 1-2 minutes'
+            });
+          }
+        }, 10000); // Check every 10 seconds
+        
+        // Use SSE endpoint for AI generation with educational content
+        const eventSource = await contentPlanningApi.streamStrategyGeneration(Number(newStrategy.id));
+        
+        console.log('🔌 SSE EventSource created:', eventSource);
+        console.log('🔌 SSE readyState:', eventSource.readyState);
+        
+        // Handle SSE data with proper parsing
+        eventSource.onmessage = (event) => {
+          try {
+            console.log('📨 Raw SSE message:', event.data);
+            
+            // Update last message time for heartbeat
+            lastMessageTime = Date.now();
+            
+            // Parse the SSE data
+            const data = JSON.parse(event.data);
+            console.log('📨 Parsed SSE data:', data);
+            console.log('📨 Message type analysis:', {
+              hasStep: data.step !== undefined,
+              hasProgress: data.progress !== undefined,
+              hasEducationalContent: !!data.educational_content,
+              hasError: !!data.error,
+              hasSuccess: !!data.success,
+              hasType: !!data.type,
+              step: data.step,
+              progress: data.progress,
+              message: data.message
+            });
+            
+            // Handle different types of messages
+            if (data.error) {
+              console.error('❌ SSE Error:', data.error);
+              clearTimeout(processTimeout);
+              clearInterval(heartbeatInterval);
+              setError(`AI generation failed: ${data.error}`);
+              setShowEducationalModal(false);
+              eventSource.close();
+              return;
+            }
+            
+            // Handle step and progress updates (backend sends these)
+            if (data.step !== undefined) {
+              console.log('🔢 Updating step:', data.step);
+              // Calculate progress from step (each step is 10%)
+              const stepProgress = Math.min(data.step * 10, 100);
+              console.log('📊 Calculated progress from step:', stepProgress);
+              setGenerationProgress(stepProgress);
+            }
+            
+            // Handle explicit progress updates
+            if (data.progress !== undefined) {
+              console.log('📊 Updating progress:', data.progress);
+              setGenerationProgress(data.progress);
+            }
+            
+            // Handle educational content updates
+            if (data.educational_content) {
+              console.log('📚 Updating educational content:', data.educational_content);
+              setEducationalContent(data.educational_content);
+            }
+            
+            // Handle completion
+            if (data.step === 10 && data.success) {
+              console.log('✅ Strategy generation completed successfully!');
+              clearTimeout(processTimeout);
+              clearInterval(heartbeatInterval);
+              setCurrentStrategy(data.strategy);
+              setShowEducationalModal(false);
+              setError('Strategy created successfully! Check the Strategic Intelligence tab for detailed insights.');
+              eventSource.close();
+            }
+            
+            // Handle educational content from AI service manager
+            if (data.type === 'educational_content' && data.educational_content) {
+              console.log('📚 AI Service educational content:', data.educational_content);
+              setEducationalContent(data.educational_content);
+            }
+            
+            // Handle success messages for individual steps
+            if (data.success && data.message) {
+              console.log('✅ Step completed:', data.message);
+              // Progress is already updated above, just log the success
+            }
+            
+          } catch (parseError) {
+            console.error('❌ Error parsing SSE message:', parseError);
+            console.error('Raw message:', event.data);
+          }
+        };
+        
+        // Handle SSE errors
+        eventSource.onerror = (error) => {
+          console.error('❌ SSE connection error:', error);
+          console.error('   ReadyState:', eventSource.readyState);
+          
+          // Check connection state
+          switch (eventSource.readyState) {
+            case EventSource.CONNECTING:
+              console.log('🔄 SSE connection is connecting...');
+              break;
+            case EventSource.OPEN:
+              console.log('✅ SSE connection is open');
+              break;
+            case EventSource.CLOSED:
+              console.log('🔌 SSE connection is closed');
+              clearTimeout(processTimeout);
+              clearInterval(heartbeatInterval);
+              setError('Connection lost during AI generation. The process may still be running in the background. Please check the Strategic Intelligence tab for results.');
+              setShowEducationalModal(false);
+              break;
+          }
+        };
+        
+        // Handle SSE connection open
+        eventSource.onopen = () => {
+          console.log('✅ SSE connection opened successfully');
+          console.log('   ReadyState:', eventSource.readyState);
+          console.log('   URL:', eventSource.url);
+          
+          // Update educational content to show connection is established
+          setEducationalContent({
+            title: '🔌 Connection Established',
+            description: 'Successfully connected to AI generation service. Starting analysis...',
+            details: [
+              '✅ SSE connection active',
+              '🤖 AI service ready',
+              '📊 Data processing initialized',
+              '🎯 Strategy generation starting'
+            ],
+            insight: 'The connection is now established and AI analysis is beginning.',
+            estimated_time: '2-3 minutes total'
+          });
+        };
+        
+      } else {
+        setError('Failed to create strategy or get strategy ID for AI generation.');
+        console.error('Failed to create strategy or get strategy ID for AI generation.');
+        setShowEducationalModal(false);
+      }
+    } catch (error: any) {
+      console.error('Error in SSE strategy generation:', error);
+      setError(`Error in strategy generation: ${error.message || 'Unknown error'}`);
+      setShowEducationalModal(false);
     }
   };
 
@@ -678,6 +883,7 @@ const ContentStrategyBuilder: React.FC = () => {
                             dataSource={dataSources[field.id]}
                             confidenceLevel={autoPopulatedFields[field.id] ? 0.8 : undefined}
                             dataQuality={autoPopulatedFields[field.id] ? 'High Quality' : undefined}
+                            personalizationData={personalizationData[field.id]}
                             onChange={(value: any) => updateFormField(field.id, value)}
                             onValidate={() => validateFormField(field.id)}
                             onShowTooltip={() => setShowTooltip(field.id)}
@@ -784,26 +990,195 @@ const ContentStrategyBuilder: React.FC = () => {
 
       {/* AI Recommendations Modal */}
       <Dialog 
-        open={showAIRecommendations} 
-        onClose={() => setShowAIRecommendations(false)}
+        open={showAIRecModal}
+        onClose={() => setShowAIRecModal(false)}
         maxWidth="md"
         fullWidth
       >
         <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AutoAwesomeIcon />
-            AI Recommendations & Insights
+          <Box display="flex" alignItems="center" gap={1}>
+            <AutoAwesomeIcon color="primary" />
+            AI Recommendations
           </Box>
         </DialogTitle>
         <DialogContent>
-          <AIRecommendationsPanel 
-            aiGenerating={aiGenerating}
-            onGenerateRecommendations={handleCreateStrategy}
-          />
+          <Typography variant="body1" gutterBottom>
+            AI recommendations are being generated for your strategy. This process may take a few minutes.
+          </Typography>
+          <LinearProgress variant="indeterminate" sx={{ mt: 2 }} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Educational Modal for Strategy Generation */}
+      <Dialog
+        open={showEducationalModal}
+        onClose={() => setShowEducationalModal(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <SchoolIcon color="primary" />
+            {educationalContent?.title || 'AI Strategy Generation'}
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {educationalContent ? (
+            <Box>
+              {/* Progress Bar */}
+              <Box sx={{ mb: 3 }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                  <Typography variant="body2" color="text.secondary">
+                    Progress: {generationProgress}%
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Step {Math.ceil(generationProgress / 10)} of 10
+                  </Typography>
+                </Box>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={generationProgress} 
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
+              </Box>
+
+              {/* Educational Content */}
+              <Typography variant="h6" gutterBottom color="primary">
+                {educationalContent.title || 'AI Strategy Generation'}
+              </Typography>
+              
+              {educationalContent.description && (
+                <Typography variant="body1" paragraph>
+                  {educationalContent.description}
+                </Typography>
+              )}
+
+              {educationalContent.details && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    What's happening:
+                  </Typography>
+                  <List dense>
+                    {educationalContent.details.map((detail: string, index: number) => (
+                      <ListItem key={index} sx={{ py: 0.5 }}>
+                        <ListItemIcon sx={{ minWidth: 32 }}>
+                          <FiberManualRecordIcon sx={{ fontSize: 8 }} />
+                        </ListItemIcon>
+                        <ListItemText primary={detail} />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+              )}
+
+              {educationalContent.insight && (
+                <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" color="primary" gutterBottom>
+                    💡 Insight:
+                  </Typography>
+                  <Typography variant="body2">
+                    {educationalContent.insight}
+                  </Typography>
+                </Box>
+              )}
+
+              {educationalContent.ai_prompt_preview && (
+                <Box sx={{ mb: 2, p: 2, bgcolor: 'blue.50', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" color="primary" gutterBottom>
+                    🤖 AI Prompt Preview:
+                  </Typography>
+                  <Typography variant="body2" fontFamily="monospace" fontSize="0.875rem">
+                    {educationalContent.ai_prompt_preview}
+                  </Typography>
+                </Box>
+              )}
+
+              {educationalContent.estimated_time && (
+                <Box sx={{ mb: 2, p: 2, bgcolor: 'orange.50', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" color="warning.main" gutterBottom>
+                    ⏱️ Estimated Time:
+                  </Typography>
+                  <Typography variant="body2">
+                    {educationalContent.estimated_time}
+                  </Typography>
+                </Box>
+              )}
+
+              {educationalContent.achievement && (
+                <Box sx={{ mb: 2, p: 2, bgcolor: 'green.50', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" color="success.main" gutterBottom>
+                    ✅ Achievement:
+                  </Typography>
+                  <Typography variant="body2">
+                    {educationalContent.achievement}
+                  </Typography>
+                </Box>
+              )}
+
+              {educationalContent.next_step && (
+                <Box sx={{ mb: 2, p: 2, bgcolor: 'purple.50', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" color="secondary.main" gutterBottom>
+                    🔄 Next Step:
+                  </Typography>
+                  <Typography variant="body2">
+                    {educationalContent.next_step}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Summary for completion */}
+              {educationalContent.summary && (
+                <Box sx={{ mt: 3, p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    🎉 Strategy Generation Summary
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <Typography variant="body2">
+                        <strong>Components:</strong> {educationalContent.summary.successful_components}/{educationalContent.summary.total_components}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2">
+                        <strong>Content Pieces:</strong> {educationalContent.summary.total_content_pieces}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2">
+                        <strong>Estimated ROI:</strong> {educationalContent.summary.estimated_roi}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2">
+                        <strong>Timeline:</strong> {educationalContent.summary.implementation_timeline}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
+            </Box>
+          ) : (
+            /* Loading state when educational content is not yet available */
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <CircularProgress sx={{ mb: 2 }} />
+              <Typography variant="h6" gutterBottom>
+                🤖 AI-Powered Strategy Generation
+              </Typography>
+              <Typography variant="body1" color="text.secondary" paragraph>
+                Initializing AI analysis and preparing educational content...
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                This may take a few moments as we set up the AI services.
+              </Typography>
+            </Box>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAIRecommendations(false)}>
-            Close
+          <Button 
+            onClick={() => setShowEducationalModal(false)}
+            disabled={generationProgress < 100}
+          >
+            {generationProgress < 100 ? 'Please wait...' : 'Close'}
           </Button>
         </DialogActions>
       </Dialog>

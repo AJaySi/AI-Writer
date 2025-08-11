@@ -205,7 +205,7 @@ def _dict_to_types_schema(schema: Dict[str, Any]) -> types.Schema:
     return _convert(schema)
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-def gemini_structured_json_response(prompt, schema, temperature=0.7, top_p=0.9, top_k=40, max_tokens=2048, system_prompt=None):
+def gemini_structured_json_response(prompt, schema, temperature=0.7, top_p=0.9, top_k=40, max_tokens=8192, system_prompt=None):
     """
     Generate structured JSON response using Google's Gemini Pro model.
     """
@@ -229,18 +229,38 @@ def gemini_structured_json_response(prompt, schema, temperature=0.7, top_p=0.9, 
             response_schema=types_schema
         )
 
+        # Add debugging for API call
+        logger.debug(f"Gemini API call - prompt length: {len(prompt)}, schema keys: {list(schema.keys()) if isinstance(schema, dict) else 'N/A'}")
+        
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=prompt,
             config=generation_config,
         )
 
+        # Add debugging for response
+        logger.debug(f"Gemini response type: {type(response)}")
+        logger.debug(f"Gemini response has text: {hasattr(response, 'text')}")
+        logger.debug(f"Gemini response has parsed: {hasattr(response, 'parsed')}")
+        
+        if hasattr(response, 'text'):
+            logger.debug(f"Gemini response.text: {repr(response.text)}")
+        if hasattr(response, 'parsed'):
+            logger.debug(f"Gemini response.parsed: {repr(response.parsed)}")
+
         # Prefer parsed if present and non-empty; otherwise parse text with fallbacks
         try:
             parsed = getattr(response, 'parsed', None)
             if parsed:
+                logger.debug(f"Using parsed response: {type(parsed)}")
                 return parsed if isinstance(parsed, dict) else json.loads(json.dumps(parsed))
+            
             text = (response.text or '').strip()
+            logger.debug(f"Using text response, length: {len(text)}")
+            
+            if not text:
+                logger.error("Gemini returned empty text response")
+                return {"error": "Empty response from Gemini API", "raw_response": ""}
             
             # Strip markdown code fences if present
             if text.startswith('```'):
@@ -258,6 +278,16 @@ def gemini_structured_json_response(prompt, schema, temperature=0.7, top_p=0.9, 
                 return json.loads(text)
             except json.JSONDecodeError as e:
                 logger.warning(f"Direct JSON parsing failed: {e}")
+                logger.debug(f"Failed to parse text: {text[:200]}...")
+                
+                # Check if response is truncated (common cause of JSON errors)
+                if text.endswith('...') or text.endswith('"') or text.endswith(','):
+                    logger.warning("Response appears to be truncated, attempting partial parsing")
+                    # Try to extract what we can from truncated response
+                    partial_result = _extract_partial_json(text)
+                    if partial_result:
+                        logger.info("Successfully extracted partial JSON from truncated response")
+                        return partial_result
                 
                 # Fallback 1: Extract likely JSON object substring
                 first = text.find('{')
@@ -380,6 +410,88 @@ def _repair_json_string(text: str) -> Optional[str]:
     repaired = re.sub(r'"(\s*)"', r'",\1"', repaired)
     
     return repaired
+
+
+def _extract_partial_json(text: str) -> Optional[Dict[str, Any]]:
+    """
+    Extract partial JSON from truncated responses.
+    Attempts to salvage as much data as possible from incomplete JSON.
+    """
+    if not text:
+        return None
+    
+    try:
+        # Find the start of JSON
+        start = text.find('{')
+        if start == -1:
+            return None
+        
+        # Extract from start to end, handling common truncation patterns
+        json_text = text[start:]
+        
+        # Common truncation patterns and their fixes
+        truncation_patterns = [
+            (r'(["\w\s,{}\[\]\-\.:]+)\.\.\.$', r'\1'),  # Remove trailing ...
+            (r'(["\w\s,{}\[\]\-\.:]+)"$', r'\1"'),      # Add missing closing quote
+            (r'(["\w\s,{}\[\]\-\.:]+),$', r'\1'),       # Remove trailing comma
+            (r'(["\w\s,{}\[\]\-\.:]+)\[(["\w\s,{}\[\]\-\.:]*)$', r'\1\2]'),  # Close unclosed arrays
+            (r'(["\w\s,{}\[\]\-\.:]+)\{(["\w\s,{}\[\]\-\.:]*)$', r'\1\2}'),  # Close unclosed objects
+        ]
+        
+        # Apply truncation fixes
+        import re
+        for pattern, replacement in truncation_patterns:
+            json_text = re.sub(pattern, replacement, json_text)
+        
+        # Try to balance brackets and braces
+        open_braces = json_text.count('{')
+        close_braces = json_text.count('}')
+        open_brackets = json_text.count('[')
+        close_brackets = json_text.count(']')
+        
+        # Add missing closing braces/brackets
+        if open_braces > close_braces:
+            json_text += '}' * (open_braces - close_braces)
+        if open_brackets > close_brackets:
+            json_text += ']' * (open_brackets - close_brackets)
+        
+        # Try to parse the repaired JSON
+        try:
+            result = json.loads(json_text)
+            logger.info(f"Successfully extracted partial JSON with {len(str(result))} characters")
+            return result
+        except json.JSONDecodeError as e:
+            logger.debug(f"Partial JSON parsing failed: {e}")
+            
+            # Try to extract individual fields as a last resort
+            fields = {}
+            
+            # Extract key-value pairs using regex
+            kv_pattern = r'"([^"]+)"\s*:\s*"([^"]*)"'
+            matches = re.findall(kv_pattern, json_text)
+            for key, value in matches:
+                fields[key] = value
+            
+            # Extract array fields
+            array_pattern = r'"([^"]+)"\s*:\s*\[([^\]]*)\]'
+            array_matches = re.findall(array_pattern, json_text)
+            for key, array_content in array_matches:
+                # Parse array items
+                items = []
+                item_pattern = r'"([^"]*)"'
+                item_matches = re.findall(item_pattern, array_content)
+                items.extend(item_matches)
+                fields[key] = items
+            
+            if fields:
+                logger.info(f"Extracted {len(fields)} fields from truncated JSON")
+                return fields
+            
+            return None
+            
+    except Exception as e:
+        logger.debug(f"Error in partial JSON extraction: {e}")
+        return None
 
 
 def _extract_key_value_pairs(text: str) -> Optional[Dict[str, Any]]:

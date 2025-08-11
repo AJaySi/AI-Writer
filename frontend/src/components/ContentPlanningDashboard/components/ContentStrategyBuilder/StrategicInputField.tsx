@@ -15,7 +15,8 @@ import {
   Alert,
   Autocomplete,
   InputAdornment,
-  Button
+  Button,
+  Collapse
 } from '@mui/material';
 import {
   Help as HelpIcon,
@@ -23,7 +24,10 @@ import {
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
   Edit as EditIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  Person as PersonIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon
 } from '@mui/icons-material';
 import { useEnhancedStrategyStore } from '../../../../stores/enhancedStrategyStore';
 
@@ -35,6 +39,22 @@ interface StrategicInputFieldProps {
   dataSource?: string;
   confidenceLevel?: number;
   dataQuality?: string;
+  personalizationData?: {
+    explanation?: string;
+    data_sources?: {
+      website_analysis?: boolean;
+      audience_insights?: boolean;
+      ai_recommendations?: boolean;
+      research_config?: boolean;
+    };
+    personalization_factors?: {
+      website_url?: string;
+      industry_focus?: string;
+      writing_tone?: string;
+      expertise_level?: string;
+      business_size?: string;
+    };
+  };
   onChange: (value: any) => void;
   onValidate: () => boolean;
   onShowTooltip: () => void;
@@ -80,6 +100,7 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
   dataSource,
   confidenceLevel,
   dataQuality,
+  personalizationData,
   onChange,
   onValidate,
   onShowTooltip,
@@ -89,6 +110,7 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
 }) => {
   const { getTooltipData } = useEnhancedStrategyStore();
   const [isEditing, setIsEditing] = useState(false);
+  const [showPersonalization, setShowPersonalization] = useState(false);
 
   const getAccent = (theme: any) => (theme?.palette?.[accentColorKey] ?? theme?.palette?.primary);
   
@@ -666,6 +688,94 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
                 View details
               </Button>
             )}
+          </Box>
+        )}
+
+        {/* Personalization Information */}
+        {personalizationData && (
+          <Box sx={{ 
+            mt: 0.5,
+            p: 0.5,
+            bgcolor: 'rgba(76, 175, 80, 0.08)',
+            borderRadius: 1,
+            border: '1px solid rgba(76, 175, 80, 0.2)'
+          }}>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 0.5,
+              cursor: 'pointer',
+              '&:hover': { bgcolor: 'rgba(76, 175, 80, 0.05)' },
+              borderRadius: 0.5,
+              p: 0.25
+            }}
+            onClick={() => setShowPersonalization(!showPersonalization)}
+            >
+              <PersonIcon sx={{ fontSize: 12, color: 'success.main' }} />
+              <Typography variant="caption" color="success.main" sx={{ fontSize: '0.6rem', fontWeight: 600 }}>
+                Personalized for your business
+              </Typography>
+              {showPersonalization ? (
+                <ExpandLessIcon sx={{ fontSize: 12, color: 'success.main' }} />
+              ) : (
+                <ExpandMoreIcon sx={{ fontSize: 12, color: 'success.main' }} />
+              )}
+            </Box>
+            
+            <Collapse in={showPersonalization}>
+              <Box sx={{ mt: 0.5, pl: 1.5 }}>
+                {/* Personalization Explanation */}
+                {personalizationData.explanation && (
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6rem', display: 'block', mb: 0.5 }}>
+                    {personalizationData.explanation}
+                  </Typography>
+                )}
+                
+                {/* Personalization Factors */}
+                {personalizationData.personalization_factors && (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 0.5 }}>
+                    {Object.entries(personalizationData.personalization_factors).map(([key, value]) => (
+                      value && (
+                        <Chip
+                          key={key}
+                          label={`${key.replace(/_/g, ' ')}: ${value}`}
+                          size="small"
+                          variant="outlined"
+                          color="success"
+                          sx={{ 
+                            fontSize: '0.5rem',
+                            height: 16,
+                            '& .MuiChip-label': { px: 0.5 }
+                          }}
+                        />
+                      )
+                    ))}
+                  </Box>
+                )}
+                
+                {/* Data Sources Used */}
+                {personalizationData.data_sources && (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {Object.entries(personalizationData.data_sources).map(([source, used]) => (
+                      used && (
+                        <Chip
+                          key={source}
+                          label={source.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          size="small"
+                          variant="outlined"
+                          color="info"
+                          sx={{ 
+                            fontSize: '0.5rem',
+                            height: 16,
+                            '& .MuiChip-label': { px: 0.5 }
+                          }}
+                        />
+                      )
+                    ))}
+                  </Box>
+                )}
+              </Box>
+            </Collapse>
           </Box>
         )}
       </Box>

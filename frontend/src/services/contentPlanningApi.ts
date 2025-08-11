@@ -547,6 +547,41 @@ class ContentPlanningAPI {
     });
   }
 
+  // SSE Strategy Generation
+  async streamStrategyGeneration(strategyId: number): Promise<EventSource> {
+    // The backend endpoint doesn't need strategy_id, it creates the strategy internally
+    const url = `${this.baseURL}/content-strategy/ai-generation/generate-comprehensive-strategy/stream?user_id=1&strategy_name=Enhanced%20Content%20Strategy`;
+    
+    console.log('🚀 Creating SSE connection for strategy generation:');
+    console.log('   URL:', url);
+    console.log('   Base URL:', this.baseURL);
+    console.log('   Strategy ID:', strategyId);
+    
+    const eventSource = new EventSource(url);
+    
+    // Add comprehensive error handling
+    eventSource.onerror = (error) => {
+      console.error('❌ SSE Error in strategy generation:', error);
+      console.error('   ReadyState:', eventSource.readyState);
+      console.error('   URL:', url);
+      
+      // Don't close immediately on error - let the frontend handle it
+      // eventSource.close();
+    };
+    
+    eventSource.onopen = () => {
+      console.log('✅ SSE connection opened successfully');
+      console.log('   ReadyState:', eventSource.readyState);
+      console.log('   URL:', url);
+    };
+    
+    eventSource.onmessage = (event) => {
+      console.log('📨 SSE message received:', event.data);
+    };
+    
+    return eventSource;
+  }
+
   async updateEnhancedStrategy(id: string, updates: any): Promise<any> {
     return this.handleRequest(async () => {
       const response = await apiClient.put(`${this.baseURL}/enhanced-strategies/${id}`, updates);

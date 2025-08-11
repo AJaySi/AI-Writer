@@ -159,6 +159,7 @@ interface EnhancedStrategyStore {
   autoPopulatedFields: Record<string, any>;
   dataSources: Record<string, string>;
   inputDataPoints: Record<string, any>; // Detailed input data points from backend
+  personalizationData: Record<string, any>; // Personalization data for each field
   
   // UI State
   loading: boolean;
@@ -602,6 +603,7 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
   autoPopulatedFields: {},
   dataSources: {},
   inputDataPoints: {}, // Initialize inputDataPoints
+  personalizationData: {}, // Initialize personalizationData
   
   // UI State
   loading: false,
@@ -722,6 +724,7 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
       autoPopulatedFields: {},
       dataSources: {},
       inputDataPoints: {}, // Reset inputDataPoints
+      personalizationData: {}, // Reset personalizationData
       currentStep: 0,
       completedSteps: []
     });
@@ -789,6 +792,7 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
       // Transform the fields object to extract values for formData
       const fieldValues: Record<string, any> = {};
       const autoPopulatedFields: Record<string, any> = {};
+      const personalizationData: Record<string, any> = {};
       
       Object.keys(fields).forEach(fieldId => {
         const fieldData = fields[fieldId];
@@ -797,6 +801,13 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
         if (fieldData && typeof fieldData === 'object' && 'value' in fieldData) {
           fieldValues[fieldId] = fieldData.value;
           autoPopulatedFields[fieldId] = fieldData.value;
+          
+          // Extract personalization data if available
+          if (fieldData.personalization_data) {
+            personalizationData[fieldId] = fieldData.personalization_data;
+            console.log(`🎯 Personalization data for ${fieldId}:`, fieldData.personalization_data);
+          }
+          
           console.log(`✅ Auto-populated ${fieldId}:`, fieldData.value);
         } else {
           console.log(`❌ Skipping ${fieldId} - invalid data structure`);
@@ -805,11 +816,13 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
       
       console.log('📝 Final field values:', fieldValues);
       console.log('🔄 Final auto-populated fields:', autoPopulatedFields);
+      console.log('🎯 Personalization data:', personalizationData);
       
       set((state) => ({
         autoPopulatedFields,
         dataSources: sources,
         inputDataPoints, // Store the detailed input data points
+        personalizationData, // Store personalization data
         formData: { ...state.formData, ...fieldValues }
       }));
       

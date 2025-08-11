@@ -1,7 +1,8 @@
 import json
 import logging
 import traceback
-from typing import Any, Dict
+from typing import Any, Dict, List
+from datetime import datetime
 
 from services.ai_service_manager import AIServiceManager, AIServiceType
 
@@ -60,43 +61,103 @@ class AIStructuredAutofillService:
         research = context.get('research_preferences') or {}
         api_keys = context.get('api_keys_data') or {}
         session = context.get('onboarding_session') or {}
+        
+        # Extract detailed personalization data
+        writing_style = website.get('writing_style', {})
+        target_audience = website.get('target_audience', {})
+        content_type = website.get('content_type', {})
+        recommended_settings = website.get('recommended_settings', {})
+        content_characteristics = website.get('content_characteristics', {})
+        
         summary = {
-            'website_summary': {
+            'user_profile': {
                 'website_url': website.get('website_url'),
-                'industry': website.get('industry'),
-                'content_types': website.get('content_types'),
-                'target_audience': website.get('target_audience'),
-                'performance_metrics': website.get('performance_metrics'),
-                'seo_summary': website.get('seo_analysis')
-            },
-            'research_summary': {
-                'audience_segments': research.get('audience_segments'),
-                'content_preferences': research.get('content_preferences'),
-                'consumption_patterns': research.get('consumption_patterns'),
-                'seasonality': research.get('seasonal_trends')
-            },
-            'api_summary': {
-                'providers': api_keys.get('providers'),
-                'total_keys': api_keys.get('total_keys')
-            },
-            'session_summary': {
                 'business_size': session.get('business_size'),
-                'region': session.get('region')
+                'region': session.get('region'),
+                'onboarding_progress': session.get('progress', 0)
+            },
+            'content_analysis': {
+                'writing_style': {
+                    'tone': writing_style.get('tone'),
+                    'voice': writing_style.get('voice'),
+                    'complexity': writing_style.get('complexity'),
+                    'engagement_level': writing_style.get('engagement_level')
+                },
+                'content_characteristics': {
+                    'sentence_structure': content_characteristics.get('sentence_structure'),
+                    'vocabulary': content_characteristics.get('vocabulary'),
+                    'paragraph_organization': content_characteristics.get('paragraph_organization')
+                },
+                'content_type': {
+                    'primary_type': content_type.get('primary_type'),
+                    'secondary_types': content_type.get('secondary_types'),
+                    'purpose': content_type.get('purpose')
+                }
+            },
+            'audience_insights': {
+                'demographics': target_audience.get('demographics'),
+                'expertise_level': target_audience.get('expertise_level'),
+                'industry_focus': target_audience.get('industry_focus'),
+                'pain_points': target_audience.get('pain_points'),
+                'content_preferences': target_audience.get('content_preferences')
+            },
+            'ai_recommendations': {
+                'recommended_tone': recommended_settings.get('writing_tone'),
+                'recommended_audience': recommended_settings.get('target_audience'),
+                'recommended_content_type': recommended_settings.get('content_type'),
+                'style_guidelines': website.get('style_guidelines')
+            },
+            'research_config': {
+                'research_depth': research.get('research_depth'),
+                'content_types': research.get('content_types'),
+                'auto_research': research.get('auto_research'),
+                'factual_content': research.get('factual_content')
+            },
+            'api_capabilities': {
+                'providers': api_keys.get('providers', []),
+                'total_keys': api_keys.get('total_keys', 0),
+                'available_services': self._extract_available_services(api_keys)
+            },
+            'data_quality': {
+                'website_freshness': website.get('data_freshness'),
+                'confidence_level': website.get('confidence_level'),
+                'analysis_status': website.get('status')
             }
         }
+        
         try:
             logger.debug(
-                "AI Structured Autofill: context presence | website=%s research=%s api=%s session=%s",
+                "AI Structured Autofill: personalized context | website=%s research=%s api=%s session=%s",
                 bool(website), bool(research), bool(api_keys), bool(session)
             )
             logger.debug(
-                "AI Structured Autofill: website keys=%s research keys=%s",
-                len(list(website.keys())) if hasattr(website, 'keys') else 0,
-                len(list(research.keys())) if hasattr(research, 'keys') else 0,
+                "AI Structured Autofill: personalization data | writing_style=%s target_audience=%s content_type=%s",
+                bool(writing_style), bool(target_audience), bool(content_type)
             )
         except Exception:
             pass
         return summary
+
+    def _extract_available_services(self, api_keys: Dict[str, Any]) -> List[str]:
+        """Extract available services from API keys."""
+        services = []
+        providers = api_keys.get('providers', [])
+        
+        # Map providers to services
+        provider_service_map = {
+            'google_search_console': ['SEO Analytics', 'Search Performance'],
+            'google_analytics': ['Web Analytics', 'User Behavior'],
+            'semrush': ['Competitive Analysis', 'Keyword Research'],
+            'ahrefs': ['Backlink Analysis', 'SEO Tools'],
+            'moz': ['SEO Tools', 'Rank Tracking'],
+            'social_media': ['Social Media Analytics', 'Social Listening']
+        }
+        
+        for provider in providers:
+            if provider in provider_service_map:
+                services.extend(provider_service_map[provider])
+        
+        return list(set(services))  # Remove duplicates
 
     def _build_schema(self) -> Dict[str, Any]:
         # Simplified schema following Gemini best practices
@@ -167,47 +228,109 @@ class AIStructuredAutofillService:
         return schema
 
     def _build_prompt(self, context_summary: Dict[str, Any]) -> str:
-        # Ultra-simplified prompt to avoid JSON parsing issues
-        prompt = (
-            "Generate a JSON object with exactly 30 fields for content strategy. Use this exact format:\n\n"
-            
-            '{\n'
-            '"business_objectives": "Increase traffic and leads",\n'
-            '"target_metrics": "25% growth, 15% conversion",\n'
-            '"content_budget": 3000,\n'
-            '"team_size": 3,\n'
-            '"implementation_timeline": "6 months",\n'
-            '"market_share": "15%",\n'
-            '"competitive_position": "Leader",\n'
-            '"performance_metrics": "Current metrics data",\n'
-            '"content_preferences": "Blog posts, videos",\n'
-            '"consumption_patterns": "Peak hours 9-11 AM",\n'
-            '"audience_pain_points": "Time constraints, complexity",\n'
-            '"buying_journey": "Awareness to Decision",\n'
-            '"seasonal_trends": "Q1 planning, Q2 execution",\n'
-            '"engagement_metrics": "3.5% engagement rate",\n'
-            '"top_competitors": "Competitor A, B, C",\n'
-            '"competitor_content_strategies": "Educational content approach",\n'
-            '"market_gaps": "AI tools, automation guides",\n'
-            '"industry_trends": "AI integration, video content",\n'
-            '"emerging_trends": "Voice search, interactive content",\n'
-            '"preferred_formats": "Blog posts, videos, infographics",\n'
-            '"content_mix": "70% educational, 30% promotional",\n'
-            '"content_frequency": "Weekly",\n'
-            '"optimal_timing": "Tuesday/Thursday 10 AM",\n'
-            '"quality_metrics": "SEO score >90, engagement >3%",\n'
-            '"editorial_guidelines": "Professional tone, actionable insights",\n'
-            '"brand_voice": "Professional",\n'
-            '"traffic_sources": "Organic search, social media",\n'
-            '"conversion_rates": "15% conversion, $200 CPA",\n'
-            '"content_roi_targets": "15% conversion, 3:1 ROI",\n'
-            '"ab_testing_capabilities": true\n'
-            '}\n\n'
-            
-            f"Business context: {json.dumps(context_summary, indent=2)}\n\n"
-            "Generate the complete JSON with all 30 fields:"
-        )
-        logger.debug("AI Structured Autofill: ultra-simplified prompt (%d chars)", len(prompt))
+        # Build personalized prompt using actual user data
+        user_profile = context_summary.get('user_profile', {})
+        content_analysis = context_summary.get('content_analysis', {})
+        audience_insights = context_summary.get('audience_insights', {})
+        ai_recommendations = context_summary.get('ai_recommendations', {})
+        research_config = context_summary.get('research_config', {})
+        api_capabilities = context_summary.get('api_capabilities', {})
+        
+        # Extract specific personalization data
+        website_url = user_profile.get('website_url', 'your website')
+        writing_tone = content_analysis.get('writing_style', {}).get('tone', 'professional')
+        target_demographics = audience_insights.get('demographics', ['professionals'])
+        industry_focus = audience_insights.get('industry_focus', 'general')
+        expertise_level = audience_insights.get('expertise_level', 'intermediate')
+        primary_content_type = content_analysis.get('content_type', {}).get('primary_type', 'blog')
+        research_depth = research_config.get('research_depth', 'Standard')
+        available_services = api_capabilities.get('available_services', [])
+        
+        # Build personalized context description
+        personalization_context = f"""
+PERSONALIZED CONTEXT FOR {website_url.upper()}:
+
+🎯 YOUR BUSINESS PROFILE:
+- Website: {website_url}
+- Industry Focus: {industry_focus}
+- Business Size: {user_profile.get('business_size', 'SME')}
+- Region: {user_profile.get('region', 'Global')}
+
+📝 YOUR CONTENT ANALYSIS:
+- Current Writing Tone: {writing_tone}
+- Primary Content Type: {primary_content_type}
+- Target Demographics: {', '.join(target_demographics) if isinstance(target_demographics, list) else target_demographics}
+- Audience Expertise Level: {expertise_level}
+- Content Purpose: {content_analysis.get('content_type', {}).get('purpose', 'informational')}
+
+🔍 YOUR AUDIENCE INSIGHTS:
+- Pain Points: {audience_insights.get('pain_points', 'time constraints, complexity')}
+- Content Preferences: {audience_insights.get('content_preferences', 'educational, actionable')}
+- Industry Focus: {industry_focus}
+
+🤖 AI RECOMMENDATIONS FOR YOUR SITE:
+- Recommended Tone: {ai_recommendations.get('recommended_tone', writing_tone)}
+- Recommended Content Type: {ai_recommendations.get('recommended_content_type', primary_content_type)}
+- Style Guidelines: {ai_recommendations.get('style_guidelines', 'professional, engaging')}
+
+⚙️ YOUR RESEARCH CONFIGURATION:
+- Research Depth: {research_depth}
+- Content Types: {', '.join(research_config.get('content_types', ['blog', 'article'])) if isinstance(research_config.get('content_types'), list) else research_config.get('content_types', 'blog, article')}
+- Auto Research: {research_config.get('auto_research', True)}
+- Factual Content: {research_config.get('factual_content', True)}
+
+🔧 YOUR AVAILABLE TOOLS:
+- Analytics Services: {', '.join(available_services) if available_services else 'Basic analytics'}
+- API Providers: {', '.join(api_capabilities.get('providers', [])) if api_capabilities.get('providers') else 'Manual tracking'}
+"""
+
+        # Personalized prompt with specific instructions
+        prompt = f"""
+You are a content strategy expert analyzing {website_url}. Based on the detailed analysis of this website and user's onboarding data, generate a personalized content strategy with exactly 30 fields.
+
+{personalization_context}
+
+IMPORTANT: Make each field specific to {website_url} and the user's actual data. Avoid generic placeholder values. Use the real insights from their website analysis.
+
+Generate a JSON object with exactly 30 fields using this exact format:
+
+{{
+"business_objectives": "Specific goals for {website_url} based on {industry_focus} industry",
+"target_metrics": "Realistic KPIs for {user_profile.get('business_size', 'SME')} business",
+"content_budget": 3000,
+"team_size": 3,
+"implementation_timeline": "6 months",
+"market_share": "15%",
+"competitive_position": "Leader",
+"performance_metrics": "Current performance data for {website_url}",
+"content_preferences": "Content formats preferred by {', '.join(target_demographics) if isinstance(target_demographics, list) else target_demographics} audience",
+"consumption_patterns": "When {expertise_level} level audience consumes content",
+"audience_pain_points": "Specific challenges for {industry_focus} professionals",
+"buying_journey": "Customer journey for {industry_focus} industry",
+"seasonal_trends": "Seasonal patterns in {industry_focus}",
+"engagement_metrics": "Expected engagement for {writing_tone} tone content",
+"top_competitors": "Main competitors in {industry_focus} space",
+"competitor_content_strategies": "How competitors approach {primary_content_type} content",
+"market_gaps": "Opportunities in {industry_focus} content market",
+"industry_trends": "Current trends in {industry_focus} industry",
+"emerging_trends": "Upcoming trends for {industry_focus}",
+"preferred_formats": "Formats that work for {expertise_level} audience",
+"content_mix": "Optimal mix for {primary_content_type} focus",
+"content_frequency": "Frequency for {research_depth} research depth",
+"optimal_timing": "Best times for {target_demographics[0] if isinstance(target_demographics, list) and target_demographics else 'your'} audience",
+"quality_metrics": "Quality standards for {writing_tone} content",
+"editorial_guidelines": "Guidelines matching {writing_tone} tone",
+"brand_voice": "{writing_tone.title()}",
+"traffic_sources": "Primary sources for {industry_focus} content",
+"conversion_rates": "Realistic rates for {user_profile.get('business_size', 'SME')}",
+"content_roi_targets": "ROI goals for {industry_focus} content",
+"ab_testing_capabilities": true
+}}
+
+Generate the complete JSON with all 30 fields personalized for {website_url}:
+"""
+        
+        logger.debug("AI Structured Autofill: personalized prompt (%d chars)", len(prompt))
         return prompt
 
     def _normalize_value(self, key: str, value: Any) -> Any:
@@ -459,7 +582,15 @@ class AIStructuredAutofillService:
             raw_value = last_result.get(key)
             norm_value = self._normalize_value(key, raw_value)
             if norm_value is not None and norm_value != "" and norm_value != []:
-                fields[key] = { 'value': norm_value, 'source': 'ai_refresh', 'confidence': 0.8 }
+                # Add personalization metadata to each field
+                personalized_metadata = self._add_personalization_metadata(key, norm_value, context_summary)
+                fields[key] = { 
+                    'value': norm_value, 
+                    'source': 'ai_refresh', 
+                    'confidence': 0.8,
+                    'personalized': True,
+                    'personalization_data': personalized_metadata
+                }
                 sources[key] = 'ai_refresh'
                 non_null_keys.append(key)
             else:
@@ -479,31 +610,93 @@ class AIStructuredAutofillService:
             'performance_analytics': ['traffic_sources', 'conversion_rates', 'content_roi_targets', 'ab_testing_capabilities']
         }
         
+        # Log category-wise success rates
         for category, category_fields in field_categories.items():
-            generated_in_category = [f for f in category_fields if f in non_null_keys]
-            missing_in_category = [f for f in category_fields if f in missing_fields]
-            logger.info("📊 %s: %d/%d fields generated (%s missing: %s)", 
-                       category.upper(), len(generated_in_category), len(category_fields), 
-                       len(missing_in_category), missing_in_category)
+            generated_count = len([f for f in category_fields if f in non_null_keys])
+            missing_count = len([f for f in category_fields if f in missing_fields])
+            logger.info(f"📊 {category.upper()}: {generated_count}/{len(category_fields)} fields generated ({missing_count} missing: {[f for f in category_fields if f in missing_fields]})")
         
         success_rate = self._calculate_success_rate(last_result)
+        logger.info(f"AI structured autofill completed | non_null_fields={len(non_null_keys)} missing={len(missing_fields)} success_rate={success_rate:.1f}% attempts={self.max_retries + 1}")
 
-        payload = {
+        return {
             'fields': fields,
             'sources': sources,
             'meta': {
-                'ai_used': len(non_null_keys) > 0,
+                'ai_used': True,
                 'ai_overrides_count': len(non_null_keys),
-                'ai_override_fields': non_null_keys,
-                'ai_only': True,
                 'missing_fields': missing_fields,
                 'success_rate': success_rate,
-                'attempts': self.max_retries + 1
+                'attempts': self.max_retries + 1,
+                'personalization_level': 'high',
+                'data_sources_used': list(set(sources.values())),
+                'website_analyzed': context_summary.get('user_profile', {}).get('website_url'),
+                'generated_at': datetime.utcnow().isoformat()
             }
         }
-        logger.info("AI structured autofill completed | non_null_fields=%d missing=%d success_rate=%.1f%% attempts=%d", 
-                   len(non_null_keys), len(missing_fields), success_rate, self.max_retries + 1)
-        return payload
+
+    def _add_personalization_metadata(self, field_key: str, value: Any, context_summary: Dict[str, Any]) -> Dict[str, Any]:
+        """Add personalization metadata to explain how the value was personalized."""
+        user_profile = context_summary.get('user_profile', {})
+        content_analysis = context_summary.get('content_analysis', {})
+        audience_insights = context_summary.get('audience_insights', {})
+        ai_recommendations = context_summary.get('ai_recommendations', {})
+        
+        website_url = user_profile.get('website_url', 'your website')
+        writing_tone = content_analysis.get('writing_style', {}).get('tone', 'professional')
+        industry_focus = audience_insights.get('industry_focus', 'general')
+        expertise_level = audience_insights.get('expertise_level', 'intermediate')
+        
+        # Create personalized explanation for each field
+        personalization_explanations = {
+            'business_objectives': f"Based on {industry_focus} industry analysis and {user_profile.get('business_size', 'SME')} business profile",
+            'target_metrics': f"Realistic KPIs for {user_profile.get('business_size', 'SME')} business in {industry_focus}",
+            'content_budget': f"Budget recommendation based on {user_profile.get('business_size', 'SME')} scale and {industry_focus} content needs",
+            'team_size': f"Team size optimized for {user_profile.get('business_size', 'SME')} business and {content_analysis.get('content_type', {}).get('primary_type', 'blog')} content",
+            'implementation_timeline': f"Timeline based on {user_profile.get('business_size', 'SME')} resources and {industry_focus} complexity",
+            'market_share': f"Market position analysis for {industry_focus} industry",
+            'competitive_position': f"Competitive analysis for {industry_focus} market",
+            'performance_metrics': f"Current performance data from {website_url} analysis",
+            'content_preferences': f"Formats preferred by {', '.join(audience_insights.get('demographics', ['professionals']))} audience",
+            'consumption_patterns': f"Patterns for {expertise_level} level audience in {industry_focus}",
+            'audience_pain_points': f"Specific challenges for {industry_focus} professionals",
+            'buying_journey': f"Customer journey mapped for {industry_focus} industry",
+            'seasonal_trends': f"Seasonal patterns specific to {industry_focus} content",
+            'engagement_metrics': f"Expected engagement for {writing_tone} tone content",
+            'top_competitors': f"Main competitors in {industry_focus} space",
+            'competitor_content_strategies': f"Competitor analysis for {industry_focus} content strategies",
+            'market_gaps': f"Opportunities identified in {industry_focus} content market",
+            'industry_trends': f"Current trends in {industry_focus} industry",
+            'emerging_trends': f"Upcoming trends for {industry_focus} content",
+            'preferred_formats': f"Formats optimized for {expertise_level} audience",
+            'content_mix': f"Optimal mix for {content_analysis.get('content_type', {}).get('primary_type', 'blog')} focus",
+            'content_frequency': f"Frequency based on {context_summary.get('research_config', {}).get('research_depth', 'Standard')} research depth",
+            'optimal_timing': f"Best times for {audience_insights.get('demographics', ['professionals'])[0] if isinstance(audience_insights.get('demographics'), list) and audience_insights.get('demographics') else 'your'} audience",
+            'quality_metrics': f"Quality standards for {writing_tone} content",
+            'editorial_guidelines': f"Guidelines matching {writing_tone} tone from {website_url} analysis",
+            'brand_voice': f"Voice derived from {writing_tone} tone analysis of {website_url}",
+            'traffic_sources': f"Primary sources for {industry_focus} content",
+            'conversion_rates': f"Realistic rates for {user_profile.get('business_size', 'SME')} business",
+            'content_roi_targets': f"ROI goals for {industry_focus} content",
+            'ab_testing_capabilities': f"A/B testing availability based on {user_profile.get('business_size', 'SME')} capabilities"
+        }
+        
+        return {
+            'explanation': personalization_explanations.get(field_key, f"Personalized for {website_url}"),
+            'data_sources': {
+                'website_analysis': bool(context_summary.get('content_analysis')),
+                'audience_insights': bool(context_summary.get('audience_insights')),
+                'ai_recommendations': bool(context_summary.get('ai_recommendations')),
+                'research_config': bool(context_summary.get('research_config'))
+            },
+            'personalization_factors': {
+                'website_url': website_url,
+                'industry_focus': industry_focus,
+                'writing_tone': writing_tone,
+                'expertise_level': expertise_level,
+                'business_size': user_profile.get('business_size', 'SME')
+            }
+        }
 
     def _extract_fields_from_raw_response(self, result: Dict[str, Any]) -> Dict[str, Any]:
         """Extract fields from malformed JSON response using regex patterns."""
