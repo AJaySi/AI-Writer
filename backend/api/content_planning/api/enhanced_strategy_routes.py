@@ -1122,4 +1122,4 @@ async def refresh_autofill(
         )
     except Exception as e:
         logger.error(f"❌ Error generating fresh auto-fill payload: {str(e)}")
-        raise ContentPlanningErrorHandler.handle_general_error(e, "refresh_autofill") 
+        raise ContentPlanningErrorHandler.handle_general_error(e, "refresh_autofill")   

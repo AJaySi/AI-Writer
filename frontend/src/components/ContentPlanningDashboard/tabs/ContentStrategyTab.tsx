@@ -56,6 +56,7 @@ import {
 import { useContentPlanningStore } from '../../../stores/contentPlanningStore';
 import { contentPlanningApi } from '../../../services/contentPlanningApi';
 import ContentStrategyBuilder from '../components/ContentStrategyBuilder';
+import StrategyIntelligenceTab from '../components/StrategyIntelligenceTab';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -461,110 +462,7 @@ const ContentStrategyTab: React.FC = () => {
 
         {/* Strategic Intelligence Tab */}
         <TabPanel value={tabValue} index={1}>
-          {dataLoading.strategicIntelligence ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-              <CircularProgress />
-            </Box>
-          ) : strategicIntelligence && strategicIntelligence.market_positioning ? (
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Market Positioning
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <CircularProgress
-                        variant="determinate"
-                        value={strategicIntelligence.market_positioning.score || 0}
-                        size={60}
-                        color="primary"
-                      />
-                      <Typography variant="h4" sx={{ ml: 2 }}>
-                        {strategicIntelligence.market_positioning.score || 0}/100
-                      </Typography>
-                    </Box>
-                    
-                    <Typography variant="subtitle2" gutterBottom>
-                      Strengths:
-                    </Typography>
-                    <List dense>
-                      {(strategicIntelligence.market_positioning.strengths || []).map((strength: string, index: number) => (
-                        <ListItem key={index}>
-                          <ListItemIcon>
-                            <CheckCircleIcon color="success" />
-                          </ListItemIcon>
-                          <ListItemText primary={strength} />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Competitive Advantages
-                    </Typography>
-                    {(strategicIntelligence.competitive_advantages || []).map((advantage: any, index: number) => (
-                      <Box key={index} sx={{ mb: 2 }}>
-                        <Typography variant="subtitle1">
-                          {advantage.advantage}
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                          <Chip 
-                            label={advantage.impact} 
-                            color={advantage.impact === 'High' ? 'success' : 'primary'}
-                            size="small"
-                          />
-                          <Chip 
-                            label={advantage.implementation} 
-                            variant="outlined"
-                            size="small"
-                          />
-                        </Box>
-                      </Box>
-                    ))}
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Strategic Risks
-                    </Typography>
-                    {(strategicIntelligence.strategic_risks || []).map((risk: any, index: number) => (
-                      <Box key={index} sx={{ mb: 2 }}>
-                        <Typography variant="subtitle1">
-                          {risk.risk}
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                          <Chip 
-                            label={`Probability: ${risk.probability}`} 
-                            color={risk.probability === 'High' ? 'error' : 'warning'}
-                            size="small"
-                          />
-                          <Chip 
-                            label={`Impact: ${risk.impact}`} 
-                            color={risk.impact === 'High' ? 'error' : 'warning'}
-                            size="small"
-                          />
-                        </Box>
-                      </Box>
-                    ))}
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          ) : (
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', p: 3 }}>
-              No strategic intelligence data available
-            </Typography>
-          )}
+          <StrategyIntelligenceTab />
         </TabPanel>
 
         {/* Keyword Research Tab */}

@@ -60,7 +60,7 @@ class AIStrategyGenerator:
             strategy_name: Optional custom strategy name
             
         Returns:
-            Comprehensive strategy with all components
+            Comprehensive strategy with all components (EXCLUDING content calendar)
             
         Raises:
             RuntimeError: If any AI component fails to generate
@@ -77,19 +77,16 @@ class AIStrategyGenerator:
             # Step 3: Generate competitive analysis
             competitive_analysis = await self._generate_competitive_analysis(base_strategy, context)
             
-            # Step 4: Generate content calendar
-            content_calendar = await self._generate_content_calendar(base_strategy, context)
-            
-            # Step 5: Generate performance predictions
+            # Step 4: Generate performance predictions
             performance_predictions = await self._generate_performance_predictions(base_strategy, context)
             
-            # Step 6: Generate implementation roadmap
+            # Step 5: Generate implementation roadmap
             implementation_roadmap = await self._generate_implementation_roadmap(base_strategy, context)
             
-            # Step 7: Generate risk assessment
+            # Step 6: Generate risk assessment
             risk_assessment = await self._generate_risk_assessment(base_strategy, context)
             
-            # Step 8: Compile comprehensive strategy
+            # Step 7: Compile comprehensive strategy (NO CONTENT CALENDAR)
             comprehensive_strategy = {
                 "strategy_metadata": {
                     "generated_at": datetime.utcnow().isoformat(),
@@ -99,21 +96,21 @@ class AIStrategyGenerator:
                     "ai_model": "gemini-pro",
                     "personalization_level": "high",
                     "ai_generated": True,
-                    "comprehensive": True
+                    "comprehensive": True,
+                    "content_calendar_ready": False  # Indicates calendar needs to be generated separately
                 },
                 "base_strategy": base_strategy,
                 "strategic_insights": strategic_insights,
                 "competitive_analysis": competitive_analysis,
-                "content_calendar": content_calendar,
                 "performance_predictions": performance_predictions,
                 "implementation_roadmap": implementation_roadmap,
                 "risk_assessment": risk_assessment,
                 "summary": {
-                    "total_content_pieces": len(content_calendar.get("content_pieces", [])),
                     "estimated_roi": performance_predictions.get("estimated_roi", "15-25%"),
                     "implementation_timeline": implementation_roadmap.get("total_duration", "12 months"),
                     "risk_level": risk_assessment.get("overall_risk_level", "Medium"),
-                    "success_probability": performance_predictions.get("success_probability", "85%")
+                    "success_probability": performance_predictions.get("success_probability", "85%"),
+                    "next_step": "Review strategy and generate content calendar"
                 }
             }
             
@@ -334,8 +331,55 @@ class AIStrategyGenerator:
                         }
                     },
                     "themes": {"type": "array", "items": {"type": "string"}},
-                    "schedule": {"type": "object"},
-                    "distribution_strategy": {"type": "object"}
+                    "schedule": {
+                        "type": "object",
+                        "properties": {
+                            "publishing_frequency": {"type": "string"},
+                            "optimal_times": {"type": "array", "items": {"type": "string"}},
+                            "content_mix": {
+                                "type": "object",
+                                "properties": {
+                                    "blog_posts": {"type": "string"},
+                                    "social_media": {"type": "string"},
+                                    "videos": {"type": "string"},
+                                    "infographics": {"type": "string"},
+                                    "newsletters": {"type": "string"}
+                                }
+                            },
+                            "seasonal_adjustments": {
+                                "type": "object",
+                                "properties": {
+                                    "holiday_content": {"type": "array", "items": {"type": "string"}},
+                                    "seasonal_themes": {"type": "array", "items": {"type": "string"}},
+                                    "peak_periods": {"type": "array", "items": {"type": "string"}}
+                                }
+                            }
+                        }
+                    },
+                    "distribution_strategy": {
+                        "type": "object",
+                        "properties": {
+                            "primary_platforms": {"type": "array", "items": {"type": "string"}},
+                            "cross_posting_strategy": {"type": "string"},
+                            "platform_specific_content": {
+                                "type": "object",
+                                "properties": {
+                                    "linkedin_content": {"type": "array", "items": {"type": "string"}},
+                                    "twitter_content": {"type": "array", "items": {"type": "string"}},
+                                    "instagram_content": {"type": "array", "items": {"type": "string"}},
+                                    "facebook_content": {"type": "array", "items": {"type": "string"}}
+                                }
+                            },
+                            "engagement_timing": {
+                                "type": "object",
+                                "properties": {
+                                    "best_times": {"type": "array", "items": {"type": "string"}},
+                                    "frequency": {"type": "string"},
+                                    "timezone_considerations": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
                 }
             }
             
@@ -483,8 +527,33 @@ class AIStrategyGenerator:
                             }
                         }
                     },
-                    "timeline": {"type": "object"},
-                    "resource_allocation": {"type": "object"},
+                    "timeline": {
+                        "type": "object",
+                        "properties": {
+                            "start_date": {"type": "string"},
+                            "end_date": {"type": "string"},
+                            "key_milestones": {"type": "array", "items": {"type": "string"}},
+                            "critical_path": {"type": "array", "items": {"type": "string"}}
+                        }
+                    },
+                    "resource_allocation": {
+                        "type": "object",
+                        "properties": {
+                            "team_requirements": {"type": "array", "items": {"type": "string"}},
+                            "budget_allocation": {
+                                "type": "object",
+                                "properties": {
+                                    "total_budget": {"type": "string"},
+                                    "content_creation": {"type": "string"},
+                                    "technology_tools": {"type": "string"},
+                                    "marketing_promotion": {"type": "string"},
+                                    "external_resources": {"type": "string"}
+                                }
+                            },
+                            "technology_needs": {"type": "array", "items": {"type": "string"}},
+                            "external_resources": {"type": "array", "items": {"type": "string"}}
+                        }
+                    },
                     "success_metrics": {"type": "array", "items": {"type": "string"}},
                     "total_duration": {"type": "string"}
                 }
@@ -552,9 +621,25 @@ class AIStrategyGenerator:
                         }
                     },
                     "overall_risk_level": {"type": "string"},
-                    "risk_categories": {"type": "object"},
+                    "risk_categories": {
+                        "type": "object",
+                        "properties": {
+                            "technical_risks": {"type": "array", "items": {"type": "string"}},
+                            "market_risks": {"type": "array", "items": {"type": "string"}},
+                            "operational_risks": {"type": "array", "items": {"type": "string"}},
+                            "financial_risks": {"type": "array", "items": {"type": "string"}}
+                        }
+                    },
                     "mitigation_strategies": {"type": "array", "items": {"type": "string"}},
-                    "monitoring_framework": {"type": "object"}
+                    "monitoring_framework": {
+                        "type": "object",
+                        "properties": {
+                            "key_indicators": {"type": "array", "items": {"type": "string"}},
+                            "monitoring_frequency": {"type": "string"},
+                            "escalation_procedures": {"type": "array", "items": {"type": "string"}},
+                            "review_schedule": {"type": "string"}
+                        }
+                    }
                 }
             }
             

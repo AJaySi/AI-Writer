@@ -196,7 +196,7 @@ class ContentPlanningAPI {
 
   async getStrategies(userId?: number) {
     const params = userId ? { user_id: userId } : {};
-    const response = await apiClient.get(`${this.baseURL}/strategies/`, { params });
+    const response = await apiClient.get(`${this.baseURL}/enhanced-strategies`, { params });
     return response.data;
   }
 
@@ -580,6 +580,105 @@ class ContentPlanningAPI {
     };
     
     return eventSource;
+  }
+
+  // New polling-based strategy generation methods
+  async startStrategyGenerationPolling(userId: number = 1, strategyName?: string, config?: any): Promise<any> {
+    return this.handleRequest(async () => {
+      const payload = {
+        user_id: userId,
+        strategy_name: strategyName || 'Enhanced Content Strategy',
+        config: config || {}
+      };
+      
+      console.log('🚀 Starting polling-based strategy generation:', payload);
+      
+      const response = await apiClient.post(
+        `${this.baseURL}/content-strategy/ai-generation/generate-comprehensive-strategy-polling`,
+        payload
+      );
+      
+      console.log('✅ Strategy generation started:', response.data);
+      return response.data.data || response.data;
+    });
+  }
+
+  async getStrategyGenerationStatus(taskId: string): Promise<any> {
+    return this.handleRequest(async () => {
+      const response = await apiClient.get(`${this.baseURL}/content-strategy/ai-generation/strategy-generation-status/${taskId}`);
+      return response.data.data || response.data;
+    });
+  }
+
+  // Get the latest generated strategy from polling system
+  async getLatestGeneratedStrategy(userId: number = 1): Promise<any> {
+    return this.handleRequest(async () => {
+      const response = await apiClient.get(`${this.baseURL}/content-strategy/ai-generation/latest-strategy`, {
+        params: { user_id: userId }
+      });
+      return response.data.data || response.data;
+    });
+  }
+
+  // Polling utility method
+  async pollStrategyGeneration(
+    taskId: string,
+    onProgress: (status: any) => void,
+    onComplete: (strategy: any) => void,
+    onError: (error: any) => void,
+    pollInterval: number = 10000, // 10 seconds
+    maxAttempts: number = 36 // 6 minutes max (36 * 10 seconds)
+  ): Promise<void> {
+    let attempts = 0;
+    
+    const poll = async () => {
+      try {
+        attempts++;
+        console.log(`📊 Polling attempt ${attempts}/${maxAttempts} for task: ${taskId}`);
+        
+        const status = await this.getStrategyGenerationStatus(taskId);
+        
+        // Call progress callback
+        onProgress(status);
+        
+        // Check if completed
+        if (status.status === 'completed') {
+          console.log('✅ Strategy generation completed:', status);
+          onComplete(status.strategy);
+          return;
+        }
+        
+        // Check if failed
+        if (status.status === 'failed') {
+          console.error('❌ Strategy generation failed:', status.error);
+          onError(status.error || 'Strategy generation failed');
+          return;
+        }
+        
+        // Check if max attempts reached
+        if (attempts >= maxAttempts) {
+          console.warn('⏰ Max polling attempts reached, checking final status...');
+          const finalStatus = await this.getStrategyGenerationStatus(taskId);
+          
+          if (finalStatus.status === 'completed') {
+            onComplete(finalStatus.strategy);
+          } else {
+            onError('Strategy generation timeout. The process may still be running in the background.');
+          }
+          return;
+        }
+        
+        // Continue polling
+        setTimeout(poll, pollInterval);
+        
+      } catch (error) {
+        console.error('❌ Error polling strategy generation status:', error);
+        onError(error);
+      }
+    };
+    
+    // Start polling
+    poll();
   }
 
   async updateEnhancedStrategy(id: string, updates: any): Promise<any> {

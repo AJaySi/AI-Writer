@@ -506,7 +506,7 @@ class EnhancedStrategyService:
 
     def _merge_strategy_with_onboarding(self, strategy_data: Dict[str, Any], field_transformations: Dict[str, Any]) -> Dict[str, Any]:
         """Merge strategy data with onboarding data."""
-            merged_data = strategy_data.copy()
+        merged_data = strategy_data.copy()
             
         for field, transformation in field_transformations.items():
             if field not in merged_data or merged_data[field] is None:

@@ -1,0 +1,1578 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Grid,
+  Paper,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  CardActions,
+  Chip,
+  Divider,
+  Alert,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  CircularProgress,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Tooltip,
+  Badge,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  LinearProgress,
+  Stepper,
+  Step,
+  StepLabel,
+  StepContent
+} from '@mui/material';
+import {
+  TrendingUp as TrendingUpIcon,
+  Business as BusinessIcon,
+  Lightbulb as LightbulbIcon,
+  CheckCircle as CheckCircleIcon,
+  Warning as WarningIcon,
+  Search as SearchIcon,
+  Analytics as AnalyticsIcon,
+  Timeline as TimelineIcon,
+  Assessment as AssessmentIcon,
+  ExpandMore as ExpandMoreIcon,
+  Refresh as RefreshIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+  Visibility as VisibilityIcon,
+  BarChart as BarChartIcon,
+  PieChart as PieChartIcon,
+  ShowChart as ShowChartIcon,
+  AutoAwesome as AutoAwesomeIcon,
+  Psychology as PsychologyIcon,
+  Security as SecurityIcon,
+  Schedule as ScheduleIcon,
+  ThumbUp as ThumbUpIcon,
+  ThumbDown as ThumbDownIcon,
+  Save as SaveIcon,
+  PlayArrow as PlayArrowIcon,
+  CalendarToday as CalendarIcon,
+  Info as InfoIcon,
+  Star as StarIcon,
+  TrendingDown as TrendingDownIcon,
+  Speed as SpeedIcon,
+  MyLocation as TargetIcon,
+  Flag as FlagIcon,
+  Check as CheckIcon,
+  Close as CloseIcon
+} from '@mui/icons-material';
+import { motion, AnimatePresence } from 'framer-motion';
+import { contentPlanningApi } from '../../../services/contentPlanningApi';
+
+// Helper function to get user ID from context or store
+const getUserId = (): number => {
+  // TODO: Replace with actual user context/store
+  // For now, return default user ID
+  return 1;
+};
+
+interface StrategyData {
+  strategy_metadata?: {
+    generated_at?: string;
+    generation_timestamp?: string;
+    user_id: number;
+    strategy_name: string;
+    generation_version?: string;
+    ai_model?: string;
+    personalization_level?: string;
+    ai_generated: boolean;
+    comprehensive: boolean;
+    content_calendar_ready: boolean;
+  };
+  metadata?: {
+    generated_at?: string;
+    generation_timestamp?: string;
+    user_id: number;
+    strategy_name: string;
+    generation_version?: string;
+    ai_model?: string;
+    personalization_level?: string;
+    ai_generated: boolean;
+    comprehensive: boolean;
+    content_calendar_ready: boolean;
+  };
+  base_strategy?: any;
+  strategic_insights?: any;
+  competitive_analysis?: any;
+  performance_predictions?: any;
+  implementation_roadmap?: any;
+  risk_assessment?: any;
+  summary?: {
+    estimated_roi: string;
+    implementation_timeline: string;
+    risk_level: string;
+    success_probability: string;
+    next_step: string;
+  };
+}
+
+const StrategyIntelligenceTab: React.FC = () => {
+  const [strategyData, setStrategyData] = useState<StrategyData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [activeStep, setActiveStep] = useState(0);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [strategyConfirmed, setStrategyConfirmed] = useState(false);
+
+  // Load the most recent strategy data
+  useEffect(() => {
+    loadStrategyData();
+  }, []);
+
+  const loadStrategyData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Get the latest generated strategy from the backend
+      const userId = getUserId();
+      
+      // First, try to get the latest generated strategy from the polling system
+      try {
+        const latestStrategyResponse = await contentPlanningApi.getLatestGeneratedStrategy(userId);
+        
+        if (latestStrategyResponse?.data?.strategy) {
+          console.log('✅ Found latest generated strategy from polling system:', latestStrategyResponse.data.strategy);
+          
+          // Transform the data structure to match frontend expectations
+          const strategyData = latestStrategyResponse.data.strategy;
+          
+          // Map metadata to strategy_metadata for frontend compatibility
+          const transformedStrategy = {
+            ...strategyData,
+            strategy_metadata: strategyData.metadata || strategyData.strategy_metadata,
+            // Add summary if not present
+            summary: strategyData.summary || {
+              estimated_roi: strategyData.performance_predictions?.estimated_roi || "15-25%",
+              implementation_timeline: strategyData.implementation_roadmap?.total_duration || "12 months",
+              risk_level: strategyData.risk_assessment?.overall_risk_level || "Medium",
+              success_probability: strategyData.performance_predictions?.success_probability || "85%",
+              next_step: "Review strategy and generate content calendar"
+            }
+          };
+          
+          console.log('🔄 Transformed strategy data:', transformedStrategy);
+          setStrategyData(transformedStrategy);
+          setLoading(false);
+          return;
+        }
+      } catch (pollingError) {
+        console.log('No latest strategy found in polling system, checking database...', pollingError);
+      }
+      
+      // If no strategy found in polling system, try to get from database
+      try {
+        const strategiesResponse = await contentPlanningApi.getEnhancedStrategies(userId);
+        
+        // Handle the enhanced strategies response structure
+        const strategies = strategiesResponse?.data?.strategies || strategiesResponse?.strategies || [];
+        
+        if (strategies && strategies.length > 0) {
+          // Get the most recent strategy (assuming it's sorted by creation date)
+          const latestStrategy = strategies[0];
+          
+          // Check if this strategy has comprehensive AI-generated data
+          if (latestStrategy.comprehensive_ai_analysis) {
+            console.log('✅ Found comprehensive strategy in database:', latestStrategy);
+            console.log('📊 Comprehensive AI analysis structure:', latestStrategy.comprehensive_ai_analysis);
+            console.log('🔍 Available fields:', Object.keys(latestStrategy.comprehensive_ai_analysis));
+            
+            // Check if this is the full 5-component structure or SWOT analysis
+            const hasFullStructure = latestStrategy.comprehensive_ai_analysis.strategic_insights || 
+                                   latestStrategy.comprehensive_ai_analysis.competitive_analysis ||
+                                   latestStrategy.comprehensive_ai_analysis.performance_predictions;
+            
+            if (hasFullStructure) {
+              // Transform the data to match frontend expectations (full 5-component structure)
+              const transformedStrategy = {
+                ...latestStrategy.comprehensive_ai_analysis,
+                strategy_metadata: latestStrategy.comprehensive_ai_analysis.metadata || latestStrategy.comprehensive_ai_analysis.strategy_metadata,
+                // Add summary if not present
+                summary: latestStrategy.comprehensive_ai_analysis.summary || {
+                  estimated_roi: latestStrategy.comprehensive_ai_analysis.performance_predictions?.estimated_roi || "15-25%",
+                  implementation_timeline: latestStrategy.comprehensive_ai_analysis.implementation_roadmap?.total_duration || "12 months",
+                  risk_level: latestStrategy.comprehensive_ai_analysis.risk_assessment?.overall_risk_level || "Medium",
+                  success_probability: latestStrategy.comprehensive_ai_analysis.performance_predictions?.success_probability || "85%",
+                  next_step: "Review strategy and generate content calendar"
+                }
+              };
+              
+              console.log('🔄 Transformed enhanced strategy data (full structure):', transformedStrategy);
+              console.log('🎯 Final strategy data structure:', {
+                hasStrategicInsights: !!transformedStrategy.strategic_insights,
+                hasCompetitiveAnalysis: !!transformedStrategy.competitive_analysis,
+                hasPerformancePredictions: !!transformedStrategy.performance_predictions,
+                hasImplementationRoadmap: !!transformedStrategy.implementation_roadmap,
+                hasRiskAssessment: !!transformedStrategy.risk_assessment,
+                hasSummary: !!transformedStrategy.summary
+              });
+              setStrategyData(transformedStrategy);
+              setLoading(false);
+              return;
+            } else {
+              // This is SWOT analysis, create a comprehensive 5-component structure enhanced with SWOT data
+              console.log('🔄 Creating comprehensive 5-component structure from SWOT analysis');
+              const swotData = latestStrategy.comprehensive_ai_analysis;
+              
+              const transformedStrategy = {
+                strategy_metadata: {
+                  user_id: latestStrategy.user_id,
+                  strategy_name: latestStrategy.name,
+                  ai_generated: true,
+                  comprehensive: true,
+                  content_calendar_ready: false,
+                  generation_timestamp: latestStrategy.created_at
+                },
+                // Enhanced Strategic Insights with SWOT data
+                strategic_insights: {
+                  market_positioning: {
+                    positioning_strength: swotData.overall_score || 75,
+                    current_position: "Emerging",
+                    swot_analysis: {
+                      strengths: swotData.strengths || [],
+                      opportunities: swotData.opportunities || []
+                    }
+                  },
+                  content_opportunities: [
+                    ...(swotData.opportunities || []),
+                    "Leverage identified market gaps",
+                    "Focus on unique value propositions",
+                    "Build thought leadership content"
+                  ],
+                  growth_potential: {
+                    market_size: "Growing",
+                    growth_rate: "High",
+                    key_drivers: swotData.opportunities || [],
+                    competitive_advantages: swotData.strengths || []
+                  },
+                  swot_summary: {
+                    overall_score: swotData.overall_score || 75,
+                    primary_strengths: (swotData.strengths || []).slice(0, 3),
+                    key_opportunities: (swotData.opportunities || []).slice(0, 3)
+                  }
+                },
+                // Enhanced Competitive Analysis with SWOT data
+                competitive_analysis: {
+                  competitors: [
+                    {
+                      name: "Direct Competitors",
+                      market_position: "Established",
+                      strengths: swotData.strengths || [],
+                      weaknesses: swotData.weaknesses || [],
+                      competitive_response: "Focus on differentiation"
+                    },
+                    {
+                      name: "Emerging Competitors",
+                      market_position: "Growing",
+                      strengths: [],
+                      weaknesses: swotData.weaknesses || [],
+                      competitive_response: "Establish market leadership"
+                    }
+                  ],
+                  market_gaps: [
+                    ...(swotData.opportunities || []),
+                    "Content personalization opportunities",
+                    "Niche market segments",
+                    "Innovation in content delivery"
+                  ],
+                  competitive_advantages: {
+                    primary: swotData.strengths || [],
+                    sustainable: swotData.opportunities || [],
+                    development_areas: swotData.weaknesses || []
+                  },
+                  swot_competitive_insights: {
+                    leverage_strengths: swotData.strengths || [],
+                    address_weaknesses: swotData.weaknesses || [],
+                    capitalize_opportunities: swotData.opportunities || [],
+                    mitigate_threats: swotData.threats || []
+                  }
+                },
+                // Enhanced Performance Predictions with SWOT context
+                performance_predictions: {
+                  estimated_roi: "20-30%",
+                  key_metrics: {
+                    engagement_rate: "5-8%",
+                    conversion_rate: "2-4%",
+                    reach_growth: "40-60%",
+                    brand_awareness: "25-35%",
+                    market_share: "3-5%"
+                  },
+                  timeline_projections: {
+                    "3_months": "Initial traction and brand awareness leveraging identified strengths",
+                    "6_months": "Established presence and engagement addressing market opportunities",
+                    "12_months": "Market leadership and growth capitalizing on competitive advantages"
+                  },
+                  success_factors: {
+                    primary: swotData.strengths || [],
+                    secondary: swotData.opportunities || [],
+                    risk_mitigation: swotData.threats || []
+                  },
+                  swot_based_predictions: {
+                    strength_impact: "High performance in areas of identified strengths",
+                    opportunity_impact: "Growth potential through market opportunities",
+                    weakness_mitigation: "Improved performance by addressing weaknesses",
+                    threat_management: "Risk-adjusted projections considering market threats"
+                  }
+                },
+                // Enhanced Implementation Roadmap with SWOT considerations
+                implementation_roadmap: {
+                  total_duration: "12 months",
+                  phases: [
+                    {
+                      phase: "Foundation (Months 1-3)",
+                      activities: [
+                        "Brand positioning leveraging identified strengths",
+                        "Content strategy development addressing market opportunities",
+                        "Weakness assessment and improvement planning"
+                      ],
+                      deliverables: ["Brand guidelines", "Content calendar", "SWOT action plan"],
+                      swot_focus: "Strengths and Opportunities"
+                    },
+                    {
+                      phase: "Growth (Months 4-8)",
+                      activities: [
+                        "Content execution based on competitive advantages",
+                        "Community building addressing market gaps",
+                        "Threat mitigation strategies implementation"
+                      ],
+                      deliverables: ["Content library", "Engaged audience", "Risk management framework"],
+                      swot_focus: "Opportunities and Threats"
+                    },
+                    {
+                      phase: "Scale (Months 9-12)",
+                      activities: [
+                        "Market expansion capitalizing on strengths",
+                        "Performance optimization addressing weaknesses",
+                        "Sustainable competitive advantage development"
+                      ],
+                      deliverables: ["Market leadership", "Optimized strategy", "Long-term competitive position"],
+                      swot_focus: "Strengths and Weaknesses"
+                    }
+                  ],
+                  resource_allocation: {
+                    team_requirements: "Content team + Marketing support + SWOT analysis expertise",
+                    budget_allocation: "Distributed across phases with focus on opportunity areas",
+                    swot_priorities: {
+                      high_priority: swotData.opportunities || [],
+                      medium_priority: swotData.strengths || [],
+                      low_priority: swotData.weaknesses || []
+                    }
+                  },
+                  swot_integration: {
+                    strength_leverage: swotData.strengths || [],
+                    weakness_improvement: swotData.weaknesses || [],
+                    opportunity_capitalization: swotData.opportunities || [],
+                    threat_mitigation: swotData.threats || []
+                  }
+                },
+                // Enhanced Risk Assessment with SWOT threats
+                risk_assessment: {
+                  overall_risk_level: "Medium",
+                  risk_categories: {
+                    market_risks: [
+                      ...(swotData.threats?.map((threat: string) => ({
+                        risk: threat,
+                        probability: "Medium",
+                        impact: "High",
+                        mitigation: "Strategic planning and monitoring"
+                      })) || []),
+                      {
+                        risk: "Market saturation",
+                        probability: "Medium",
+                        impact: "Medium",
+                        mitigation: "Innovation and differentiation"
+                      }
+                    ],
+                    operational_risks: [
+                      {
+                        risk: "Resource constraints",
+                        probability: "Medium",
+                        impact: "Medium",
+                        mitigation: "Efficient resource allocation"
+                      },
+                      {
+                        risk: "Weakness areas",
+                        probability: "High",
+                        impact: "Medium",
+                        mitigation: "Targeted improvement programs"
+                      }
+                    ],
+                    competitive_risks: [
+                      {
+                        risk: "Market competition",
+                        probability: "High",
+                        impact: "Medium",
+                        mitigation: "Leverage competitive advantages"
+                      },
+                      {
+                        risk: "Strength erosion",
+                        probability: "Medium",
+                        impact: "High",
+                        mitigation: "Continuous improvement and innovation"
+                      }
+                    ]
+                  },
+                  swot_risk_mapping: {
+                    strength_risks: "Risk of over-reliance on current strengths",
+                    weakness_risks: "Risk of weakness exploitation by competitors",
+                    opportunity_risks: "Risk of missing market opportunities",
+                    threat_risks: "Risk of threat materialization"
+                  },
+                  risk_mitigation_strategies: {
+                    based_on_strengths: "Leverage strengths to mitigate threats",
+                    based_on_opportunities: "Use opportunities to address weaknesses",
+                    based_on_weaknesses: "Develop improvement plans for weak areas",
+                    based_on_threats: "Create contingency plans for identified threats"
+                  }
+                },
+                // Enhanced summary with SWOT context
+                summary: {
+                  estimated_roi: "20-30%",
+                  implementation_timeline: "12 months",
+                  risk_level: "Medium",
+                  success_probability: `${swotData.overall_score || 75}%`,
+                  next_step: "Review strategy and generate content calendar",
+                  swot_highlights: {
+                    key_strengths: (swotData.strengths || []).slice(0, 2),
+                    key_opportunities: (swotData.opportunities || []).slice(0, 2),
+                    primary_risks: (swotData.threats || []).slice(0, 2)
+                  }
+                }
+              };
+              
+              console.log('🔄 Created comprehensive 5-component structure from SWOT analysis:', transformedStrategy);
+              console.log('🎯 Final strategy data structure:', {
+                hasStrategicInsights: !!transformedStrategy.strategic_insights,
+                hasCompetitiveAnalysis: !!transformedStrategy.competitive_analysis,
+                hasPerformancePredictions: !!transformedStrategy.performance_predictions,
+                hasImplementationRoadmap: !!transformedStrategy.implementation_roadmap,
+                hasRiskAssessment: !!transformedStrategy.risk_assessment,
+                hasSummary: !!transformedStrategy.summary,
+                swotEnhanced: true
+              });
+              setStrategyData(transformedStrategy);
+              setLoading(false);
+              return;
+            }
+          } else {
+            console.log('⚠️ Strategy found but no comprehensive_ai_analysis field:', {
+              strategyId: latestStrategy.id,
+              strategyName: latestStrategy.name,
+              availableFields: Object.keys(latestStrategy)
+            });
+          }
+        }
+      } catch (dbError) {
+        console.log('No comprehensive strategies found in database, checking for recent generation...', dbError);
+      }
+      
+      // If no comprehensive strategy found in database, check for recent generation tasks
+      // This would be the data from our polling-based generation that might not be saved yet
+      try {
+        // Try to get the latest strategy generation result
+        const recentStrategies = await contentPlanningApi.getStrategies(userId);
+        
+        // Handle the enhanced strategies response structure
+        const strategies = recentStrategies?.data?.strategies || recentStrategies?.strategies || [];
+        
+        if (strategies && strategies.length > 0) {
+          // Find the most recent AI-generated strategy
+          const aiGeneratedStrategy = strategies.find(
+            (strategy: any) => strategy.comprehensive_ai_analysis
+          );
+          
+          if (aiGeneratedStrategy && aiGeneratedStrategy.comprehensive_ai_analysis) {
+            console.log('✅ Found AI-generated strategy in recent strategies:', aiGeneratedStrategy);
+            
+            // Transform the data to match frontend expectations
+            const transformedStrategy = {
+              ...aiGeneratedStrategy.comprehensive_ai_analysis,
+              strategy_metadata: aiGeneratedStrategy.comprehensive_ai_analysis.metadata || aiGeneratedStrategy.comprehensive_ai_analysis.strategy_metadata,
+              // Add summary if not present
+              summary: aiGeneratedStrategy.comprehensive_ai_analysis.summary || {
+                estimated_roi: aiGeneratedStrategy.comprehensive_ai_analysis.performance_predictions?.estimated_roi || "15-25%",
+                implementation_timeline: aiGeneratedStrategy.comprehensive_ai_analysis.implementation_roadmap?.total_duration || "12 months",
+                risk_level: aiGeneratedStrategy.comprehensive_ai_analysis.risk_assessment?.overall_risk_level || "Medium",
+                success_probability: aiGeneratedStrategy.comprehensive_ai_analysis.performance_predictions?.success_probability || "85%",
+                next_step: "Review strategy and generate content calendar"
+              }
+            };
+            
+            console.log('🔄 Transformed recent strategy data:', transformedStrategy);
+            setStrategyData(transformedStrategy);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (strategyError) {
+        console.log('No recent strategies found, checking for generation tasks...', strategyError);
+      }
+      
+      // If no strategy data is available, show appropriate message
+      console.log('❌ No comprehensive strategy data found');
+      setStrategyData(null);
+      setError('No comprehensive strategy data available. Please generate a strategy first.');
+      setLoading(false);
+      
+    } catch (err: any) {
+      console.error('Error loading strategy data:', err);
+      setError(err.message || 'Failed to load strategy data');
+      setStrategyData(null);
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmStrategy = () => {
+    setShowConfirmDialog(true);
+  };
+
+  const confirmStrategy = async () => {
+    try {
+      setStrategyConfirmed(true);
+      setShowConfirmDialog(false);
+      
+      // Save confirmation status to backend
+      const userId = strategyData?.strategy_metadata?.user_id || strategyData?.metadata?.user_id;
+      if (userId) {
+        try {
+          // Update the strategy with confirmation status
+          await contentPlanningApi.updateEnhancedStrategy(
+            userId.toString(),
+            { confirmed: true, confirmed_at: new Date().toISOString() }
+          );
+          console.log('Strategy confirmation saved to backend');
+        } catch (updateError) {
+          console.warn('Could not save confirmation to backend:', updateError);
+          // Don't fail the confirmation if backend update fails
+        }
+      }
+      
+      console.log('Strategy confirmed! Ready to generate content calendar.');
+    } catch (error) {
+      console.error('Error confirming strategy:', error);
+      setStrategyConfirmed(false);
+    }
+  };
+
+  const handleGenerateContentCalendar = async () => {
+    try {
+      const userId = strategyData?.strategy_metadata?.user_id || strategyData?.metadata?.user_id;
+      if (!userId) {
+        console.error('No strategy data available for calendar generation');
+        return;
+      }
+      
+      // Generate content calendar based on confirmed strategy
+      const calendarRequest = {
+        user_id: userId,
+        strategy_id: userId, // Using user_id as strategy_id for now
+        calendar_type: 'comprehensive',
+        industry: strategyData.base_strategy?.industry || 'technology',
+        business_size: 'medium', // TODO: Get from strategy data
+        force_refresh: false
+      };
+      
+      console.log('Generating content calendar with request:', calendarRequest);
+      
+      // Call the calendar generation API
+      const calendarResponse = await contentPlanningApi.generateCalendar(calendarRequest);
+      
+      console.log('Content calendar generated successfully:', calendarResponse);
+      
+      // TODO: Navigate to calendar tab or show success message
+      // You could also store the calendar data in a global state
+      
+    } catch (error) {
+      console.error('Error generating content calendar:', error);
+      // Show error message to user
+      setError('Failed to generate content calendar. Please try again.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert severity="error" sx={{ m: 2 }}>
+        {error}
+      </Alert>
+    );
+  }
+
+  if (!strategyData) {
+    return (
+      <Box sx={{ textAlign: 'center', p: 4 }}>
+        <Typography variant="h6" color="text.secondary" gutterBottom>
+          No Strategy Data Available
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Generate a comprehensive strategy first to view strategic intelligence.
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ p: 3 }}>
+      {/* Header Section */}
+      <Paper 
+        sx={{ 
+          p: 3, 
+          mb: 3, 
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+          color: 'white',
+          boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
+          borderRadius: 3,
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)',
+            pointerEvents: 'none'
+          }
+        }}
+      >
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} md={8}>
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+              🧠 Strategic Intelligence
+            </Typography>
+            <Typography variant="h6" sx={{ opacity: 0.9, fontWeight: 500 }}>
+              {strategyData.strategy_metadata?.strategy_name || strategyData.metadata?.strategy_name || 'AI-Generated Strategy'}
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.8, mt: 1 }}>
+              Generated on {new Date(strategyData.strategy_metadata?.generated_at || strategyData.strategy_metadata?.generation_timestamp || strategyData.metadata?.generated_at || strategyData.metadata?.generation_timestamp || '').toLocaleDateString()}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={4} sx={{ textAlign: 'right' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Chip 
+                label={`ROI: ${strategyData.summary?.estimated_roi}`}
+                color="success"
+                variant="filled"
+                sx={{ 
+                  color: 'white',
+                  fontWeight: 600,
+                  boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+                  '&:hover': {
+                    boxShadow: '0 6px 16px rgba(76, 175, 80, 0.4)',
+                    transform: 'translateY(-1px)'
+                  },
+                  transition: 'all 0.3s ease'
+                }}
+              />
+              <Chip 
+                label={`Success: ${strategyData.summary?.success_probability}`}
+                color="info"
+                variant="filled"
+                sx={{ 
+                  color: 'white',
+                  fontWeight: 600,
+                  boxShadow: '0 4px 12px rgba(33, 150, 243, 0.3)',
+                  '&:hover': {
+                    boxShadow: '0 6px 16px rgba(33, 150, 243, 0.4)',
+                    transform: 'translateY(-1px)'
+                  },
+                  transition: 'all 0.3s ease'
+                }}
+              />
+              <Chip 
+                label={`Risk: ${strategyData.summary?.risk_level}`}
+                color={strategyData.summary?.risk_level === 'Low' ? 'success' : 'warning'}
+                variant="filled"
+                sx={{ 
+                  color: 'white',
+                  fontWeight: 600,
+                  boxShadow: strategyData.summary?.risk_level === 'Low' 
+                    ? '0 4px 12px rgba(76, 175, 80, 0.3)' 
+                    : '0 4px 12px rgba(255, 152, 0, 0.3)',
+                  '&:hover': {
+                    boxShadow: strategyData.summary?.risk_level === 'Low' 
+                      ? '0 6px 16px rgba(76, 175, 80, 0.4)' 
+                      : '0 6px 16px rgba(255, 152, 0, 0.4)',
+                    transform: 'translateY(-1px)'
+                  },
+                  transition: 'all 0.3s ease'
+                }}
+              />
+            </Box>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Strategy Confirmation Status */}
+      {strategyConfirmed && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Alert 
+            severity="success" 
+            sx={{ 
+              mb: 3,
+              borderRadius: 2,
+              boxShadow: '0 4px 12px rgba(76, 175, 80, 0.2)',
+              border: '1px solid rgba(76, 175, 80, 0.3)'
+            }}
+            action={
+              <Button 
+                color="inherit" 
+                size="small" 
+                onClick={handleGenerateContentCalendar}
+                startIcon={<CalendarIcon />}
+                sx={{
+                  fontWeight: 600,
+                  '&:hover': {
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    transform: 'translateY(-1px)'
+                  },
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                Generate Content Calendar
+              </Button>
+            }
+          >
+            Strategy confirmed! You can now generate a content calendar based on this strategy.
+          </Alert>
+        </motion.div>
+      )}
+
+      {/* Strategy Components - Enhanced Grid Layout */}
+      <Grid container spacing={2}>
+        {/* Strategic Insights */}
+        <Grid item xs={12} lg={6}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            whileHover={{ y: -4 }}
+          >
+            <Card sx={{ 
+              height: '100%',
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%)',
+              border: '1px solid rgba(102, 126, 234, 0.1)',
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)'
+              },
+              '&:hover': {
+                boxShadow: '0 12px 40px rgba(102, 126, 234, 0.15)',
+                transform: 'translateY(-4px)'
+              },
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}>
+              <CardContent sx={{ p: 2.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ 
+                    p: 1, 
+                    borderRadius: 2, 
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    mr: 1.5,
+                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
+                  }}>
+                    <PsychologyIcon sx={{ color: 'white', fontSize: 20 }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>Strategic Insights</Typography>
+                </Box>
+                
+                {strategyData.strategic_insights && (
+                  <>
+                    <Box sx={{ mb: 2.5 }}>
+                      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: '#667eea' }}>
+                        Market Positioning
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        <Box sx={{ position: 'relative' }}>
+                          <CircularProgress
+                            variant="determinate"
+                            value={strategyData.strategic_insights.market_positioning?.positioning_strength || 0}
+                            size={50}
+                            sx={{
+                              color: '#667eea',
+                              '& .MuiCircularProgress-circle': {
+                                strokeLinecap: 'round',
+                                filter: 'drop-shadow(0 2px 4px rgba(102, 126, 234, 0.3))'
+                              }
+                            }}
+                          />
+                          <Typography 
+                            variant="h6" 
+                            sx={{ 
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              fontWeight: 700,
+                              color: '#667eea'
+                            }}
+                          >
+                            {strategyData.strategic_insights.market_positioning?.positioning_strength || 0}
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" sx={{ ml: 2, color: 'text.secondary', fontWeight: 500 }}>
+                          {strategyData.strategic_insights.market_positioning?.current_position}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <Divider sx={{ my: 2, opacity: 0.3 }} />
+
+                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: '#667eea' }}>
+                      Content Opportunities
+                    </Typography>
+                    <List dense sx={{ py: 0 }}>
+                      {(strategyData.strategic_insights.content_opportunities || []).map((opportunity: string, index: number) => (
+                        <ListItem key={index} sx={{ px: 0, py: 0.5 }}>
+                          <ListItemIcon sx={{ minWidth: 30 }}>
+                            <Box sx={{ 
+                              p: 0.5, 
+                              borderRadius: 1, 
+                              background: 'rgba(102, 126, 234, 0.1)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <LightbulbIcon sx={{ color: '#667eea', fontSize: 16 }} />
+                            </Box>
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary={opportunity} 
+                            primaryTypographyProps={{ 
+                              variant: 'body2', 
+                              sx: { fontWeight: 500, lineHeight: 1.4 } 
+                            }}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+
+                    <Divider sx={{ my: 2, opacity: 0.3 }} />
+
+                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: '#667eea' }}>
+                      Growth Potential
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      <Chip 
+                        label={`Market: ${strategyData.strategic_insights.growth_potential?.market_size}`} 
+                        size="small" 
+                        sx={{ 
+                          fontWeight: 600,
+                          background: 'rgba(102, 126, 234, 0.1)',
+                          color: '#667eea',
+                          border: '1px solid rgba(102, 126, 234, 0.2)'
+                        }}
+                      />
+                      <Chip 
+                        label={`Growth: ${strategyData.strategic_insights.growth_potential?.growth_rate}`} 
+                        size="small" 
+                        color="success"
+                        sx={{ 
+                          fontWeight: 600,
+                          boxShadow: '0 2px 8px rgba(76, 175, 80, 0.2)'
+                        }}
+                      />
+                    </Box>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        </Grid>
+
+        {/* Competitive Analysis */}
+        <Grid item xs={12} lg={6}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            whileHover={{ y: -4 }}
+          >
+            <Card sx={{ 
+              height: '100%',
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%)',
+              border: '1px solid rgba(102, 126, 234, 0.1)',
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)'
+              },
+              '&:hover': {
+                boxShadow: '0 12px 40px rgba(102, 126, 234, 0.15)',
+                transform: 'translateY(-4px)'
+              },
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}>
+              <CardContent sx={{ p: 2.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ 
+                    p: 1, 
+                    borderRadius: 2, 
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    mr: 1.5,
+                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
+                  }}>
+                    <SearchIcon sx={{ color: 'white', fontSize: 20 }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>Competitive Analysis</Typography>
+                </Box>
+                
+                {strategyData.competitive_analysis && (
+                  <>
+                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: '#667eea' }}>
+                      Key Competitors
+                    </Typography>
+                    {(strategyData.competitive_analysis.competitors || []).slice(0, 2).map((competitor: any, index: number) => (
+                      <Box key={index} sx={{ 
+                        mb: 2, 
+                        p: 2, 
+                        border: '1px solid rgba(102, 126, 234, 0.1)', 
+                        borderRadius: 2,
+                        background: 'rgba(102, 126, 234, 0.02)',
+                        '&:hover': {
+                          background: 'rgba(102, 126, 234, 0.05)',
+                          borderColor: 'rgba(102, 126, 234, 0.2)'
+                        },
+                        transition: 'all 0.3s ease'
+                      }}>
+                        <Typography variant="subtitle1" fontWeight="bold" sx={{ color: '#667eea' }}>
+                          {competitor.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
+                          {competitor.market_position}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                          <Chip 
+                            label={`${competitor.strengths?.length || 0} strengths`} 
+                            size="small" 
+                            color="success"
+                            sx={{ fontWeight: 600, boxShadow: '0 2px 8px rgba(76, 175, 80, 0.2)' }}
+                          />
+                          <Chip 
+                            label={`${competitor.weaknesses?.length || 0} weaknesses`} 
+                            size="small" 
+                            color="warning"
+                            sx={{ fontWeight: 600, boxShadow: '0 2px 8px rgba(255, 152, 0, 0.2)' }}
+                          />
+                        </Box>
+                      </Box>
+                    ))}
+
+                    <Divider sx={{ my: 2, opacity: 0.3 }} />
+
+                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: '#667eea' }}>
+                      Market Gaps
+                    </Typography>
+                    <List dense sx={{ py: 0 }}>
+                      {(strategyData.competitive_analysis.market_gaps || []).slice(0, 3).map((gap: string, index: number) => (
+                        <ListItem key={index} sx={{ px: 0, py: 0.5 }}>
+                          <ListItemIcon sx={{ minWidth: 30 }}>
+                            <Box sx={{ 
+                              p: 0.5, 
+                              borderRadius: 1, 
+                              background: 'rgba(102, 126, 234, 0.1)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <TargetIcon sx={{ color: '#667eea', fontSize: 16 }} />
+                            </Box>
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary={gap} 
+                            primaryTypographyProps={{ 
+                              variant: 'body2', 
+                              sx: { fontWeight: 500, lineHeight: 1.4 } 
+                            }}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        </Grid>
+
+        {/* Performance Predictions */}
+        <Grid item xs={12} lg={6}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            whileHover={{ y: -4 }}
+          >
+            <Card sx={{ 
+              height: '100%',
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%)',
+              border: '1px solid rgba(102, 126, 234, 0.1)',
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: 'linear-gradient(90deg, #4caf50 0%, #8bc34a 100%)'
+              },
+              '&:hover': {
+                boxShadow: '0 12px 40px rgba(76, 175, 80, 0.15)',
+                transform: 'translateY(-4px)'
+              },
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}>
+              <CardContent sx={{ p: 2.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ 
+                    p: 1, 
+                    borderRadius: 2, 
+                    background: 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)',
+                    mr: 1.5,
+                    boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
+                  }}>
+                    <TrendingUpIcon sx={{ color: 'white', fontSize: 20 }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>Performance Predictions</Typography>
+                </Box>
+                
+                {strategyData.performance_predictions && (
+                  <>
+                    <Box sx={{ mb: 2.5, textAlign: 'center' }}>
+                      <Typography variant="h3" sx={{ 
+                        fontWeight: 700, 
+                        background: 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)',
+                        backgroundClip: 'text',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        mb: 0.5
+                      }}>
+                        {strategyData.performance_predictions.estimated_roi}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                        Estimated ROI
+                      </Typography>
+                    </Box>
+
+                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: '#4caf50' }}>
+                      Key Metrics
+                    </Typography>
+                    <Grid container spacing={1} sx={{ mb: 2 }}>
+                      {Object.entries(strategyData.performance_predictions.key_metrics || {}).map(([metric, value]) => (
+                        <Grid item xs={6} key={metric}>
+                          <Box sx={{ 
+                            textAlign: 'center', 
+                            p: 1.5, 
+                            border: '1px solid rgba(76, 175, 80, 0.2)', 
+                            borderRadius: 2,
+                            background: 'rgba(76, 175, 80, 0.05)',
+                            '&:hover': {
+                              background: 'rgba(76, 175, 80, 0.1)',
+                              transform: 'translateY(-2px)'
+                            },
+                            transition: 'all 0.3s ease'
+                          }}>
+                            <Typography variant="h6" sx={{ 
+                              color: '#4caf50', 
+                              fontWeight: 700,
+                              mb: 0.5
+                            }}>
+                              {value as string}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                              {metric.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      ))}
+                    </Grid>
+
+                    <Divider sx={{ my: 2, opacity: 0.3 }} />
+
+                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: '#4caf50' }}>
+                      Timeline Projections
+                    </Typography>
+                    <List dense sx={{ py: 0 }}>
+                      {Object.entries(strategyData.performance_predictions.timeline_projections || {}).map(([period, projection]) => (
+                        <ListItem key={period} sx={{ px: 0, py: 0.5 }}>
+                          <ListItemIcon sx={{ minWidth: 30 }}>
+                            <Box sx={{ 
+                              p: 0.5, 
+                              borderRadius: 1, 
+                              background: 'rgba(76, 175, 80, 0.1)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <TimelineIcon sx={{ color: '#4caf50', fontSize: 16 }} />
+                            </Box>
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary={projection as string}
+                            secondary={period.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            primaryTypographyProps={{ 
+                              variant: 'body2', 
+                              sx: { fontWeight: 500, lineHeight: 1.4 } 
+                            }}
+                            secondaryTypographyProps={{ 
+                              variant: 'caption',
+                              sx: { fontWeight: 600, color: '#4caf50' }
+                            }}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        </Grid>
+
+        {/* Implementation Roadmap */}
+        <Grid item xs={12} lg={6}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            whileHover={{ y: -4 }}
+          >
+            <Card sx={{ 
+              height: '100%',
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%)',
+              border: '1px solid rgba(102, 126, 234, 0.1)',
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: 'linear-gradient(90deg, #ff9800 0%, #ff5722 100%)'
+              },
+              '&:hover': {
+                boxShadow: '0 12px 40px rgba(255, 152, 0, 0.15)',
+                transform: 'translateY(-4px)'
+              },
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}>
+              <CardContent sx={{ p: 2.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ 
+                    p: 1, 
+                    borderRadius: 2, 
+                    background: 'linear-gradient(135deg, #ff9800 0%, #ff5722 100%)',
+                    mr: 1.5,
+                    boxShadow: '0 4px 12px rgba(255, 152, 0, 0.3)'
+                  }}>
+                    <ScheduleIcon sx={{ color: 'white', fontSize: 20 }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>Implementation Roadmap</Typography>
+                </Box>
+                
+                {strategyData.implementation_roadmap && (
+                  <>
+                    <Typography variant="h6" sx={{ 
+                      color: '#ff9800', 
+                      fontWeight: 700, 
+                      mb: 2,
+                      textAlign: 'center'
+                    }}>
+                      {strategyData.implementation_roadmap.total_duration}
+                    </Typography>
+
+                    <Stepper orientation="vertical" sx={{ mt: 2 }}>
+                      {(strategyData.implementation_roadmap.phases || []).map((phase: any, index: number) => (
+                        <Step key={index} active={index === 0} completed={index < 1}>
+                          <StepLabel sx={{
+                            '& .MuiStepLabel-label': {
+                              fontWeight: 600,
+                              color: '#ff9800'
+                            }
+                          }}>
+                            <Typography variant="subtitle2" fontWeight="bold">
+                              {phase.phase}
+                            </Typography>
+                          </StepLabel>
+                          <StepContent>
+                            <Box sx={{ 
+                              p: 1.5, 
+                              background: 'rgba(255, 152, 0, 0.05)', 
+                              borderRadius: 2,
+                              border: '1px solid rgba(255, 152, 0, 0.1)'
+                            }}>
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
+                                Activities: {phase.activities?.length || 0}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                Deliverables: {phase.deliverables?.length || 0}
+                              </Typography>
+                            </Box>
+                          </StepContent>
+                        </Step>
+                      ))}
+                    </Stepper>
+
+                    <Divider sx={{ my: 2, opacity: 0.3 }} />
+
+                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: '#ff9800' }}>
+                      Resource Requirements
+                    </Typography>
+                    <Box sx={{ 
+                      p: 1.5, 
+                      background: 'rgba(255, 152, 0, 0.05)', 
+                      borderRadius: 2,
+                      border: '1px solid rgba(255, 152, 0, 0.1)'
+                    }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
+                        {strategyData.implementation_roadmap.resource_allocation?.team_requirements}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                        Budget: {strategyData.implementation_roadmap.resource_allocation?.budget_allocation}
+                      </Typography>
+                    </Box>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        </Grid>
+
+        {/* Risk Assessment */}
+        <Grid item xs={12}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            whileHover={{ y: -4 }}
+          >
+            <Card sx={{ 
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%)',
+              border: '1px solid rgba(102, 126, 234, 0.1)',
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: 'linear-gradient(90deg, #f44336 0%, #ff5722 100%)'
+              },
+              '&:hover': {
+                boxShadow: '0 12px 40px rgba(244, 67, 54, 0.15)',
+                transform: 'translateY(-4px)'
+              },
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}>
+              <CardContent sx={{ p: 2.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ 
+                    p: 1, 
+                    borderRadius: 2, 
+                    background: 'linear-gradient(135deg, #f44336 0%, #ff5722 100%)',
+                    mr: 1.5,
+                    boxShadow: '0 4px 12px rgba(244, 67, 54, 0.3)'
+                  }}>
+                    <SecurityIcon sx={{ color: 'white', fontSize: 20 }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>Risk Assessment</Typography>
+                  <Chip 
+                    label={strategyData.risk_assessment?.overall_risk_level || 'Medium'}
+                    color={strategyData.risk_assessment?.overall_risk_level === 'Low' ? 'success' : 'warning'}
+                    sx={{ 
+                      ml: 2,
+                      fontWeight: 600,
+                      boxShadow: strategyData.risk_assessment?.overall_risk_level === 'Low' 
+                        ? '0 4px 12px rgba(76, 175, 80, 0.3)' 
+                        : '0 4px 12px rgba(255, 152, 0, 0.3)'
+                    }}
+                  />
+                </Box>
+                
+                {strategyData.risk_assessment && (
+                  <Grid container spacing={2}>
+                    {Object.entries(strategyData.risk_assessment.risk_categories || {}).map(([category, risks]) => (
+                      <Grid item xs={12} md={4} key={category}>
+                        <Typography variant="subtitle2" gutterBottom sx={{ 
+                          textTransform: 'capitalize',
+                          fontWeight: 600,
+                          color: '#f44336'
+                        }}>
+                          {category.replace(/_/g, ' ')}
+                        </Typography>
+                        {(risks as any[]).map((risk: any, index: number) => (
+                          <Box key={index} sx={{ 
+                            mb: 2, 
+                            p: 2, 
+                            border: '1px solid rgba(244, 67, 54, 0.1)', 
+                            borderRadius: 2,
+                            background: 'rgba(244, 67, 54, 0.02)',
+                            '&:hover': {
+                              background: 'rgba(244, 67, 54, 0.05)',
+                              borderColor: 'rgba(244, 67, 54, 0.2)'
+                            },
+                            transition: 'all 0.3s ease'
+                          }}>
+                            <Typography variant="body2" fontWeight="bold" sx={{ mb: 1 }}>
+                              {risk.risk}
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                              <Chip 
+                                label={`P: ${risk.probability}`} 
+                                color={risk.probability === 'High' ? 'error' : 'warning'}
+                                size="small"
+                                sx={{ 
+                                  fontWeight: 600,
+                                  boxShadow: risk.probability === 'High' 
+                                    ? '0 2px 8px rgba(244, 67, 54, 0.2)' 
+                                    : '0 2px 8px rgba(255, 152, 0, 0.2)'
+                                }}
+                              />
+                              <Chip 
+                                label={`I: ${risk.impact}`} 
+                                color={risk.impact === 'High' ? 'error' : 'warning'}
+                                size="small"
+                                sx={{ 
+                                  fontWeight: 600,
+                                  boxShadow: risk.impact === 'High' 
+                                    ? '0 2px 8px rgba(244, 67, 54, 0.2)' 
+                                    : '0 2px 8px rgba(255, 152, 0, 0.2)'
+                                }}
+                              />
+                            </Box>
+                          </Box>
+                        ))}
+                      </Grid>
+                    ))}
+                  </Grid>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        </Grid>
+      </Grid>
+
+      {/* Action Buttons */}
+      <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'center' }}>
+        {!strategyConfirmed ? (
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button
+              variant="contained"
+              size="large"
+              onClick={handleConfirmStrategy}
+              startIcon={<CheckIcon />}
+              sx={{ 
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                borderRadius: 3,
+                px: 4,
+                py: 1.5,
+                fontWeight: 600,
+                boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                  boxShadow: '0 12px 40px rgba(102, 126, 234, 0.4)',
+                  transform: 'translateY(-2px)'
+                },
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+            >
+              Confirm Strategy
+            </Button>
+          </motion.div>
+        ) : (
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button
+              variant="contained"
+              size="large"
+              onClick={handleGenerateContentCalendar}
+              startIcon={<CalendarIcon />}
+              color="success"
+              sx={{ 
+                borderRadius: 3,
+                px: 4,
+                py: 1.5,
+                fontWeight: 600,
+                boxShadow: '0 8px 32px rgba(76, 175, 80, 0.3)',
+                '&:hover': {
+                  boxShadow: '0 12px 40px rgba(76, 175, 80, 0.4)',
+                  transform: 'translateY(-2px)'
+                },
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+            >
+              Generate Content Calendar
+            </Button>
+          </motion.div>
+        )}
+        
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Button
+            variant="outlined"
+            size="large"
+            onClick={loadStrategyData}
+            startIcon={<RefreshIcon />}
+            sx={{ 
+              borderRadius: 3,
+              px: 4,
+              py: 1.5,
+              fontWeight: 600,
+              borderColor: 'rgba(102, 126, 234, 0.3)',
+              color: '#667eea',
+              '&:hover': {
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.05)',
+                transform: 'translateY(-2px)'
+              },
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+          >
+            Refresh Data
+          </Button>
+        </motion.div>
+      </Box>
+
+      {/* Confirmation Dialog */}
+      <Dialog 
+        open={showConfirmDialog} 
+        onClose={() => setShowConfirmDialog(false)} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0 16px 48px rgba(0, 0, 0, 0.2)'
+          }
+        }}
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ 
+              p: 1, 
+              borderRadius: 2, 
+              background: 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)',
+              mr: 1.5,
+              boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
+            }}>
+              <CheckCircleIcon sx={{ color: 'white', fontSize: 20 }} />
+            </Box>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Confirm Strategy
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 2, fontWeight: 500 }}>
+            Are you sure you want to confirm this strategy? Once confirmed, you'll be able to generate a content calendar based on this strategy.
+          </Typography>
+          <Alert severity="info" sx={{ 
+            mb: 2,
+            borderRadius: 2,
+            border: '1px solid rgba(33, 150, 243, 0.3)'
+          }}>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              <strong>Next Steps:</strong> After confirmation, you can generate a comprehensive content calendar that follows this strategy.
+            </Typography>
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 0 }}>
+          <Button 
+            onClick={() => setShowConfirmDialog(false)}
+            sx={{ 
+              borderRadius: 2,
+              px: 3,
+              fontWeight: 600
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={confirmStrategy} 
+            variant="contained" 
+            color="success"
+            sx={{ 
+              borderRadius: 2,
+              px: 3,
+              fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+              '&:hover': {
+                boxShadow: '0 6px 16px rgba(76, 175, 80, 0.4)'
+              }
+            }}
+          >
+            Confirm Strategy
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+};
+
+export default StrategyIntelligenceTab; 

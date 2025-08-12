@@ -8,8 +8,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from loguru import logger
 from datetime import datetime
-from fastapi.responses import StreamingResponse
-import json
 
 # Import database
 from services.database import get_db_session
@@ -18,6 +16,9 @@ from services.database import get_db_session
 from ....services.content_strategy.ai_generation import AIStrategyGenerator, StrategyGenerationConfig
 from ....services.enhanced_strategy_service import EnhancedStrategyService
 from ....services.enhanced_strategy_db_service import EnhancedStrategyDBService
+
+# Import educational content manager
+from .content_strategy.educational_content import EducationalContentManager
 
 # Import utilities
 from ....utils.error_handlers import ContentPlanningErrorHandler
@@ -33,6 +34,9 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# Global storage for latest strategies (more persistent than task status)
+_latest_strategies = {}
 
 @router.post("/generate-comprehensive-strategy")
 async def generate_comprehensive_strategy(
@@ -302,427 +306,194 @@ async def optimize_existing_strategy(
         logger.error(f"❌ Error optimizing strategy: {str(e)}")
         raise ContentPlanningErrorHandler.handle_general_error(e, "optimize_existing_strategy") 
 
-@router.get("/generate-comprehensive-strategy/stream")
-async def generate_comprehensive_strategy_stream(
-    user_id: int,
-    strategy_name: Optional[str] = None,
-    config: Optional[Dict[str, Any]] = None,
+@router.post("/generate-comprehensive-strategy-polling")
+async def generate_comprehensive_strategy_polling(
+    request: Dict[str, Any],
     db: Session = Depends(get_db)
-):
-    """Generate comprehensive AI strategy with Server-Sent Events for progress updates."""
+) -> Dict[str, Any]:
+    """Generate a comprehensive AI-powered content strategy using polling approach."""
     try:
-        logger.info(f"🚀 Starting streaming AI strategy generation for user: {user_id}")
+        # Extract parameters from request body
+        user_id = request.get("user_id", 1)
+        strategy_name = request.get("strategy_name")
+        config = request.get("config", {})
         
-        async def generate_strategy_stream():
-            try:
-                # Step 1: Get user context with educational content
-                yield f"data: {json.dumps({
-                    'step': 1, 
-                    'message': 'Getting user context...', 
-                    'progress': 10,
-                    'educational_content': {
-                        'title': '🔍 Analyzing Your Data',
-                        'description': 'We\'re gathering all your onboarding information to create a personalized strategy.',
-                        'details': [
-                            '📊 Website analysis data',
-                            '🎯 Research preferences',
-                            '🔑 API configurations',
-                            '📈 Historical performance metrics'
-                        ],
-                        'insight': 'Your data helps us understand your business context, target audience, and competitive landscape.',
-                        'ai_prompt_preview': 'Analyzing user onboarding data to extract business context, audience insights, and competitive positioning...'
-                    }
-                })}\n\n"
+        logger.info(f"🚀 Starting polling-based AI strategy generation for user: {user_id}")
+        
+        # Get user context and onboarding data
+        db_service = EnhancedStrategyDBService(db)
+        enhanced_service = EnhancedStrategyService(db_service)
+        
+        # Get onboarding data for context
+        onboarding_data = await enhanced_service._get_onboarding_data(user_id)
                 
-                db_service = EnhancedStrategyDBService(db)
-                enhanced_service = EnhancedStrategyService(db_service)
-                onboarding_data = await enhanced_service._get_onboarding_data(user_id)
-                
-                context = {
+        # Build context for AI generation
+        context = {
                     "onboarding_data": onboarding_data,
                     "user_id": user_id,
                     "generation_config": config or {}
                 }
                 
-                # Step 2: Generate base strategy fields
-                yield f"data: {json.dumps({
-                    'step': 2, 
-                    'message': 'Generating base strategy fields...', 
-                    'progress': 20,
-                    'educational_content': {
-                        'title': '🏗️ Building Foundation',
-                        'description': 'Creating the core strategy framework based on your business objectives.',
-                        'details': [
-                            '🎯 Business objectives mapping',
-                            '📊 Target metrics definition',
-                            '💰 Budget allocation strategy',
-                            '⏰ Timeline planning'
-                        ],
-                        'insight': 'A solid foundation ensures your content strategy aligns with business goals and resources.',
-                        'ai_prompt_preview': 'Generating strategic foundation: business objectives, target metrics, budget allocation, and timeline planning...'
-                    }
-                })}\n\n"
+        # Create strategy generation config
+        generation_config = StrategyGenerationConfig(
+            include_competitive_analysis=config.get("include_competitive_analysis", True) if config else True,
+            include_content_calendar=config.get("include_content_calendar", True) if config else True,
+            include_performance_predictions=config.get("include_performance_predictions", True) if config else True,
+            include_implementation_roadmap=config.get("include_implementation_roadmap", True) if config else True,
+            include_risk_assessment=config.get("include_risk_assessment", True) if config else True,
+            max_content_pieces=config.get("max_content_pieces", 50) if config else 50,
+            timeline_months=config.get("timeline_months", 12) if config else 12
+        )
                 
                 # Initialize AI strategy generator
-                from ....services.content_strategy.ai_generation import AIStrategyGenerator
-                strategy_generator = AIStrategyGenerator()
+        strategy_generator = AIStrategyGenerator(generation_config)
+        
+        # Start generation in background (non-blocking)
+        import asyncio
+        import uuid
+        
+        # Generate unique task ID
+        task_id = str(uuid.uuid4())
+        
+        # Store initial status
+        generation_status = {
+            "task_id": task_id,
+            "user_id": user_id,
+            "status": "started",
+            "progress": 0,
+            "step": 0,
+            "message": "Initializing AI strategy generation...",
+            "started_at": datetime.utcnow().isoformat(),
+            "estimated_completion": None,
+            "strategy": None,
+            "error": None,
+            "educational_content": EducationalContentManager.get_initialization_content()
+        }
+        
+        # Store status in memory (in production, use Redis or database)
+        if not hasattr(generate_comprehensive_strategy_polling, '_task_status'):
+            generate_comprehensive_strategy_polling._task_status = {}
+        
+        generate_comprehensive_strategy_polling._task_status[task_id] = generation_status
+        
+        # Start background task
+        async def generate_strategy_background():
+            try:
+                logger.info(f"🔄 Starting background strategy generation for task: {task_id}")
                 
-                # Step 3: Generate strategic insights with real-time educational content
-                yield f"data: {json.dumps({
-                    'step': 3, 
-                    'message': 'Generating strategic insights...', 
-                    'progress': 30,
-                    'educational_content': {
-                        'title': '🧠 Strategic Intelligence Analysis',
-                        'description': 'AI is analyzing your market position and identifying strategic opportunities.',
-                        'details': [
-                            '🎯 Market positioning analysis',
-                            '💡 Opportunity identification',
-                            '📈 Growth potential assessment',
-                            '🎪 Competitive advantage mapping'
-                        ],
-                        'insight': 'Strategic insights help you understand where you stand in the market and how to differentiate.',
-                        'ai_prompt_preview': 'Analyzing market position, identifying strategic opportunities, assessing growth potential, and mapping competitive advantages...',
-                        'estimated_time': '15-20 seconds'
-                    }
-                })}\n\n"
+                # Step 1: Get user context
+                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                    "step": 1,
+                    "progress": 10,
+                    "message": "Getting user context...",
+                    "educational_content": EducationalContentManager.get_step_content(1)
+                })
                 
-                try:
-                    # Create a custom AI service manager that emits educational content to SSE
-                    from services.ai_service_manager import AIServiceManager, AIServiceType
-                    
-                    class SSEAIServiceManager(AIServiceManager):
-                        def __init__(self, sse_yield_func):
-                            super().__init__()
-                            self.sse_yield = sse_yield_func
-                        
-                        async def _emit_educational_content(self, service_type: AIServiceType, status: str, error_message: str = None, processing_time: float = None):
-                            """Override to emit educational content to SSE stream."""
-                            try:
-                                educational_content = self._get_educational_content(service_type, status, error_message, processing_time)
-                                
-                                # Emit to SSE stream
-                                yield_data = {
-                                    'type': 'educational_content',
-                                    'service_type': service_type.value,
-                                    'status': status,
-                                    'educational_content': educational_content
-                                }
-                                
-                                if processing_time:
-                                    yield_data['processing_time'] = processing_time
-                                if error_message:
-                                    yield_data['error_message'] = error_message
-                                
-                                await self.sse_yield(f"data: {json.dumps(yield_data)}\n\n")
-                                logger.info(f"📚 Emitted educational content for {service_type.value}: {status}")
-                                
-                            except Exception as e:
-                                logger.error(f"Error emitting educational content to SSE: {e}")
-                    
-                    # Use the SSE-enabled AI service manager
-                    sse_ai_manager = SSEAIServiceManager(lambda data: generate_strategy_stream().__anext__())
-                    
-                    # Generate strategic insights with educational content
-                    strategic_insights = await strategy_generator._generate_strategic_insights({}, context, sse_ai_manager)
-                    
-                    yield f"data: {json.dumps({
-                        'step': 3, 
-                        'message': 'Strategic insights generated successfully', 
-                        'progress': 35, 
-                        'success': True,
-                        'educational_content': {
-                            'title': '✅ Strategic Insights Complete',
-                            'description': 'Successfully identified key strategic opportunities and market positioning.',
-                            'achievement': f'Generated {len(strategic_insights.get("insights", []))} strategic insights',
-                            'next_step': 'Moving to competitive analysis...'
-                        }
-                    })}\n\n"
-                except Exception as e:
-                    yield f"data: {json.dumps({
-                        'step': 3, 
-                        'message': f'Strategic insights generation failed: {str(e)}', 
-                        'progress': 35, 
-                        'success': False, 
-                        'error': str(e),
-                        'educational_content': {
-                            'title': '⚠️ Strategic Insights Issue',
-                            'description': 'We encountered an issue with strategic analysis, but continuing with other components.',
-                            'fallback': 'Will use industry best practices for strategic positioning.'
-                        }
-                    })}\n\n"
-                    strategic_insights = {}
+                # Step 2: Generate base strategy fields
+                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                    "step": 2,
+                    "progress": 20,
+                    "message": "Generating base strategy fields...",
+                    "educational_content": EducationalContentManager.get_step_content(2)
+                })
                 
-                # Step 4: Generate competitive analysis with educational content
-                yield f"data: {json.dumps({
-                    'step': 4, 
-                    'message': 'Generating competitive analysis...', 
-                    'progress': 40,
-                    'educational_content': {
-                        'title': '🔍 Competitive Intelligence Analysis',
-                        'description': 'AI is analyzing your competitors to identify gaps and opportunities.',
-                        'details': [
-                            '🏢 Competitor content strategies',
-                            '📊 Market gap analysis',
-                            '🎯 Differentiation opportunities',
-                            '📈 Industry trend analysis'
-                        ],
-                        'insight': 'Understanding your competitors helps you find unique angles and underserved market segments.',
-                        'ai_prompt_preview': 'Analyzing competitor content strategies, identifying market gaps, finding differentiation opportunities, and assessing industry trends...',
-                        'estimated_time': '20-25 seconds'
-                    }
-                })}\n\n"
+                # Step 3: Generate strategic insights
+                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                    "step": 3,
+                    "progress": 30,
+                    "message": "Generating strategic insights...",
+                    "educational_content": EducationalContentManager.get_step_content(3)
+                })
                 
-                try:
-                    competitive_analysis = await strategy_generator._generate_competitive_analysis({}, context, sse_ai_manager)
-                    yield f"data: {json.dumps({
-                        'step': 4, 
-                        'message': 'Competitive analysis generated successfully', 
-                        'progress': 45, 
-                        'success': True,
-                        'educational_content': {
-                            'title': '✅ Competitive Analysis Complete',
-                            'description': 'Successfully analyzed competitive landscape and identified market opportunities.',
-                            'achievement': f'Analyzed {len(competitive_analysis.get("competitors", []))} competitors',
-                            'next_step': 'Moving to content calendar generation...'
-                        }
-                    })}\n\n"
-                except Exception as e:
-                    yield f"data: {json.dumps({
-                        'step': 4, 
-                        'message': f'Competitive analysis generation failed: {str(e)}', 
-                        'progress': 45, 
-                        'success': False, 
-                        'error': str(e),
-                        'educational_content': {
-                            'title': '⚠️ Competitive Analysis Issue',
-                            'description': 'We encountered an issue with competitive analysis, but continuing with other components.',
-                            'fallback': 'Will use industry best practices for competitive positioning.'
-                        }
-                    })}\n\n"
-                    competitive_analysis = {}
+                strategic_insights = await strategy_generator._generate_strategic_insights({}, context)
                 
-                # Step 5: Generate content calendar with educational content
-                yield f"data: {json.dumps({
-                    'step': 5, 
-                    'message': 'Generating content calendar...', 
-                    'progress': 50,
-                    'educational_content': {
-                        'title': '📅 Content Calendar Creation',
-                        'description': 'AI is building a comprehensive content schedule optimized for your audience.',
-                        'details': [
-                            '📝 Content piece generation',
-                            '📅 Optimal publishing schedule',
-                            '🎯 Audience engagement timing',
-                            '🔄 Content repurposing strategy'
-                        ],
-                        'insight': 'A well-planned content calendar ensures consistent engagement and maximizes content ROI.',
-                        'ai_prompt_preview': 'Generating content pieces, optimizing publishing schedule, determining audience engagement timing, and planning content repurposing...',
-                        'estimated_time': '25-30 seconds'
-                    }
-                })}\n\n"
+                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                    "step": 3,
+                    "progress": 35,
+                    "message": "Strategic insights generated successfully",
+                    "educational_content": EducationalContentManager.get_step_completion_content(3, strategic_insights)
+                })
                 
-                try:
-                    content_calendar = await strategy_generator._generate_content_calendar({}, context, sse_ai_manager)
-                    yield f"data: {json.dumps({
-                        'step': 5, 
-                        'message': 'Content calendar generated successfully', 
-                        'progress': 55, 
-                        'success': True,
-                        'educational_content': {
-                            'title': '✅ Content Calendar Complete',
-                            'description': 'Successfully created comprehensive content schedule.',
-                            'achievement': f'Generated {len(content_calendar.get("content_pieces", []))} content pieces',
-                            'next_step': 'Moving to performance predictions...'
-                        }
-                    })}\n\n"
-                except Exception as e:
-                    yield f"data: {json.dumps({
-                        'step': 5, 
-                        'message': f'Content calendar generation failed: {str(e)}', 
-                        'progress': 55, 
-                        'success': False, 
-                        'error': str(e),
-                        'educational_content': {
-                            'title': '⚠️ Content Calendar Issue',
-                            'description': 'We encountered an issue with content calendar generation, but continuing with other components.',
-                            'fallback': 'Will use industry best practices for content scheduling.'
-                        }
-                    })}\n\n"
-                    content_calendar = {}
+                # Step 4: Generate competitive analysis
+                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                    "step": 4,
+                    "progress": 40,
+                    "message": "Generating competitive analysis...",
+                    "educational_content": EducationalContentManager.get_step_content(4)
+                })
                 
-                # Step 6: Generate performance predictions with educational content
-                yield f"data: {json.dumps({
-                    'step': 6, 
-                    'message': 'Generating performance predictions...', 
-                    'progress': 60,
-                    'educational_content': {
-                        'title': '📊 Performance Forecasting',
-                        'description': 'AI is predicting content performance and ROI based on industry data.',
-                        'details': [
-                            '📈 Traffic growth projections',
-                            '💰 ROI predictions',
-                            '🎯 Conversion rate estimates',
-                            '📊 Engagement metrics forecasting'
-                        ],
-                        'insight': 'Performance predictions help you set realistic expectations and optimize resource allocation.',
-                        'ai_prompt_preview': 'Analyzing industry benchmarks, predicting traffic growth, estimating ROI, forecasting conversion rates, and projecting engagement metrics...',
-                        'estimated_time': '15-20 seconds'
-                    }
-                })}\n\n"
+                competitive_analysis = await strategy_generator._generate_competitive_analysis({}, context)
                 
-                try:
-                    performance_predictions = await strategy_generator._generate_performance_predictions({}, context, sse_ai_manager)
-                    yield f"data: {json.dumps({
-                        'step': 6, 
-                        'message': 'Performance predictions generated successfully', 
-                        'progress': 65, 
-                        'success': True,
-                        'educational_content': {
-                            'title': '✅ Performance Predictions Complete',
-                            'description': 'Successfully predicted content performance and ROI.',
-                            'achievement': f'Predicted {performance_predictions.get("estimated_roi", "15-25%")} ROI',
-                            'next_step': 'Moving to implementation roadmap...'
-                        }
-                    })}\n\n"
-                except Exception as e:
-                    yield f"data: {json.dumps({
-                        'step': 6, 
-                        'message': f'Performance predictions generation failed: {str(e)}', 
-                        'progress': 65, 
-                        'success': False, 
-                        'error': str(e),
-                        'educational_content': {
-                            'title': '⚠️ Performance Predictions Issue',
-                            'description': 'We encountered an issue with performance predictions, but continuing with other components.',
-                            'fallback': 'Will use industry benchmarks for performance estimates.'
-                        }
-                    })}\n\n"
-                    performance_predictions = {}
+                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                    "step": 4,
+                    "progress": 45,
+                    "message": "Competitive analysis generated successfully",
+                    "educational_content": EducationalContentManager.get_step_completion_content(4, competitive_analysis)
+                })
                 
-                # Step 7: Generate implementation roadmap with educational content
-                yield f"data: {json.dumps({
-                    'step': 7, 
-                    'message': 'Generating implementation roadmap...', 
-                    'progress': 70,
-                    'educational_content': {
-                        'title': '🗺️ Implementation Roadmap',
-                        'description': 'AI is creating a detailed implementation plan for your content strategy.',
-                        'details': [
-                            '📋 Task breakdown and timeline',
-                            '👥 Resource allocation planning',
-                            '🎯 Milestone definition',
-                            '📊 Success metric tracking'
-                        ],
-                        'insight': 'A clear implementation roadmap ensures successful strategy execution and measurable results.',
-                        'ai_prompt_preview': 'Creating implementation roadmap: task breakdown, resource allocation, milestone planning, and success metric definition...',
-                        'estimated_time': '15-20 seconds'
-                    }
-                })}\n\n"
+                # Step 5: Generate performance predictions
+                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                    "step": 4,
+                    "progress": 40,
+                    "message": "Generating performance predictions...",
+                    "educational_content": EducationalContentManager.get_step_content(4)
+                })
                 
-                try:
-                    implementation_roadmap = await strategy_generator._generate_implementation_roadmap({}, context, sse_ai_manager)
-                    yield f"data: {json.dumps({
-                        'step': 7, 
-                        'message': 'Implementation roadmap generated successfully', 
-                        'progress': 75, 
-                        'success': True,
-                        'educational_content': {
-                            'title': '✅ Implementation Roadmap Complete',
-                            'description': 'Successfully created detailed implementation plan.',
-                            'achievement': f'Planned {implementation_roadmap.get("total_duration", "12 months")} implementation timeline',
-                            'next_step': 'Moving to risk assessment...'
-                        }
-                    })}\n\n"
-                except Exception as e:
-                    yield f"data: {json.dumps({
-                        'step': 7, 
-                        'message': f'Implementation roadmap generation failed: {str(e)}', 
-                        'progress': 75, 
-                        'success': False, 
-                        'error': str(e),
-                        'educational_content': {
-                            'title': '⚠️ Implementation Roadmap Issue',
-                            'description': 'We encountered an issue with implementation roadmap generation, but continuing with other components.',
-                            'fallback': 'Will use industry best practices for implementation planning.'
-                        }
-                    })}\n\n"
-                    implementation_roadmap = {}
+                performance_predictions = await strategy_generator._generate_performance_predictions({}, context)
                 
-                # Step 8: Generate risk assessment with educational content
-                yield f"data: {json.dumps({
-                    'step': 8, 
-                    'message': 'Generating risk assessment...', 
-                    'progress': 80,
-                    'educational_content': {
-                        'title': '⚠️ Risk Assessment',
-                        'description': 'AI is identifying potential risks and mitigation strategies for your content strategy.',
-                        'details': [
-                            '🔍 Risk identification and analysis',
-                            '📊 Risk probability assessment',
-                            '🛡️ Mitigation strategy development',
-                            '📈 Risk monitoring framework'
-                        ],
-                        'insight': 'Proactive risk assessment helps you prepare for challenges and maintain strategy effectiveness.',
-                        'ai_prompt_preview': 'Assessing risks: identifying potential challenges, analyzing probability and impact, developing mitigation strategies, and creating monitoring framework...',
-                        'estimated_time': '10-15 seconds'
-                    }
-                })}\n\n"
+                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                    "step": 4,
+                    "progress": 45,
+                    "message": "Performance predictions generated successfully",
+                    "educational_content": EducationalContentManager.get_step_completion_content(4, performance_predictions)
+                })
                 
-                try:
-                    risk_assessment = await strategy_generator._generate_risk_assessment({}, context, sse_ai_manager)
-                    yield f"data: {json.dumps({
-                        'step': 8, 
-                        'message': 'Risk assessment generated successfully', 
-                        'progress': 85, 
-                        'success': True,
-                        'educational_content': {
-                            'title': '✅ Risk Assessment Complete',
-                            'description': 'Successfully identified risks and mitigation strategies.',
-                            'achievement': f'Assessed {risk_assessment.get("overall_risk_level", "Medium")} risk level',
-                            'next_step': 'Finalizing comprehensive strategy...'
-                        }
-                    })}\n\n"
-                except Exception as e:
-                    yield f"data: {json.dumps({
-                        'step': 8, 
-                        'message': f'Risk assessment generation failed: {str(e)}', 
-                        'progress': 85, 
-                        'success': False, 
-                        'error': str(e),
-                        'educational_content': {
-                            'title': '⚠️ Risk Assessment Issue',
-                            'description': 'We encountered an issue with risk assessment, but continuing with strategy finalization.',
-                            'fallback': 'Will use industry best practices for risk management.'
-                        }
-                    })}\n\n"
-                    risk_assessment = {}
+                # Step 5: Generate implementation roadmap
+                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                    "step": 5,
+                    "progress": 50,
+                    "message": "Generating implementation roadmap...",
+                    "educational_content": EducationalContentManager.get_step_content(5)
+                })
                 
-                # Step 9: Compile comprehensive strategy
-                yield f"data: {json.dumps({
-                    'step': 9, 
-                    'message': 'Compiling comprehensive strategy...', 
-                    'progress': 90,
-                    'educational_content': {
-                        'title': '📋 Strategy Compilation',
-                        'description': 'AI is compiling all components into a comprehensive content strategy.',
-                        'details': [
-                            '🔗 Component integration',
-                            '📊 Data synthesis',
-                            '📝 Strategy documentation',
-                            '✅ Quality validation'
-                        ],
-                        'insight': 'A comprehensive strategy integrates all components into a cohesive, actionable plan.',
-                        'ai_prompt_preview': 'Compiling comprehensive strategy: integrating all components, synthesizing data, documenting strategy, and validating quality...',
-                        'estimated_time': '5-10 seconds'
-                    }
-                })}\n\n"
+                implementation_roadmap = await strategy_generator._generate_implementation_roadmap({}, context)
                 
-                # Compile the comprehensive strategy
+                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                    "step": 5,
+                    "progress": 55,
+                    "message": "Implementation roadmap generated successfully",
+                    "educational_content": EducationalContentManager.get_step_completion_content(5, implementation_roadmap)
+                })
+                
+                # Step 6: Generate risk assessment
+                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                    "step": 6,
+                    "progress": 60,
+                    "message": "Generating risk assessment...",
+                    "educational_content": EducationalContentManager.get_step_content(6)
+                })
+                
+                risk_assessment = await strategy_generator._generate_risk_assessment({}, context)
+                
+                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                    "step": 6,
+                    "progress": 65,
+                    "message": "Risk assessment generated successfully",
+                    "educational_content": EducationalContentManager.get_step_completion_content(6, risk_assessment)
+                })
+                
+                # Step 7: Compile comprehensive strategy
+                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                    "step": 7,
+                    "progress": 70,
+                    "message": "Compiling comprehensive strategy...",
+                    "educational_content": EducationalContentManager.get_step_content(7)
+                })
+                
+                # Compile the comprehensive strategy (NO CONTENT CALENDAR)
                 comprehensive_strategy = {
                     "strategic_insights": strategic_insights,
                     "competitive_analysis": competitive_analysis,
-                    "content_calendar": content_calendar,
                     "performance_predictions": performance_predictions,
                     "implementation_roadmap": implementation_roadmap,
                     "risk_assessment": risk_assessment,
@@ -731,265 +502,226 @@ async def generate_comprehensive_strategy_stream(
                         "comprehensive": True,
                         "generation_timestamp": datetime.utcnow().isoformat(),
                         "user_id": user_id,
-                        "strategy_name": strategy_name or "Enhanced Content Strategy"
+                        "strategy_name": strategy_name or "Enhanced Content Strategy",
+                        "content_calendar_ready": False  # Indicates calendar needs to be generated separately
                     }
                 }
                 
-                # Step 10: Complete with educational content
-                yield f"data: {json.dumps({
-                    'step': 10, 
-                    'message': 'Strategy generation completed successfully!', 
-                    'progress': 100, 
-                    'success': True, 
-                    'strategy': comprehensive_strategy,
-                    'educational_content': {
-                        'title': '🎉 Strategy Generation Complete!',
-                        'description': 'Your comprehensive AI-powered content strategy is ready!',
-                        'summary': {
-                            'total_components': 6,
-                            'successful_components': sum([
-                                1 if strategic_insights else 0,
-                                1 if competitive_analysis else 0,
-                                1 if content_calendar else 0,
-                                1 if performance_predictions else 0,
-                                1 if implementation_roadmap else 0,
-                                1 if risk_assessment else 0
-                            ]),
-                            'total_content_pieces': len(content_calendar.get("content_pieces", [])),
-                            'estimated_roi': performance_predictions.get("estimated_roi", "15-25%"),
-                            'implementation_timeline': implementation_roadmap.get("total_duration", "12 months"),
-                            'risk_level': risk_assessment.get("overall_risk_level", "Medium")
-                        },
-                        'key_achievements': [
-                            '🧠 Strategic insights generated',
-                            '🔍 Competitive analysis completed',
-                            '📅 Content calendar created',
-                            '📊 Performance predictions calculated',
-                            '🗺️ Implementation roadmap planned',
-                            '⚠️ Risk assessment conducted'
-                        ],
-                        'next_steps': [
-                            'Review your comprehensive strategy',
-                            'Customize specific components as needed',
-                            'Share with your team for feedback',
-                            'Begin implementation following the roadmap'
-                        ],
-                        'ai_insights': 'Your strategy leverages advanced AI analysis of your business context, competitive landscape, and industry best practices to create a data-driven content approach.',
-                        'personalization_note': 'This strategy is uniquely tailored to your business based on your onboarding data, ensuring relevance and effectiveness.'
+                # Step 8: Complete
+                completion_content = EducationalContentManager.get_step_content(8)
+                completion_content = EducationalContentManager.update_completion_summary(
+                    completion_content, 
+                    {
+                        "performance_predictions": performance_predictions,
+                        "implementation_roadmap": implementation_roadmap,
+                        "risk_assessment": risk_assessment
                     }
-                })}\n\n"
+                )
+                
+                # Save the comprehensive strategy to database
+                try:
+                    from models.enhanced_strategy_models import EnhancedContentStrategy
+                    
+                    # Create enhanced strategy record
+                    enhanced_strategy = EnhancedContentStrategy(
+                        user_id=user_id,
+                        name=strategy_name or "Enhanced Content Strategy",
+                        industry="technology",  # Default, can be updated later
+                        
+                        # Store the comprehensive AI analysis in the dedicated field
+                        comprehensive_ai_analysis=comprehensive_strategy,
+                        
+                        # Store metadata
+                        ai_recommendations=comprehensive_strategy,
+                        
+                        # Mark as AI-generated and comprehensive
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow()
+                    )
+                    
+                    # Add to database
+                    db.add(enhanced_strategy)
+                    db.commit()
+                    db.refresh(enhanced_strategy)
+                    
+                    logger.info(f"💾 Strategy saved to database with ID: {enhanced_strategy.id}")
+                    
+                    # Update the comprehensive strategy with the database ID
+                    comprehensive_strategy["metadata"]["strategy_id"] = enhanced_strategy.id
+                    
+                except Exception as db_error:
+                    logger.error(f"❌ Error saving strategy to database: {str(db_error)}")
+                    # Continue without database save, strategy is still available in memory
+                
+                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                    "step": 8,
+                    "progress": 100,
+                    "status": "completed",
+                    "message": "Strategy generation completed successfully!",
+                    "strategy": comprehensive_strategy,
+                    "completed_at": datetime.utcnow().isoformat(),
+                    "educational_content": completion_content
+                })
+                
+                # Store in global latest strategies for persistent access
+                _latest_strategies[user_id] = {
+                    "strategy": comprehensive_strategy,
+                    "completed_at": datetime.utcnow().isoformat(),
+                    "task_id": task_id
+                }
+                
+                logger.info(f"✅ Background strategy generation completed for task: {task_id}")
+                logger.info(f"💾 Strategy stored in global storage for user: {user_id}")
                 
             except Exception as e:
-                logger.error(f"❌ Error in streaming strategy generation: {str(e)}")
-                yield f"data: {json.dumps({'error': f'Strategy generation failed: {str(e)}', 'progress': 0, 'success': False})}\n\n"
+                logger.error(f"❌ Error in background strategy generation for task {task_id}: {str(e)}")
+                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                    "status": "failed",
+                    "error": str(e),
+                    "message": f"Strategy generation failed: {str(e)}",
+                    "failed_at": datetime.utcnow().isoformat()
+                })
         
-        return StreamingResponse(
-            generate_strategy_stream(),
-            media_type="text/plain",
-            headers={
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": "Cache-Control"
-            }
-        )
+        # Start the background task
+        asyncio.create_task(generate_strategy_background())
         
-    except Exception as e:
-        logger.error(f"❌ Error starting streaming strategy generation: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to start streaming strategy generation: {str(e)}"
-        )
-
-@router.get("/ai-generation-education")
-async def get_ai_generation_education() -> Dict[str, Any]:
-    """Get educational content about the AI generation process."""
-    try:
-        logger.info("📚 Providing AI generation educational content")
-        
-        educational_content = {
-            "title": "🤖 AI-Powered Strategy Generation",
-            "subtitle": "Understanding How We Create Your Content Strategy",
-            "overview": {
-                "description": "Our AI system analyzes your business data and generates a comprehensive content strategy using advanced machine learning and industry best practices.",
-                "total_time": "2-3 minutes",
-                "components": 6,
-                "ai_model": "Google Gemini Pro",
-                "personalization_level": "High"
-            },
-            "process_steps": [
-                {
-                    "step": 1,
-                    "title": "🔍 Data Analysis",
-                    "description": "Analyzing your onboarding data to understand your business context",
-                    "duration": "5-10 seconds",
-                    "details": [
-                        "Website analysis data processing",
-                        "Research preferences analysis",
-                        "API configuration review",
-                        "Historical performance assessment"
-                    ],
-                    "ai_prompt_example": "Analyze user onboarding data to extract business context, audience insights, and competitive positioning..."
-                },
-                {
-                    "step": 2,
-                    "title": "🏗️ Foundation Building",
-                    "description": "Creating the core strategy framework based on your objectives",
-                    "duration": "5-10 seconds",
-                    "details": [
-                        "Business objectives mapping",
-                        "Target metrics definition",
-                        "Budget allocation strategy",
-                        "Timeline planning"
-                    ],
-                    "ai_prompt_example": "Generate strategic foundation: business objectives, target metrics, budget allocation, and timeline planning..."
-                },
-                {
-                    "step": 3,
-                    "title": "🧠 Strategic Intelligence",
-                    "description": "AI analyzes your market position and identifies opportunities",
-                    "duration": "15-20 seconds",
-                    "details": [
-                        "Market positioning analysis",
-                        "Opportunity identification",
-                        "Growth potential assessment",
-                        "Competitive advantage mapping"
-                    ],
-                    "ai_prompt_example": "Analyze market position, identify strategic opportunities, assess growth potential, and map competitive advantages..."
-                },
-                {
-                    "step": 4,
-                    "title": "🔍 Competitive Intelligence",
-                    "description": "Analyzing competitors to identify gaps and opportunities",
-                    "duration": "20-25 seconds",
-                    "details": [
-                        "Competitor content strategies",
-                        "Market gap analysis",
-                        "Differentiation opportunities",
-                        "Industry trend analysis"
-                    ],
-                    "ai_prompt_example": "Analyze competitor content strategies, identify market gaps, find differentiation opportunities, and assess industry trends..."
-                },
-                {
-                    "step": 5,
-                    "title": "📅 Content Calendar Creation",
-                    "description": "Building a comprehensive content schedule optimized for your audience",
-                    "duration": "25-30 seconds",
-                    "details": [
-                        "Content piece generation",
-                        "Optimal publishing schedule",
-                        "Audience engagement timing",
-                        "Content repurposing strategy"
-                    ],
-                    "ai_prompt_example": "Generate content pieces, optimize publishing schedule, determine audience engagement timing, and plan content repurposing..."
-                },
-                {
-                    "step": 6,
-                    "title": "📊 Performance Forecasting",
-                    "description": "Predicting content performance and ROI based on industry data",
-                    "duration": "15-20 seconds",
-                    "details": [
-                        "Traffic growth projections",
-                        "ROI predictions",
-                        "Conversion rate estimates",
-                        "Engagement metrics forecasting"
-                    ],
-                    "ai_prompt_example": "Analyze industry benchmarks, predict traffic growth, estimate ROI, forecast conversion rates, and project engagement metrics..."
-                },
-                {
-                    "step": 7,
-                    "title": "🗺️ Implementation Roadmap",
-                    "description": "Creating a step-by-step plan to execute your strategy",
-                    "duration": "15-20 seconds",
-                    "details": [
-                        "Phase-by-phase breakdown",
-                        "Timeline with milestones",
-                        "Resource allocation",
-                        "Success checkpoints"
-                    ],
-                    "ai_prompt_example": "Create phase-by-phase breakdown, establish timeline with milestones, allocate resources, and set success checkpoints..."
-                },
-                {
-                    "step": 8,
-                    "title": "⚠️ Risk Assessment",
-                    "description": "Identifying potential challenges and creating mitigation strategies",
-                    "duration": "10-15 seconds",
-                    "details": [
-                        "Risk identification",
-                        "Risk probability analysis",
-                        "Mitigation strategies",
-                        "Contingency planning"
-                    ],
-                    "ai_prompt_example": "Identify potential risks, analyze risk probabilities, develop mitigation strategies, and create contingency plans..."
-                }
-            ],
-            "ai_technology": {
-                "model": "Google Gemini Pro",
-                "capabilities": [
-                    "Advanced natural language processing",
-                    "Context-aware analysis",
-                    "Industry knowledge integration",
-                    "Personalized recommendations"
-                ],
-                "data_sources": [
-                    "Your onboarding data",
-                    "Industry benchmarks",
-                    "Best practices database",
-                    "Market research insights"
-                ]
-            },
-            "personalization_features": {
-                "data_points_used": [
-                    "Business objectives and goals",
-                    "Target audience demographics",
-                    "Industry and market context",
-                    "Competitive landscape",
-                    "Content preferences and style",
-                    "Budget and resource constraints"
-                ],
-                "customization_level": "High",
-                "adaptation_factors": [
-                    "Industry-specific insights",
-                    "Audience behavior patterns",
-                    "Competitive positioning",
-                    "Resource availability"
-                ]
-            },
-            "quality_assurance": {
-                "validation_steps": [
-                    "Data completeness check",
-                    "Strategy coherence validation",
-                    "Industry alignment verification",
-                    "Implementation feasibility assessment"
-                ],
-                "fallback_mechanisms": [
-                    "Industry best practices",
-                    "Standard templates",
-                    "Benchmark data",
-                    "Expert recommendations"
-                ]
-            },
-            "tips_for_users": [
-                "💡 The more detailed your onboarding data, the more personalized your strategy will be",
-                "📊 Review and customize the generated strategy to match your specific needs",
-                "🔄 Use the strategy as a starting point and iterate based on performance",
-                "📈 Monitor results and adjust the strategy as your business evolves",
-                "👥 Share the strategy with your team for feedback and buy-in"
-            ],
-            "technical_details": {
-                "processing_time": "2-3 minutes total",
-                "ai_calls": "8 specialized AI analyses",
-                "data_processing": "Real-time onboarding data integration",
-                "output_format": "Structured JSON with comprehensive strategy components",
-                "scalability": "Handles multiple concurrent generations"
-            }
-        }
+        logger.info(f"✅ Polling-based AI strategy generation started for user: {user_id}, task: {task_id}")
         
         return ResponseBuilder.create_success_response(
-            message="AI generation educational content retrieved successfully",
-            data=educational_content
+            message="AI strategy generation started successfully",
+            data={
+                "task_id": task_id,
+                "status": "started",
+                "message": "Strategy generation is running in the background. Use the task_id to check progress.",
+                "polling_endpoint": f"/api/content-planning/content-strategy/ai-generation/strategy-generation-status/{task_id}",
+                "estimated_completion": "2-3 minutes"
+            }
         )
         
     except Exception as e:
-        logger.error(f"❌ Error getting AI generation education: {str(e)}")
-        raise ContentPlanningErrorHandler.handle_general_error(e, "get_ai_generation_education") 
+        logger.error(f"❌ Error starting polling-based strategy generation: {str(e)}")
+        raise ContentPlanningErrorHandler.handle_general_error(e, "generate_comprehensive_strategy_polling")
+
+@router.get("/strategy-generation-status/{task_id}")
+async def get_strategy_generation_status_by_task(
+    task_id: str,
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """Get the status of strategy generation for a specific task."""
+    try:
+        logger.info(f"Getting strategy generation status for task: {task_id}")
+        
+        # Check if task status exists
+        if not hasattr(generate_comprehensive_strategy_polling, '_task_status'):
+            raise HTTPException(
+                status_code=404,
+                detail="No task status found. Task may have expired or never existed."
+            )
+        
+        task_status = generate_comprehensive_strategy_polling._task_status.get(task_id)
+        
+        if not task_status:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Task {task_id} not found. It may have expired or never existed."
+            )
+        
+        logger.info(f"✅ Strategy generation status retrieved for task: {task_id}")
+        
+        return ResponseBuilder.create_success_response(
+            message="Strategy generation status retrieved successfully",
+            data=task_status
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error getting strategy generation status: {str(e)}")
+        raise ContentPlanningErrorHandler.handle_general_error(e, "get_strategy_generation_status_by_task")
+
+@router.get("/latest-strategy")
+async def get_latest_generated_strategy(
+    user_id: int = Query(1, description="User ID"),
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """Get the latest generated strategy from the polling system or database."""
+    try:
+        logger.info(f"🔍 Getting latest generated strategy for user: {user_id}")
+        
+        # First, try to get from database (most reliable)
+        try:
+            from models.enhanced_strategy_models import EnhancedContentStrategy
+            from sqlalchemy import desc
+            
+            # Query for the most recent strategy with comprehensive AI analysis
+            latest_db_strategy = db.query(EnhancedContentStrategy).filter(
+                EnhancedContentStrategy.user_id == user_id,
+                EnhancedContentStrategy.comprehensive_ai_analysis.isnot(None)
+            ).order_by(desc(EnhancedContentStrategy.created_at)).first()
+            
+            if latest_db_strategy and latest_db_strategy.comprehensive_ai_analysis:
+                logger.info(f"✅ Found latest strategy in database: {latest_db_strategy.id}")
+                return ResponseBuilder.create_success_response(
+                    message="Latest generated strategy retrieved successfully from database",
+                    data={
+                        "user_id": user_id,
+                        "strategy": latest_db_strategy.comprehensive_ai_analysis,
+                        "completed_at": latest_db_strategy.created_at.isoformat(),
+                        "strategy_id": latest_db_strategy.id
+                    }
+                )
+        except Exception as db_error:
+            logger.warning(f"⚠️ Database query failed: {str(db_error)}")
+        
+        # Fallback: Check in-memory task status
+        if not hasattr(generate_comprehensive_strategy_polling, '_task_status'):
+            logger.warning("⚠️ No task status storage found")
+            return ResponseBuilder.create_not_found_response(
+                message="No strategy generation tasks found",
+                data={"user_id": user_id, "strategy": None}
+            )
+        
+        # Debug: Log all task statuses
+        logger.info(f"📊 Total tasks in storage: {len(generate_comprehensive_strategy_polling._task_status)}")
+        for task_id, task_status in generate_comprehensive_strategy_polling._task_status.items():
+            logger.info(f"   Task {task_id}: user_id={task_status.get('user_id')}, status={task_status.get('status')}, has_strategy={bool(task_status.get('strategy'))}")
+        
+        # Find the most recent completed strategy for this user
+        latest_strategy = None
+        latest_completion_time = None
+        
+        for task_id, task_status in generate_comprehensive_strategy_polling._task_status.items():
+            logger.info(f"🔍 Checking task {task_id}: user_id={task_status.get('user_id')} vs requested {user_id}")
+            
+            if (task_status.get("user_id") == user_id and 
+                task_status.get("status") == "completed" and 
+                task_status.get("strategy")):
+                
+                completion_time = task_status.get("completed_at")
+                logger.info(f"✅ Found completed strategy for user {user_id} at {completion_time}")
+                
+                if completion_time and (latest_completion_time is None or completion_time > latest_completion_time):
+                    latest_strategy = task_status.get("strategy")
+                    latest_completion_time = completion_time
+                    logger.info(f"🔄 Updated latest strategy with completion time: {completion_time}")
+        
+        if latest_strategy:
+            logger.info(f"✅ Found latest generated strategy for user: {user_id}")
+            return ResponseBuilder.create_success_response(
+                message="Latest generated strategy retrieved successfully from memory",
+                data={
+                    "user_id": user_id,
+                    "strategy": latest_strategy,
+                    "completed_at": latest_completion_time
+                }
+            )
+        else:
+            logger.info(f"⚠️ No completed strategies found for user: {user_id}")
+            return ResponseBuilder.create_not_found_response(
+                message="No completed strategy generation found",
+                data={"user_id": user_id, "strategy": None}
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting latest generated strategy: {str(e)}")
+        raise ContentPlanningErrorHandler.handle_general_error(e, "get_latest_generated_strategy")
