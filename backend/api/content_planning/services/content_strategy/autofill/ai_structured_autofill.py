@@ -496,10 +496,21 @@ Generate the complete JSON with all 30 fields personalized for {website_url}:
         logger.info("AIStructuredAutofillService: generating %d fields | user=%s", len(CORE_FIELDS), user_id)
         logger.debug("AIStructuredAutofillService: properties=%d", len(schema.get('properties', {})))
         
+        # Log context summary for debugging
+        logger.info("AIStructuredAutofillService: context summary | user=%s", user_id)
+        logger.info("  - Website analysis exists: %s", bool(context_summary.get('user_profile', {}).get('website_url')))
+        logger.info("  - Research config: %s", context_summary.get('research_config', {}).get('research_depth', 'None'))
+        logger.info("  - API capabilities: %s", len(context_summary.get('api_capabilities', {}).get('providers', [])))
+        logger.info("  - Content analysis: %s", bool(context_summary.get('content_analysis')))
+        logger.info("  - Audience insights: %s", bool(context_summary.get('audience_insights')))
+        
+        # Log prompt length for debugging
+        logger.info("AIStructuredAutofillService: prompt length=%d chars | user=%s", len(prompt), user_id)
+        
         last_result = None
         for attempt in range(self.max_retries + 1):
             try:
-                logger.info(f"AI structured call attempt {attempt + 1}/{self.max_retries + 1}")
+                logger.info(f"AI structured call attempt {attempt + 1}/{self.max_retries + 1} | user=%s", user_id)
                 result = await self.ai.execute_structured_json_call(
                     service_type=AIServiceType.STRATEGIC_INTELLIGENCE,
                     prompt=prompt,
@@ -507,8 +518,34 @@ Generate the complete JSON with all 30 fields personalized for {website_url}:
                 )
                 last_result = result
                 
+                # Log AI response details
+                logger.info(f"AI response received | attempt={attempt + 1} | user=%s", user_id)
+                if isinstance(result, dict):
+                    logger.info(f"  - Response keys: {list(result.keys())}")
+                    logger.info(f"  - Response type: dict with {len(result)} items")
+                    
+                    # Handle wrapped response from AI service manager
+                    if 'data' in result and 'success' in result:
+                        # This is a wrapped response from AI service manager
+                        if result.get('success'):
+                            # Extract the actual AI response from the 'data' field
+                            ai_response = result.get('data', {})
+                            logger.info(f"  - Extracted AI response from wrapped response")
+                            logger.info(f"  - AI response keys: {list(ai_response.keys()) if isinstance(ai_response, dict) else 'N/A'}")
+                            last_result = ai_response
+                        else:
+                            # AI service failed
+                            error_msg = result.get('error', 'Unknown AI service error')
+                            logger.error(f"  - AI service failed: {error_msg}")
+                            last_result = {'error': error_msg}
+                    elif 'error' in result:
+                        logger.error(f"  - AI returned error: {result['error']}")
+                else:
+                    logger.warning(f"  - Response type: {type(result)}")
+                
                 # Check if we should retry
-                if not self._should_retry(result, attempt):
+                if not self._should_retry(last_result, attempt):
+                    logger.info(f"Retry not needed | attempt={attempt + 1} | user=%s", user_id)
                     break
                     
                 # Add a small delay before retry

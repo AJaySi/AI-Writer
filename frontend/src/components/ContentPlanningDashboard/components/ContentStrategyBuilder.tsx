@@ -478,7 +478,7 @@ const ContentStrategyBuilder: React.FC = () => {
               onUpdateFormField={updateFormField}
               onValidateFormField={validateFormField}
               onShowTooltip={setShowTooltip}
-              onViewDataSource={() => setShowDataSourceTransparency(true)}
+                                onViewDataSource={() => setShowDataSourceTransparency(true)}
               onConfirmCategoryReview={handleConfirmCategoryReviewWrapper}
               onSetActiveCategory={setActiveCategory}
               onSetShowEducationalInfo={setShowEducationalInfo}

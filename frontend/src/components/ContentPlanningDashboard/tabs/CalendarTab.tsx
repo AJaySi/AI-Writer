@@ -8,7 +8,6 @@ import {
   TextField,
   Card,
   CardContent,
-  CardActions,
   Chip,
   IconButton,
   Dialog,
@@ -42,7 +41,6 @@ import {
   CalendarToday as CalendarIcon,
   Event as EventIcon,
   Refresh as RefreshIcon,
-  AutoAwesome as AIIcon,
   TrendingUp as TrendingIcon,
   ContentCopy as RepurposeIcon,
   Analytics as AnalyticsIcon,
@@ -64,7 +62,6 @@ import {
 } from '@mui/icons-material';
 import { useContentPlanningStore } from '../../../stores/contentPlanningStore';
 import { contentPlanningApi } from '../../../services/contentPlanningApi';
-import CalendarGenerationWizard from '../components/CalendarGenerationWizard';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -100,10 +97,8 @@ const CalendarTab: React.FC = () => {
     updateCalendarEvents,
     // New calendar generation state
     generatedCalendar,
-    contentOptimization,
     performancePrediction,
     contentRepurposing,
-    trendingTopics,
     aiInsights,
     calendarGenerationError,
     dataLoading
@@ -131,7 +126,7 @@ const CalendarTab: React.FC = () => {
     aiAnalysisResults: []
   });
 
-  const [calendarGenerationMode, setCalendarGenerationMode] = useState<'transparency' | 'wizard'>('transparency');
+  const safeCalendarEvents = Array.isArray(calendarEvents) ? calendarEvents : [];
 
   useEffect(() => {
     loadCalendarData();
@@ -214,22 +209,6 @@ const CalendarTab: React.FC = () => {
     await loadCalendarData();
   };
 
-  const handleGenerateAICalendar = async () => {
-    try {
-      // This will now use the comprehensive data from the transparency dashboard
-      const calendarConfig = {
-        userData,
-        calendarType: 'monthly',
-        industry: userData.onboardingData?.industry || 'technology',
-        businessSize: 'sme'
-      };
-      
-      await contentPlanningApi.generateComprehensiveCalendar(calendarConfig);
-    } catch (error) {
-      console.error('Error generating AI calendar:', error);
-    }
-  };
-
   const handleDataUpdate = (updatedData: any) => {
     setUserData((prev: any) => ({ ...prev, ...updatedData }));
   };
@@ -278,9 +257,6 @@ const CalendarTab: React.FC = () => {
     }
   };
 
-  // Ensure calendarEvents is always an array
-  const safeCalendarEvents = Array.isArray(calendarEvents) ? calendarEvents : [];
-
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -321,9 +297,6 @@ const CalendarTab: React.FC = () => {
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
           <Tab label="Calendar Events" icon={<CalendarIcon />} iconPosition="start" />
-          <Tab label="Calendar Wizard" icon={<AIIcon />} iconPosition="start" />
-          <Tab label="Content Optimizer" icon={<AnalyticsIcon />} iconPosition="start" />
-          <Tab label="Trending Topics" icon={<TrendingIcon />} iconPosition="start" />
         </Tabs>
       </Box>
 
@@ -414,102 +387,6 @@ const CalendarTab: React.FC = () => {
             </Grid>
           </Grid>
         )}
-      </TabPanel>
-
-      <TabPanel value={tabValue} index={1}>
-        {/* Calendar Generation Wizard with Data Transparency */}
-        <CalendarGenerationWizard
-          userData={userData}
-          onGenerateCalendar={handleGenerateCalendar}
-          loading={loading}
-        />
-      </TabPanel>
-
-      <TabPanel value={tabValue} index={2}>
-        {/* Content Optimizer Tab */}
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                <AnalyticsIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Content Optimization
-              </Typography>
-              
-              {contentOptimization ? (
-                <Box>
-                  <Typography variant="body1" gutterBottom>
-                    Optimization Recommendations
-                  </Typography>
-                  <List>
-                    {contentOptimization.recommendations?.map((rec: any, index: number) => (
-                          <ListItem key={index}>
-                            <ListItemIcon>
-                          <LightbulbIcon color="primary" />
-                            </ListItemIcon>
-                        <ListItemText 
-                          primary={rec.title}
-                          secondary={rec.description}
-                        />
-                          </ListItem>
-                        ))}
-                      </List>
-                </Box>
-              ) : (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <AnalyticsIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-                  <Typography variant="h6" color="text.secondary" gutterBottom>
-                    No optimization data
-                  </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                    Generate content optimization recommendations
-                      </Typography>
-                </Box>
-              )}
-            </Paper>
-          </Grid>
-        </Grid>
-      </TabPanel>
-
-      <TabPanel value={tabValue} index={3}>
-        {/* Trending Topics Tab */}
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                <TrendingIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Trending Topics
-              </Typography>
-              
-            {trendingTopics ? (
-                <Box>
-                  <Typography variant="body1" gutterBottom>
-                    Current Trending Topics
-                </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {trendingTopics.trending_topics?.map((topic: any, index: number) => (
-                              <Chip
-                        key={index} 
-                        label={topic.name || topic.keyword} 
-                                color="primary"
-                                variant="outlined"
-                      />
-                    ))}
-                            </Box>
-                          </Box>
-              ) : (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                <TrendingIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                    No trending topics
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                    Get trending topics for your industry
-                </Typography>
-                </Box>
-              )}
-              </Paper>
-          </Grid>
-        </Grid>
       </TabPanel>
 
       {/* Event Dialog */}

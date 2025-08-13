@@ -26,6 +26,8 @@ class AutoFillRefreshService:
         - Optionally augments with AI overrides (hook, not persisted)
         - Returns payload in the same shape as AutoFillService.get_autofill, plus meta
         """
+        logger.info(f"AutoFillRefreshService: starting build_fresh_payload | user=%s | use_ai=%s | ai_only=%s", user_id, use_ai, ai_only)
+        
         # Base context from onboarding analysis (used for AI context only when ai_only)
         logger.debug("AutoFillRefreshService: processing onboarding context | user=%s", user_id)
         base_context = await self.autofill.integration.process_onboarding_data(user_id, self.db)
@@ -37,6 +39,33 @@ class AutoFillRefreshService:
             bool((base_context or {}).get('api_keys_data')),
             bool((base_context or {}).get('onboarding_session')),
         )
+        
+        # Log detailed context analysis
+        logger.info(f"AutoFillRefreshService: detailed context analysis | user=%s", user_id)
+        if base_context:
+            website_analysis = base_context.get('website_analysis', {})
+            research_preferences = base_context.get('research_preferences', {})
+            api_keys_data = base_context.get('api_keys_data', {})
+            onboarding_session = base_context.get('onboarding_session', {})
+            
+            logger.info(f"  - Website analysis keys: {list(website_analysis.keys()) if website_analysis else 'None'}")
+            logger.info(f"  - Research preferences keys: {list(research_preferences.keys()) if research_preferences else 'None'}")
+            logger.info(f"  - API keys data keys: {list(api_keys_data.keys()) if api_keys_data else 'None'}")
+            logger.info(f"  - Onboarding session keys: {list(onboarding_session.keys()) if onboarding_session else 'None'}")
+            
+            # Log specific data points
+            if website_analysis:
+                logger.info(f"  - Website URL: {website_analysis.get('website_url', 'Not found')}")
+                logger.info(f"  - Website status: {website_analysis.get('status', 'Unknown')}")
+            if research_preferences:
+                logger.info(f"  - Research depth: {research_preferences.get('research_depth', 'Not found')}")
+                logger.info(f"  - Content types: {research_preferences.get('content_types', 'Not found')}")
+            if api_keys_data:
+                logger.info(f"  - API providers: {api_keys_data.get('providers', [])}")
+                logger.info(f"  - Total keys: {api_keys_data.get('total_keys', 0)}")
+        else:
+            logger.warning(f"AutoFillRefreshService: no base context available | user=%s", user_id)
+        
         try:
             w = (base_context or {}).get('website_analysis') or {}
             r = (base_context or {}).get('research_preferences') or {}
@@ -50,6 +79,16 @@ class AutoFillRefreshService:
                 ai_payload = await self.structured_ai.generate_autofill_fields(user_id, base_context)
                 meta = ai_payload.get('meta') or {}
                 logger.info("AI-only payload meta: ai_used=%s overrides=%s", meta.get('ai_used'), meta.get('ai_overrides_count'))
+                
+                # Log detailed AI payload analysis
+                logger.info(f"AutoFillRefreshService: AI payload analysis | user=%s", user_id)
+                logger.info(f"  - AI used: {meta.get('ai_used', False)}")
+                logger.info(f"  - AI overrides count: {meta.get('ai_overrides_count', 0)}")
+                logger.info(f"  - Success rate: {meta.get('success_rate', 0):.1f}%")
+                logger.info(f"  - Attempts: {meta.get('attempts', 0)}")
+                logger.info(f"  - Missing fields: {len(meta.get('missing_fields', []))}")
+                logger.info(f"  - Fields generated: {len(ai_payload.get('fields', {}))}")
+                
                 return ai_payload
             except Exception as e:
                 logger.error("AI-only structured generation failed | user=%s | err=%s", user_id, repr(e))
@@ -68,6 +107,7 @@ class AutoFillRefreshService:
                 }
 
         # Fallback to previous behavior (DB + sparse overrides)
+        logger.info("AutoFillRefreshService: using fallback behavior (DB + sparse overrides)")
         payload = await self.autofill.get_autofill(user_id)
         logger.info("AutoFillRefreshService: Base payload fields: %d", len(payload.get('fields', {})))
 

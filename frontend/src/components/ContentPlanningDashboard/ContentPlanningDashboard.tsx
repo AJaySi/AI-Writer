@@ -19,13 +19,15 @@ import {
   Analytics as AnalyticsIcon,
   Search as SearchIcon,
   Lightbulb as AIInsightsIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  Add as CreateIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import ContentStrategyTab from './tabs/ContentStrategyTab';
 import CalendarTab from './tabs/CalendarTab';
 import AnalyticsTab from './tabs/AnalyticsTab';
 import GapAnalysisTab from './tabs/GapAnalysisTab';
+import CreateTab from './tabs/CreateTab';
 import AIInsightsPanel from './components/AIInsightsPanel';
 import ServiceStatusPanel from './components/ServiceStatusPanel';
 import ProgressIndicator from './components/ProgressIndicator';
@@ -170,7 +172,8 @@ const ContentPlanningDashboard: React.FC = () => {
     { label: 'CONTENT STRATEGY', icon: <StrategyIcon />, component: <ContentStrategyTab /> },
     { label: 'CALENDAR', icon: <CalendarIcon />, component: <CalendarTab /> },
     { label: 'ANALYTICS', icon: <AnalyticsIcon />, component: <AnalyticsTab /> },
-    { label: 'GAP ANALYSIS', icon: <SearchIcon />, component: <GapAnalysisTab /> }
+    { label: 'GAP ANALYSIS', icon: <SearchIcon />, component: <GapAnalysisTab /> },
+    { label: 'CREATE', icon: <CreateIcon />, component: <CreateTab /> }
   ];
 
   const totalAIItems = (dashboardData.aiInsights?.length || 0) + (dashboardData.aiRecommendations?.length || 0);

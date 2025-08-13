@@ -7,7 +7,20 @@ import google.genai as genai
 from google.genai import types
 
 from dotenv import load_dotenv
-load_dotenv(Path('../../../.env'))
+
+# Fix the environment loading path - load from backend directory
+current_dir = Path(__file__).parent.parent  # services directory
+backend_dir = current_dir.parent  # backend directory
+env_path = backend_dir / '.env'
+
+if env_path.exists():
+    load_dotenv(env_path)
+    print(f"Loaded .env from: {env_path}")
+else:
+    # Fallback to current directory
+    load_dotenv()
+    print(f"No .env found at {env_path}, using current directory")
+
 from loguru import logger
 logger.remove()
 logger.add(sys.stdout,
@@ -31,14 +44,33 @@ import logging
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s-%(levelname)s-%(module)s-%(lineno)d]- %(message)s')
 logger = logging.getLogger(__name__)
 
+def get_gemini_api_key() -> str:
+    """Get Gemini API key with proper error handling."""
+    api_key = os.getenv('GEMINI_API_KEY')
+    if not api_key:
+        error_msg = "GEMINI_API_KEY environment variable is not set. Please set it in your .env file."
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+    
+    # Validate API key format (basic check)
+    if not api_key.startswith('AIza'):
+        error_msg = "GEMINI_API_KEY appears to be invalid. It should start with 'AIza'."
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+    
+    return api_key
+
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
 def gemini_text_response(prompt, temperature, top_p, n, max_tokens, system_prompt):
     """ Common functiont to get response from gemini pro Text. """
     #FIXME: Include : https://github.com/google-gemini/cookbook/blob/main/quickstarts/rest/System_instructions_REST.ipynb
     try:
-        client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+        api_key = get_gemini_api_key()
+        client = genai.Client(api_key=api_key)
+        logger.info("✅ Gemini client initialized successfully")
     except Exception as err:
         logger.error(f"Failed to configure Gemini: {err}")
+        raise
     logger.info(f"Temp: {temperature}, MaxTokens: {max_tokens}, TopP: {top_p}, N: {n}")
     # Set up AI model config
     generation_config = {
@@ -121,20 +153,32 @@ async def test_gemini_api_key(api_key: str) -> tuple[bool, str]:
         tuple[bool, str]: A tuple containing (is_valid, message)
     """
     try:
+        # Validate API key format first
+        if not api_key:
+            return False, "API key is empty"
+        
+        if not api_key.startswith('AIza'):
+            return False, "API key format appears invalid (should start with 'AIza')"
+        
         # Configure Gemini with the provided key
-        genai.configure(api_key=api_key)
+        client = genai.Client(api_key=api_key)
         
         # Try to list models as a simple API test
-        models = genai.list_models()
+        models = client.models.list()
         
         # Check if Gemini Pro is available
-        if any(model.name == "gemini-pro" for model in models):
+        model_names = [model.name for model in models]
+        logger.info(f"Available models: {model_names}")
+        
+        if any("gemini" in model_name.lower() for model_name in model_names):
             return True, "Gemini API key is valid"
         else:
-            return False, "Gemini Pro model not available with this API key"
+            return False, "No Gemini models available with this API key"
         
     except Exception as e:
-        return False, f"Error testing Gemini API key: {str(e)}"
+        error_msg = f"Error testing Gemini API key: {str(e)}"
+        logger.error(error_msg)
+        return False, error_msg
 
 def gemini_pro_text_gen(prompt, temperature=0.7, top_p=0.9, top_k=40, max_tokens=2048):
     """
@@ -151,18 +195,20 @@ def gemini_pro_text_gen(prompt, temperature=0.7, top_p=0.9, top_k=40, max_tokens
         str: The generated text completion
     """
     try:
-        # Configure the model
-        model = genai.GenerativeModel('gemini-pro')
+        # Get API key with proper error handling
+        api_key = get_gemini_api_key()
+        client = genai.Client(api_key=api_key)
         
-        # Generate content
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(
+        # Generate content using the new client
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                max_output_tokens=max_tokens,
                 temperature=temperature,
                 top_p=top_p,
                 top_k=top_k,
-                max_output_tokens=max_tokens,
-            )
+            ),
         )
         
         # Return the generated text
@@ -210,7 +256,10 @@ def gemini_structured_json_response(prompt, schema, temperature=0.7, top_p=0.9, 
     Generate structured JSON response using Google's Gemini Pro model.
     """
     try:
-        client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+        # Get API key with proper error handling
+        api_key = get_gemini_api_key()
+        client = genai.Client(api_key=api_key)
+        logger.info("✅ Gemini client initialized for structured JSON response")
 
         # Build config using official SDK schema type
         try:
@@ -329,6 +378,10 @@ def gemini_structured_json_response(prompt, schema, temperature=0.7, top_p=0.9, 
             logger.error(f"Error parsing structured response: {e}")
             return {"error": f"Failed to parse JSON response: {e}", "raw_response": (response.text or '')}
 
+    except ValueError as e:
+        # API key related errors
+        logger.error(f"API key error in Gemini Pro structured JSON generation: {e}")
+        return {"error": str(e)}
     except Exception as e:
         logger.error(f"Error in Gemini Pro structured JSON generation: {e}")
         return {"error": str(e)}

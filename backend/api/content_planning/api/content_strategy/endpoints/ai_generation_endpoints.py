@@ -332,7 +332,7 @@ async def generate_comprehensive_strategy_polling(
                     "onboarding_data": onboarding_data,
                     "user_id": user_id,
                     "generation_config": config or {}
-                }
+        }
                 
         # Create strategy generation config
         generation_config = StrategyGenerationConfig(

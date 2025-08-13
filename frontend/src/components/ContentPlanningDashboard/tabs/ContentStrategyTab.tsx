@@ -5,12 +5,10 @@ import {
   Paper,
   Typography,
   Button,
-  TextField,
   Card,
   CardContent,
   CardActions,
   Chip,
-  Divider,
   Alert,
   List,
   ListItem,
@@ -39,7 +37,6 @@ import {
   Lightbulb as LightbulbIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
-  Search as SearchIcon,
   Analytics as AnalyticsIcon,
   Timeline as TimelineIcon,
   Assessment as AssessmentIcon,
@@ -48,36 +45,14 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Visibility as VisibilityIcon,
-  BarChart as BarChartIcon,
-  PieChart as PieChartIcon,
   ShowChart as ShowChartIcon,
-  AutoAwesome as AutoAwesomeIcon
+  AutoAwesome as AutoAwesomeIcon,
+  PlayArrow as PlayArrowIcon
 } from '@mui/icons-material';
 import { useContentPlanningStore } from '../../../stores/contentPlanningStore';
 import { contentPlanningApi } from '../../../services/contentPlanningApi';
-import ContentStrategyBuilder from '../components/ContentStrategyBuilder';
 import StrategyIntelligenceTab from '../components/StrategyIntelligenceTab';
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`strategy-tabpanel-${index}`}
-      aria-labelledby={`strategy-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
+import StrategyOnboardingDialog from '../components/StrategyOnboardingDialog';
 
 const ContentStrategyTab: React.FC = () => {
   const { 
@@ -85,7 +60,6 @@ const ContentStrategyTab: React.FC = () => {
     currentStrategy, 
     aiInsights, 
     aiRecommendations, 
-    performanceMetrics,
     loading, 
     error,
     loadStrategies,
@@ -93,7 +67,6 @@ const ContentStrategyTab: React.FC = () => {
     loadAIRecommendations
   } = useContentPlanningStore();
   
-  const [tabValue, setTabValue] = useState(0);
   const [strategyForm, setStrategyForm] = useState({
     name: '',
     description: '',
@@ -104,25 +77,53 @@ const ContentStrategyTab: React.FC = () => {
 
   // Real data states
   const [strategicIntelligence, setStrategicIntelligence] = useState<any>(null);
-  const [keywordResearch, setKeywordResearch] = useState<any>(null);
-  const [contentPillars, setContentPillars] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState({
     strategies: false,
     insights: false,
     recommendations: false,
-    strategicIntelligence: false,
-    keywordResearch: false,
-    pillars: false
+    strategicIntelligence: false
   });
+
+  // Strategy status and onboarding
+  const [strategyStatus, setStrategyStatus] = useState<'active' | 'inactive' | 'none'>('none');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [hasCheckedStrategy, setHasCheckedStrategy] = useState(false);
 
   // Load data on component mount
   useEffect(() => {
     loadInitialData();
   }, []);
 
+  // Check strategy status when strategies are loaded
+  useEffect(() => {
+    if (strategies && strategies.length > 0 && !hasCheckedStrategy) {
+      checkStrategyStatus();
+    } else if ((!strategies || strategies.length === 0) && !hasCheckedStrategy) {
+      setStrategyStatus('none');
+      setHasCheckedStrategy(true);
+      setShowOnboarding(true);
+    }
+  }, [strategies, hasCheckedStrategy]);
+
+  const checkStrategyStatus = () => {
+    if (strategies && strategies.length > 0) {
+      // Find the most recent strategy
+      const latestStrategy = strategies[0]; // Assuming strategies are sorted by date
+      
+      // For now, we'll assume strategies are active if they exist
+      // In a real implementation, you would check a status field from the database
+      setStrategyStatus('active');
+      setShowOnboarding(false);
+    } else {
+      setStrategyStatus('none');
+      setShowOnboarding(true);
+    }
+    setHasCheckedStrategy(true);
+  };
+
   const loadInitialData = async () => {
     try {
-      setDataLoading({ strategies: true, insights: true, recommendations: true, strategicIntelligence: true, keywordResearch: true, pillars: true });
+      setDataLoading({ strategies: true, insights: true, recommendations: true, strategicIntelligence: true });
       
       // Load strategies
       await loadStrategies();
@@ -136,16 +137,10 @@ const ContentStrategyTab: React.FC = () => {
       // Load strategic intelligence
       await loadStrategicIntelligence();
       
-      // Load keyword research
-      await loadKeywordResearch();
-      
-      // Load content pillars
-      await loadContentPillars();
-      
     } catch (error) {
       console.error('Error loading initial data:', error);
     } finally {
-      setDataLoading({ strategies: false, insights: false, recommendations: false, strategicIntelligence: false, keywordResearch: false, pillars: false });
+      setDataLoading({ strategies: false, insights: false, recommendations: false, strategicIntelligence: false });
     }
   };
 
@@ -236,156 +231,6 @@ const ContentStrategyTab: React.FC = () => {
     }
   };
 
-  const loadKeywordResearch = async () => {
-    try {
-      setDataLoading(prev => ({ ...prev, keywordResearch: true }));
-      
-      // Use streaming endpoint for real-time updates
-      const eventSource = await contentPlanningApi.streamKeywordResearch(1);
-      
-      contentPlanningApi.handleSSEData(
-        eventSource,
-        (data) => {
-          console.log('Keyword Research SSE Data:', data);
-          
-          if (data.type === 'status') {
-            // Update loading message
-            console.log('Status:', data.message);
-          } else if (data.type === 'progress') {
-            // Update progress (could be used for progress bar)
-            console.log('Progress:', data.progress, '%');
-          } else if (data.type === 'result' && data.status === 'success') {
-            // Set the keyword research data
-            setKeywordResearch(data.data);
-            setDataLoading(prev => ({ ...prev, keywordResearch: false }));
-          } else if (data.type === 'error') {
-            console.error('Keyword Research Error:', data.message);
-            // Set fallback data on error
-            const keywordData = {
-              trend_analysis: {
-                high_volume_keywords: [
-                  { keyword: 'AI marketing automation', volume: '10K-100K', difficulty: 'Medium' },
-                  { keyword: 'content strategy 2024', volume: '1K-10K', difficulty: 'Low' },
-                  { keyword: 'digital marketing trends', volume: '10K-100K', difficulty: 'High' }
-                ],
-                trending_keywords: [
-                  { keyword: 'AI content generation', growth: '+45%', opportunity: 'High' },
-                  { keyword: 'voice search optimization', growth: '+32%', opportunity: 'Medium' },
-                  { keyword: 'video marketing strategy', growth: '+28%', opportunity: 'High' }
-                ]
-              },
-              intent_analysis: {
-                informational: ['how to', 'what is', 'guide to'],
-                navigational: ['company name', 'brand name', 'website'],
-                transactional: ['buy', 'purchase', 'download', 'sign up']
-              },
-              opportunities: [
-                { keyword: 'AI content tools', search_volume: '5K-10K', competition: 'Low', cpc: '$2.50' },
-                { keyword: 'content marketing ROI', search_volume: '1K-5K', competition: 'Medium', cpc: '$4.20' },
-                { keyword: 'social media strategy', search_volume: '10K-50K', competition: 'High', cpc: '$3.80' }
-              ]
-            };
-            setKeywordResearch(keywordData);
-            setDataLoading(prev => ({ ...prev, keywordResearch: false }));
-          }
-        },
-        (error) => {
-          console.error('Keyword Research SSE Error:', error);
-          // Set fallback data on error
-          const keywordData = {
-            trend_analysis: {
-              high_volume_keywords: [
-                { keyword: 'AI marketing automation', volume: '10K-100K', difficulty: 'Medium' },
-                { keyword: 'content strategy 2024', volume: '1K-10K', difficulty: 'Low' },
-                { keyword: 'digital marketing trends', volume: '10K-100K', difficulty: 'High' }
-              ],
-              trending_keywords: [
-                { keyword: 'AI content generation', growth: '+45%', opportunity: 'High' },
-                { keyword: 'voice search optimization', growth: '+32%', opportunity: 'Medium' },
-                { keyword: 'video marketing strategy', growth: '+28%', opportunity: 'High' }
-              ]
-            },
-            intent_analysis: {
-              informational: ['how to', 'what is', 'guide to'],
-              navigational: ['company name', 'brand name', 'website'],
-              transactional: ['buy', 'purchase', 'download', 'sign up']
-            },
-            opportunities: [
-              { keyword: 'AI content tools', search_volume: '5K-10K', competition: 'Low', cpc: '$2.50' },
-              { keyword: 'content marketing ROI', search_volume: '1K-5K', competition: 'Medium', cpc: '$4.20' },
-              { keyword: 'social media strategy', search_volume: '10K-50K', competition: 'High', cpc: '$3.80' }
-            ]
-          };
-          setKeywordResearch(keywordData);
-          setDataLoading(prev => ({ ...prev, keywordResearch: false }));
-        }
-      );
-      
-    } catch (error) {
-      console.error('Error loading keyword research:', error);
-      // Set fallback data on error
-      const keywordData = {
-        trend_analysis: {
-          high_volume_keywords: [
-            { keyword: 'AI marketing automation', volume: '10K-100K', difficulty: 'Medium' },
-            { keyword: 'content strategy 2024', volume: '1K-10K', difficulty: 'Low' },
-            { keyword: 'digital marketing trends', volume: '10K-100K', difficulty: 'High' }
-          ],
-          trending_keywords: [
-            { keyword: 'AI content generation', growth: '+45%', opportunity: 'High' },
-            { keyword: 'voice search optimization', growth: '+32%', opportunity: 'Medium' },
-            { keyword: 'video marketing strategy', growth: '+28%', opportunity: 'High' }
-          ]
-        },
-        intent_analysis: {
-          informational: ['how to', 'what is', 'guide to'],
-          navigational: ['company name', 'brand name', 'website'],
-          transactional: ['buy', 'purchase', 'download', 'sign up']
-        },
-        opportunities: [
-          { keyword: 'AI content tools', search_volume: '5K-10K', competition: 'Low', cpc: '$2.50' },
-          { keyword: 'content marketing ROI', search_volume: '1K-5K', competition: 'Medium', cpc: '$4.20' },
-          { keyword: 'social media strategy', search_volume: '10K-50K', competition: 'High', cpc: '$3.80' }
-        ]
-      };
-      setKeywordResearch(keywordData);
-      setDataLoading(prev => ({ ...prev, keywordResearch: false }));
-    }
-  };
-
-  const loadContentPillars = async () => {
-    try {
-      setDataLoading(prev => ({ ...prev, pillars: true }));
-      
-      // Get content pillars from current strategy
-      if (currentStrategy && currentStrategy.content_pillars) {
-        const pillars = currentStrategy.content_pillars.map((pillar: any, index: number) => ({
-          name: pillar.name || `Pillar ${index + 1}`,
-          content_count: pillar.content_count || Math.floor(Math.random() * 20) + 5,
-          avg_engagement: pillar.avg_engagement || (Math.random() * 30 + 60).toFixed(1),
-          performance_score: pillar.performance_score || (Math.random() * 20 + 75).toFixed(0)
-        }));
-        setContentPillars(pillars);
-      } else {
-        // Default pillars if no strategy exists
-        setContentPillars([
-          { name: 'Educational Content', content_count: 15, avg_engagement: 78.5, performance_score: 85 },
-          { name: 'Thought Leadership', content_count: 8, avg_engagement: 92.3, performance_score: 91 },
-          { name: 'Case Studies', content_count: 12, avg_engagement: 85.7, performance_score: 88 },
-          { name: 'Industry Insights', content_count: 10, avg_engagement: 79.2, performance_score: 82 }
-        ]);
-      }
-    } catch (error) {
-      console.error('Error loading content pillars:', error);
-    } finally {
-      setDataLoading(prev => ({ ...prev, pillars: false }));
-    }
-  };
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
   const handleStrategyFormChange = (field: string, value: string) => {
     setStrategyForm(prev => ({
       ...prev,
@@ -428,6 +273,38 @@ const ContentStrategyTab: React.FC = () => {
     await loadInitialData();
   };
 
+  // Onboarding dialog handlers
+  const handleConfirmStrategy = async () => {
+    try {
+      if (currentStrategy) {
+        // For now, we'll just close the dialog since we can't update status
+        // In a real implementation, you would update the strategy status in the database
+        setShowOnboarding(false);
+        
+        // Reload strategies to get updated data
+        await loadStrategies();
+      }
+    } catch (error) {
+      console.error('Error activating strategy:', error);
+    }
+  };
+
+  const handleEditStrategy = () => {
+    setShowOnboarding(false);
+    // Navigate to Create tab to edit strategy
+    // This would typically involve changing the active tab in the parent component
+  };
+
+  const handleCreateNewStrategy = () => {
+    setShowOnboarding(false);
+    // Navigate to Create tab to create new strategy
+    // This would typically involve changing the active tab in the parent component
+  };
+
+  const handleCloseOnboarding = () => {
+    setShowOnboarding(false);
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       {error && (
@@ -436,260 +313,72 @@ const ContentStrategyTab: React.FC = () => {
         </Alert>
       )}
 
-      {/* Strategy Builder Tabs */}
+      {/* Strategy Status Banner */}
+      {strategyStatus === 'inactive' && (
+        <Alert 
+          severity="warning" 
+          sx={{ mb: 3 }}
+          action={
+            <Button 
+              color="inherit" 
+              size="small" 
+              onClick={() => setShowOnboarding(true)}
+              startIcon={<PlayArrowIcon />}
+            >
+              Activate Strategy
+            </Button>
+          }
+        >
+          <Typography variant="body1">
+            <strong>Strategy Pending Activation:</strong> Your content strategy is ready but needs to be activated to start your AI-powered content marketing journey.
+          </Typography>
+        </Alert>
+      )}
+
+      {strategyStatus === 'none' && (
+        <Alert 
+          severity="info" 
+          sx={{ mb: 3 }}
+          action={
+            <Button 
+              color="inherit" 
+              size="small" 
+              onClick={() => setShowOnboarding(true)}
+              startIcon={<AutoAwesomeIcon />}
+            >
+              Create Strategy
+            </Button>
+          }
+        >
+          <Typography variant="body1">
+            <strong>No Strategy Found:</strong> Let's create your first AI-powered content strategy to start your digital marketing journey.
+          </Typography>
+        </Alert>
+      )}
+
+      {strategyStatus === 'active' && (
+        <Alert severity="success" sx={{ mb: 3 }}>
+          <Typography variant="body1">
+            <strong>Strategy Active:</strong> Your content strategy is running and ALwrity is managing your content marketing automatically.
+          </Typography>
+        </Alert>
+      )}
+
+      {/* Strategic Intelligence */}
       <Paper sx={{ width: '100%', mb: 3 }}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={tabValue} onChange={handleTabChange} aria-label="strategy builder tabs">
-            <Tab 
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <AutoAwesomeIcon sx={{ mr: 1 }} />
-                  Enhanced Strategy Builder
-                </Box>
-              } 
-            />
-            <Tab label="Strategic Intelligence" icon={<AssessmentIcon />} />
-            <Tab label="Keyword Research" icon={<SearchIcon />} />
-            <Tab label="Performance Analytics" icon={<BarChartIcon />} />
-            <Tab label="Content Pillars" icon={<PieChartIcon />} />
-          </Tabs>
-        </Box>
-
-        {/* Enhanced Strategy Builder Tab */}
-        <TabPanel value={tabValue} index={0}>
-          <ContentStrategyBuilder />
-        </TabPanel>
-
-        {/* Strategic Intelligence Tab */}
-        <TabPanel value={tabValue} index={1}>
-          <StrategyIntelligenceTab />
-        </TabPanel>
-
-        {/* Keyword Research Tab */}
-        <TabPanel value={tabValue} index={2}>
-          {dataLoading.keywordResearch ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-              <CircularProgress />
-            </Box>
-          ) : keywordResearch && keywordResearch.trend_analysis ? (
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      High Volume Keywords
-                    </Typography>
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Keyword</TableCell>
-                            <TableCell>Volume</TableCell>
-                            <TableCell>Difficulty</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {(keywordResearch.trend_analysis.high_volume_keywords || []).map((keyword: any, index: number) => (
-                            <TableRow key={index}>
-                              <TableCell>{keyword.keyword}</TableCell>
-                              <TableCell>{keyword.volume}</TableCell>
-                              <TableCell>
-                                <Chip 
-                                  label={keyword.difficulty} 
-                                  color={keyword.difficulty === 'Low' ? 'success' : keyword.difficulty === 'Medium' ? 'warning' : 'error'}
-                                  size="small"
-                                />
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Trending Keywords
-                    </Typography>
-                    {(keywordResearch.trend_analysis.trending_keywords || []).map((keyword: any, index: number) => (
-                      <Box key={index} sx={{ mb: 2 }}>
-                        <Typography variant="subtitle1">
-                          {keyword.keyword}
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Chip 
-                            label={keyword.growth} 
-                            color="success"
-                            size="small"
-                          />
-                          <Chip 
-                            label={keyword.opportunity} 
-                            color={keyword.opportunity === 'High' ? 'success' : 'primary'}
-                            size="small"
-                          />
-                        </Box>
-                      </Box>
-                    ))}
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Keyword Opportunities
-                    </Typography>
-                    <TableContainer>
-                      <Table>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Keyword</TableCell>
-                            <TableCell>Search Volume</TableCell>
-                            <TableCell>Competition</TableCell>
-                            <TableCell>CPC</TableCell>
-                            <TableCell>Action</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {(keywordResearch.opportunities || []).map((opportunity: any, index: number) => (
-                            <TableRow key={index}>
-                              <TableCell>{opportunity.keyword}</TableCell>
-                              <TableCell>{opportunity.search_volume}</TableCell>
-                              <TableCell>
-                                <Chip 
-                                  label={opportunity.competition} 
-                                  color={opportunity.competition === 'Low' ? 'success' : opportunity.competition === 'Medium' ? 'warning' : 'error'}
-                                  size="small"
-                                />
-                              </TableCell>
-                              <TableCell>${opportunity.cpc}</TableCell>
-                              <TableCell>
-                                <Button size="small" variant="outlined">
-                                  Add to Strategy
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          ) : (
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', p: 3 }}>
-              No keyword research data available
-            </Typography>
-          )}
-        </TabPanel>
-
-        {/* Performance Analytics Tab */}
-        <TabPanel value={tabValue} index={3}>
-          {performanceMetrics ? (
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Content Performance by Type
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      No content performance data available
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Growth Trends
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      No trend data available
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          ) : (
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', p: 3 }}>
-              No performance analytics data available
-            </Typography>
-          )}
-        </TabPanel>
-
-        {/* Content Pillars Tab */}
-        <TabPanel value={tabValue} index={4}>
-          {dataLoading.pillars ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-              <CircularProgress />
-            </Box>
-          ) : contentPillars.length > 0 ? (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Content Pillars Overview
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Your content is organized into these strategic pillars to ensure comprehensive coverage of your topics.
-                </Typography>
-              </Grid>
-
-              {contentPillars.map((pillar, index) => (
-                <Grid item xs={12} md={6} key={index}>
-                  <Card>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
-                        {pillar.name}
-                      </Typography>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Content Count
-                        </Typography>
-                        <Typography variant="h6">
-                          {pillar.content_count}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Avg. Engagement
-                        </Typography>
-                        <Typography variant="h6">
-                          {pillar.avg_engagement}%
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Performance Score
-                        </Typography>
-                        <Typography variant="h6" color="success.main">
-                          {pillar.performance_score}/100
-                        </Typography>
-                      </Box>
-                    </CardContent>
-                    <CardActions>
-                      <Button size="small">View Content</Button>
-                      <Button size="small">Optimize</Button>
-                    </CardActions>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          ) : (
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', p: 3 }}>
-              No content pillars data available
-            </Typography>
-          )}
-        </TabPanel>
+        <StrategyIntelligenceTab />
       </Paper>
+
+      {/* Strategy Onboarding Dialog */}
+      <StrategyOnboardingDialog
+        open={showOnboarding}
+        onClose={handleCloseOnboarding}
+        onConfirmStrategy={handleConfirmStrategy}
+        onEditStrategy={handleEditStrategy}
+        onCreateNewStrategy={handleCreateNewStrategy}
+        currentStrategy={currentStrategy}
+        strategyStatus={strategyStatus}
+      />
     </Box>
   );
 };

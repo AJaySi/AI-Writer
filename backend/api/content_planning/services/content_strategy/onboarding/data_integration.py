@@ -7,6 +7,7 @@ import logging
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
+import traceback
 
 # Import database models
 from models.enhanced_strategy_models import (
@@ -39,6 +40,13 @@ class OnboardingDataIntegrationService:
             api_keys_data = self._get_api_keys_data(user_id, db)
             onboarding_session = self._get_onboarding_session(user_id, db)
 
+            # Log data source status
+            logger.info(f"Data source status for user {user_id}:")
+            logger.info(f"  - Website analysis: {'✅ Found' if website_analysis else '❌ Missing'}")
+            logger.info(f"  - Research preferences: {'✅ Found' if research_preferences else '❌ Missing'}")
+            logger.info(f"  - API keys data: {'✅ Found' if api_keys_data else '❌ Missing'}")
+            logger.info(f"  - Onboarding session: {'✅ Found' if onboarding_session else '❌ Missing'}")
+
             # Process and integrate data
             integrated_data = {
                 'website_analysis': website_analysis,
@@ -49,6 +57,14 @@ class OnboardingDataIntegrationService:
                 'processing_timestamp': datetime.utcnow().isoformat()
             }
 
+            # Log data quality assessment
+            data_quality = integrated_data['data_quality']
+            logger.info(f"Data quality assessment for user {user_id}:")
+            logger.info(f"  - Completeness: {data_quality.get('completeness', 0):.2f}")
+            logger.info(f"  - Freshness: {data_quality.get('freshness', 0):.2f}")
+            logger.info(f"  - Relevance: {data_quality.get('relevance', 0):.2f}")
+            logger.info(f"  - Confidence: {data_quality.get('confidence', 0):.2f}")
+
             # Store integrated data
             await self._store_integrated_data(user_id, integrated_data, db)
 
@@ -57,6 +73,7 @@ class OnboardingDataIntegrationService:
 
         except Exception as e:
             logger.error(f"Error processing onboarding data for user {user_id}: {str(e)}")
+            logger.error("Traceback:\n%s", traceback.format_exc())
             return self._get_fallback_data()
 
     def _get_website_analysis(self, user_id: int, db: Session) -> Dict[str, Any]:
