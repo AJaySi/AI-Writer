@@ -4,6 +4,7 @@
   "description": "Alwrity React Frontend",
   "private": true,
   "dependencies": {
+    "@clerk/clerk-react": "^5.40.0",
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.15.0",
@@ -43,6 +44,7 @@
     ]
   },
   "devDependencies": {
+    "@types/node": "^24.2.1",
     "react-scripts": "5.0.1",
     "typescript": "^4.9.5"
   },
