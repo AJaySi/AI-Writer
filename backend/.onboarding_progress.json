@@ -5,7 +5,7 @@
       "title": "AI LLM Providers",
       "description": "Configure AI language model providers",
       "status": "completed",
-      "completed_at": "2025-07-31T12:17:03.460792",
+      "completed_at": "2025-08-11T22:04:00.811667",
       "data": {},
       "validation_errors": []
     },
@@ -14,7 +14,7 @@
       "title": "Website Analysis",
       "description": "Set up website analysis and crawling",
       "status": "completed",
-      "completed_at": "2025-07-31T12:18:14.821068",
+      "completed_at": "2025-08-11T22:03:59.687538",
       "data": {},
       "validation_errors": []
     },
@@ -23,7 +23,7 @@
       "title": "AI Research",
       "description": "Configure AI research capabilities",
       "status": "completed",
-      "completed_at": "2025-07-31T12:18:22.366937",
+      "completed_at": "2025-08-11T08:35:33.588857",
       "data": {},
       "validation_errors": []
     },
@@ -32,7 +32,7 @@
       "title": "Personalization",
       "description": "Set up personalization features",
       "status": "completed",
-      "completed_at": "2025-07-31T12:18:28.453836",
+      "completed_at": "2025-08-11T08:35:58.077566",
       "data": {},
       "validation_errors": []
     },
@@ -41,7 +41,7 @@
       "title": "Integrations",
       "description": "Configure ALwrity integrations",
       "status": "completed",
-      "completed_at": "2025-07-31T12:18:46.195900",
+      "completed_at": "2025-08-11T08:41:06.977843",
       "data": {},
       "validation_errors": []
     },
@@ -49,15 +49,15 @@
       "step_number": 6,
       "title": "Complete Setup",
       "description": "Finalize and complete onboarding",
-      "status": "completed",
-      "completed_at": "2025-07-31T12:18:48.982697",
-      "data": {},
+      "status": "pending",
+      "completed_at": null,
+      "data": null,
       "validation_errors": []
     }
   ],
-  "current_step": 6,
-  "started_at": "2025-07-30T18:45:53.838059",
-  "last_updated": "2025-07-31T12:18:48.992288",
-  "is_completed": true,
-  "completed_at": "2025-07-31T12:18:48.992276"
+  "current_step": 2,
+  "started_at": "2025-08-10T22:06:16.430393",
+  "last_updated": "2025-08-11T22:04:00.811667",
+  "is_completed": false,
+  "completed_at": null
 }
