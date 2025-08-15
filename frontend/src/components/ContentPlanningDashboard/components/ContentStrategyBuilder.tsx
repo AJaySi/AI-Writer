@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+  import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -59,6 +59,7 @@ import StrategicInputField from './ContentStrategyBuilder/StrategicInputField';
 import EnhancedTooltip from './ContentStrategyBuilder/EnhancedTooltip';
 import AIRecommendationsPanel from './AIRecommendationsPanel';
 import DataSourceTransparency from './DataSourceTransparency';
+import StrategyAutofillTransparencyModal from './StrategyAutofillTransparencyModal';
 
 // Import extracted hooks
 import { useCategoryReview } from './ContentStrategyBuilder/hooks/useCategoryReview';
@@ -97,6 +98,20 @@ const ContentStrategyBuilder: React.FC = () => {
     disclosureSteps,
     currentStrategy,
     updateFormField,
+    // Transparency state
+    transparencyModalOpen,
+    generationProgress: storeGenerationProgress,
+    currentPhase,
+    educationalContent: storeEducationalContent,
+    transparencyMessages,
+    isGenerating,
+    setTransparencyModalOpen,
+    setGenerationProgress: setStoreGenerationProgress,
+    setCurrentPhase,
+    setEducationalContent: setStoreEducationalContent,
+    addTransparencyMessage,
+    clearTransparencyMessages,
+    setIsGenerating,
     validateFormField,
     validateAllFields,
     completeStep,
@@ -127,8 +142,8 @@ const ContentStrategyBuilder: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [showEducationalModal, setShowEducationalModal] = useState(false);
-  const [educationalContent, setEducationalContent] = useState<any>(null);
-  const [generationProgress, setGenerationProgress] = useState<number>(0);
+  const [localEducationalContent, setLocalEducationalContent] = useState<any>(null);
+  const [localGenerationProgress, setLocalGenerationProgress] = useState<number>(0);
   const [showAIRecModal, setShowAIRecModal] = useState(false);
 
   // Ref to track if we've already set the default category
@@ -171,8 +186,8 @@ const ContentStrategyBuilder: React.FC = () => {
     setError,
     setCurrentStrategy,
     setSaving,
-    setGenerationProgress,
-    setEducationalContent,
+    setGenerationProgress: setStoreGenerationProgress,
+    setEducationalContent: setStoreEducationalContent,
     setShowEducationalModal,
     validateAllFields,
     getCompletionStats,
@@ -210,6 +225,21 @@ const ContentStrategyBuilder: React.FC = () => {
     console.log('🔄 activeCategory changed to:', activeCategory);
     console.trace('📍 Stack trace for activeCategory change');
   }, [activeCategory]);
+
+  // Monitor modal state for debugging
+  useEffect(() => {
+    console.log('🎯 Modal state changed - transparencyModalOpen:', transparencyModalOpen);
+  }, [transparencyModalOpen]);
+
+  // Monitor store data changes for debugging
+  useEffect(() => {
+    console.log('🎯 Store data changed:', {
+      autoPopulatedFieldsCount: Object.keys(autoPopulatedFields || {}).length,
+      dataSourcesCount: Object.keys(dataSources || {}).length,
+      inputDataPointsCount: Object.keys(inputDataPoints || {}).length,
+      transparencyMessagesCount: transparencyMessages?.length || 0
+    });
+  }, [autoPopulatedFields, dataSources, inputDataPoints, transparencyMessages]);
 
   // Add CSS keyframes for pulse animation
   useEffect(() => {
@@ -287,116 +317,207 @@ const ContentStrategyBuilder: React.FC = () => {
               onRefreshData={() => autoPopulateFromOnboarding()}
               onRefreshAI={async () => {
                 try {
+                  // 🚀 POLLING-BASED AI REFRESH (No SSE)
+                  // We switched from SSE to polling for better reliability
+                  // This approach uses direct HTTP calls with visual feedback
+                  
+                  // Open transparency modal and initialize transparency state
+                  console.log('🎯 Opening transparency modal...');
+                  setTransparencyModalOpen(true);
+                  setIsGenerating(true);
+                  setStoreGenerationProgress(0);
+                  setCurrentPhase('autofill_initialization');
+                  clearTransparencyMessages();
+                  addTransparencyMessage('Starting strategy inputs generation process...');
+                  console.log('🎯 Modal state set, transparency initialized');
+                  
                   setAIGenerating(true);
                   setIsRefreshing(true);
                   setRefreshError(null);
-                  setRefreshMessage('Initializing refresh…');
+                  setRefreshMessage('Initializing AI refresh…');
                   setRefreshProgress(5);
-                  const es = await contentPlanningApi.streamAutofillRefresh(1, true, true);
-                  es.onmessage = (evt: MessageEvent) => {
-                    try {
-                      const data = JSON.parse(evt.data);
-                      if (data.type === 'status' || data.type === 'progress') {
-                        setRefreshMessage(data.message || 'Refreshing…');
-                        if (typeof data.progress === 'number') setRefreshProgress(data.progress);
-                      }
-                      if (data.type === 'result') {
-                        const payload = data.data || {};
-                        const fields = payload.fields || {};
-                        const sources = payload.sources || {};
-                        const inputDataPoints = payload.input_data_points || {};
-                        const meta = payload.meta || {};
-                        
-                        console.log('🎯 AI Refresh Result - Payload:', payload);
-                        console.log('🎯 AI Refresh Result - Fields:', fields);
-                        console.log('🎯 AI Refresh Result - Meta:', meta);
-                        
-                        const fieldValues: Record<string, any> = {};
-                        Object.keys(fields).forEach((fieldId) => {
-                          const fieldData = fields[fieldId];
-                          if (fieldData && typeof fieldData === 'object' && 'value' in fieldData) {
-                            fieldValues[fieldId] = fieldData.value;
-                            console.log(`✅ Processed field ${fieldId}:`, fieldData.value);
-                          } else {
-                            console.log(`❌ Skipped field ${fieldId}:`, fieldData);
-                          }
-                        });
-                        
-                        console.log('🎯 Final fieldValues:', fieldValues);
-                        
-                        useEnhancedStrategyStore.setState((state) => {
-                          const newState = {
-                            autoPopulatedFields: { ...state.autoPopulatedFields, ...fieldValues },
-                            dataSources: { ...state.dataSources, ...sources },
-                            inputDataPoints,
-                            formData: { ...state.formData, ...fieldValues }
-                          };
-                          console.log('🎯 Updated store state:', newState);
-                          return newState;
-                        });
-                        
-                        // Enhanced success/error messaging based on retry attempts and success rate
-                        const attempts = meta.attempts || 1;
-                        const successRate = meta.success_rate || 0;
-                        const aiOverridesCount = meta.ai_overrides_count || 0;
-                        
-                        if (!meta.ai_used || aiOverridesCount === 0) {
-                          const msg = meta.error || 'AI did not produce new values. Please try again or complete onboarding data.';
-                          setError(msg);
-                          setRefreshError(msg);
-                          setRefreshMessage(`No new AI values available. (${attempts} attempt${attempts > 1 ? 's' : ''})`);
-                        } else {
-                          // Show success message with retry info if applicable
-                          if (attempts > 1) {
-                            setRefreshMessage(`AI refresh completed successfully! Generated ${aiOverridesCount} fields in ${attempts} attempts (${successRate.toFixed(1)}% success rate).`);
-                          } else {
-                            setRefreshMessage(`AI refresh completed! Generated ${aiOverridesCount} fields (${successRate.toFixed(1)}% success rate).`);
-                          }
-                          
-                          // Show warning if success rate is low but we got some data
-                          if (successRate < 70 && aiOverridesCount > 0) {
-                            setRefreshError(`Warning: Only ${successRate.toFixed(1)}% of fields were filled. Some fields may need manual input.`);
-                          }
-                        }
-                        
-                        es.close();
-                        setAIGenerating(false);
-                        setIsRefreshing(false);
-                        
-                        // Clear success message after a delay
-                        if (aiOverridesCount > 0) {
-                          setTimeout(() => {
-                            setRefreshMessage(null);
-                            setRefreshProgress(0);
-                          }, 5000);
-                        }
-                      }
-                      if (data.type === 'error') {
-                        const msg = data.message || 'AI refresh failed.';
-                        setRefreshError(msg);
-                        es.close();
-                        setAIGenerating(false);
-                        setIsRefreshing(false);
-                        setRefreshMessage('Refresh failed.');
-                      }
-                    } catch (err: any) {
-                      console.error('SSE parse error:', err);
+
+                  // Start transparency message polling for visual feedback
+                  const transparencyMessages = [
+                    { type: 'autofill_initialization', message: 'Starting strategy inputs generation process...', progress: 5 },
+                    { type: 'autofill_data_collection', message: 'Collecting and analyzing data sources...', progress: 15 },
+                    { type: 'autofill_data_quality', message: 'Assessing data quality and completeness...', progress: 25 },
+                    { type: 'autofill_context_analysis', message: 'Analyzing business context and strategic framework...', progress: 35 },
+                    { type: 'autofill_strategy_generation', message: 'Generating strategic insights and recommendations...', progress: 45 },
+                    { type: 'autofill_field_generation', message: 'Generating individual strategy input fields...', progress: 55 },
+                    { type: 'autofill_quality_validation', message: 'Validating generated strategy inputs...', progress: 65 },
+                    { type: 'autofill_alignment_check', message: 'Checking strategy alignment and consistency...', progress: 75 },
+                    { type: 'autofill_final_review', message: 'Performing final review and optimization...', progress: 85 },
+                    { type: 'autofill_complete', message: 'Strategy inputs generation completed successfully...', progress: 95 }
+                  ];
+                  
+                  let messageIndex = 0;
+                  const transparencyInterval = setInterval(() => {
+                    if (messageIndex < transparencyMessages.length) {
+                      const message = transparencyMessages[messageIndex];
+                      console.log('🎯 Raw Polling Message:', {
+                        type: message.type,
+                        message: message.message,
+                        progress: message.progress,
+                        timestamp: new Date().toISOString()
+                      });
+                      setCurrentPhase(message.type);
+                      addTransparencyMessage(message.message);
+                      setStoreGenerationProgress(message.progress);
+                      setRefreshProgress(message.progress);
+                      messageIndex++;
+                    } else {
+                      clearInterval(transparencyInterval);
                     }
-                  };
-                  es.onerror = (err: any) => {
-                    console.error('SSE connection error:', err);
-                    es.close();
-                    setAIGenerating(false);
-                    setIsRefreshing(false);
-                    setRefreshError('AI refresh connection lost. Please try again.');
-                    setRefreshMessage('Connection lost.');
-                  };
+                  }, 2000); // Send a message every 2 seconds for better UX
+
+                  // Call the non-streaming refresh endpoint (Polling-based approach)
+                  console.log('🎯 Calling AI refresh endpoint (Polling-based)...');
+                  const response = await contentPlanningApi.refreshAutofill(1, true, true);
+                  console.log('🎯 Raw Polling Response:', {
+                    success: !!response,
+                    hasData: !!response?.data,
+                    responseStructure: {
+                      hasDataProperty: !!response?.data?.data,
+                      hasFieldsDirect: !!response?.data?.fields,
+                      hasFieldsInData: !!response?.data?.data?.fields
+                    },
+                    fieldsCount: Object.keys(response?.data?.data?.fields || response?.data?.fields || {}).length,
+                    sourcesCount: Object.keys(response?.data?.data?.sources || response?.data?.sources || {}).length,
+                    meta: response?.data?.data?.meta || response?.data?.meta || {},
+                    timestamp: new Date().toISOString()
+                  });
+
+                  // Clear the transparency interval since we got the response
+                  clearInterval(transparencyInterval);
+
+                  // Process the response
+                  if (response && response.data) {
+                    // The API response is wrapped in ResponseBuilder format:
+                    // { status: "success", message: "...", data: { fields: {...}, sources: {...}, meta: {...} } }
+                    // So we need to access payload.data.fields, not payload.fields
+                    const payload = response.data;
+                    const fields = payload.data?.fields || payload.fields || {};
+                    const sources = payload.data?.sources || payload.sources || {};
+                    const inputDataPoints = payload.data?.input_data_points || payload.input_data_points || {};
+                    const meta = payload.data?.meta || payload.meta || {};
+                    
+                    console.log('🎯 AI Refresh Result - Payload:', payload);
+                    console.log('🎯 AI Refresh Result - Fields:', fields);
+                    console.log('🎯 AI Refresh Result - Meta:', meta);
+                    console.log('🎯 Fields structure check:', {
+                      fieldsType: typeof fields,
+                      fieldsKeys: Object.keys(fields),
+                      sampleField: fields[Object.keys(fields)[0]],
+                      hasValueProperty: fields[Object.keys(fields)[0]]?.hasOwnProperty('value')
+                    });
+                    
+                    // 🚨 CRITICAL: Check if AI generation failed
+                    if (meta.error || !meta.ai_used || meta.ai_overrides_count === 0) {
+                      console.error('❌ AI generation failed:', meta.error || 'No AI data generated');
+                      setError(`AI generation failed: ${meta.error || 'No real AI data was generated. Please try again.'}`);
+                      setTransparencyModalOpen(false);
+                      setAIGenerating(false);
+                      setIsRefreshing(false);
+                      setIsGenerating(false);
+                      setRefreshError('AI generation failed. Please try again.');
+                      setRefreshMessage('Refresh failed.');
+                      return;
+                    }
+                    
+                    // 🚨 CRITICAL: Validate data source
+                    if (meta.data_source === 'ai_generation_failed' || meta.data_source === 'ai_generation_error' || meta.data_source === 'ai_disabled') {
+                      console.error('❌ Invalid data source:', meta.data_source);
+                      setError(`AI generation failed: ${meta.error || 'Invalid data source. Please try again.'}`);
+                      setTransparencyModalOpen(false);
+                      setAIGenerating(false);
+                      setIsRefreshing(false);
+                      setIsGenerating(false);
+                      setRefreshError('AI generation failed. Please try again.');
+                      setRefreshMessage('Refresh failed.');
+                      return;
+                    }
+                    
+                    console.log('✅ AI generation successful - processing real AI data');
+                    
+                    const fieldValues: Record<string, any> = {};
+                    const confidenceScores: Record<string, number> = {};
+                    
+                    Object.keys(fields).forEach((fieldId) => {
+                      const fieldData = fields[fieldId];
+                      console.log(`🎯 Processing field ${fieldId}:`, fieldData);
+                      
+                      if (fieldData && typeof fieldData === 'object' && 'value' in fieldData) {
+                        fieldValues[fieldId] = fieldData.value;
+                        console.log(`✅ Field ${fieldId} value extracted:`, fieldData.value);
+                        
+                        // Extract confidence score if available
+                        if (fieldData.confidence) {
+                          confidenceScores[fieldId] = fieldData.confidence;
+                          console.log(`🎯 Field ${fieldId} confidence: ${fieldData.confidence}`);
+                        }
+                        
+                        // Extract personalization data if available
+                        if (fieldData.personalization_data) {
+                          console.log(`🎯 Field ${fieldId} personalization:`, fieldData.personalization_data);
+                        }
+                      } else {
+                        console.warn(`⚠️ Field ${fieldId} has invalid structure:`, fieldData);
+                      }
+                    });
+                    
+                    console.log('🎯 Processed field values:', Object.keys(fieldValues));
+                    console.log('🎯 Confidence scores:', confidenceScores);
+                    console.log('🎯 Field values details:', fieldValues);
+                    
+                    // Update the store with the new data
+                    useEnhancedStrategyStore.setState((state) => {
+                      const newState = {
+                        autoPopulatedFields: { ...state.autoPopulatedFields, ...fieldValues },
+                        dataSources: { ...state.dataSources, ...sources },
+                        inputDataPoints: { ...state.inputDataPoints, ...inputDataPoints },
+                        confidenceScores: { ...state.confidenceScores, ...confidenceScores },
+                        formData: { ...state.formData, ...fieldValues }
+                      };
+                      console.log('🎯 Updated store state:', newState);
+                      console.log('🎯 Field values being added:', fieldValues);
+                      console.log('🎯 Confidence scores being added:', confidenceScores);
+                      console.log('🎯 Store autoPopulatedFields count:', Object.keys(newState.autoPopulatedFields).length);
+                      return newState;
+                    });
+                    
+                    // Add final completion message
+                    addTransparencyMessage(`✅ AI generation completed successfully! Generated ${Object.keys(fieldValues).length} real AI values.`);
+                    setStoreGenerationProgress(100);
+                    setRefreshProgress(100);
+                    setCurrentPhase('Complete');
+                    setRefreshMessage(`AI refresh completed! Generated ${Object.keys(fieldValues).length} fields.`);
+                    
+                    // Close modal after a short delay to show completion
+                    setTimeout(() => {
+                      setTransparencyModalOpen(false);
+                      setAIGenerating(false);
+                      setIsRefreshing(false);
+                      setIsGenerating(false);
+                      console.log('🎯 Polling-based AI refresh completed successfully!', {
+                        fieldsGenerated: Object.keys(fieldValues).length,
+                        confidenceScoresCount: Object.keys(confidenceScores).length,
+                        dataSourcesCount: Object.keys(sources).length,
+                        approach: 'Polling (No SSE)',
+                        timestamp: new Date().toISOString()
+                      });
+                    }, 2000);
+                  } else {
+                    throw new Error('Invalid response from AI refresh endpoint');
+                  }
                 } catch (e) {
                   console.error('AI refresh error', e);
                   setAIGenerating(false);
                   setIsRefreshing(false);
+                  setIsGenerating(false);
                   setRefreshError('AI refresh failed. Please try again.');
                   setRefreshMessage('Refresh failed.');
+                  setError(`AI refresh failed: ${e instanceof Error ? e.message : 'Unknown error'}`);
                 }
               }}
               refreshMessage={refreshMessage}
@@ -469,6 +590,7 @@ const ContentStrategyBuilder: React.FC = () => {
               formErrors={formErrors}
               autoPopulatedFields={autoPopulatedFields}
               dataSources={dataSources}
+              inputDataPoints={inputDataPoints}
               personalizationData={personalizationData}
               completionStats={completionStats}
               reviewedCategories={reviewedCategories}
@@ -478,7 +600,17 @@ const ContentStrategyBuilder: React.FC = () => {
               onUpdateFormField={updateFormField}
               onValidateFormField={validateFormField}
               onShowTooltip={setShowTooltip}
-                                onViewDataSource={() => setShowDataSourceTransparency(true)}
+              onViewDataSource={(fieldId) => {
+                // If a specific field is provided, show field-specific data source info
+                if (fieldId) {
+                  console.log('🎯 Viewing data source for field:', fieldId);
+                  // For now, just open the general data source transparency modal
+                  // In the future, this could open a field-specific modal
+                  setShowDataSourceTransparency(true);
+                } else {
+                  setShowDataSourceTransparency(true);
+                }
+              }}
               onConfirmCategoryReview={handleConfirmCategoryReviewWrapper}
               onSetActiveCategory={setActiveCategory}
               onSetShowEducationalInfo={setShowEducationalInfo}
@@ -524,8 +656,8 @@ const ContentStrategyBuilder: React.FC = () => {
       <EducationalModal
         open={showEducationalModal}
         onClose={() => setShowEducationalModal(false)}
-        educationalContent={educationalContent}
-        generationProgress={generationProgress}
+                educationalContent={storeEducationalContent}      
+        generationProgress={storeGenerationProgress}
       />
 
       {/* Data Source Transparency Modal */}
@@ -554,6 +686,21 @@ const ContentStrategyBuilder: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Strategy Autofill Transparency Modal */}
+      <StrategyAutofillTransparencyModal
+        open={transparencyModalOpen}
+        onClose={() => setTransparencyModalOpen(false)}
+        autoPopulatedFields={autoPopulatedFields}
+        dataSources={dataSources}
+        inputDataPoints={inputDataPoints}
+        isGenerating={isGenerating}
+        generationProgress={storeGenerationProgress}
+        currentPhase={currentPhase}
+        educationalContent={storeEducationalContent}
+        transparencyMessages={transparencyMessages}
+        error={error}
+      />
 
       {/* Tooltip */}
       {showTooltip && (

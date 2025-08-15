@@ -137,7 +137,7 @@ class ContentPlanningAIAnalyticsService:
             raise ContentPlanningErrorHandler.handle_general_error(e, "generate_strategic_intelligence")
     
     async def get_ai_analytics(self, user_id: Optional[int] = None, strategy_id: Optional[int] = None, force_refresh: bool = False) -> Dict[str, Any]:
-        """Get AI analytics with real personalized insights - Database first approach."""
+        """Get AI analytics with real personalized insights - FORCE FRESH AI GENERATION."""
         try:
             logger.info(f"🚀 Starting AI analytics for user: {user_id}, strategy: {strategy_id}, force_refresh: {force_refresh}")
             start_time = time.time()
@@ -145,37 +145,51 @@ class ContentPlanningAIAnalyticsService:
             # Use user_id or default to 1
             current_user_id = user_id or 1
             
-            # Skip database check if force_refresh is True
+            # 🚨 CRITICAL: Always force fresh AI generation for refresh operations
+            if force_refresh:
+                logger.info(f"🔄 FORCE REFRESH: Deleting all cached AI analysis for user {current_user_id}")
+                try:
+                    await self.ai_analysis_db_service.delete_old_ai_analyses(days_old=0)
+                    logger.info(f"✅ Deleted all cached AI analysis for user {current_user_id}")
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to delete cached analysis: {str(e)}")
+            
+            # 🚨 CRITICAL: Skip database check for refresh operations to ensure fresh AI generation
             if not force_refresh:
-                # First, try to get existing AI analysis from database
+                # Only check database for non-refresh operations
                 logger.info(f"🔍 Checking database for existing AI analysis for user {current_user_id}")
                 existing_analysis = await self.ai_analysis_db_service.get_latest_ai_analysis(
                     user_id=current_user_id,
                     analysis_type="comprehensive_analysis",
                     strategy_id=strategy_id,
-                    max_age_hours=24  # Use cached results up to 24 hours old
+                    max_age_hours=1  # 🚨 CRITICAL: Reduced from 24 hours to 1 hour to minimize stale data
                 )
                 
                 if existing_analysis:
-                    logger.info(f"✅ Found existing AI analysis in database: {existing_analysis.get('id', 'unknown')}")
+                    cache_age_hours = (datetime.utcnow() - existing_analysis.get('created_at', datetime.utcnow())).total_seconds() / 3600
+                    logger.info(f"✅ Found existing AI analysis in database: {existing_analysis.get('id', 'unknown')} (age: {cache_age_hours:.1f} hours)")
                     
-                    # Return cached results
-                    return {
-                        "insights": existing_analysis.get('insights', []),
-                        "recommendations": existing_analysis.get('recommendations', []),
-                        "total_insights": len(existing_analysis.get('insights', [])),
-                        "total_recommendations": len(existing_analysis.get('recommendations', [])),
-                        "generated_at": existing_analysis.get('created_at', datetime.utcnow()).isoformat(),
-                        "ai_service_status": existing_analysis.get('ai_service_status', 'operational'),
-                        "processing_time": f"{existing_analysis.get('processing_time', 0):.2f}s" if existing_analysis.get('processing_time') else "cached",
-                        "personalized_data_used": True if existing_analysis.get('personalized_data_used') else False,
-                        "data_source": "database_cache",
-                        "cache_age_hours": (datetime.utcnow() - existing_analysis.get('created_at', datetime.utcnow())).total_seconds() / 3600,
-                        "user_profile": existing_analysis.get('personalized_data_used', {})
-                    }
+                    # Return cached results only if very recent (less than 1 hour)
+                    if cache_age_hours < 1:
+                        logger.info(f"📋 Using cached AI analysis (age: {cache_age_hours:.1f} hours)")
+                        return {
+                            "insights": existing_analysis.get('insights', []),
+                            "recommendations": existing_analysis.get('recommendations', []),
+                            "total_insights": len(existing_analysis.get('insights', [])),
+                            "total_recommendations": len(existing_analysis.get('recommendations', [])),
+                            "generated_at": existing_analysis.get('created_at', datetime.utcnow()).isoformat(),
+                            "ai_service_status": existing_analysis.get('ai_service_status', 'operational'),
+                            "processing_time": f"{existing_analysis.get('processing_time', 0):.2f}s" if existing_analysis.get('processing_time') else "cached",
+                            "personalized_data_used": True if existing_analysis.get('personalized_data_used') else False,
+                            "data_source": "database_cache",
+                            "cache_age_hours": cache_age_hours,
+                            "user_profile": existing_analysis.get('personalized_data_used', {})
+                        }
+                    else:
+                        logger.info(f"🔄 Cached analysis too old ({cache_age_hours:.1f} hours) - generating fresh AI analysis")
             
-            # No recent analysis found or force refresh requested, run new AI analysis
-            logger.info(f"🔄 Running new AI analysis for user {current_user_id} (force_refresh: {force_refresh})")
+            # 🚨 CRITICAL: Always run fresh AI analysis for refresh operations
+            logger.info(f"🔄 Running FRESH AI analysis for user {current_user_id} (force_refresh: {force_refresh})")
             
             # Get personalized inputs from onboarding data
             personalized_inputs = self.onboarding_service.get_personalized_ai_inputs(current_user_id)

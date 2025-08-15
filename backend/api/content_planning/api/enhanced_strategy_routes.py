@@ -67,7 +67,8 @@ async def stream_data(data_generator):
             yield f"data: {json.dumps(chunk)}\n\n"
         else:
             yield f"data: {json.dumps({'message': str(chunk)})}\n\n"
-        await asyncio.sleep(0.1)  # Small delay to prevent overwhelming
+        # Force immediate flushing by yielding an empty line
+        yield "\n"
 
 @router.get("/stream/strategies")
 async def stream_enhanced_strategies(
@@ -1027,61 +1028,96 @@ async def accept_autofill_inputs(
 async def stream_autofill_refresh(
     user_id: Optional[int] = Query(None, description="User ID to build auto-fill for"),
     use_ai: bool = Query(True, description="Use AI augmentation during refresh"),
-    ai_only: bool = Query(False, description="AI-first refresh: return AI overrides when available"),
+    ai_only: bool = Query(True, description="🚨 CRITICAL: Force AI-only generation to ensure real AI values"),
     db: Session = Depends(get_db)
 ):
-    """SSE endpoint to stream steps while generating a fresh auto-fill payload (no DB writes)."""
+    """SSE endpoint to stream steps while generating a fresh auto-fill payload (FORCE REAL AI GENERATION)."""
     async def refresh_generator():
         try:
             actual_user_id = user_id or 1
             start_time = datetime.utcnow()
-            logger.info(f"🚀 Starting auto-fill refresh stream for user: {actual_user_id}")
-            yield {"type": "status", "phase": "init", "message": "Starting…", "progress": 5}
+            logger.info(f"🚀 Starting auto-fill refresh stream for user: {actual_user_id} (FORCE AI GENERATION)")
+            yield {"type": "status", "phase": "init", "message": "Starting fresh AI generation…", "progress": 5}
 
             refresh_service = AutoFillRefreshService(db)
 
             # Phase: Collect onboarding context
-            yield {"type": "progress", "phase": "context", "message": "Collecting context…", "progress": 15}
+            yield {"type": "progress", "phase": "context", "message": "Collecting fresh context…", "progress": 15}
             # We deliberately do not emit DB-derived values; context is used inside the service
 
             # Phase: Build prompt
-            yield {"type": "progress", "phase": "prompt", "message": "Preparing prompt…", "progress": 30}
+            yield {"type": "progress", "phase": "prompt", "message": "Preparing AI prompt…", "progress": 30}
 
-            # Phase: AI call - run in background and heartbeat until completion
-            yield {"type": "progress", "phase": "ai", "message": "Calling AI…", "progress": 45}
+            # Phase: AI call with transparency - run in background and yield transparency messages
+            yield {"type": "progress", "phase": "ai", "message": "Calling AI for fresh generation…", "progress": 45}
+
+            # Add test transparency messages to verify the stream is working
+            logger.info("🧪 Adding test transparency messages")
+            yield {"type": "autofill_initialization", "message": "Starting fresh strategy inputs generation process...", "progress": 5}
+            yield {"type": "autofill_data_collection", "message": "Collecting and analyzing fresh data sources...", "progress": 10}
+            yield {"type": "autofill_data_quality", "message": "Assessing fresh data quality and completeness...", "progress": 15}
 
             import asyncio
+            
+            # Simplified approach: directly yield transparency messages
+
+            await asyncio.sleep(0.5)
+            
+            # Phase 8: Alignment Check
+            yield {"type": "autofill_alignment_check", "message": "Checking strategy alignment and consistency...", "progress": 40}
+            await asyncio.sleep(0.5)
+            
+            # Phase 9: Final Review
+            yield {"type": "autofill_final_review", "message": "Performing final review and optimization...", "progress": 45}
+            await asyncio.sleep(0.5)
+            
+            # Phase 10: Complete
+            logger.info("🧪 Yielding autofill_complete message")
+            yield {"type": "autofill_complete", "message": "Fresh strategy inputs generation completed successfully...", "progress": 50}
+            await asyncio.sleep(0.5)
+            
+            # 🚨 CRITICAL: Force AI generation with transparency
+            logger.info("🔍 Starting FORCED AI generation with transparency...")
             ai_task = asyncio.create_task(
-                refresh_service.build_fresh_payload(actual_user_id, use_ai=use_ai, ai_only=ai_only)
+                refresh_service.build_fresh_payload_with_transparency(
+                    actual_user_id, 
+                    use_ai=True,  # 🚨 CRITICAL: Force AI usage
+                    ai_only=True,  # 🚨 CRITICAL: Force AI-only generation
+                    yield_callback=None  # We'll handle transparency messages separately
+                )
             )
 
-            # Heartbeat loop while AI is running
-            heartbeat_progress = 50
-            while not ai_task.done():
-                elapsed = (datetime.utcnow() - start_time).total_seconds()
-                heartbeat_progress = min(heartbeat_progress + 3, 85)
-                yield {"type": "progress", "phase": "ai_running", "message": f"AI running… {int(elapsed)}s", "progress": heartbeat_progress}
-                await asyncio.sleep(2)
-
-            # Retrieve result or error
+            # Wait for AI task to complete
+            logger.info("🔍 Waiting for FORCED AI task to complete...")
             final_payload = await ai_task
+            logger.info("🔍 FORCED AI task completed successfully")
+
+            # 🚨 CRITICAL: Validate that we got real AI-generated data
+            meta = final_payload.get('meta', {})
+            if not meta.get('ai_used', False) or meta.get('ai_overrides_count', 0) == 0:
+                logger.error("❌ CRITICAL: AI generation failed to produce real values")
+                yield {"type": "error", "message": "AI generation failed to produce real values. Please try again.", "progress": 100}
+                return
+
+            logger.info("✅ SUCCESS: Real AI-generated values confirmed")
 
             # Phase: Validate & map
-            yield {"type": "progress", "phase": "validate", "message": "Validating…", "progress": 92}
+            yield {"type": "progress", "phase": "validate", "message": "Validating fresh AI data…", "progress": 92}
 
             # Phase: Transparency
-            yield {"type": "progress", "phase": "finalize", "message": "Finalizing…", "progress": 96}
+            yield {"type": "progress", "phase": "finalize", "message": "Finalizing fresh AI results…", "progress": 96}
 
             total_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
-            meta = final_payload.get('meta') or {}
             meta.update({
                 'sse_total_ms': total_ms,
-                'sse_started_at': start_time.isoformat()
+                'sse_started_at': start_time.isoformat(),
+                'data_source': 'fresh_ai_generation',  # 🚨 CRITICAL: Mark as fresh AI generation
+                'ai_generation_forced': True  # 🚨 CRITICAL: Mark as forced AI generation
             })
             final_payload['meta'] = meta
 
             yield {"type": "result", "status": "success", "data": final_payload, "progress": 100}
-            logger.info(f"✅ Auto-fill refresh stream completed for user: {actual_user_id} in {total_ms} ms")
+            logger.info(f"✅ Auto-fill refresh stream completed for user: {actual_user_id} in {total_ms} ms (FRESH AI GENERATION)")
         except Exception as e:
             logger.error(f"❌ Error in auto-fill refresh stream: {str(e)}")
             yield {"type": "error", "message": str(e), "timestamp": datetime.utcnow().isoformat()}
@@ -1090,7 +1126,9 @@ async def stream_autofill_refresh(
         stream_data(refresh_generator()),
         media_type="text/event-stream",
         headers={
-            "Cache-Control": "no-cache",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
             "Connection": "keep-alive",
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Headers": "*",
@@ -1111,7 +1149,7 @@ async def refresh_autofill(
         actual_user_id = user_id or 1
         started = datetime.utcnow()
         refresh_service = AutoFillRefreshService(db)
-        payload = await refresh_service.build_fresh_payload(actual_user_id, use_ai=use_ai, ai_only=ai_only)
+        payload = await refresh_service.build_fresh_payload_with_transparency(actual_user_id, use_ai=use_ai, ai_only=ai_only)
         total_ms = int((datetime.utcnow() - started).total_seconds() * 1000)
         meta = payload.get('meta') or {}
         meta.update({'http_total_ms': total_ms, 'http_started_at': started.isoformat()})

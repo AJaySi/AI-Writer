@@ -6,6 +6,7 @@ import traceback
 from .autofill_service import AutoFillService
 from ...ai_analytics_service import ContentPlanningAIAnalyticsService
 from .ai_structured_autofill import AIStructuredAutofillService
+from .transparency_service import AutofillTransparencyService
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ class AutoFillRefreshService:
         self.autofill = AutoFillService(db)
         self.ai_analytics = ContentPlanningAIAnalyticsService()
         self.structured_ai = AIStructuredAutofillService()
+        self.transparency = AutofillTransparencyService(db)
 
     async def build_fresh_payload(self, user_id: int, use_ai: bool = True, ai_only: bool = False) -> Dict[str, Any]:
         """Build a fresh auto-fill payload.
@@ -73,8 +75,9 @@ class AutoFillRefreshService:
         except Exception:
             pass
 
-        if ai_only and use_ai:
-            logger.info("AutoFillRefreshService: AI-only refresh enabled; generating full 30+ fields via AI")
+        # 🚨 CRITICAL: Always use AI-only generation for refresh to ensure real AI values
+        if use_ai:
+            logger.info("AutoFillRefreshService: FORCING AI-only generation for refresh to ensure real AI values")
             try:
                 ai_payload = await self.structured_ai.generate_autofill_fields(user_id, base_context)
                 meta = ai_payload.get('meta') or {}
@@ -89,11 +92,28 @@ class AutoFillRefreshService:
                 logger.info(f"  - Missing fields: {len(meta.get('missing_fields', []))}")
                 logger.info(f"  - Fields generated: {len(ai_payload.get('fields', {}))}")
                 
+                # 🚨 VALIDATION: Ensure we have real AI-generated data
+                if not meta.get('ai_used', False) or meta.get('ai_overrides_count', 0) == 0:
+                    logger.error("❌ CRITICAL: AI generation failed to produce real values - returning error")
+                    return {
+                        'fields': {},
+                        'sources': {},
+                        'meta': {
+                            'ai_used': False,
+                            'ai_overrides_count': 0,
+                            'ai_override_fields': [],
+                            'ai_only': True,
+                            'error': 'AI generation failed to produce real values. Please try again.',
+                            'data_source': 'ai_generation_failed'
+                        }
+                    }
+                
+                logger.info("✅ SUCCESS: Real AI-generated values produced")
                 return ai_payload
             except Exception as e:
                 logger.error("AI-only structured generation failed | user=%s | err=%s", user_id, repr(e))
                 logger.error("Traceback:\n%s", traceback.format_exc())
-                # Return graceful fallback instead of raising
+                # Return error instead of fallback to prevent stale data
                 return {
                     'fields': {},
                     'sources': {},
@@ -102,91 +122,197 @@ class AutoFillRefreshService:
                         'ai_overrides_count': 0,
                         'ai_override_fields': [],
                         'ai_only': True,
-                        'error': str(e)
+                        'error': f'AI generation failed: {str(e)}. Please try again.',
+                        'data_source': 'ai_generation_error'
                     }
                 }
 
-        # Fallback to previous behavior (DB + sparse overrides)
-        logger.info("AutoFillRefreshService: using fallback behavior (DB + sparse overrides)")
-        payload = await self.autofill.get_autofill(user_id)
-        logger.info("AutoFillRefreshService: Base payload fields: %d", len(payload.get('fields', {})))
-
-        ai_overrides: Dict[str, Any] = {}
-        if use_ai:
-            # Hook to integrate AI-generated overrides for certain fields, if available
-            ai_overrides = await self._generate_ai_overrides(user_id, payload)
-            if ai_overrides:
-                logger.debug("AutoFillRefreshService: merging %d AI overrides", len(ai_overrides))
-                # Merge AI overrides into fields while preserving sources/transparency
-                fields = payload.get('fields', {})
-                for key, override_value in ai_overrides.items():
-                    if key in fields and isinstance(fields[key], dict):
-                        fields[key]['value'] = override_value
-                    else:
-                        fields[key] = {'value': override_value, 'source': 'ai_refresh', 'confidence': 0.8}
-                payload['fields'] = fields
-
-                # Label sources for overridden fields as coming from AI refresh (non-persistent)
-                sources = payload.get('sources', {})
-                for key in ai_overrides.keys():
-                    sources[key] = 'ai_refresh'
-                payload['sources'] = sources
-
-        # If ai_only requested, we still keep onboarding values where AI is silent (fallback), but we track AI usage
-        overridden_keys = list(ai_overrides.keys())
-        payload['meta'] = {
-            'ai_used': len(overridden_keys) > 0,
-            'ai_overrides_count': len(overridden_keys),
-            'ai_override_fields': overridden_keys,
-            'ai_only': ai_only,
+        # 🚨 CRITICAL: If AI is disabled, return error instead of stale database data
+        logger.error("❌ CRITICAL: AI generation is disabled - cannot provide real AI values")
+        return {
+            'fields': {},
+            'sources': {},
+            'meta': {
+                'ai_used': False,
+                'ai_overrides_count': 0,
+                'ai_override_fields': [],
+                'ai_only': False,
+                'error': 'AI generation is required for refresh. Please enable AI and try again.',
+                'data_source': 'ai_disabled'
+            }
         }
-
-        logger.info("AutoFillRefreshService: Applied AI overrides for %d fields: %s", len(ai_overrides), overridden_keys)
-        return payload
-
-    async def _generate_ai_overrides(self, user_id: int, base_payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Produce AI overrides for selected fields based on current context.
-        Calls AI analytics with force refresh to avoid stale DB values.
-        Logs raw AI response and mapped overrides for transparency.
+    
+    async def build_fresh_payload_with_transparency(self, user_id: int, use_ai: bool = True, ai_only: bool = False, yield_callback=None) -> Dict[str, Any]:
+        """Build a fresh auto-fill payload with transparency messages.
+        
+        Args:
+            user_id: User ID to build payload for
+            use_ai: Whether to use AI augmentation
+            ai_only: Whether to use AI-only generation
+            yield_callback: Callback function to yield transparency messages
         """
-        try:
-            logger.info(f"AutoFillRefreshService: Invoking AI analytics for user {user_id} with force refresh")
-            ai_resp = await self.ai_analytics.get_ai_analytics(user_id=user_id, strategy_id=None, force_refresh=True)  # type: ignore
-            # Log high-level response structure
-            if isinstance(ai_resp, dict):
-                keys = list(ai_resp.keys())
-                logger.info(f"AI analytics response keys: {keys}")
-                # Optionally log truncated insights/recommendations
-                insights = ai_resp.get('insights')
-                recs = ai_resp.get('recommendations')
-                if insights is not None:
-                    logger.info(f"AI insights count: {len(insights) if hasattr(insights, '__len__') else 'n/a'}")
-                if recs is not None:
-                    logger.info(f"AI recommendations count: {len(recs) if hasattr(recs, '__len__') else 'n/a'}")
-            else:
-                logger.warning("AI analytics response is not a dict; skipping mapping")
-                return {}
-
-            # Minimal, conservative mapping attempt (only if safely found)
-            overrides: Dict[str, Any] = {}
-            # Example: try to map preferred_formats from recommendations if present
+        logger.info(f"AutoFillRefreshService: starting build_fresh_payload_with_transparency | user=%s | use_ai=%s | ai_only=%s", user_id, use_ai, ai_only)
+        
+        # Phase 1: Initialization
+        if yield_callback:
+            logger.info("AutoFillRefreshService: generating autofill_initialization message")
+            await yield_callback(self.transparency.generate_phase_message('autofill_initialization'))
+        
+        # Phase 2: Data Collection
+        if yield_callback:
+            logger.info("AutoFillRefreshService: generating autofill_data_collection message")
+            await yield_callback(self.transparency.generate_phase_message('autofill_data_collection'))
+        
+        # Base context from onboarding analysis
+        logger.debug("AutoFillRefreshService: processing onboarding context | user=%s", user_id)
+        base_context = await self.autofill.integration.process_onboarding_data(user_id, self.db)
+        
+        # Phase 3: Data Quality Assessment
+        if yield_callback:
+            data_source_summary = self.transparency.get_data_source_summary(base_context)
+            context = {'data_sources': data_source_summary}
+            await yield_callback(self.transparency.generate_phase_message('autofill_data_quality', context))
+        
+        # Phase 4: Context Analysis
+        if yield_callback:
+            await yield_callback(self.transparency.generate_phase_message('autofill_context_analysis'))
+        
+        # Phase 5: Strategy Generation
+        if yield_callback:
+            await yield_callback(self.transparency.generate_phase_message('autofill_strategy_generation'))
+        
+        if ai_only and use_ai:
+            logger.info("AutoFillRefreshService: AI-only refresh enabled; generating full 30+ fields via AI")
+            
+            # Phase 6: Field Generation
+            if yield_callback:
+                await yield_callback(self.transparency.generate_phase_message('autofill_field_generation'))
+            
             try:
-                recs = ai_resp.get('recommendations') or {}
-                if isinstance(recs, dict):
-                    pf = recs.get('preferred_formats')
-                    if pf:
-                        overrides['preferred_formats'] = pf
-                # Example: target_metrics from insights/metrics if present
-                insights = ai_resp.get('insights') or {}
-                if isinstance(insights, dict):
-                    tm = insights.get('target_metrics') or insights.get('kpi_targets')
-                    if tm:
-                        overrides['target_metrics'] = tm
-            except Exception as map_err:
-                logger.warning(f"AI override mapping encountered an issue: {map_err}")
-
-            logger.info(f"AI override mapping produced {len(overrides)} fields: {list(overrides.keys())}")
-            return overrides
-        except Exception as e:
-            logger.error(f"AI override generation failed: {e}")
-            return {} 
+                ai_payload = await self.structured_ai.generate_autofill_fields(user_id, base_context)
+                meta = ai_payload.get('meta') or {}
+                
+                # 🚨 VALIDATION: Ensure we have real AI-generated data
+                if not meta.get('ai_used', False) or meta.get('ai_overrides_count', 0) == 0:
+                    logger.error("❌ CRITICAL: AI generation failed to produce real values - returning error")
+                    return {
+                        'fields': {},
+                        'sources': {},
+                        'meta': {
+                            'ai_used': False,
+                            'ai_overrides_count': 0,
+                            'ai_override_fields': [],
+                            'ai_only': True,
+                            'error': 'AI generation failed to produce real values. Please try again.',
+                            'data_source': 'ai_generation_failed'
+                        }
+                    }
+                
+                # Phase 7: Quality Validation
+                if yield_callback:
+                    validation_context = {
+                        'validation_results': {
+                            'passed': len(ai_payload.get('fields', {})),
+                            'total': 30  # Approximate total fields
+                        }
+                    }
+                    await yield_callback(self.transparency.generate_phase_message('autofill_quality_validation', validation_context))
+                
+                # Phase 8: Alignment Check
+                if yield_callback:
+                    await yield_callback(self.transparency.generate_phase_message('autofill_alignment_check'))
+                
+                # Phase 9: Final Review
+                if yield_callback:
+                    await yield_callback(self.transparency.generate_phase_message('autofill_final_review'))
+                
+                # Phase 10: Complete
+                if yield_callback:
+                    logger.info("AutoFillRefreshService: generating autofill_complete message")
+                    await yield_callback(self.transparency.generate_phase_message('autofill_complete'))
+                
+                logger.info("✅ SUCCESS: Real AI-generated values produced with transparency")
+                return ai_payload
+            except Exception as e:
+                logger.error("AI-only structured generation failed | user=%s | err=%s", user_id, repr(e))
+                logger.error("Traceback:\n%s", traceback.format_exc())
+                return {
+                    'fields': {},
+                    'sources': {},
+                    'meta': {
+                        'ai_used': False,
+                        'ai_overrides_count': 0,
+                        'ai_override_fields': [],
+                        'ai_only': True,
+                        'error': f'AI generation failed: {str(e)}. Please try again.',
+                        'data_source': 'ai_generation_error'
+                    }
+                }
+        
+        # 🚨 CRITICAL: Force AI generation for refresh - no fallback to database
+        if use_ai:
+            logger.info("AutoFillRefreshService: FORCING AI generation for refresh to ensure real AI values")
+            
+            # Phase 6: Field Generation (for AI generation)
+            if yield_callback:
+                await yield_callback(self.transparency.generate_phase_message('autofill_field_generation'))
+            
+            try:
+                ai_payload = await self.structured_ai.generate_autofill_fields(user_id, base_context)
+                meta = ai_payload.get('meta') or {}
+                
+                # 🚨 VALIDATION: Ensure we have real AI-generated data
+                if not meta.get('ai_used', False) or meta.get('ai_overrides_count', 0) == 0:
+                    logger.error("❌ CRITICAL: AI generation failed to produce real values - returning error")
+                    return {
+                        'fields': {},
+                        'sources': {},
+                        'meta': {
+                            'ai_used': False,
+                            'ai_overrides_count': 0,
+                            'ai_override_fields': [],
+                            'ai_only': False,
+                            'error': 'AI generation failed to produce real values. Please try again.',
+                            'data_source': 'ai_generation_failed'
+                        }
+                    }
+                
+                # Phase 7-10: Validation, Alignment, Review, Complete
+                if yield_callback:
+                    await yield_callback(self.transparency.generate_phase_message('autofill_quality_validation'))
+                    await yield_callback(self.transparency.generate_phase_message('autofill_alignment_check'))
+                    await yield_callback(self.transparency.generate_phase_message('autofill_final_review'))
+                    await yield_callback(self.transparency.generate_phase_message('autofill_complete'))
+                
+                logger.info("✅ SUCCESS: Real AI-generated values produced with transparency")
+                return ai_payload
+            except Exception as e:
+                logger.error("AI generation failed | user=%s | err=%s", user_id, repr(e))
+                logger.error("Traceback:\n%s", traceback.format_exc())
+                return {
+                    'fields': {},
+                    'sources': {},
+                    'meta': {
+                        'ai_used': False,
+                        'ai_overrides_count': 0,
+                        'ai_override_fields': [],
+                        'ai_only': False,
+                        'error': f'AI generation failed: {str(e)}. Please try again.',
+                        'data_source': 'ai_generation_error'
+                    }
+                }
+        
+        # 🚨 CRITICAL: If AI is disabled, return error instead of stale database data
+        logger.error("❌ CRITICAL: AI generation is disabled - cannot provide real AI values")
+        return {
+            'fields': {},
+            'sources': {},
+            'meta': {
+                'ai_used': False,
+                'ai_overrides_count': 0,
+                'ai_override_fields': [],
+                'ai_only': False,
+                'error': 'AI generation is required for refresh. Please enable AI and try again.',
+                'data_source': 'ai_disabled'
+            }
+        } 

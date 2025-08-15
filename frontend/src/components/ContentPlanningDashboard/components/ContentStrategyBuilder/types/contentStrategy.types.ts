@@ -26,6 +26,7 @@ export interface CategoryDetailViewProps {
   formErrors: Record<string, any>;
   autoPopulatedFields: Record<string, any>;
   dataSources: Record<string, any>;
+  inputDataPoints: Record<string, any>;
   personalizationData: Record<string, any>;
   completionStats: any;
   reviewedCategories: Set<string>;
@@ -35,7 +36,7 @@ export interface CategoryDetailViewProps {
   onUpdateFormField: (fieldId: string, value: any) => void;
   onValidateFormField: (fieldId: string) => boolean;
   onShowTooltip: (fieldId: string) => void;
-  onViewDataSource: () => void;
+  onViewDataSource: (fieldId?: string) => void;
   onConfirmCategoryReview: () => void;
   onSetActiveCategory: (category: string | null) => void;
   onSetShowEducationalInfo: (categoryId: string | null) => void;

@@ -539,219 +539,26 @@ class ContentPlanningAPI {
   }
 
   // Enhanced Strategy API Methods
-  async createEnhancedStrategy(strategy: any): Promise<any> {
-    return this.handleRequest(async () => {
-      const response = await apiClient.post(`${this.baseURL}/enhanced-strategies/create`, strategy);
-      // Extract data from the response wrapper
-      return response.data.data || response.data;
-    });
-  }
-
-  // SSE Strategy Generation
-  async streamStrategyGeneration(strategyId: number): Promise<EventSource> {
-    // The backend endpoint doesn't need strategy_id, it creates the strategy internally
-    const url = `${this.baseURL}/content-strategy/ai-generation/generate-comprehensive-strategy/stream?user_id=1&strategy_name=Enhanced%20Content%20Strategy`;
-    
-    console.log('🚀 Creating SSE connection for strategy generation:');
-    console.log('   URL:', url);
-    console.log('   Base URL:', this.baseURL);
-    console.log('   Strategy ID:', strategyId);
-    
-    const eventSource = new EventSource(url);
-    
-    // Add comprehensive error handling
-    eventSource.onerror = (error) => {
-      console.error('❌ SSE Error in strategy generation:', error);
-      console.error('   ReadyState:', eventSource.readyState);
-      console.error('   URL:', url);
-      
-      // Don't close immediately on error - let the frontend handle it
-      // eventSource.close();
-    };
-    
-    eventSource.onopen = () => {
-      console.log('✅ SSE connection opened successfully');
-      console.log('   ReadyState:', eventSource.readyState);
-      console.log('   URL:', url);
-    };
-    
-    eventSource.onmessage = (event) => {
-      console.log('📨 SSE message received:', event.data);
-    };
-    
-    return eventSource;
-  }
-
-  // New polling-based strategy generation methods
-  async startStrategyGenerationPolling(userId: number = 1, strategyName?: string, config?: any): Promise<any> {
-    return this.handleRequest(async () => {
-      const payload = {
-        user_id: userId,
-        strategy_name: strategyName || 'Enhanced Content Strategy',
-        config: config || {}
-      };
-      
-      console.log('🚀 Starting polling-based strategy generation:', payload);
-      
-      const response = await apiClient.post(
-        `${this.baseURL}/content-strategy/ai-generation/generate-comprehensive-strategy-polling`,
-        payload
-      );
-      
-      console.log('✅ Strategy generation started:', response.data);
-      return response.data.data || response.data;
-    });
-  }
-
-  async getStrategyGenerationStatus(taskId: string): Promise<any> {
-    return this.handleRequest(async () => {
-      const response = await apiClient.get(`${this.baseURL}/content-strategy/ai-generation/strategy-generation-status/${taskId}`);
-      return response.data.data || response.data;
-    });
-  }
-
-  // Get the latest generated strategy from polling system
-  async getLatestGeneratedStrategy(userId: number = 1): Promise<any> {
-    return this.handleRequest(async () => {
-      const response = await apiClient.get(`${this.baseURL}/content-strategy/ai-generation/latest-strategy`, {
-        params: { user_id: userId }
-      });
-      return response.data.data || response.data;
-    });
-  }
-
-  // Polling utility method
-  async pollStrategyGeneration(
-    taskId: string,
-    onProgress: (status: any) => void,
-    onComplete: (strategy: any) => void,
-    onError: (error: any) => void,
-    pollInterval: number = 10000, // 10 seconds
-    maxAttempts: number = 36 // 6 minutes max (36 * 10 seconds)
-  ): Promise<void> {
-    let attempts = 0;
-    
-    const poll = async () => {
-      try {
-        attempts++;
-        console.log(`📊 Polling attempt ${attempts}/${maxAttempts} for task: ${taskId}`);
-        
-        const status = await this.getStrategyGenerationStatus(taskId);
-        
-        // Call progress callback
-        onProgress(status);
-        
-        // Check if completed
-        if (status.status === 'completed') {
-          console.log('✅ Strategy generation completed:', status);
-          onComplete(status.strategy);
-          return;
-        }
-        
-        // Check if failed
-        if (status.status === 'failed') {
-          console.error('❌ Strategy generation failed:', status.error);
-          onError(status.error || 'Strategy generation failed');
-          return;
-        }
-        
-        // Check if max attempts reached
-        if (attempts >= maxAttempts) {
-          console.warn('⏰ Max polling attempts reached, checking final status...');
-          const finalStatus = await this.getStrategyGenerationStatus(taskId);
-          
-          if (finalStatus.status === 'completed') {
-            onComplete(finalStatus.strategy);
-          } else {
-            onError('Strategy generation timeout. The process may still be running in the background.');
-          }
-          return;
-        }
-        
-        // Continue polling
-        setTimeout(poll, pollInterval);
-        
-      } catch (error) {
-        console.error('❌ Error polling strategy generation status:', error);
-        onError(error);
-      }
-    };
-    
-    // Start polling
-    poll();
-  }
-
-  async updateEnhancedStrategy(id: string, updates: any): Promise<any> {
-    return this.handleRequest(async () => {
-      const response = await apiClient.put(`${this.baseURL}/enhanced-strategies/${id}`, updates);
-      return response.data.data || response.data;
-    });
-  }
-
-  async deleteEnhancedStrategy(id: string): Promise<any> {
-    return this.handleRequest(async () => {
-      const response = await apiClient.delete(`${this.baseURL}/enhanced-strategies/${id}`);
-      return response.data.data || response.data;
-    });
-  }
-
   async getEnhancedStrategies(userId?: number): Promise<any> {
     return this.handleRequest(async () => {
-      const params = userId ? { user_id: userId } : {};
+      const params: any = {};
+      if (userId) params.user_id = userId;
       const response = await apiClient.get(`${this.baseURL}/enhanced-strategies`, { params });
+      return response.data;
+    });
+  }
+
+  async getEnhancedStrategy(strategyId: string): Promise<any> {
+    return this.handleRequest(async () => {
+      const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/${strategyId}`);
+      return response.data;
+    });
+  }
+
+  async createEnhancedStrategy(strategy: any): Promise<any> {
+    return this.handleRequest(async () => {
+      const response = await apiClient.post(`${this.baseURL}/enhanced-strategies`, strategy);
       return response.data.data || response.data;
-    });
-  }
-
-  async getEnhancedStrategy(id: string): Promise<any> {
-    return this.handleRequest(async () => {
-      const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/${id}`);
-      return response.data.data || response.data;
-    });
-  }
-
-  async generateEnhancedAIRecommendations(strategyId: string): Promise<any> {
-    return this.handleRequest(async () => {
-      const response = await apiClient.post(`${this.baseURL}/enhanced-strategies/${strategyId}/ai-recommendations`);
-      return response.data.data || response.data;
-    }, true);
-  }
-
-  async regenerateAIAnalysis(strategyId: string, analysisType: string): Promise<any> {
-    return this.handleRequest(async () => {
-      const response = await apiClient.post(`${this.baseURL}/enhanced-strategies/${strategyId}/ai-analysis/regenerate`, {
-        analysis_type: analysisType
-      });
-      return response.data;
-    }, true);
-  }
-
-  async getEnhancedAIAnalyses(strategyId: string): Promise<any> {
-    return this.handleRequest(async () => {
-      const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/${strategyId}/ai-analyses`);
-      return response.data;
-    });
-  }
-
-  async getOnboardingData(userId?: number): Promise<any> {
-    return this.handleRequest(async () => {
-      const params = userId ? { user_id: userId } : {};
-      const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/onboarding-data`, { params });
-      return response.data;
-    });
-  }
-
-  async getOnboardingIntegration(strategyId: string): Promise<any> {
-    return this.handleRequest(async () => {
-      const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/${strategyId}/onboarding-integration`);
-      return response.data;
-    });
-  }
-
-  async getEnhancedStrategyAnalytics(strategyId: string): Promise<any> {
-    return this.handleRequest(async () => {
-      const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/${strategyId}/analytics`);
-      return response.data;
     });
   }
 
@@ -776,22 +583,6 @@ class ContentPlanningAPI {
     });
   }
 
-  // Enhanced Strategy Streaming Methods
-  async streamEnhancedStrategies(userId?: number): Promise<EventSource> {
-    const url = `${this.baseURL}/enhanced-strategies/stream/strategies?user_id=${userId || 1}`;
-    return new EventSource(url);
-  }
-
-  async streamStrategicIntelligence(userId?: number): Promise<EventSource> {
-    const url = `${this.baseURL}/enhanced-strategies/stream/strategic-intelligence?user_id=${userId || 1}`;
-    return new EventSource(url);
-  }
-
-  async streamKeywordResearch(userId?: number): Promise<EventSource> {
-    const url = `${this.baseURL}/enhanced-strategies/stream/keyword-research?user_id=${userId || 1}`;
-    return new EventSource(url);
-  }
-
   // Clear enhanced strategy streaming/cache for a user (best-effort refresh)
   async clearEnhancedCache(userId?: number): Promise<any> {
     const params: any = {};
@@ -800,21 +591,7 @@ class ContentPlanningAPI {
     return response.data;
   }
 
-  // Stream AI generation/status updates for a specific strategy (best-effort)
-  async streamAIGenerationStatus(strategyId: number | string): Promise<EventSource> {
-    const url = `${this.baseURL}/enhanced-strategies/stream/strategies?strategy_id=${strategyId}`;
-    return new EventSource(url);
-  }
-
-  async streamAutofillRefresh(userId?: number, useAI: boolean = true, aiOnly: boolean = false): Promise<EventSource> {
-    const params = new URLSearchParams();
-    if (userId) params.append('user_id', String(userId));
-    params.append('use_ai', String(useAI));
-    params.append('ai_only', String(aiOnly));
-    const url = `${this.baseURL}/enhanced-strategies/autofill/refresh/stream?${params.toString()}`;
-    return new EventSource(url);
-  }
-
+  // Non-streaming autofill refresh method
   async refreshAutofill(userId?: number, useAI: boolean = true, aiOnly: boolean = false): Promise<any> {
     const params: any = { use_ai: useAI, ai_only: aiOnly };
     if (userId) params.user_id = userId;
@@ -822,7 +599,68 @@ class ContentPlanningAPI {
     return response.data;
   }
 
-  // Helper method to handle SSE data
+  // Enhanced Strategy CRUD Operations
+  async updateEnhancedStrategy(id: string, updates: any): Promise<any> {
+    return this.handleRequest(async () => {
+      const response = await apiClient.put(`${this.baseURL}/enhanced-strategies/${id}`, updates);
+      return response.data.data || response.data;
+    });
+  }
+
+  async deleteEnhancedStrategy(id: string): Promise<any> {
+    return this.handleRequest(async () => {
+      const response = await apiClient.delete(`${this.baseURL}/enhanced-strategies/${id}`);
+      return response.data.data || response.data;
+    });
+  }
+
+  // Onboarding Data Methods
+  async getOnboardingData(userId?: number): Promise<any> {
+    return this.handleRequest(async () => {
+      const params = userId ? { user_id: userId } : {};
+      const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/onboarding-data`, { params });
+      return response.data;
+    });
+  }
+
+  async getOnboardingIntegration(strategyId: string): Promise<any> {
+    return this.handleRequest(async () => {
+      const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/${strategyId}/onboarding-integration`);
+      return response.data;
+    });
+  }
+
+  // AI Analysis Methods
+  async generateEnhancedAIRecommendations(strategyId: string): Promise<any> {
+    return this.handleRequest(async () => {
+      const response = await apiClient.post(`${this.baseURL}/enhanced-strategies/${strategyId}/ai-recommendations`);
+      return response.data.data || response.data;
+    }, true);
+  }
+
+  async regenerateAIAnalysis(strategyId: string, analysisType: string): Promise<any> {
+    return this.handleRequest(async () => {
+      const response = await apiClient.post(`${this.baseURL}/enhanced-strategies/${strategyId}/ai-analysis/regenerate`, {
+        analysis_type: analysisType
+      });
+      return response.data;
+    }, true);
+  }
+
+  async getEnhancedAIAnalyses(strategyId: string): Promise<any> {
+    return this.handleRequest(async () => {
+      const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/${strategyId}/ai-analyses`);
+      return response.data;
+    });
+  }
+
+  // SSE Methods (for Orchestrator - real-time updates needed)
+  async streamStrategicIntelligence(userId?: number): Promise<EventSource> {
+    const url = `${this.baseURL}/enhanced-strategies/stream/strategic-intelligence?user_id=${userId || 1}`;
+    return new EventSource(url);
+  }
+
+  // Helper method to handle SSE data (for Orchestrator)
   handleSSEData(eventSource: EventSource, onData: (data: any) => void, onError?: (error: any) => void, onComplete?: () => void) {
     eventSource.onmessage = (event) => {
       try {
@@ -847,6 +685,26 @@ class ContentPlanningAPI {
     };
 
     return eventSource;
+  }
+
+  // Polling and Status Methods
+  async getLatestGeneratedStrategy(userId?: number): Promise<any> {
+    return this.handleRequest(async () => {
+      const params = userId ? { user_id: userId } : {};
+      const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/latest-generated`, { params });
+      return response.data;
+    });
+  }
+
+  // Additional SSE Methods (for other features that need real-time updates)
+  async streamKeywordResearch(userId?: number): Promise<EventSource> {
+    const url = `${this.baseURL}/enhanced-strategies/stream/keyword-research?user_id=${userId || 1}`;
+    return new EventSource(url);
+  }
+
+  async streamAIGenerationStatus(strategyId: string | number): Promise<EventSource> {
+    const url = `${this.baseURL}/enhanced-strategies/stream/ai-generation-status?strategy_id=${strategyId}`;
+    return new EventSource(url);
   }
 }
 

@@ -121,12 +121,27 @@ async def stream_autofill_refresh(
             # Phase: Build prompt
             yield {"type": "progress", "phase": "prompt", "message": "Preparing prompt…", "progress": 30}
 
-            # Phase: AI call - run in background and heartbeat until completion
+            # Phase: AI call with transparency - run in background and yield transparency messages
             yield {"type": "progress", "phase": "ai", "message": "Calling AI…", "progress": 45}
 
             import asyncio
+            
+            # Create a queue to collect transparency messages
+            transparency_messages = []
+            
+            async def yield_transparency_message(message):
+                transparency_messages.append(message)
+                logger.info(f"📊 Transparency message collected: {message.get('type', 'unknown')} - {message.get('message', 'no message')}")
+                return message
+            
+            # Run the transparency-enabled payload generation
             ai_task = asyncio.create_task(
-                refresh_service.build_fresh_payload(actual_user_id, use_ai=use_ai, ai_only=ai_only)
+                refresh_service.build_fresh_payload_with_transparency(
+                    actual_user_id, 
+                    use_ai=use_ai, 
+                    ai_only=ai_only,
+                    yield_callback=yield_transparency_message
+                )
             )
 
             # Heartbeat loop while AI is running
@@ -135,10 +150,23 @@ async def stream_autofill_refresh(
                 elapsed = (datetime.utcnow() - start_time).total_seconds()
                 heartbeat_progress = min(heartbeat_progress + 3, 85)
                 yield {"type": "progress", "phase": "ai_running", "message": f"AI running… {int(elapsed)}s", "progress": heartbeat_progress}
-                await asyncio.sleep(2)
+                
+                # Yield any transparency messages that have been collected
+                while transparency_messages:
+                    message = transparency_messages.pop(0)
+                    logger.info(f"📤 Yielding transparency message: {message.get('type', 'unknown')}")
+                    yield message
+                
+                await asyncio.sleep(1)  # Check more frequently
 
             # Retrieve result or error
             final_payload = await ai_task
+            
+            # Yield any remaining transparency messages after task completion
+            while transparency_messages:
+                message = transparency_messages.pop(0)
+                logger.info(f"📤 Yielding remaining transparency message: {message.get('type', 'unknown')}")
+                yield message
 
             # Phase: Validate & map
             yield {"type": "progress", "phase": "validate", "message": "Validating…", "progress": 92}
@@ -185,7 +213,7 @@ async def refresh_autofill(
         actual_user_id = user_id or 1
         started = datetime.utcnow()
         refresh_service = AutoFillRefreshService(db)
-        payload = await refresh_service.build_fresh_payload(actual_user_id, use_ai=use_ai, ai_only=ai_only)
+        payload = await refresh_service.build_fresh_payload_with_transparency(actual_user_id, use_ai=use_ai, ai_only=ai_only)
         total_ms = int((datetime.utcnow() - started).total_seconds() * 1000)
         meta = payload.get('meta') or {}
         meta.update({'http_total_ms': total_ms, 'http_started_at': started.isoformat()})

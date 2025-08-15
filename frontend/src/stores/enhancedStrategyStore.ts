@@ -160,6 +160,7 @@ interface EnhancedStrategyStore {
   dataSources: Record<string, string>;
   inputDataPoints: Record<string, any>; // Detailed input data points from backend
   personalizationData: Record<string, any>; // Personalization data for each field
+  confidenceScores: Record<string, number>; // Confidence scores for each field
   
   // UI State
   loading: boolean;
@@ -167,11 +168,28 @@ interface EnhancedStrategyStore {
   saving: boolean;
   aiGenerating: boolean;
   
+  // Transparency State
+  transparencyModalOpen: boolean;
+  generationProgress: number;
+  currentPhase: string;
+  educationalContent: any;
+  transparencyMessages: string[];
+  isGenerating: boolean;
+  
   // Actions
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setSaving: (saving: boolean) => void;
   setAIGenerating: (generating: boolean) => void;
+  
+  // Transparency actions
+  setTransparencyModalOpen: (open: boolean) => void;
+  setGenerationProgress: (progress: number) => void;
+  setCurrentPhase: (phase: string) => void;
+  setEducationalContent: (content: any) => void;
+  addTransparencyMessage: (message: string) => void;
+  clearTransparencyMessages: () => void;
+  setIsGenerating: (generating: boolean) => void;
   
   // Strategy actions
   createEnhancedStrategy: (strategy: Partial<EnhancedStrategy>) => Promise<EnhancedStrategy>;
@@ -604,6 +622,7 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
   dataSources: {},
   inputDataPoints: {}, // Initialize inputDataPoints
   personalizationData: {}, // Initialize personalizationData
+  confidenceScores: {}, // Initialize confidenceScores
   
   // UI State
   loading: false,
@@ -611,11 +630,30 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
   saving: false,
   aiGenerating: false,
   
+  // Transparency State
+  transparencyModalOpen: false,
+  generationProgress: 0,
+  currentPhase: '',
+  educationalContent: null,
+  transparencyMessages: [],
+  isGenerating: false,
+  
   // Actions
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
   setSaving: (saving) => set({ saving }),
   setAIGenerating: (generating) => set({ aiGenerating: generating }),
+  
+  // Transparency actions
+  setTransparencyModalOpen: (open) => set({ transparencyModalOpen: open }),
+  setGenerationProgress: (progress) => set({ generationProgress: progress }),
+  setCurrentPhase: (phase) => set({ currentPhase: phase }),
+  setEducationalContent: (content) => set({ educationalContent: content }),
+  addTransparencyMessage: (message) => set((state) => ({ 
+    transparencyMessages: [...state.transparencyMessages, message] 
+  })),
+  clearTransparencyMessages: () => set({ transparencyMessages: [] }),
+  setIsGenerating: (generating) => set({ isGenerating: generating }),
   
   // Strategy actions
   createEnhancedStrategy: async (strategy) => {
@@ -725,8 +763,16 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
       dataSources: {},
       inputDataPoints: {}, // Reset inputDataPoints
       personalizationData: {}, // Reset personalizationData
+      confidenceScores: {}, // Reset confidenceScores
       currentStep: 0,
-      completedSteps: []
+      completedSteps: [],
+      // Reset transparency state
+      transparencyModalOpen: false,
+      generationProgress: 0,
+      currentPhase: '',
+      educationalContent: null,
+      transparencyMessages: [],
+      isGenerating: false
     });
   },
   
@@ -793,6 +839,7 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
       const fieldValues: Record<string, any> = {};
       const autoPopulatedFields: Record<string, any> = {};
       const personalizationData: Record<string, any> = {};
+      const confidenceScores: Record<string, number> = {}; // Initialize confidenceScores
       
       Object.keys(fields).forEach(fieldId => {
         const fieldData = fields[fieldId];
@@ -808,6 +855,12 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
             console.log(`🎯 Personalization data for ${fieldId}:`, fieldData.personalization_data);
           }
           
+          // Extract confidence score if available
+          if (fieldData.confidence_score) {
+            confidenceScores[fieldId] = fieldData.confidence_score;
+            console.log(`💯 Confidence score for ${fieldId}:`, fieldData.confidence_score);
+          }
+          
           console.log(`✅ Auto-populated ${fieldId}:`, fieldData.value);
         } else {
           console.log(`❌ Skipping ${fieldId} - invalid data structure`);
@@ -817,12 +870,14 @@ export const useEnhancedStrategyStore = create<EnhancedStrategyStore>((set, get)
       console.log('📝 Final field values:', fieldValues);
       console.log('🔄 Final auto-populated fields:', autoPopulatedFields);
       console.log('🎯 Personalization data:', personalizationData);
+      console.log('💯 Confidence scores:', confidenceScores);
       
       set((state) => ({
         autoPopulatedFields,
         dataSources: sources,
         inputDataPoints, // Store the detailed input data points
         personalizationData, // Store personalization data
+        confidenceScores, // Store confidence scores
         formData: { ...state.formData, ...fieldValues }
       }));
       

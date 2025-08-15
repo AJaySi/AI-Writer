@@ -25,6 +25,7 @@ import {
 import { motion } from 'framer-motion';
 import StrategicInputField from '../StrategicInputField';
 import { CategoryDetailViewProps, EducationalInfoDialogProps } from '../types/contentStrategy.types';
+import { useEnhancedStrategyStore } from '../../../../../stores/enhancedStrategyStore';
 
 const EducationalInfoDialog: React.FC<EducationalInfoDialogProps> = ({
   open,
@@ -97,6 +98,7 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
   formErrors,
   autoPopulatedFields,
   dataSources,
+  inputDataPoints,
   personalizationData,
   completionStats,
   reviewedCategories,
@@ -114,6 +116,8 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
   getCategoryColor,
   getEducationalContent
 }) => {
+  // Get confidence scores from store
+  const { confidenceScores } = useEnhancedStrategyStore();
   if (!activeCategory) {
     return (
       <motion.div
@@ -193,13 +197,13 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
                       error={formErrors[field.id]}
                       autoPopulated={!!autoPopulatedFields[field.id]}
                       dataSource={dataSources[field.id]}
-                      confidenceLevel={autoPopulatedFields[field.id] ? 0.8 : undefined}
+                      confidenceLevel={confidenceScores[field.id] || (autoPopulatedFields[field.id] ? 0.8 : undefined)}
                       dataQuality={autoPopulatedFields[field.id] ? 'High Quality' : undefined}
                       personalizationData={personalizationData[field.id]}
                       onChange={(value: any) => onUpdateFormField(field.id, value)}
                       onValidate={() => onValidateFormField(field.id)}
                       onShowTooltip={() => onShowTooltip(field.id)}
-                      onViewDataSource={onViewDataSource}
+                      onViewDataSource={() => onViewDataSource(field.id)}
                       accentColorKey={getCategoryColor(activeCategory) as any}
                       isCompact={isCompactField}
                     />

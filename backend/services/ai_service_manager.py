@@ -66,8 +66,8 @@ class AIServiceManager:
             'top_p': 0.9,
             'top_k': 40,
             'max_tokens': 8192,  # increased from 4096 to prevent JSON truncation
-            'enable_caching': True,
-            'cache_duration_minutes': 60,
+            'enable_caching': False,  # 🚨 CRITICAL: Disabled caching to ensure fresh AI responses
+            'cache_duration_minutes': 0,  # 🚨 CRITICAL: Zero cache duration
             'performance_monitoring': True,
             'fallback_enabled': False  # Disabled fallback to prevent false positives
         } 
