@@ -191,83 +191,83 @@ class ContentPlanningAPI {
   // Content Strategy APIs
   async createStrategy(strategy: ContentStrategyCreate) {
     const response = await apiClient.post(`${this.baseURL}/strategies/`, strategy);
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   async getStrategies(userId?: number) {
     const params = userId ? { user_id: userId } : {};
     const response = await apiClient.get(`${this.baseURL}/enhanced-strategies`, { params });
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   async getStrategy(id: string) {
     const response = await apiClient.get(`${this.baseURL}/strategies/${id}`);
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   async updateStrategy(id: string, updates: ContentStrategyUpdate) {
     const response = await apiClient.put(`${this.baseURL}/strategies/${id}`, updates);
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   async deleteStrategy(id: string) {
     const response = await apiClient.delete(`${this.baseURL}/strategies/${id}`);
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   // Calendar Event APIs
   async createEvent(event: CalendarEventCreate) {
     const response = await apiClient.post(`${this.baseURL}/calendar-events/`, event);
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   async getEvents(userId?: number, filters?: any) {
     const params = { ...filters };
     if (userId) params.user_id = userId;
     const response = await apiClient.get(`${this.baseURL}/calendar-events/`, { params });
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   async getEvent(id: string) {
     const response = await apiClient.get(`${this.baseURL}/calendar-events/${id}`);
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   async updateEvent(id: string, updates: CalendarEventUpdate) {
     const response = await apiClient.put(`${this.baseURL}/calendar-events/${id}`, updates);
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   async deleteEvent(id: string) {
     const response = await apiClient.delete(`${this.baseURL}/calendar-events/${id}`);
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   // Gap Analysis APIs
   async createGapAnalysis(analysis: GapAnalysisCreate) {
     const response = await apiClient.post(`${this.baseURL}/gap-analysis/`, analysis);
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   async getGapAnalyses(userId?: number) {
     const params = userId ? { user_id: userId } : {};
     const response = await apiClient.get(`${this.baseURL}/gap-analysis/`, { params });
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   async getGapAnalysis(id: string) {
     const response = await apiClient.get(`${this.baseURL}/gap-analysis/${id}`);
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   async updateGapAnalysis(id: string, updates: GapAnalysisUpdate) {
     const response = await apiClient.put(`${this.baseURL}/gap-analysis/${id}`, updates);
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   async deleteGapAnalysis(id: string) {
     const response = await apiClient.delete(`${this.baseURL}/gap-analysis/${id}`);
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   // AI-Powered Gap Analysis - Using AI client for longer timeout
@@ -544,14 +544,14 @@ class ContentPlanningAPI {
       const params: any = {};
       if (userId) params.user_id = userId;
       const response = await apiClient.get(`${this.baseURL}/enhanced-strategies`, { params });
-      return response.data;
+      return response.data?.data || response.data;
     });
   }
 
   async getEnhancedStrategy(strategyId: string): Promise<any> {
     return this.handleRequest(async () => {
       const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/${strategyId}`);
-      return response.data;
+      return response.data?.data || response.data;
     });
   }
 
@@ -565,21 +565,21 @@ class ContentPlanningAPI {
   async getEnhancedStrategyCompletion(strategyId: string): Promise<any> {
     return this.handleRequest(async () => {
       const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/${strategyId}/completion`);
-      return response.data;
+      return response.data?.data || response.data;
     });
   }
 
   async getEnhancedStrategyTooltips(): Promise<any> {
     return this.handleRequest(async () => {
       const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/tooltips`);
-      return response.data;
+      return response.data?.data || response.data;
     });
   }
 
   async getEnhancedStrategyDisclosureSteps(): Promise<any> {
     return this.handleRequest(async () => {
       const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/disclosure-steps`);
-      return response.data;
+      return response.data?.data || response.data;
     });
   }
 
@@ -588,7 +588,7 @@ class ContentPlanningAPI {
     const params: any = {};
     if (userId) params.user_id = userId;
     const response = await apiClient.post(`${this.baseURL}/enhanced-strategies/cache/clear`, null, { params });
-    return response.data;
+    return response.data?.data || response.data;
   }
 
   // Non-streaming autofill refresh method
@@ -596,7 +596,29 @@ class ContentPlanningAPI {
     const params: any = { use_ai: useAI, ai_only: aiOnly };
     if (userId) params.user_id = userId;
     const response = await apiClient.post(`${this.baseURL}/enhanced-strategies/autofill/refresh`, null, { params });
-    return response.data;
+    
+    // Debug the API response
+    console.log('🎯 API refreshAutofill response:', {
+      responseType: typeof response,
+      responseKeys: Object.keys(response),
+      dataType: typeof response.data,
+      dataKeys: response.data ? Object.keys(response.data) : 'no data',
+      hasDataProperty: response.data?.hasOwnProperty('data'),
+      hasFieldsProperty: response.data?.hasOwnProperty('fields'),
+      dataDataKeys: response.data?.data ? Object.keys(response.data.data) : 'no data.data'
+    });
+    
+    // The backend returns ResponseBuilder format: { status, message, data, status_code, timestamp }
+    // We need to return the actual payload from response.data.data
+    const result = response.data?.data || response.data;
+    console.log('🎯 API refreshAutofill returning:', {
+      resultType: typeof result,
+      resultKeys: Object.keys(result),
+      hasFields: result?.hasOwnProperty('fields'),
+      fieldsCount: result?.fields ? Object.keys(result.fields).length : 0
+    });
+    
+    return result;
   }
 
   // Enhanced Strategy CRUD Operations
@@ -619,14 +641,14 @@ class ContentPlanningAPI {
     return this.handleRequest(async () => {
       const params = userId ? { user_id: userId } : {};
       const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/onboarding-data`, { params });
-      return response.data;
+      return response.data?.data || response.data;
     });
   }
 
   async getOnboardingIntegration(strategyId: string): Promise<any> {
     return this.handleRequest(async () => {
       const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/${strategyId}/onboarding-integration`);
-      return response.data;
+      return response.data?.data || response.data;
     });
   }
 
@@ -692,7 +714,18 @@ class ContentPlanningAPI {
     return this.handleRequest(async () => {
       const params = userId ? { user_id: userId } : {};
       const response = await apiClient.get(`${this.baseURL}/content-strategy/ai-generation/latest-strategy`, { params });
-      return response.data;
+      console.log('🔍 getLatestGeneratedStrategy response:', response.data);
+      console.log('🔍 Response structure:', {
+        hasData: !!response.data,
+        dataKeys: Object.keys(response.data || {}),
+        hasStrategy: !!response.data?.data?.strategy,
+        strategyKeys: response.data?.data?.strategy ? Object.keys(response.data.data.strategy) : []
+      });
+      // Return the strategy data from the nested response structure
+      const result = response.data?.data?.strategy;
+      console.log('🔍 Returning result:', result);
+      console.log('🔍 Result keys:', Object.keys(result || {}));
+      return result;
     });
   }
 

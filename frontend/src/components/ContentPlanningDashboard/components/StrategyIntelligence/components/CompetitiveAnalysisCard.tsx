@@ -373,6 +373,259 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
           </Box>
         </Box>
       )}
+
+      {/* Competitive Advantages */}
+      {strategyData.competitive_analysis.competitive_advantages && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, mb: 2, fontWeight: 600 }}>
+            Competitive Advantages
+          </Typography>
+          <Box sx={sectionStyles.sectionContainer}>
+            
+            {/* Development Areas */}
+            {strategyData.competitive_analysis.competitive_advantages.development_areas && 
+             strategyData.competitive_analysis.competitive_advantages.development_areas.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.info, fontWeight: 600, mb: 1 }}>
+                  Development Areas ({strategyData.competitive_analysis.competitive_advantages.development_areas.length})
+                </Typography>
+                <List dense>
+                  {strategyData.competitive_analysis.competitive_advantages.development_areas.map((area: string, index: number) => (
+                    <ListItem key={index} sx={listItemStyles.listItem}>
+                      <ListItemIcon sx={listItemStyles.listItemIcon}>
+                        <Box sx={{ 
+                          width: 6, 
+                          height: 6, 
+                          borderRadius: '50%', 
+                          background: ANALYSIS_CARD_STYLES.colors.info,
+                          opacity: 0.7
+                        }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={area}
+                        primaryTypographyProps={{ 
+                          variant: 'body2', 
+                          fontSize: '0.875rem',
+                          sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                        }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+
+            {/* Primary Advantages */}
+            {strategyData.competitive_analysis.competitive_advantages.primary && 
+             strategyData.competitive_analysis.competitive_advantages.primary.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.primary, fontWeight: 600, mb: 1 }}>
+                  Primary Advantages ({strategyData.competitive_analysis.competitive_advantages.primary.length})
+                </Typography>
+                <List dense>
+                  {strategyData.competitive_analysis.competitive_advantages.primary.map((advantage: string, index: number) => (
+                    <ListItem key={index} sx={listItemStyles.listItem}>
+                      <ListItemIcon sx={listItemStyles.listItemIcon}>
+                        <Box sx={{ 
+                          width: 6, 
+                          height: 6, 
+                          borderRadius: '50%', 
+                          background: ANALYSIS_CARD_STYLES.colors.primary,
+                          opacity: 0.7
+                        }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={advantage}
+                        primaryTypographyProps={{ 
+                          variant: 'body2', 
+                          fontSize: '0.875rem',
+                          sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                        }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+
+            {/* Sustainable Advantages */}
+            {strategyData.competitive_analysis.competitive_advantages.sustainable && 
+             strategyData.competitive_analysis.competitive_advantages.sustainable.length > 0 && (
+              <Box>
+                <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.success, fontWeight: 600, mb: 1 }}>
+                  Sustainable Advantages ({strategyData.competitive_analysis.competitive_advantages.sustainable.length})
+                </Typography>
+                <List dense>
+                  {strategyData.competitive_analysis.competitive_advantages.sustainable.map((advantage: string, index: number) => (
+                    <ListItem key={index} sx={listItemStyles.listItem}>
+                      <ListItemIcon sx={listItemStyles.listItemIcon}>
+                        <Box sx={{ 
+                          width: 6, 
+                          height: 6, 
+                          borderRadius: '50%', 
+                          background: ANALYSIS_CARD_STYLES.colors.success,
+                          opacity: 0.7
+                        }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={advantage}
+                        primaryTypographyProps={{ 
+                          variant: 'body2', 
+                          fontSize: '0.875rem',
+                          sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                        }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+          </Box>
+        </Box>
+      )}
+
+      {/* SWOT Competitive Insights */}
+      {strategyData.competitive_analysis.swot_competitive_insights && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, mb: 2, fontWeight: 600 }}>
+            SWOT Competitive Insights
+          </Typography>
+          <Box sx={sectionStyles.sectionContainer}>
+            
+            {/* Leverage Strengths */}
+            {strategyData.competitive_analysis.swot_competitive_insights.leverage_strengths && 
+             strategyData.competitive_analysis.swot_competitive_insights.leverage_strengths.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.success, fontWeight: 600, mb: 1 }}>
+                  Leverage Strengths ({strategyData.competitive_analysis.swot_competitive_insights.leverage_strengths.length})
+                </Typography>
+                <List dense>
+                  {strategyData.competitive_analysis.swot_competitive_insights.leverage_strengths.map((strength: string, index: number) => (
+                    <ListItem key={index} sx={listItemStyles.listItem}>
+                      <ListItemIcon sx={listItemStyles.listItemIcon}>
+                        <Box sx={{ 
+                          width: 6, 
+                          height: 6, 
+                          borderRadius: '50%', 
+                          background: ANALYSIS_CARD_STYLES.colors.success,
+                          opacity: 0.7
+                        }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={strength}
+                        primaryTypographyProps={{ 
+                          variant: 'body2', 
+                          fontSize: '0.875rem',
+                          sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                        }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+
+            {/* Address Weaknesses */}
+            {strategyData.competitive_analysis.swot_competitive_insights.address_weaknesses && 
+             strategyData.competitive_analysis.swot_competitive_insights.address_weaknesses.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.warning, fontWeight: 600, mb: 1 }}>
+                  Address Weaknesses ({strategyData.competitive_analysis.swot_competitive_insights.address_weaknesses.length})
+                </Typography>
+                <List dense>
+                  {strategyData.competitive_analysis.swot_competitive_insights.address_weaknesses.map((weakness: string, index: number) => (
+                    <ListItem key={index} sx={listItemStyles.listItem}>
+                      <ListItemIcon sx={listItemStyles.listItemIcon}>
+                        <Box sx={{ 
+                          width: 6, 
+                          height: 6, 
+                          borderRadius: '50%', 
+                          background: ANALYSIS_CARD_STYLES.colors.warning,
+                          opacity: 0.7
+                        }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={weakness}
+                        primaryTypographyProps={{ 
+                          variant: 'body2', 
+                          fontSize: '0.875rem',
+                          sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                        }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+
+            {/* Capitalize Opportunities */}
+            {strategyData.competitive_analysis.swot_competitive_insights.capitalize_opportunities && 
+             strategyData.competitive_analysis.swot_competitive_insights.capitalize_opportunities.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.info, fontWeight: 600, mb: 1 }}>
+                  Capitalize Opportunities ({strategyData.competitive_analysis.swot_competitive_insights.capitalize_opportunities.length})
+                </Typography>
+                <List dense>
+                  {strategyData.competitive_analysis.swot_competitive_insights.capitalize_opportunities.map((opportunity: string, index: number) => (
+                    <ListItem key={index} sx={listItemStyles.listItem}>
+                      <ListItemIcon sx={listItemStyles.listItemIcon}>
+                        <Box sx={{ 
+                          width: 6, 
+                          height: 6, 
+                          borderRadius: '50%', 
+                          background: ANALYSIS_CARD_STYLES.colors.info,
+                          opacity: 0.7
+                        }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={opportunity}
+                        primaryTypographyProps={{ 
+                          variant: 'body2', 
+                          fontSize: '0.875rem',
+                          sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                        }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+
+            {/* Mitigate Threats */}
+            {strategyData.competitive_analysis.swot_competitive_insights.mitigate_threats && 
+             strategyData.competitive_analysis.swot_competitive_insights.mitigate_threats.length > 0 && (
+              <Box>
+                <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.error, fontWeight: 600, mb: 1 }}>
+                  Mitigate Threats ({strategyData.competitive_analysis.swot_competitive_insights.mitigate_threats.length})
+                </Typography>
+                <List dense>
+                  {strategyData.competitive_analysis.swot_competitive_insights.mitigate_threats.map((threat: string, index: number) => (
+                    <ListItem key={index} sx={listItemStyles.listItem}>
+                      <ListItemIcon sx={listItemStyles.listItemIcon}>
+                        <Box sx={{ 
+                          width: 6, 
+                          height: 6, 
+                          borderRadius: '50%', 
+                          background: ANALYSIS_CARD_STYLES.colors.error,
+                          opacity: 0.7
+                        }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={threat}
+                        primaryTypographyProps={{ 
+                          variant: 'body2', 
+                          fontSize: '0.875rem',
+                          sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                        }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 

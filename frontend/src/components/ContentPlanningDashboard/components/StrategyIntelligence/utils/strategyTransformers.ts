@@ -11,18 +11,175 @@ export const getUserId = (): number => {
  * Transform polling system strategy data to frontend format
  */
 export const transformPollingStrategyData = (strategyData: any): StrategyData => {
-  return {
-    ...strategyData,
+  console.log('🔄 Transforming polling strategy data:', strategyData);
+  console.log('🔄 Strategy data type:', typeof strategyData);
+  console.log('🔄 Strategy data keys:', Object.keys(strategyData || {}));
+  
+  // Extract the actual strategy components from the backend structure
+  const strategicInsights = strategyData.strategic_insights;
+  const competitiveAnalysis = strategyData.competitive_analysis;
+  const performancePredictions = strategyData.performance_predictions;
+  const implementationRoadmap = strategyData.implementation_roadmap;
+  const riskAssessment = strategyData.risk_assessment;
+  
+  console.log('📊 Extracted components:', {
+    hasStrategicInsights: !!strategicInsights,
+    hasCompetitiveAnalysis: !!competitiveAnalysis,
+    hasPerformancePredictions: !!performancePredictions,
+    hasImplementationRoadmap: !!implementationRoadmap,
+    hasRiskAssessment: !!riskAssessment
+  });
+
+  console.log('🔍 Strategic Insights Raw Data:', strategicInsights);
+  console.log('🔍 Competitive Analysis Raw Data:', competitiveAnalysis);
+  console.log('🔍 Performance Predictions Raw Data:', performancePredictions);
+  console.log('🔍 Implementation Roadmap Raw Data:', implementationRoadmap);
+  console.log('🔍 Risk Assessment Raw Data:', riskAssessment);
+
+  const transformedData = {
+    // Map metadata
     strategy_metadata: strategyData.metadata || strategyData.strategy_metadata,
-    // Add summary if not present
+    metadata: strategyData.metadata || strategyData.strategy_metadata,
+    
+    // Transform Strategic Insights - map the actual backend structure
+    strategic_insights: strategicInsights ? {
+      market_positioning: {
+        positioning_strength: strategicInsights.market_positioning?.positioning_strength || 75,
+        current_position: strategicInsights.market_positioning?.current_position || "Emerging",
+        swot_analysis: {
+          strengths: strategicInsights.market_positioning?.swot_analysis?.strengths || [],
+          opportunities: strategicInsights.market_positioning?.swot_analysis?.opportunities || []
+        }
+      },
+      content_opportunities: strategicInsights.content_opportunities || [],
+      growth_potential: {
+        market_size: strategicInsights.growth_potential?.market_size || "Growing",
+        growth_rate: strategicInsights.growth_potential?.growth_rate || "High",
+        key_drivers: strategicInsights.growth_potential?.key_drivers || [],
+        competitive_advantages: strategicInsights.growth_potential?.competitive_advantages || []
+      },
+      swot_summary: {
+        overall_score: strategicInsights.swot_summary?.overall_score || 75,
+        primary_strengths: strategicInsights.swot_summary?.primary_strengths || [],
+        key_opportunities: strategicInsights.swot_summary?.key_opportunities || []
+      },
+      // Add insights array if it exists in the backend data
+      insights: strategicInsights.insights || []
+    } : undefined,
+    
+    // Transform Competitive Analysis - map the actual backend structure
+    competitive_analysis: competitiveAnalysis ? {
+      competitors: competitiveAnalysis.competitors || [],
+      market_gaps: competitiveAnalysis.market_gaps || [],
+      opportunities: competitiveAnalysis.opportunities || [],
+      recommendations: competitiveAnalysis.recommendations || [],
+      competitive_advantages: {
+        primary: competitiveAnalysis.competitive_advantages?.primary || [],
+        sustainable: competitiveAnalysis.competitive_advantages?.sustainable || [],
+        development_areas: competitiveAnalysis.competitive_advantages?.development_areas || []
+      },
+      swot_competitive_insights: {
+        leverage_strengths: competitiveAnalysis.swot_competitive_insights?.leverage_strengths || [],
+        address_weaknesses: competitiveAnalysis.swot_competitive_insights?.address_weaknesses || [],
+        capitalize_opportunities: competitiveAnalysis.swot_competitive_insights?.capitalize_opportunities || [],
+        mitigate_threats: competitiveAnalysis.swot_competitive_insights?.mitigate_threats || []
+      }
+    } : undefined,
+    
+    // Transform Performance Predictions - map the actual backend structure
+    performance_predictions: performancePredictions ? {
+      estimated_roi: performancePredictions.estimated_roi || "15-25%",
+      key_metrics: {
+        engagement_rate: performancePredictions.engagement_metrics?.time_on_page || "3-5 minutes",
+        conversion_rate: performancePredictions.conversion_predictions?.lead_generation || "5-8%",
+        reach_growth: performancePredictions.traffic_growth?.month_12 || "100%",
+        brand_awareness: performancePredictions.engagement_metrics?.social_shares || "15-25 per post",
+        market_share: performancePredictions.success_probability || "85%"
+      },
+      timeline_projections: {
+        "month_1": "Initial setup and content creation",
+        "month_3": performancePredictions.traffic_growth?.month_3 || "25% growth",
+        "month_6": performancePredictions.traffic_growth?.month_6 || "50% growth",
+        "month_12": performancePredictions.traffic_growth?.month_12 || "100% growth"
+      },
+      success_factors: {
+        primary: performancePredictions.conversion_predictions ? [
+          `Lead generation: ${performancePredictions.conversion_predictions.lead_generation}`,
+          `Email signups: ${performancePredictions.conversion_predictions.email_signups}`,
+          `Content downloads: ${performancePredictions.conversion_predictions.content_downloads}`
+        ] : [],
+        secondary: performancePredictions.engagement_metrics ? [
+          `Time on page: ${performancePredictions.engagement_metrics.time_on_page}`,
+          `Bounce rate: ${performancePredictions.engagement_metrics.bounce_rate}`
+        ] : [],
+        risk_mitigation: performancePredictions.success_probability ? [
+          `Success probability: ${performancePredictions.success_probability}`
+        ] : []
+      },
+      swot_based_predictions: {
+        strength_impact: "High positive impact from identified strengths",
+        opportunity_impact: "Significant growth potential from market opportunities",
+        weakness_mitigation: "Addressing weaknesses through strategic content planning",
+        threat_management: "Proactive threat management through diversified approach"
+      }
+    } : undefined,
+    
+    // Transform Implementation Roadmap - map the actual backend structure
+    implementation_roadmap: implementationRoadmap ? {
+      timeline: implementationRoadmap.timeline || "12 months",
+      phases: implementationRoadmap.phases || [],
+      milestones: implementationRoadmap.milestones || [],
+      resource_requirements: implementationRoadmap.resource_requirements || [],
+      critical_path: implementationRoadmap.critical_path || [],
+      success_metrics: implementationRoadmap.success_metrics || [],
+      timeline_object: {
+        start_date: "2024-09-01",
+        end_date: "2025-08-31",
+        key_milestones: implementationRoadmap.milestones || []
+      },
+      resource_allocation: {
+        team_members: implementationRoadmap.resource_requirements || [],
+        team_requirements: implementationRoadmap.resource_requirements || [],
+        budget_allocation: {
+          total_budget: "$60,000",
+          content_creation: "$30,000",
+          technology_tools: "$5,000",
+          marketing_promotion: "$20,000",
+          external_resources: "$5,000"
+        },
+        swot_priorities: {
+          high_priority: implementationRoadmap.success_metrics?.slice(0, 3) || [],
+          medium_priority: implementationRoadmap.success_metrics?.slice(3, 6) || [],
+          low_priority: implementationRoadmap.success_metrics?.slice(6, 9) || []
+        }
+      }
+    } : undefined,
+    
+    // Transform Risk Assessment - map the actual backend structure
+    risk_assessment: riskAssessment ? {
+      overall_risk_level: riskAssessment.overall_risk_level || "Medium",
+      risks: riskAssessment.risks || [],
+      risk_categories: {
+        market_risks: riskAssessment.risk_categories?.market_risks || [],
+        operational_risks: riskAssessment.risk_categories?.operational_risks || [],
+        competitive_risks: riskAssessment.risk_categories?.competitive_risks || [],
+        technical_risks: riskAssessment.risk_categories?.technical_risks || [],
+        financial_risks: riskAssessment.risk_categories?.financial_risks || []
+      }
+    } : undefined,
+    
+    // Add summary
     summary: strategyData.summary || {
-      estimated_roi: strategyData.performance_predictions?.estimated_roi || "15-25%",
-      implementation_timeline: strategyData.implementation_roadmap?.total_duration || "12 months",
-      risk_level: strategyData.risk_assessment?.overall_risk_level || "Medium",
-      success_probability: strategyData.performance_predictions?.success_probability || "85%",
+      estimated_roi: performancePredictions?.estimated_roi || "15-25%",
+      implementation_timeline: implementationRoadmap?.timeline || "12 months",
+      risk_level: riskAssessment?.overall_risk_level || "Medium",
+      success_probability: performancePredictions?.success_probability || "85%",
       next_step: "Review strategy and generate content calendar"
     }
   };
+
+  console.log('✅ Transformed Polling Strategy Data:', transformedData);
+  return transformedData;
 };
 
 /**
@@ -115,21 +272,22 @@ export const transformFullStructureData = (latestStrategy: any): StrategyData =>
     
     // Transform Implementation Roadmap
     implementation_roadmap: comprehensiveData.implementation_roadmap ? {
-      total_duration: comprehensiveData.implementation_roadmap.total_duration || "6 months",
+      timeline: comprehensiveData.implementation_roadmap.timeline || "6 months",
       phases: comprehensiveData.implementation_roadmap.phases || [],
+      milestones: comprehensiveData.implementation_roadmap.milestones || [],
+      resource_requirements: comprehensiveData.implementation_roadmap.resource_requirements || [],
+      critical_path: comprehensiveData.implementation_roadmap.critical_path || [],
       success_metrics: comprehensiveData.implementation_roadmap.success_metrics || [],
-      timeline: comprehensiveData.implementation_roadmap.timeline || {
+      timeline_object: comprehensiveData.implementation_roadmap.timeline_object || {
         start_date: "2024-09-01",
         end_date: "2025-02-28",
         key_milestones: []
       },
       resource_allocation: {
         team_members: comprehensiveData.implementation_roadmap.resource_allocation?.team_members || 
-                     comprehensiveData.implementation_roadmap.resource_allocation?.team_requirements || 
-                     ["Content Strategist", "SEO Specialist", "Content Writer", "Editor"],
+                     comprehensiveData.implementation_roadmap.resource_allocation?.team_requirements || [],
         team_requirements: comprehensiveData.implementation_roadmap.resource_allocation?.team_requirements || 
-                          comprehensiveData.implementation_roadmap.resource_allocation?.team_members || 
-                          ["Content Strategist", "SEO Specialist", "Content Writer", "Editor"],
+                          comprehensiveData.implementation_roadmap.resource_allocation?.team_members || [],
         budget_allocation: comprehensiveData.implementation_roadmap.resource_allocation?.budget_allocation || {
           total_budget: "$60,000",
           content_creation: "$30,000",
@@ -290,7 +448,7 @@ export const transformSwotToComprehensiveStructure = (latestStrategy: any): Stra
     },
     // Enhanced Implementation Roadmap with SWOT considerations
     implementation_roadmap: {
-      total_duration: "12 months",
+      timeline: "12 months",
       phases: [
         {
           phase: "Foundation (Months 1-3)",
@@ -329,8 +487,36 @@ export const transformSwotToComprehensiveStructure = (latestStrategy: any): Stra
           swot_focus: "Strengths and Weaknesses"
         }
       ],
+      milestones: [
+        "Brand guidelines", "Content calendar", "SWOT action plan",
+        "Content library", "Engaged audience", "Risk management framework",
+        "Market leadership", "Optimized strategy", "Long-term competitive position"
+      ],
+      resource_requirements: [
+        "Content Strategist", "SEO Specialist", "Content Writer", "Editor", "Marketing Manager"
+      ],
+      critical_path: [
+        "Brand positioning leveraging identified strengths",
+        "Content execution based on competitive advantages",
+        "Market expansion capitalizing on strengths"
+      ],
+      success_metrics: [
+        "Brand guidelines", "Content calendar", "SWOT action plan",
+        "Content library", "Engaged audience", "Risk management framework",
+        "Market leadership", "Optimized strategy", "Long-term competitive position"
+      ],
+      timeline_object: {
+        start_date: "2024-01-01",
+        end_date: "2024-12-31",
+        key_milestones: [
+          "Brand guidelines", "Content calendar", "SWOT action plan",
+          "Content library", "Engaged audience", "Risk management framework",
+          "Market leadership", "Optimized strategy", "Long-term competitive position"
+        ]
+      },
       resource_allocation: {
         team_members: ["Content Strategist", "SEO Specialist", "Content Writer", "Editor", "Marketing Manager"],
+        team_requirements: ["Content Strategist", "SEO Specialist", "Content Writer", "Editor", "Marketing Manager"],
         budget_allocation: {
           total_budget: "$60,000",
           content_creation: "$30,000",
@@ -343,12 +529,6 @@ export const transformSwotToComprehensiveStructure = (latestStrategy: any): Stra
           medium_priority: swotData.strengths || [],
           low_priority: swotData.weaknesses || []
         }
-      },
-      swot_integration: {
-        strength_leverage: swotData.strengths || [],
-        weakness_improvement: swotData.weaknesses || [],
-        opportunity_capitalization: swotData.opportunities || [],
-        threat_mitigation: swotData.threats || []
       }
     },
     // Enhanced Risk Assessment with SWOT threats

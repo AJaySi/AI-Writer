@@ -278,13 +278,13 @@ const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({ strategyData })
           </Typography>
           <Box sx={sectionStyles.sectionContainer}>
             <List dense>
-              {strategyData.risk_assessment.mitigation_strategies.map((strategy: string, index: number) => (
+              {strategyData.risk_assessment.mitigation_strategies.map((strategy: any, index: number) => (
                 <ListItem key={index} sx={listItemStyles.listItem}>
                   <ListItemIcon sx={listItemStyles.listItemIcon}>
                     <CheckCircleIcon sx={{ color: ANALYSIS_CARD_STYLES.colors.success, fontSize: 16 }} />
                   </ListItemIcon>
                   <ListItemText 
-                    primary={strategy}
+                    primary={typeof strategy === 'string' ? strategy : strategy.mitigation || strategy.risk || 'Mitigation strategy'}
                     primaryTypographyProps={{ 
                       variant: 'body2', 
                       fontSize: '0.875rem',
@@ -305,31 +305,36 @@ const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({ strategyData })
             Risk Categories
           </Typography>
           
-          {Object.entries(strategyData.risk_assessment.risk_categories).map(([category, risks]: [string, any]) => (
-            <Accordion key={category} defaultExpanded={false} sx={accordionStyles.accordion}>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon sx={accordionStyles.expandIcon} />}
-                sx={accordionStyles.accordionSummary}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                  <Box sx={{ mr: 1.5 }}>
-                    <WarningIcon sx={{ color: ANALYSIS_CARD_STYLES.colors.warning, fontSize: 20 }} />
+          {Object.entries(strategyData.risk_assessment.risk_categories).map(([category, risks]: [string, any]) => {
+            // Skip empty arrays or null values
+            if (!risks || !Array.isArray(risks) || risks.length === 0) {
+              return null;
+            }
+            
+            return (
+              <Accordion key={category} defaultExpanded={false} sx={accordionStyles.accordion}>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon sx={accordionStyles.expandIcon} />}
+                  sx={accordionStyles.accordionSummary}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                    <Box sx={{ mr: 1.5 }}>
+                      <WarningIcon sx={{ color: ANALYSIS_CARD_STYLES.colors.warning, fontSize: 20 }} />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body2" sx={accordionStyles.accordionTitle}>
+                        {category.replace(/_/g, ' ')}
+                      </Typography>
+                      <Typography variant="caption" sx={accordionStyles.accordionSubtitle}>
+                        {risks.length} risks
+                      </Typography>
+                    </Box>
                   </Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="body2" sx={accordionStyles.accordionTitle}>
-                      {category.replace(/_/g, ' ')}
-                    </Typography>
-                    <Typography variant="caption" sx={accordionStyles.accordionSubtitle}>
-                      {Array.isArray(risks) ? `${risks.length} risks` : 'Risk category'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails sx={{ pt: 0 }}>
-                <Box sx={sectionStyles.sectionContainer}>
-                  {Array.isArray(risks) ? (
+                </AccordionSummary>
+                <AccordionDetails sx={{ pt: 0 }}>
+                  <Box sx={sectionStyles.sectionContainer}>
                     <List dense>
-                      {risks.map((risk: string, index: number) => (
+                      {risks.map((risk: any, index: number) => (
                         <ListItem key={index} sx={listItemStyles.listItem}>
                           <ListItemIcon sx={listItemStyles.listItemIcon}>
                             <Box sx={{ 
@@ -341,7 +346,7 @@ const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({ strategyData })
                             }} />
                           </ListItemIcon>
                           <ListItemText 
-                            primary={risk}
+                            primary={typeof risk === 'string' ? risk : risk.risk || 'Risk'}
                             primaryTypographyProps={{ 
                               variant: 'body2', 
                               fontSize: '0.875rem',
@@ -351,35 +356,38 @@ const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({ strategyData })
                         </ListItem>
                       ))}
                     </List>
-                  ) : (
-                    <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, fontSize: '0.875rem' }}>
-                      {typeof risks === 'string' ? risks : 'Risk category details'}
-                    </Typography>
-                  )}
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-          ))}
+                  </Box>
+                </AccordionDetails>
+              </Accordion>
+            );
+          })}
         </Box>
       )}
 
       {/* Monitoring Framework */}
-      {strategyData.risk_assessment.monitoring_framework && (
+      {strategyData.risk_assessment.monitoring_framework && Object.keys(strategyData.risk_assessment.monitoring_framework).length > 0 && (
         <Box sx={{ mb: 3 }}>
           <Typography variant="subtitle2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, mb: 2, fontWeight: 600 }}>
             Monitoring Framework
           </Typography>
           <Box sx={sectionStyles.sectionContainer}>
-            {Object.entries(strategyData.risk_assessment.monitoring_framework).map(([key, value]: [string, any]) => (
-              <Box key={key} sx={{ mb: 1 }}>
-                <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.primary, fontWeight: 600, mb: 0.5 }}>
-                  {key.replace(/_/g, ' ')}
-                </Typography>
-                <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, fontSize: '0.875rem' }}>
-                  {typeof value === 'string' ? value : JSON.stringify(value)}
-                </Typography>
-              </Box>
-            ))}
+            {Object.entries(strategyData.risk_assessment.monitoring_framework).map(([key, value]: [string, any]) => {
+              // Skip empty values
+              if (!value || (Array.isArray(value) && value.length === 0)) {
+                return null;
+              }
+              
+              return (
+                <Box key={key} sx={{ mb: 1 }}>
+                  <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.primary, fontWeight: 600, mb: 0.5 }}>
+                    {key.replace(/_/g, ' ')}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, fontSize: '0.875rem' }}>
+                    {typeof value === 'string' ? value : JSON.stringify(value)}
+                  </Typography>
+                </Box>
+              );
+            })}
           </Box>
         </Box>
       )}

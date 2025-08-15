@@ -20,15 +20,13 @@ import {
   Business as BusinessIcon,
   Analytics as AnalyticsIcon
 } from '@mui/icons-material';
-import { motion } from 'framer-motion';
 import { StrategyData } from '../types/strategy.types';
 import {
   ANALYSIS_CARD_STYLES,
   getSectionStyles,
   getAccordionStyles,
   getEnhancedChipStyles,
-  getListItemStyles,
-  getAnimationStyles
+  getListItemStyles
 } from '../styles';
 import ProgressiveCard from './ProgressiveCard';
 
@@ -41,10 +39,16 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
   const sectionStyles = getSectionStyles();
   const accordionStyles = getAccordionStyles();
   const listItemStyles = getListItemStyles();
-  const animationStyles = getAnimationStyles();
 
   console.log('🔍 StrategicInsightsCard - strategyData:', strategyData);
   console.log('🔍 StrategicInsightsCard - strategic_insights:', strategyData?.strategic_insights);
+  console.log('🔍 StrategicInsightsCard - market_positioning:', strategyData?.strategic_insights?.market_positioning);
+  console.log('🔍 StrategicInsightsCard - swot_analysis:', strategyData?.strategic_insights?.market_positioning?.swot_analysis);
+  console.log('🔍 StrategicInsightsCard - strengths:', strategyData?.strategic_insights?.market_positioning?.swot_analysis?.strengths);
+  console.log('🔍 StrategicInsightsCard - opportunities:', strategyData?.strategic_insights?.market_positioning?.swot_analysis?.opportunities);
+  console.log('🔍 StrategicInsightsCard - content_opportunities:', strategyData?.strategic_insights?.content_opportunities);
+  console.log('🔍 StrategicInsightsCard - growth_potential:', strategyData?.strategic_insights?.growth_potential);
+  console.log('🔍 StrategicInsightsCard - swot_summary:', strategyData?.strategic_insights?.swot_summary);
 
   if (!strategyData?.strategic_insights) {
     return (
@@ -105,25 +109,27 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
               fontWeight: 600,
               boxShadow: `0 4px 12px ${ANALYSIS_CARD_STYLES.colors.success}30`
             }}>
-              85%
+              {strategyData.strategic_insights.market_positioning?.positioning_strength || 
+               strategyData.strategic_insights.swot_summary?.overall_score || 
+               85}%
             </Box>
             <Box>
               <Typography variant="h6" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, fontWeight: 600 }}>
                 Market Analysis
               </Typography>
               <Typography variant="caption" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
-                Strong market positioning identified
+                {strategyData.strategic_insights.market_positioning?.current_position || 'Strong'} market positioning identified
               </Typography>
             </Box>
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Chip 
-              label="High Growth"
+              label={strategyData.strategic_insights.growth_potential?.growth_rate || "High Growth"}
               size="small"
               sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.success).chip}
             />
             <Chip 
-              label="6 months"
+              label={strategyData.strategic_insights.growth_potential?.market_size || "Growing Market"}
               size="small"
               sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.info).chip}
             />
@@ -137,22 +143,52 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
           Key Insights Preview
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          {strategyData.strategic_insights.insights?.slice(0, 3).map((insight: any, index: number) => (
+          {/* Show content opportunities as key insights */}
+          {strategyData.strategic_insights.content_opportunities?.slice(0, 2).map((opportunity: string, index: number) => (
             <Chip
-              key={index}
-              label={insight.type}
+              key={`content-${index}`}
+              label={`Opportunity ${index + 1}`}
               size="small"
-              icon={getInsightIcon(insight.type)}
-              sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.primary).chip}
+              icon={<LightbulbIcon />}
+              sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.success).chip}
             />
           ))}
-          {(strategyData.strategic_insights.insights?.length || 0) > 3 && (
+          {/* Show growth drivers as key insights */}
+          {strategyData.strategic_insights.growth_potential?.key_drivers?.slice(0, 1).map((driver: string, index: number) => (
             <Chip
-              label={`+${(strategyData.strategic_insights.insights?.length || 0) - 3} more`}
+              key={`driver-${index}`}
+              label="Growth Driver"
               size="small"
-              sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.secondary).chip}
+              icon={<TrendingUpIcon />}
+              sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.warning).chip}
             />
-          )}
+          ))}
+          {/* Show SWOT insights */}
+          {(() => {
+            const strengthsLength = strategyData.strategic_insights.market_positioning?.swot_analysis?.strengths?.length || 0;
+            const opportunitiesLength = strategyData.strategic_insights.market_positioning?.swot_analysis?.opportunities?.length || 0;
+            
+            return (
+              <>
+                {strengthsLength > 0 && (
+                  <Chip
+                    label={`${strengthsLength} Strengths`}
+                    size="small"
+                    icon={<AnalyticsIcon />}
+                    sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.primary).chip}
+                  />
+                )}
+                {opportunitiesLength > 0 && (
+                  <Chip
+                    label={`${opportunitiesLength} Opportunities`}
+                    size="small"
+                    icon={<PsychologyIcon />}
+                    sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.info).chip}
+                  />
+                )}
+              </>
+            );
+          })()}
         </Box>
       </Box>
     </Box>
@@ -161,6 +197,244 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
   // Detailed content - shown on expansion
   const detailedContent = (
     <Box>
+      {/* Market Positioning */}
+      {strategyData.strategic_insights.market_positioning && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, mb: 2, fontWeight: 600 }}>
+            Market Positioning
+          </Typography>
+          <Box sx={sectionStyles.sectionContainer}>
+            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+              <Chip 
+                label={`Position: ${strategyData.strategic_insights.market_positioning.current_position}`}
+                size="small"
+                sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.primary).chip}
+              />
+              <Chip 
+                label={`Strength: ${strategyData.strategic_insights.market_positioning.positioning_strength}%`}
+                size="small"
+                sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.success).chip}
+              />
+            </Box>
+            
+            {/* SWOT Analysis */}
+            {strategyData.strategic_insights.market_positioning.swot_analysis && (
+              <Box>
+                <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, mb: 1, fontWeight: 500 }}>
+                  SWOT Analysis
+                </Typography>
+                
+                {/* Strengths */}
+                {strategyData.strategic_insights.market_positioning.swot_analysis.strengths && 
+                 strategyData.strategic_insights.market_positioning.swot_analysis.strengths.length > 0 && (
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="caption" sx={{ color: ANALYSIS_CARD_STYLES.colors.success, fontWeight: 600, display: 'block', mb: 1 }}>
+                      Strengths ({strategyData.strategic_insights.market_positioning.swot_analysis.strengths.length})
+                    </Typography>
+                    <List dense>
+                      {strategyData.strategic_insights.market_positioning.swot_analysis.strengths.map((strength: string, index: number) => (
+                        <ListItem key={index} sx={listItemStyles.listItem}>
+                          <ListItemIcon sx={listItemStyles.listItemIcon}>
+                            <Box sx={{ 
+                              width: 6, 
+                              height: 6, 
+                              borderRadius: '50%', 
+                              background: ANALYSIS_CARD_STYLES.colors.success,
+                              opacity: 0.7
+                            }} />
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary={strength}
+                            primaryTypographyProps={{ 
+                              variant: 'body2', 
+                              fontSize: '0.875rem',
+                              sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                            }}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+                )}
+                
+                {/* Opportunities */}
+                {strategyData.strategic_insights.market_positioning.swot_analysis.opportunities && 
+                 strategyData.strategic_insights.market_positioning.swot_analysis.opportunities.length > 0 && (
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="caption" sx={{ color: ANALYSIS_CARD_STYLES.colors.info, fontWeight: 600, display: 'block', mb: 1 }}>
+                      Opportunities ({strategyData.strategic_insights.market_positioning.swot_analysis.opportunities.length})
+                    </Typography>
+                    <List dense>
+                      {strategyData.strategic_insights.market_positioning.swot_analysis.opportunities.map((opportunity: string, index: number) => (
+                        <ListItem key={index} sx={listItemStyles.listItem}>
+                          <ListItemIcon sx={listItemStyles.listItemIcon}>
+                            <Box sx={{ 
+                              width: 6, 
+                              height: 6, 
+                              borderRadius: '50%', 
+                              background: ANALYSIS_CARD_STYLES.colors.info,
+                              opacity: 0.7
+                            }} />
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary={opportunity}
+                            primaryTypographyProps={{ 
+                              variant: 'body2', 
+                              fontSize: '0.875rem',
+                              sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                            }}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+                )}
+              </Box>
+            )}
+          </Box>
+        </Box>
+      )}
+
+      {/* Growth Potential */}
+      {strategyData.strategic_insights.growth_potential && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, mb: 2, fontWeight: 600 }}>
+            Growth Potential
+          </Typography>
+          <Box sx={sectionStyles.sectionContainer}>
+            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+              <Chip 
+                label={`Market: ${strategyData.strategic_insights.growth_potential.market_size}`}
+                size="small"
+                sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.primary).chip}
+              />
+              <Chip 
+                label={`Growth: ${strategyData.strategic_insights.growth_potential.growth_rate}`}
+                size="small"
+                sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.success).chip}
+              />
+            </Box>
+            
+            {/* Key Drivers */}
+            {strategyData.strategic_insights.growth_potential.key_drivers && 
+             strategyData.strategic_insights.growth_potential.key_drivers.length > 0 && (
+              <Box>
+                <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, mb: 1, fontWeight: 500 }}>
+                  Key Growth Drivers ({strategyData.strategic_insights.growth_potential.key_drivers.length})
+                </Typography>
+                <List dense>
+                  {strategyData.strategic_insights.growth_potential.key_drivers.map((driver: string, index: number) => (
+                    <ListItem key={index} sx={listItemStyles.listItem}>
+                      <ListItemIcon sx={listItemStyles.listItemIcon}>
+                        <Box sx={{ 
+                          width: 6, 
+                          height: 6, 
+                          borderRadius: '50%', 
+                          background: ANALYSIS_CARD_STYLES.colors.warning,
+                          opacity: 0.7
+                        }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={driver}
+                        primaryTypographyProps={{ 
+                          variant: 'body2', 
+                          fontSize: '0.875rem',
+                          sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                        }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+          </Box>
+        </Box>
+      )}
+
+      {/* SWOT Summary */}
+      {strategyData.strategic_insights.swot_summary && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, mb: 2, fontWeight: 600 }}>
+            SWOT Summary
+          </Typography>
+          <Box sx={sectionStyles.sectionContainer}>
+            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+              <Chip 
+                label={`Overall Score: ${strategyData.strategic_insights.swot_summary.overall_score}%`}
+                size="small"
+                sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.success).chip}
+              />
+            </Box>
+            
+            {/* Primary Strengths */}
+            {strategyData.strategic_insights.swot_summary.primary_strengths && 
+             strategyData.strategic_insights.swot_summary.primary_strengths.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.success, fontWeight: 600, mb: 1 }}>
+                  Primary Strengths ({strategyData.strategic_insights.swot_summary.primary_strengths.length})
+                </Typography>
+                <List dense>
+                  {strategyData.strategic_insights.swot_summary.primary_strengths.map((strength: string, index: number) => (
+                    <ListItem key={index} sx={listItemStyles.listItem}>
+                      <ListItemIcon sx={listItemStyles.listItemIcon}>
+                        <Box sx={{ 
+                          width: 6, 
+                          height: 6, 
+                          borderRadius: '50%', 
+                          background: ANALYSIS_CARD_STYLES.colors.success,
+                          opacity: 0.7
+                        }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={strength}
+                        primaryTypographyProps={{ 
+                          variant: 'body2', 
+                          fontSize: '0.875rem',
+                          sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                        }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+            
+            {/* Key Opportunities */}
+            {strategyData.strategic_insights.swot_summary.key_opportunities && 
+             strategyData.strategic_insights.swot_summary.key_opportunities.length > 0 && (
+              <Box>
+                <Typography variant="body2" sx={{ color: ANALYSIS_CARD_STYLES.colors.info, fontWeight: 600, mb: 1 }}>
+                  Key Opportunities ({strategyData.strategic_insights.swot_summary.key_opportunities.length})
+                </Typography>
+                <List dense>
+                  {strategyData.strategic_insights.swot_summary.key_opportunities.map((opportunity: string, index: number) => (
+                    <ListItem key={index} sx={listItemStyles.listItem}>
+                      <ListItemIcon sx={listItemStyles.listItemIcon}>
+                        <Box sx={{ 
+                          width: 6, 
+                          height: 6, 
+                          borderRadius: '50%', 
+                          background: ANALYSIS_CARD_STYLES.colors.info,
+                          opacity: 0.7
+                        }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={opportunity}
+                        primaryTypographyProps={{ 
+                          variant: 'body2', 
+                          fontSize: '0.875rem',
+                          sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                        }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+          </Box>
+        </Box>
+      )}
+
       {/* Strategic Insights by Type */}
       {strategyData.strategic_insights.insights && strategyData.strategic_insights.insights.length > 0 && (
         <Box sx={{ mb: 3 }}>

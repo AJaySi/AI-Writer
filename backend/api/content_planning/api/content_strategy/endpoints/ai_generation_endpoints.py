@@ -659,14 +659,19 @@ async def get_latest_generated_strategy(
             from models.enhanced_strategy_models import EnhancedContentStrategy
             from sqlalchemy import desc
             
+            logger.info(f"🔍 Querying database for strategies with user_id: {user_id}")
+            
             # Query for the most recent strategy with comprehensive AI analysis
             latest_db_strategy = db.query(EnhancedContentStrategy).filter(
                 EnhancedContentStrategy.user_id == user_id,
                 EnhancedContentStrategy.comprehensive_ai_analysis.isnot(None)
             ).order_by(desc(EnhancedContentStrategy.created_at)).first()
             
+            logger.info(f"🔍 Database query result: {latest_db_strategy}")
+            
             if latest_db_strategy and latest_db_strategy.comprehensive_ai_analysis:
                 logger.info(f"✅ Found latest strategy in database: {latest_db_strategy.id}")
+                logger.info(f"🔍 Strategy comprehensive_ai_analysis keys: {list(latest_db_strategy.comprehensive_ai_analysis.keys()) if isinstance(latest_db_strategy.comprehensive_ai_analysis, dict) else 'Not a dict'}")
                 return ResponseBuilder.create_success_response(
                     message="Latest generated strategy retrieved successfully from database",
                     data={
@@ -676,8 +681,15 @@ async def get_latest_generated_strategy(
                         "strategy_id": latest_db_strategy.id
                     }
                 )
+            else:
+                logger.info(f"⚠️ No strategy found in database for user: {user_id}")
+                if latest_db_strategy:
+                    logger.info(f"🔍 Strategy found but no comprehensive_ai_analysis: {latest_db_strategy.id}")
+                else:
+                    logger.info(f"🔍 No strategy record found at all for user: {user_id}")
         except Exception as db_error:
             logger.warning(f"⚠️ Database query failed: {str(db_error)}")
+            logger.error(f"❌ Database error details: {type(db_error).__name__}: {str(db_error)}")
         
         # Fallback: Check in-memory task status
         if not hasattr(generate_comprehensive_strategy_polling, '_task_status'):
@@ -705,6 +717,7 @@ async def get_latest_generated_strategy(
                 
                 completion_time = task_status.get("completed_at")
                 logger.info(f"✅ Found completed strategy for user {user_id} at {completion_time}")
+                logger.info(f"🔍 Strategy keys: {list(task_status.get('strategy', {}).keys())}")
                 
                 if completion_time and (latest_completion_time is None or completion_time > latest_completion_time):
                     latest_strategy = task_status.get("strategy")
@@ -726,7 +739,7 @@ async def get_latest_generated_strategy(
             return ResponseBuilder.create_not_found_response(
                 message="No completed strategy generation found",
                 data={"user_id": user_id, "strategy": None}
-        )
+            )
         
     except Exception as e:
         logger.error(f"❌ Error getting latest generated strategy: {str(e)}")

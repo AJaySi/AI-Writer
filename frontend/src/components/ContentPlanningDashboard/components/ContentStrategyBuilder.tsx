@@ -67,11 +67,15 @@ import EnterpriseDatapointsModal from './EnterpriseDatapointsModal';
 import { useCategoryReview } from './ContentStrategyBuilder/hooks/useCategoryReview';
 import { useProgressTracking } from './ContentStrategyBuilder/hooks/useProgressTracking';
 import { useAutoPopulation } from './ContentStrategyBuilder/hooks/useAutoPopulation';
-import { useActionButtonsBusinessLogic } from './ContentStrategyBuilder/components/ActionButtons';
+import { useModalManagement } from './ContentStrategyBuilder/hooks/useModalManagement';
+import { useAIRefresh } from './ContentStrategyBuilder/hooks/useAIRefresh';
+import { useEventHandlers } from './ContentStrategyBuilder/hooks/useEventHandlers';
+import { useStrategyCreation } from './ContentStrategyBuilder/hooks/useStrategyCreation';
 
 // Import extracted utilities
 import { getCategoryIcon, getCategoryColor, getCategoryName, getCategoryStatus } from './ContentStrategyBuilder/utils/categoryHelpers';
 import { getEducationalContent } from './ContentStrategyBuilder/utils/educationalContent';
+import { setupCSSAnimations, cleanupCSSAnimations } from './ContentStrategyBuilder/utils/cssAnimations';
 
 // Import extracted components
 import CategoryList from './ContentStrategyBuilder/components/CategoryList';
@@ -135,47 +139,78 @@ const ContentStrategyBuilder: React.FC = () => {
     personalizationData
   } = useEnhancedStrategyStore();
 
-  const [showTooltip, setShowTooltip] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [showEducationalInfo, setShowEducationalInfo] = useState<string | null>(null);
   const [showAIRecommendations, setShowAIRecommendations] = useState(false);
   const [showDataSourceTransparency, setShowDataSourceTransparency] = useState(false);
-  const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
-  const [refreshProgress, setRefreshProgress] = useState<number>(0);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [refreshError, setRefreshError] = useState<string | null>(null);
-  const [showEducationalModal, setShowEducationalModal] = useState(false);
   const [localEducationalContent, setLocalEducationalContent] = useState<any>(null);
-  const [showEnterpriseModal, setShowEnterpriseModal] = useState(false);
-  
-  // Persist enterprise modal state across hot reloads
-  useEffect(() => {
-    const savedModalState = sessionStorage.getItem('showEnterpriseModal');
-    if (savedModalState === 'true') {
-      console.log('🎯 Restoring enterprise modal state from sessionStorage');
-      setShowEnterpriseModal(true);
-    }
-  }, []);
-  
-  // Save modal state to sessionStorage when it changes
-  useEffect(() => {
-    sessionStorage.setItem('showEnterpriseModal', showEnterpriseModal.toString());
-  }, [showEnterpriseModal]);
-  
-  // Cleanup sessionStorage on component unmount
-  useEffect(() => {
-    return () => {
-      // Only clear if we're not in the middle of showing the modal
-      if (!showEnterpriseModal) {
-        sessionStorage.removeItem('showEnterpriseModal');
-      }
-    };
-  }, [showEnterpriseModal]);
   const [localGenerationProgress, setLocalGenerationProgress] = useState<number>(0);
   const [showAIRecModal, setShowAIRecModal] = useState(false);
 
   // Ref to track if we've already set the default category
   const hasSetDefaultCategory = useRef(false);
+
+  // Use extracted hooks
+  const {
+    showTooltip,
+    setShowTooltip,
+    activeCategory,
+    setActiveCategory,
+    showEducationalInfo,
+    setShowEducationalInfo,
+    handleReviewCategory,
+    handleShowEducationalInfo
+  } = useEventHandlers();
+
+  // Use strategy creation hook first
+  const { originalHandleCreateStrategy, handleSaveStrategy } = useStrategyCreation({
+    formData,
+    error,
+    currentStrategy,
+    setAIGenerating,
+    setError,
+    setCurrentStrategy,
+    setSaving,
+    setGenerationProgress: setStoreGenerationProgress,
+    setEducationalContent: setStoreEducationalContent,
+    setShowEducationalModal: () => {}, // Temporary placeholder
+    validateAllFields,
+    getCompletionStats,
+    generateAIRecommendations: (strategyId: string) => generateAIRecommendations(strategyId),
+    createEnhancedStrategy,
+    contentPlanningApi
+  });
+
+  const {
+    showEducationalModal,
+    setShowEducationalModal,
+    showEnterpriseModal,
+    setShowEnterpriseModal,
+    handleProceedWithCurrentStrategy,
+    handleAddEnterpriseDatapoints
+  } = useModalManagement({
+    aiGenerating,
+    originalHandleCreateStrategy
+  });
+
+  const {
+    refreshMessage,
+    setRefreshMessage,
+    refreshProgress,
+    setRefreshProgress,
+    isRefreshing,
+    setIsRefreshing,
+    refreshError,
+    setRefreshError,
+    handleAIRefresh
+  } = useAIRefresh({
+    setTransparencyModalOpen,
+    setIsGenerating,
+    setStoreGenerationProgress,
+    setCurrentPhase,
+    clearTransparencyMessages,
+    addTransparencyMessage,
+    setAIGenerating,
+    setError
+  });
 
   const completionStats = getCompletionStats();
   const completionPercentage = calculateCompletionPercentage();
@@ -205,24 +240,7 @@ const ContentStrategyBuilder: React.FC = () => {
     completionStats
   });
 
-  // Use ActionButtons business logic hook
-  const { handleCreateStrategy: originalHandleCreateStrategy, handleSaveStrategy } = useActionButtonsBusinessLogic({
-    formData,
-    error,
-    currentStrategy,
-    setAIGenerating,
-    setError,
-    setCurrentStrategy,
-    setSaving,
-    setGenerationProgress: setStoreGenerationProgress,
-    setEducationalContent: setStoreEducationalContent,
-    setShowEducationalModal,
-    validateAllFields,
-    getCompletionStats,
-    generateAIRecommendations,
-    createEnhancedStrategy,
-    contentPlanningApi
-  });
+
 
   // Enhanced handleCreateStrategy to show enterprise modal
   const handleCreateStrategy = () => {
@@ -264,51 +282,7 @@ const ContentStrategyBuilder: React.FC = () => {
     }
   };
 
-  // Handle proceed with current strategy (30 fields)
-  const handleProceedWithCurrentStrategy = async () => {
-    console.log('🎯 User clicked "Proceed with Current Strategy"');
-    setShowEnterpriseModal(false);
-    sessionStorage.removeItem('showEnterpriseModal'); // Clear sessionStorage
-    
-    // Add a small delay to ensure modal closes properly before showing educational modal
-    setTimeout(async () => {
-      console.log('🎯 Calling original handleCreateStrategy after enterprise modal closes');
-      try {
-        // Ensure we're not already generating
-        if (!aiGenerating) {
-          console.log('🎯 Starting strategy generation...');
-          await originalHandleCreateStrategy();
-        } else {
-          console.log('🎯 Already generating, skipping duplicate call');
-        }
-      } catch (error) {
-        console.error('🎯 Error in handleProceedWithCurrentStrategy:', error);
-      }
-    }, 300); // Increased delay to ensure modal closes completely
-  };
 
-  // Handle add enterprise datapoints (coming soon)
-  const handleAddEnterpriseDatapoints = async () => {
-    console.log('🎯 User clicked "Add Enterprise Datapoints"');
-    setShowEnterpriseModal(false);
-    sessionStorage.removeItem('showEnterpriseModal'); // Clear sessionStorage
-    
-    // For now, just proceed with current strategy
-    // In Phase 2, this will enable enterprise datapoints
-    setTimeout(async () => {
-      console.log('🎯 Calling original handleCreateStrategy for enterprise datapoints');
-      try {
-        // Ensure we're not already generating
-        if (!aiGenerating) {
-          await originalHandleCreateStrategy();
-        } else {
-          console.log('🎯 Already generating, skipping duplicate call');
-        }
-      } catch (error) {
-        console.error('🎯 Error in handleAddEnterpriseDatapoints:', error);
-      }
-    }, 200); // Increased delay to ensure modal closes completely
-  };
 
   // Auto-populate from onboarding on first load
   useEffect(() => {
@@ -375,37 +349,13 @@ const ContentStrategyBuilder: React.FC = () => {
 
   // Add CSS keyframes for pulse animation
   useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-        100% { transform: scale(1); }
-      }
-      @keyframes shimmer {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
-      }
-      @keyframes rotate {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-    `;
-    document.head.appendChild(style);
+    const style = setupCSSAnimations();
     return () => {
-      if (document.head.contains(style)) {
-        document.head.removeChild(style);
-      }
+      cleanupCSSAnimations(style);
     };
   }, []);
 
-  const handleReviewCategory = (categoryId: string) => {
-    setActiveCategory(activeCategory === categoryId ? null : categoryId);
-  };
 
-  const handleShowEducationalInfo = (categoryId: string) => {
-    setShowEducationalInfo(showEducationalInfo === categoryId ? null : categoryId);
-  };
 
   // Wrapper for the hook function to maintain the same interface
   const handleConfirmCategoryReviewWrapper = () => {
@@ -447,208 +397,7 @@ const ContentStrategyBuilder: React.FC = () => {
               onShowAIRecommendations={() => setShowAIRecommendations(true)}
               onShowDataSourceTransparency={() => setShowDataSourceTransparency(true)}
               onRefreshData={() => autoPopulateFromOnboarding()}
-              onRefreshAI={async () => {
-                try {
-                  // 🚀 POLLING-BASED AI REFRESH (No SSE)
-                  // We switched from SSE to polling for better reliability
-                  // This approach uses direct HTTP calls with visual feedback
-                  
-                  // Open transparency modal and initialize transparency state
-                  console.log('🎯 Opening transparency modal...');
-                  setTransparencyModalOpen(true);
-                  setIsGenerating(true);
-                  setStoreGenerationProgress(0);
-                  setCurrentPhase('autofill_initialization');
-                  clearTransparencyMessages();
-                  addTransparencyMessage('Starting strategy inputs generation process...');
-                  console.log('🎯 Modal state set, transparency initialized');
-                  
-                  setAIGenerating(true);
-                  setIsRefreshing(true);
-                  setRefreshError(null);
-                  setRefreshMessage('Initializing AI refresh…');
-                  setRefreshProgress(5);
-
-                  // Start transparency message polling for visual feedback
-                  const transparencyMessages = [
-                    { type: 'autofill_initialization', message: 'Starting strategy inputs generation process...', progress: 5 },
-                    { type: 'autofill_data_collection', message: 'Collecting and analyzing data sources...', progress: 15 },
-                    { type: 'autofill_data_quality', message: 'Assessing data quality and completeness...', progress: 25 },
-                    { type: 'autofill_context_analysis', message: 'Analyzing business context and strategic framework...', progress: 35 },
-                    { type: 'autofill_strategy_generation', message: 'Generating strategic insights and recommendations...', progress: 45 },
-                    { type: 'autofill_field_generation', message: 'Generating individual strategy input fields...', progress: 55 },
-                    { type: 'autofill_quality_validation', message: 'Validating generated strategy inputs...', progress: 65 },
-                    { type: 'autofill_alignment_check', message: 'Checking strategy alignment and consistency...', progress: 75 },
-                    { type: 'autofill_final_review', message: 'Performing final review and optimization...', progress: 85 },
-                    { type: 'autofill_complete', message: 'Strategy inputs generation completed successfully...', progress: 95 }
-                  ];
-                  
-                  let messageIndex = 0;
-                  const transparencyInterval = setInterval(() => {
-                    if (messageIndex < transparencyMessages.length) {
-                      const message = transparencyMessages[messageIndex];
-                      console.log('🎯 Raw Polling Message:', {
-                        type: message.type,
-                        message: message.message,
-                        progress: message.progress,
-                        timestamp: new Date().toISOString()
-                      });
-                      setCurrentPhase(message.type);
-                      addTransparencyMessage(message.message);
-                      setStoreGenerationProgress(message.progress);
-                      setRefreshProgress(message.progress);
-                      messageIndex++;
-                    } else {
-                      clearInterval(transparencyInterval);
-                    }
-                  }, 2000); // Send a message every 2 seconds for better UX
-
-                  // Call the non-streaming refresh endpoint (Polling-based approach)
-                  console.log('🎯 Calling AI refresh endpoint (Polling-based)...');
-                  const response = await contentPlanningApi.refreshAutofill(1, true, true);
-                  console.log('🎯 Raw Polling Response:', {
-                    success: !!response,
-                    hasData: !!response?.data,
-                    responseStructure: {
-                      hasDataProperty: !!response?.data?.data,
-                      hasFieldsDirect: !!response?.data?.fields,
-                      hasFieldsInData: !!response?.data?.data?.fields
-                    },
-                    fieldsCount: Object.keys(response?.data?.data?.fields || response?.data?.fields || {}).length,
-                    sourcesCount: Object.keys(response?.data?.data?.sources || response?.data?.sources || {}).length,
-                    meta: response?.data?.data?.meta || response?.data?.meta || {},
-                    timestamp: new Date().toISOString()
-                  });
-
-                  // Clear the transparency interval since we got the response
-                  clearInterval(transparencyInterval);
-
-                  // Process the response
-                  if (response && response.data) {
-                    // The API response is wrapped in ResponseBuilder format:
-                    // { status: "success", message: "...", data: { fields: {...}, sources: {...}, meta: {...} } }
-                    // So we need to access payload.data.fields, not payload.fields
-                    const payload = response.data;
-                    const fields = payload.data?.fields || payload.fields || {};
-                    const sources = payload.data?.sources || payload.sources || {};
-                    const inputDataPoints = payload.data?.input_data_points || payload.input_data_points || {};
-                    const meta = payload.data?.meta || payload.meta || {};
-                    
-                    console.log('🎯 AI Refresh Result - Payload:', payload);
-                    console.log('🎯 AI Refresh Result - Fields:', fields);
-                    console.log('🎯 AI Refresh Result - Meta:', meta);
-                    console.log('🎯 Fields structure check:', {
-                      fieldsType: typeof fields,
-                      fieldsKeys: Object.keys(fields),
-                      sampleField: fields[Object.keys(fields)[0]],
-                      hasValueProperty: fields[Object.keys(fields)[0]]?.hasOwnProperty('value')
-                    });
-                    
-                    // 🚨 CRITICAL: Check if AI generation failed
-                    if (meta.error || !meta.ai_used || meta.ai_overrides_count === 0) {
-                      console.error('❌ AI generation failed:', meta.error || 'No AI data generated');
-                      setError(`AI generation failed: ${meta.error || 'No real AI data was generated. Please try again.'}`);
-                      setTransparencyModalOpen(false);
-                      setAIGenerating(false);
-                      setIsRefreshing(false);
-                      setIsGenerating(false);
-                      setRefreshError('AI generation failed. Please try again.');
-                      setRefreshMessage('Refresh failed.');
-                      return;
-                    }
-                    
-                    // 🚨 CRITICAL: Validate data source
-                    if (meta.data_source === 'ai_generation_failed' || meta.data_source === 'ai_generation_error' || meta.data_source === 'ai_disabled') {
-                      console.error('❌ Invalid data source:', meta.data_source);
-                      setError(`AI generation failed: ${meta.error || 'Invalid data source. Please try again.'}`);
-                      setTransparencyModalOpen(false);
-                      setAIGenerating(false);
-                      setIsRefreshing(false);
-                      setIsGenerating(false);
-                      setRefreshError('AI generation failed. Please try again.');
-                      setRefreshMessage('Refresh failed.');
-                      return;
-                    }
-                    
-                    console.log('✅ AI generation successful - processing real AI data');
-                    
-                    const fieldValues: Record<string, any> = {};
-                    const confidenceScores: Record<string, number> = {};
-                    
-                    Object.keys(fields).forEach((fieldId) => {
-                      const fieldData = fields[fieldId];
-                      console.log(`🎯 Processing field ${fieldId}:`, fieldData);
-                      
-                      if (fieldData && typeof fieldData === 'object' && 'value' in fieldData) {
-                        fieldValues[fieldId] = fieldData.value;
-                        console.log(`✅ Field ${fieldId} value extracted:`, fieldData.value);
-                        
-                        // Extract confidence score if available
-                        if (fieldData.confidence) {
-                          confidenceScores[fieldId] = fieldData.confidence;
-                          console.log(`🎯 Field ${fieldId} confidence: ${fieldData.confidence}`);
-                        }
-                        
-                        // Extract personalization data if available
-                        if (fieldData.personalization_data) {
-                          console.log(`🎯 Field ${fieldId} personalization:`, fieldData.personalization_data);
-                        }
-                      } else {
-                        console.warn(`⚠️ Field ${fieldId} has invalid structure:`, fieldData);
-                      }
-                    });
-                    
-                    console.log('🎯 Processed field values:', Object.keys(fieldValues));
-                    console.log('🎯 Confidence scores:', confidenceScores);
-                    console.log('🎯 Field values details:', fieldValues);
-                    
-                    // Update the store with the new data
-                    useEnhancedStrategyStore.setState((state) => {
-                      const newState = {
-                        autoPopulatedFields: { ...state.autoPopulatedFields, ...fieldValues },
-                        dataSources: { ...state.dataSources, ...sources },
-                        inputDataPoints: { ...state.inputDataPoints, ...inputDataPoints },
-                        confidenceScores: { ...state.confidenceScores, ...confidenceScores },
-                        formData: { ...state.formData, ...fieldValues }
-                      };
-                      console.log('🎯 Updated store state:', newState);
-                      console.log('🎯 Field values being added:', fieldValues);
-                      console.log('🎯 Confidence scores being added:', confidenceScores);
-                      console.log('🎯 Store autoPopulatedFields count:', Object.keys(newState.autoPopulatedFields).length);
-                      return newState;
-                    });
-                    
-                    // Add final completion message
-                    addTransparencyMessage(`✅ AI generation completed successfully! Generated ${Object.keys(fieldValues).length} real AI values.`);
-                    setStoreGenerationProgress(100);
-                    setRefreshProgress(100);
-                    setCurrentPhase('Complete');
-                    setRefreshMessage(`AI refresh completed! Generated ${Object.keys(fieldValues).length} fields.`);
-                    
-                    // Don't close modal automatically - let user close it manually
-                    setAIGenerating(false);
-                    setIsRefreshing(false);
-                    setIsGenerating(false);
-                    console.log('🎯 Polling-based AI refresh completed successfully!', {
-                      fieldsGenerated: Object.keys(fieldValues).length,
-                      confidenceScoresCount: Object.keys(confidenceScores).length,
-                      dataSourcesCount: Object.keys(sources).length,
-                      approach: 'Polling (No SSE)',
-                      timestamp: new Date().toISOString()
-                    });
-                  } else {
-                    throw new Error('Invalid response from AI refresh endpoint');
-                  }
-                } catch (e) {
-                  console.error('AI refresh error', e);
-                  setAIGenerating(false);
-                  setIsRefreshing(false);
-                  setIsGenerating(false);
-                  setRefreshError('AI refresh failed. Please try again.');
-                  setRefreshMessage('Refresh failed.');
-                  setError(`AI refresh failed: ${e instanceof Error ? e.message : 'Unknown error'}`);
-                }
-              }}
+              onRefreshAI={handleAIRefresh}
               refreshMessage={refreshMessage}
               refreshProgress={refreshProgress}
               isRefreshing={isRefreshing}
@@ -757,7 +506,7 @@ const ContentStrategyBuilder: React.FC = () => {
         saving={saving}
         reviewProgressPercentage={reviewProgressPercentage}
         onCreateStrategy={handleCreateStrategy}
-        onSaveStrategy={handleSaveStrategy}
+        onSaveStrategy={() => handleSaveStrategy()}
       />
 
       {/* AI Recommendations Modal */}
@@ -785,7 +534,7 @@ const ContentStrategyBuilder: React.FC = () => {
       <EducationalModal
         open={showEducationalModal}
         onClose={() => setShowEducationalModal(false)}
-        educationalContent={storeEducationalContent}      
+                educationalContent={storeEducationalContent}      
         generationProgress={storeGenerationProgress}
         onReviewStrategy={() => {
           console.log('🎯 User clicked "Next: Review Strategy and Create Calendar"');

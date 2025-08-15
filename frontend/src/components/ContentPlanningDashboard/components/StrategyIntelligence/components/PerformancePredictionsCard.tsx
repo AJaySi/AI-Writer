@@ -98,7 +98,7 @@ const PerformancePredictionsCard: React.FC<PerformancePredictionsCardProps> = ({
               boxShadow: `0 4px 12px ${ANALYSIS_CARD_STYLES.colors.success}30`,
               flexShrink: 0
             }}>
-              {strategyData.performance_predictions.roi_predictions?.estimated_roi || '25%'}
+              {strategyData.performance_predictions.estimated_roi || '25%'}
             </Box>
             <Box sx={{ 
               minWidth: 0, 
@@ -113,7 +113,7 @@ const PerformancePredictionsCard: React.FC<PerformancePredictionsCardProps> = ({
                 mb: 0.5,
                 wordBreak: 'break-word'
               }}>
-                ROI Predictions
+                Performance Predictions
               </Typography>
               <Typography variant="caption" sx={{ 
                 color: ANALYSIS_CARD_STYLES.colors.text.secondary,
@@ -121,7 +121,7 @@ const PerformancePredictionsCard: React.FC<PerformancePredictionsCardProps> = ({
                 lineHeight: 1.2,
                 wordBreak: 'break-word'
               }}>
-                Expected return on investment
+                Expected ROI and success metrics
               </Typography>
             </Box>
           </Box>
@@ -133,12 +133,12 @@ const PerformancePredictionsCard: React.FC<PerformancePredictionsCardProps> = ({
             flexShrink: 0
           }}>
             <Chip 
-              label={`${(strategyData.performance_predictions as any)?.success_probability || '85%'} Success`}
+              label={`${strategyData.performance_predictions.success_probability || '85%'} Success`}
               size="small"
               sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.success).chip}
             />
             <Chip 
-              label={`${(strategyData.performance_predictions as any)?.implementation_timeline || '6 months'}`}
+              label="12 months"
               size="small"
               sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.info).chip}
             />
@@ -154,7 +154,7 @@ const PerformancePredictionsCard: React.FC<PerformancePredictionsCardProps> = ({
             wordBreak: 'break-word',
             textAlign: 'left'
           }}>
-            ROI of {strategyData.performance_predictions.roi_predictions?.estimated_roi || '300-350%'} is achievable leveraging the strong cost-per-lead to lifetime-value ratio.
+            ROI of {strategyData.performance_predictions.estimated_roi || '20-30%'} is achievable with {strategyData.performance_predictions.success_probability || '85%'} success probability.
           </Typography>
         </Box>
       </Box>
@@ -175,24 +175,30 @@ const PerformancePredictionsCard: React.FC<PerformancePredictionsCardProps> = ({
           gap: 1,
           justifyContent: 'flex-start'
         }}>
-          <Chip 
-            label="Traffic Growth" 
-            size="small" 
-            icon={<TrendingUpIcon />}
-            sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.primary).chip} 
-          />
-          <Chip 
-            label="Engagement" 
-            size="small" 
-            icon={<AssessmentIcon />}
-            sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.secondary).chip} 
-          />
-          <Chip 
-            label="Conversion" 
-            size="small" 
-            icon={<ShowChartIcon />}
-            sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.accent).chip} 
-          />
+          {strategyData.performance_predictions.traffic_growth && (
+            <Chip 
+              label={`${strategyData.performance_predictions.traffic_growth.month_12 || '100%'} Traffic`}
+              size="small" 
+              icon={<TrendingUpIcon />}
+              sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.primary).chip} 
+            />
+          )}
+          {strategyData.performance_predictions.engagement_metrics && (
+            <Chip 
+              label={`${strategyData.performance_predictions.engagement_metrics.time_on_page || '3-5 min'}`}
+              size="small" 
+              icon={<AssessmentIcon />}
+              sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.secondary).chip} 
+            />
+          )}
+          {strategyData.performance_predictions.conversion_predictions && (
+            <Chip 
+              label={`${strategyData.performance_predictions.conversion_predictions.lead_generation || '5-8%'} Leads`}
+              size="small" 
+              icon={<ShowChartIcon />}
+              sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.accent).chip} 
+            />
+          )}
         </Box>
       </Box>
     </Box>
@@ -214,7 +220,7 @@ const PerformancePredictionsCard: React.FC<PerformancePredictionsCardProps> = ({
               lineHeight: 1.5,
               wordBreak: 'break-word'
             }}>
-              Estimated ROI: {strategyData.performance_predictions.roi_predictions?.estimated_roi || '25%'}
+              Estimated ROI: {strategyData.performance_predictions.estimated_roi || '20-30%'}
             </Typography>
             <Typography variant="body2" sx={{ 
               color: ANALYSIS_CARD_STYLES.colors.text.secondary, 
@@ -222,268 +228,298 @@ const PerformancePredictionsCard: React.FC<PerformancePredictionsCardProps> = ({
               lineHeight: 1.5,
               wordBreak: 'break-word'
             }}>
-              Success Probability: {(strategyData.performance_predictions as any)?.success_probability || '85%'}
+              Success Probability: {strategyData.performance_predictions.success_probability || '85%'}
             </Typography>
-            <Typography variant="body2" sx={{ 
-              color: ANALYSIS_CARD_STYLES.colors.text.secondary, 
-              fontSize: '0.85rem',
-              lineHeight: 1.5,
-              wordBreak: 'break-word'
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Traffic Growth */}
+      {strategyData.performance_predictions.traffic_growth && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, mb: 2, fontWeight: 600 }}>
+            Traffic Growth Projections
+          </Typography>
+          <Box sx={sectionStyles.sectionContainer}>
+            <Box sx={{ 
+              display: 'grid', 
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(auto-fit, minmax(150px, 1fr))' }, 
+              gap: 2 
             }}>
-              Implementation Timeline: {(strategyData.performance_predictions as any)?.implementation_timeline || '6 months'}
-            </Typography>
+              {strategyData.performance_predictions.traffic_growth.month_3 && (
+                <Box sx={{ 
+                  p: 2, 
+                  border: `1px solid ${ANALYSIS_CARD_STYLES.colors.success}`, 
+                  borderRadius: 2,
+                  background: `rgba(76, 175, 80, 0.1)`,
+                  textAlign: 'center'
+                }}>
+                  <Typography variant="body2" sx={{ 
+                    color: ANALYSIS_CARD_STYLES.colors.success, 
+                    fontWeight: 600, 
+                    mb: 1,
+                    fontSize: '0.8rem'
+                  }}>
+                    Month 3
+                  </Typography>
+                  <Typography variant="h6" sx={{ 
+                    color: ANALYSIS_CARD_STYLES.colors.text.primary,
+                    fontSize: '1.2rem',
+                    fontWeight: 700
+                  }}>
+                    {strategyData.performance_predictions.traffic_growth.month_3}
+                  </Typography>
+                </Box>
+              )}
+              {strategyData.performance_predictions.traffic_growth.month_6 && (
+                <Box sx={{ 
+                  p: 2, 
+                  border: `1px solid ${ANALYSIS_CARD_STYLES.colors.primary}`, 
+                  borderRadius: 2,
+                  background: `rgba(63, 81, 181, 0.1)`,
+                  textAlign: 'center'
+                }}>
+                  <Typography variant="body2" sx={{ 
+                    color: ANALYSIS_CARD_STYLES.colors.primary, 
+                    fontWeight: 600, 
+                    mb: 1,
+                    fontSize: '0.8rem'
+                  }}>
+                    Month 6
+                  </Typography>
+                  <Typography variant="h6" sx={{ 
+                    color: ANALYSIS_CARD_STYLES.colors.text.primary,
+                    fontSize: '1.2rem',
+                    fontWeight: 700
+                  }}>
+                    {strategyData.performance_predictions.traffic_growth.month_6}
+                  </Typography>
+                </Box>
+              )}
+              {strategyData.performance_predictions.traffic_growth.month_12 && (
+                <Box sx={{ 
+                  p: 2, 
+                  border: `1px solid ${ANALYSIS_CARD_STYLES.colors.accent}`, 
+                  borderRadius: 2,
+                  background: `rgba(240, 147, 251, 0.1)`,
+                  textAlign: 'center'
+                }}>
+                  <Typography variant="body2" sx={{ 
+                    color: ANALYSIS_CARD_STYLES.colors.accent, 
+                    fontWeight: 600, 
+                    mb: 1,
+                    fontSize: '0.8rem'
+                  }}>
+                    Month 12
+                  </Typography>
+                  <Typography variant="h6" sx={{ 
+                    color: ANALYSIS_CARD_STYLES.colors.text.primary,
+                    fontSize: '1.2rem',
+                    fontWeight: 700
+                  }}>
+                    {strategyData.performance_predictions.traffic_growth.month_12}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           </Box>
         </Box>
-      </Box>
+      )}
 
-      {/* Key Metrics */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, mb: 2, fontWeight: 600 }}>
-          Key Metrics
-        </Typography>
-        <Box sx={sectionStyles.sectionContainer}>
-          <Box sx={{ 
-            display: 'grid', 
-            gridTemplateColumns: { xs: '1fr', sm: 'repeat(auto-fit, minmax(200px, 1fr))' }, 
-            gap: 2 
-          }}>
-            {/* Traffic Predictions */}
-            {strategyData.performance_predictions.traffic_predictions && (
-              <Box sx={{ 
-                p: 2, 
-                border: `1px solid ${ANALYSIS_CARD_STYLES.colors.success}`, 
-                borderRadius: 2,
-                background: `rgba(76, 175, 80, 0.1)`,
-                minHeight: 80,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                overflow: 'hidden'
-              }}>
-                <Typography variant="body2" sx={{ 
-                  color: ANALYSIS_CARD_STYLES.colors.success, 
-                  fontWeight: 600, 
-                  mb: 1,
-                  fontSize: '0.8rem',
-                  lineHeight: 1.2,
-                  wordBreak: 'break-word'
-                }}>
-                  Traffic Growth
-                </Typography>
-                <Typography variant="caption" sx={{ 
-                  color: ANALYSIS_CARD_STYLES.colors.text.secondary,
-                  fontSize: '0.7rem',
-                  lineHeight: 1.3,
-                  wordBreak: 'break-word'
-                }}>
-                  {strategyData.performance_predictions.traffic_predictions.growth_rate || '150% increase'}
-                </Typography>
-              </Box>
-            )}
-
-            {/* Engagement Predictions */}
-            {strategyData.performance_predictions.engagement_predictions && (
-              <Box sx={{ 
-                p: 2, 
-                border: `1px solid ${ANALYSIS_CARD_STYLES.colors.secondary}`, 
-                borderRadius: 2,
-                background: `rgba(118, 75, 162, 0.1)`,
-                minHeight: 80,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                overflow: 'hidden'
-              }}>
-                <Typography variant="body2" sx={{ 
-                  color: ANALYSIS_CARD_STYLES.colors.secondary, 
-                  fontWeight: 600, 
-                  mb: 1,
-                  fontSize: '0.8rem',
-                  lineHeight: 1.2,
-                  wordBreak: 'break-word'
-                }}>
-                  Engagement Rate
-                </Typography>
-                <Typography variant="caption" sx={{ 
-                  color: ANALYSIS_CARD_STYLES.colors.text.secondary,
-                  fontSize: '0.7rem',
-                  lineHeight: 1.3,
-                  wordBreak: 'break-word'
-                }}>
-                  {strategyData.performance_predictions.engagement_predictions.engagement_rate || '45% improvement'}
-                </Typography>
-              </Box>
-            )}
-
-            {/* Conversion Predictions */}
-            {strategyData.performance_predictions.conversion_predictions && (
-              <Box sx={{ 
-                p: 2, 
-                border: `1px solid ${ANALYSIS_CARD_STYLES.colors.accent}`, 
-                borderRadius: 2,
-                background: `rgba(240, 147, 251, 0.1)`,
-                minHeight: 80,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                overflow: 'hidden'
-              }}>
-                <Typography variant="body2" sx={{ 
-                  color: ANALYSIS_CARD_STYLES.colors.accent, 
-                  fontWeight: 600, 
-                  mb: 1,
-                  fontSize: '0.8rem',
-                  lineHeight: 1.2,
-                  wordBreak: 'break-word'
-                }}>
-                  Conversion Rate
-                </Typography>
-                <Typography variant="caption" sx={{ 
-                  color: ANALYSIS_CARD_STYLES.colors.text.secondary,
-                  fontSize: '0.7rem',
-                  lineHeight: 1.3,
-                  wordBreak: 'break-word'
-                }}>
-                  {strategyData.performance_predictions.conversion_predictions.conversion_rate || '3.2% to 5.8%'}
-                </Typography>
-              </Box>
-            )}
+      {/* Engagement Metrics */}
+      {strategyData.performance_predictions.engagement_metrics && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, mb: 2, fontWeight: 600 }}>
+            Engagement Metrics
+          </Typography>
+          <Box sx={sectionStyles.sectionContainer}>
+            <List dense>
+              {strategyData.performance_predictions.engagement_metrics.bounce_rate && (
+                <ListItem sx={{ ...listItemStyles.listItem, py: 1.5 }}>
+                  <ListItemIcon sx={listItemStyles.listItemIcon}>
+                    <Box sx={{ 
+                      width: 6, 
+                      height: 6, 
+                      borderRadius: '50%', 
+                      background: ANALYSIS_CARD_STYLES.colors.warning,
+                      opacity: 0.7
+                    }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Bounce Rate"
+                    secondary={strategyData.performance_predictions.engagement_metrics.bounce_rate}
+                    primaryTypographyProps={{ 
+                      variant: 'body2', 
+                      fontSize: '0.875rem',
+                      sx: { color: ANALYSIS_CARD_STYLES.colors.warning, fontWeight: 600, mb: 0.5 }
+                    }}
+                    secondaryTypographyProps={{ 
+                      variant: 'caption', 
+                      fontSize: '0.75rem',
+                      sx: { color: ANALYSIS_CARD_STYLES.colors.text.secondary, lineHeight: 1.4 }
+                    }}
+                  />
+                </ListItem>
+              )}
+              {strategyData.performance_predictions.engagement_metrics.time_on_page && (
+                <ListItem sx={{ ...listItemStyles.listItem, py: 1.5 }}>
+                  <ListItemIcon sx={listItemStyles.listItemIcon}>
+                    <Box sx={{ 
+                      width: 6, 
+                      height: 6, 
+                      borderRadius: '50%', 
+                      background: ANALYSIS_CARD_STYLES.colors.success,
+                      opacity: 0.7
+                    }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Time on Page"
+                    secondary={strategyData.performance_predictions.engagement_metrics.time_on_page}
+                    primaryTypographyProps={{ 
+                      variant: 'body2', 
+                      fontSize: '0.875rem',
+                      sx: { color: ANALYSIS_CARD_STYLES.colors.success, fontWeight: 600, mb: 0.5 }
+                    }}
+                    secondaryTypographyProps={{ 
+                      variant: 'caption', 
+                      fontSize: '0.75rem',
+                      sx: { color: ANALYSIS_CARD_STYLES.colors.text.secondary, lineHeight: 1.4 }
+                    }}
+                  />
+                </ListItem>
+              )}
+              {strategyData.performance_predictions.engagement_metrics.social_shares && (
+                <ListItem sx={{ ...listItemStyles.listItem, py: 1.5 }}>
+                  <ListItemIcon sx={listItemStyles.listItemIcon}>
+                    <Box sx={{ 
+                      width: 6, 
+                      height: 6, 
+                      borderRadius: '50%', 
+                      background: ANALYSIS_CARD_STYLES.colors.info,
+                      opacity: 0.7
+                    }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Social Shares"
+                    secondary={strategyData.performance_predictions.engagement_metrics.social_shares}
+                    primaryTypographyProps={{ 
+                      variant: 'body2', 
+                      fontSize: '0.875rem',
+                      sx: { color: ANALYSIS_CARD_STYLES.colors.info, fontWeight: 600, mb: 0.5 }
+                    }}
+                    secondaryTypographyProps={{ 
+                      variant: 'caption', 
+                      fontSize: '0.75rem',
+                      sx: { color: ANALYSIS_CARD_STYLES.colors.text.secondary, lineHeight: 1.4 }
+                    }}
+                  />
+                </ListItem>
+              )}
+            </List>
           </Box>
         </Box>
-      </Box>
+      )}
+
+      {/* Conversion Predictions */}
+      {strategyData.performance_predictions.conversion_predictions && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, mb: 2, fontWeight: 600 }}>
+            Conversion Predictions
+          </Typography>
+          <Box sx={sectionStyles.sectionContainer}>
+            <List dense>
+              {strategyData.performance_predictions.conversion_predictions.content_downloads && (
+                <ListItem sx={{ ...listItemStyles.listItem, py: 1.5 }}>
+                  <ListItemIcon sx={listItemStyles.listItemIcon}>
+                    <Box sx={{ 
+                      width: 6, 
+                      height: 6, 
+                      borderRadius: '50%', 
+                      background: ANALYSIS_CARD_STYLES.colors.primary,
+                      opacity: 0.7
+                    }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Content Downloads"
+                    secondary={strategyData.performance_predictions.conversion_predictions.content_downloads}
+                    primaryTypographyProps={{ 
+                      variant: 'body2', 
+                      fontSize: '0.875rem',
+                      sx: { color: ANALYSIS_CARD_STYLES.colors.primary, fontWeight: 600, mb: 0.5 }
+                    }}
+                    secondaryTypographyProps={{ 
+                      variant: 'caption', 
+                      fontSize: '0.75rem',
+                      sx: { color: ANALYSIS_CARD_STYLES.colors.text.secondary, lineHeight: 1.4 }
+                    }}
+                  />
+                </ListItem>
+              )}
+              {strategyData.performance_predictions.conversion_predictions.email_signups && (
+                <ListItem sx={{ ...listItemStyles.listItem, py: 1.5 }}>
+                  <ListItemIcon sx={listItemStyles.listItemIcon}>
+                    <Box sx={{ 
+                      width: 6, 
+                      height: 6, 
+                      borderRadius: '50%', 
+                      background: ANALYSIS_CARD_STYLES.colors.secondary,
+                      opacity: 0.7
+                    }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Email Signups"
+                    secondary={strategyData.performance_predictions.conversion_predictions.email_signups}
+                    primaryTypographyProps={{ 
+                      variant: 'body2', 
+                      fontSize: '0.875rem',
+                      sx: { color: ANALYSIS_CARD_STYLES.colors.secondary, fontWeight: 600, mb: 0.5 }
+                    }}
+                    secondaryTypographyProps={{ 
+                      variant: 'caption', 
+                      fontSize: '0.75rem',
+                      sx: { color: ANALYSIS_CARD_STYLES.colors.text.secondary, lineHeight: 1.4 }
+                    }}
+                  />
+                </ListItem>
+              )}
+              {strategyData.performance_predictions.conversion_predictions.lead_generation && (
+                <ListItem sx={{ ...listItemStyles.listItem, py: 1.5 }}>
+                  <ListItemIcon sx={listItemStyles.listItemIcon}>
+                    <Box sx={{ 
+                      width: 6, 
+                      height: 6, 
+                      borderRadius: '50%', 
+                      background: ANALYSIS_CARD_STYLES.colors.accent,
+                      opacity: 0.7
+                    }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Lead Generation"
+                    secondary={strategyData.performance_predictions.conversion_predictions.lead_generation}
+                    primaryTypographyProps={{ 
+                      variant: 'body2', 
+                      fontSize: '0.875rem',
+                      sx: { color: ANALYSIS_CARD_STYLES.colors.accent, fontWeight: 600, mb: 0.5 }
+                    }}
+                    secondaryTypographyProps={{ 
+                      variant: 'caption', 
+                      fontSize: '0.75rem',
+                      sx: { color: ANALYSIS_CARD_STYLES.colors.text.secondary, lineHeight: 1.4 }
+                    }}
+                  />
+                </ListItem>
+              )}
+            </List>
+          </Box>
+        </Box>
+      )}
 
       <Divider sx={{ my: 2, opacity: 0.2, borderColor: ANALYSIS_CARD_STYLES.colors.border.secondary }} />
 
-      {/* Detailed Predictions */}
+      {/* Success Factors */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="subtitle2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, mb: 2, fontWeight: 600 }}>
-          Detailed Predictions
-        </Typography>
-        <Box sx={sectionStyles.sectionContainer}>
-          <List dense>
-            {/* Traffic Predictions */}
-            {strategyData.performance_predictions.traffic_predictions && (
-              <ListItem sx={{ ...listItemStyles.listItem, py: 1.5 }}>
-                <ListItemIcon sx={listItemStyles.listItemIcon}>
-                  <Box sx={{ 
-                    width: 6, 
-                    height: 6, 
-                    borderRadius: '50%', 
-                    background: ANALYSIS_CARD_STYLES.colors.success,
-                    opacity: 0.7
-                  }} />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Traffic Growth"
-                  secondary={`${strategyData.performance_predictions.traffic_predictions.growth_rate || '150% increase'} in organic visitors`}
-                  primaryTypographyProps={{ 
-                    variant: 'body2', 
-                    fontSize: '0.875rem',
-                    sx: { color: ANALYSIS_CARD_STYLES.colors.success, fontWeight: 600, mb: 0.5 }
-                  }}
-                  secondaryTypographyProps={{ 
-                    variant: 'caption', 
-                    fontSize: '0.75rem',
-                    sx: { color: ANALYSIS_CARD_STYLES.colors.text.secondary, lineHeight: 1.4 }
-                  }}
-                />
-              </ListItem>
-            )}
-
-            {/* Engagement Predictions */}
-            {strategyData.performance_predictions.engagement_predictions && (
-              <ListItem sx={{ ...listItemStyles.listItem, py: 1.5 }}>
-                <ListItemIcon sx={listItemStyles.listItemIcon}>
-                  <Box sx={{ 
-                    width: 6, 
-                    height: 6, 
-                    borderRadius: '50%', 
-                    background: ANALYSIS_CARD_STYLES.colors.secondary,
-                    opacity: 0.7
-                  }} />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Engagement Rate"
-                  secondary={`${strategyData.performance_predictions.engagement_predictions.engagement_rate || '45% improvement'} in user interaction`}
-                  primaryTypographyProps={{ 
-                    variant: 'body2', 
-                    fontSize: '0.875rem',
-                    sx: { color: ANALYSIS_CARD_STYLES.colors.secondary, fontWeight: 600, mb: 0.5 }
-                  }}
-                  secondaryTypographyProps={{ 
-                    variant: 'caption', 
-                    fontSize: '0.75rem',
-                    sx: { color: ANALYSIS_CARD_STYLES.colors.text.secondary, lineHeight: 1.4 }
-                  }}
-                />
-              </ListItem>
-            )}
-
-            {/* Conversion Predictions */}
-            {strategyData.performance_predictions.conversion_predictions && (
-              <ListItem sx={{ ...listItemStyles.listItem, py: 1.5 }}>
-                <ListItemIcon sx={listItemStyles.listItemIcon}>
-                  <Box sx={{ 
-                    width: 6, 
-                    height: 6, 
-                    borderRadius: '50%', 
-                    background: ANALYSIS_CARD_STYLES.colors.accent,
-                    opacity: 0.7
-                  }} />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Conversion Rate"
-                  secondary={`${strategyData.performance_predictions.conversion_predictions.conversion_rate || '3.2% to 5.8%'} improvement`}
-                  primaryTypographyProps={{ 
-                    variant: 'body2', 
-                    fontSize: '0.875rem',
-                    sx: { color: ANALYSIS_CARD_STYLES.colors.accent, fontWeight: 600, mb: 0.5 }
-                  }}
-                  secondaryTypographyProps={{ 
-                    variant: 'caption', 
-                    fontSize: '0.75rem',
-                    sx: { color: ANALYSIS_CARD_STYLES.colors.text.secondary, lineHeight: 1.4 }
-                  }}
-                />
-              </ListItem>
-            )}
-
-            {/* ROI Predictions */}
-            {strategyData.performance_predictions.roi_predictions && (
-              <ListItem sx={{ ...listItemStyles.listItem, py: 1.5 }}>
-                <ListItemIcon sx={listItemStyles.listItemIcon}>
-                  <Box sx={{ 
-                    width: 6, 
-                    height: 6, 
-                    borderRadius: '50%', 
-                    background: ANALYSIS_CARD_STYLES.colors.success,
-                    opacity: 0.7
-                  }} />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Revenue Impact"
-                  secondary={`${(strategyData.performance_predictions.roi_predictions as any)?.revenue_impact || '$50K'} additional monthly revenue`}
-                  primaryTypographyProps={{ 
-                    variant: 'body2', 
-                    fontSize: '0.875rem',
-                    sx: { color: ANALYSIS_CARD_STYLES.colors.success, fontWeight: 600, mb: 0.5 }
-                  }}
-                  secondaryTypographyProps={{ 
-                    variant: 'caption', 
-                    fontSize: '0.75rem',
-                    sx: { color: ANALYSIS_CARD_STYLES.colors.text.secondary, lineHeight: 1.4 }
-                  }}
-                />
-              </ListItem>
-            )}
-          </List>
-        </Box>
-      </Box>
-
-      {/* Timeline Projections */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.primary, mb: 2, fontWeight: 600 }}>
-          Timeline Projections
+          Success Factors
         </Typography>
         <Box sx={sectionStyles.sectionContainer}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -492,28 +528,28 @@ const PerformancePredictionsCard: React.FC<PerformancePredictionsCardProps> = ({
               fontSize: '0.8rem',
               lineHeight: 1.5
             }}>
-              • Month 1-2: Initial setup and foundation building
+              • High success probability of {strategyData.performance_predictions.success_probability || '85%'}
             </Typography>
             <Typography variant="body2" sx={{ 
               color: ANALYSIS_CARD_STYLES.colors.text.secondary, 
               fontSize: '0.8rem',
               lineHeight: 1.5
             }}>
-              • Month 3-4: Content creation and optimization
+              • Expected ROI of {strategyData.performance_predictions.estimated_roi || '20-30%'}
             </Typography>
             <Typography variant="body2" sx={{ 
               color: ANALYSIS_CARD_STYLES.colors.text.secondary, 
               fontSize: '0.8rem',
               lineHeight: 1.5
             }}>
-              • Month 5-6: Scaling and performance optimization
+              • Traffic growth from {strategyData.performance_predictions.traffic_growth?.month_3 || '25%'} to {strategyData.performance_predictions.traffic_growth?.month_12 || '100%'}
             </Typography>
             <Typography variant="body2" sx={{ 
               color: ANALYSIS_CARD_STYLES.colors.text.secondary, 
               fontSize: '0.8rem',
               lineHeight: 1.5
             }}>
-              • Ongoing: Continuous monitoring and improvement
+              • Lead generation improvement of {strategyData.performance_predictions.conversion_predictions?.lead_generation || '5-8%'}
             </Typography>
           </Box>
         </Box>

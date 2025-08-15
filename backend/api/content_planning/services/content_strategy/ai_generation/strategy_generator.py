@@ -592,9 +592,11 @@ class AIStrategyGenerator:
                 raise RuntimeError("AI service returned empty implementation roadmap")
             
             logger.info("✅ Implementation roadmap generated successfully")
+            logger.info(f"🔍 Raw AI response for implementation roadmap: {json.dumps(response.get('data', {}), indent=2)}")
             
             # Transform AI response to frontend format
             transformed_response = self._transform_ai_response_to_frontend_format(response.get("data", {}), "implementation_roadmap")
+            logger.info(f"🔍 Transformed implementation roadmap: {json.dumps(transformed_response, indent=2)}")
             return transformed_response
             
         except Exception as e:
@@ -1019,6 +1021,8 @@ class AIStrategyGenerator:
 
     def _transform_implementation_roadmap(self, ai_response: Dict[str, Any]) -> Dict[str, Any]:
         """Transform implementation roadmap to frontend format."""
+        self.logger.info(f"🔍 Transforming implementation roadmap. Input: {json.dumps(ai_response, indent=2)}")
+        
         transformed = {
             "phases": [],
             "timeline": "12 months",
@@ -1028,16 +1032,49 @@ class AIStrategyGenerator:
             "success_metrics": []
         }
 
-        # Extract roadmap data from AI response
-        roadmap = ai_response.get("roadmap", {})
-        if roadmap:
-            if "phases" in roadmap:
-                transformed["phases"] = roadmap["phases"][:4]  # Limit to 4 phases
-            if "timeline" in roadmap:
-                transformed["timeline"] = roadmap["timeline"]
-            if "milestones" in roadmap:
-                transformed["milestones"] = roadmap["milestones"][:6]  # Limit to 6 milestones
+        # Extract roadmap data from AI response - data is at top level, not nested under "roadmap"
+        if ai_response:
+            # Extract phases
+            phases = ai_response.get("phases", [])
+            if phases:
+                transformed["phases"] = phases[:4]  # Limit to 4 phases
+            
+            # Extract timeline
+            timeline = ai_response.get("timeline", {})
+            if timeline:
+                if isinstance(timeline, dict):
+                    # If timeline is an object, extract the duration or use total_duration
+                    transformed["timeline"] = timeline.get("total_duration", "12 months")
+                    # Extract milestones from timeline object
+                    milestones = timeline.get("key_milestones", [])
+                    if milestones:
+                        transformed["milestones"] = milestones[:6]
+                    # Extract critical path from timeline object
+                    critical_path = timeline.get("critical_path", [])
+                    if critical_path:
+                        transformed["critical_path"] = critical_path[:5]
+                else:
+                    # If timeline is a string, use it directly
+                    transformed["timeline"] = str(timeline)
+            
+            # Extract total_duration if available
+            total_duration = ai_response.get("total_duration")
+            if total_duration:
+                transformed["timeline"] = str(total_duration)
+            
+            # Extract resource allocation
+            resource_allocation = ai_response.get("resource_allocation", {})
+            if resource_allocation:
+                team_requirements = resource_allocation.get("team_requirements", [])
+                if team_requirements:
+                    transformed["resource_requirements"] = team_requirements[:5]
+            
+            # Extract success metrics
+            success_metrics = ai_response.get("success_metrics", [])
+            if success_metrics:
+                transformed["success_metrics"] = success_metrics[:5]
 
+        self.logger.info(f"🔍 Final transformed implementation roadmap: {json.dumps(transformed, indent=2)}")
         return transformed
 
     def _transform_risk_assessment(self, ai_response: Dict[str, Any]) -> Dict[str, Any]:

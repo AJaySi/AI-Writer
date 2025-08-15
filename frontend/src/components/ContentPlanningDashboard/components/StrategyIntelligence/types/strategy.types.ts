@@ -71,6 +71,22 @@ export interface CompetitiveAnalysis {
 
 export interface PerformancePredictions {
   estimated_roi?: string;
+  success_probability?: string;
+  traffic_growth?: {
+    month_3?: string;
+    month_6?: string;
+    month_12?: string;
+  };
+  engagement_metrics?: {
+    bounce_rate?: string;
+    social_shares?: string;
+    time_on_page?: string;
+  };
+  conversion_predictions?: {
+    content_downloads?: string;
+    email_signups?: string;
+    lead_generation?: string;
+  };
   key_metrics?: {
     engagement_rate?: string;
     conversion_rate?: string;
@@ -92,7 +108,7 @@ export interface PerformancePredictions {
     weakness_mitigation: string;
     threat_management: string;
   };
-  // Nested prediction objects from backend
+  // Legacy nested prediction objects (keeping for backward compatibility)
   traffic_predictions?: {
     monthly_traffic?: string;
     growth_rate?: string;
@@ -106,7 +122,7 @@ export interface PerformancePredictions {
     month_3?: string;
     success_factors?: string[];
   };
-  conversion_predictions?: {
+  conversion_predictions_legacy?: {
     conversion_rate?: string;
     lead_generation?: string;
     month_6?: string;
@@ -122,6 +138,7 @@ export interface PerformancePredictions {
 
 export interface ImplementationRoadmap {
   total_duration?: string;
+  timeline?: string;
   phases?: Array<{
     phase: string;
     duration: string;
@@ -130,6 +147,10 @@ export interface ImplementationRoadmap {
     resources: string[]; // Added to match backend
     swot_focus?: string;
   }>;
+  milestones?: string[]; // Added to match backend data
+  resource_requirements?: string[]; // Added to match backend data
+  critical_path?: string[]; // Added to match backend data
+  success_metrics?: string[]; // Added to match backend
   resource_allocation?: {
     team_members?: string[]; // Changed from team_requirements to match backend
     team_requirements?: string[]; // Added to match backend data
@@ -146,8 +167,7 @@ export interface ImplementationRoadmap {
       low_priority: string[];
     };
   };
-  success_metrics?: string[]; // Added to match backend
-  timeline?: {
+  timeline_object?: {
     start_date?: string;
     end_date?: string;
     key_milestones?: string[];

@@ -25,15 +25,23 @@ export const useStrategyData = () => {
       try {
         const latestStrategyResponse = await contentPlanningApi.getLatestGeneratedStrategy(userId);
         
-        if (latestStrategyResponse?.strategy) {
-          console.log('✅ Found latest generated strategy from polling system:', latestStrategyResponse.strategy);
+        console.log('🔍 Latest strategy response from API:', latestStrategyResponse);
+        console.log('🔍 Response type:', typeof latestStrategyResponse);
+        console.log('🔍 Response keys:', Object.keys(latestStrategyResponse || {}));
+        
+        if (latestStrategyResponse && latestStrategyResponse.strategic_insights) {
+          // If the response itself is the strategy data (after API extraction)
+          console.log('✅ Found latest generated strategy (direct response):', latestStrategyResponse);
+          console.log('🔍 Direct response keys:', Object.keys(latestStrategyResponse));
           
-          const transformedStrategy = transformPollingStrategyData(latestStrategyResponse.strategy);
+          const transformedStrategy = transformPollingStrategyData(latestStrategyResponse);
           
           console.log('🔄 Transformed strategy data:', transformedStrategy);
           setStrategyData(transformedStrategy);
           setLoading(false);
           return;
+        } else {
+          console.log('❌ No strategy data found in response');
         }
       } catch (pollingError) {
         console.log('No latest strategy found in polling system, checking database...', pollingError);
