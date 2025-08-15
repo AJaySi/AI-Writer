@@ -433,61 +433,61 @@ async def generate_comprehensive_strategy_polling(
                 
                 # Step 5: Generate performance predictions
                 generate_comprehensive_strategy_polling._task_status[task_id].update({
-                    "step": 4,
-                    "progress": 40,
+                    "step": 5,
+                    "progress": 50,
                     "message": "Generating performance predictions...",
-                    "educational_content": EducationalContentManager.get_step_content(4)
+                    "educational_content": EducationalContentManager.get_step_content(5)
                 })
                 
                 performance_predictions = await strategy_generator._generate_performance_predictions({}, context)
                 
                 generate_comprehensive_strategy_polling._task_status[task_id].update({
-                    "step": 4,
-                    "progress": 45,
+                    "step": 5,
+                    "progress": 55,
                     "message": "Performance predictions generated successfully",
-                    "educational_content": EducationalContentManager.get_step_completion_content(4, performance_predictions)
+                    "educational_content": EducationalContentManager.get_step_completion_content(5, performance_predictions)
                 })
                 
-                # Step 5: Generate implementation roadmap
+                # Step 6: Generate implementation roadmap
                 generate_comprehensive_strategy_polling._task_status[task_id].update({
-                    "step": 5,
-                    "progress": 50,
+                    "step": 6,
+                    "progress": 60,
                     "message": "Generating implementation roadmap...",
-                    "educational_content": EducationalContentManager.get_step_content(5)
+                    "educational_content": EducationalContentManager.get_step_content(6)
                 })
                 
                 implementation_roadmap = await strategy_generator._generate_implementation_roadmap({}, context)
                 
                 generate_comprehensive_strategy_polling._task_status[task_id].update({
-                    "step": 5,
-                    "progress": 55,
+                    "step": 6,
+                    "progress": 65,
                     "message": "Implementation roadmap generated successfully",
-                    "educational_content": EducationalContentManager.get_step_completion_content(5, implementation_roadmap)
+                    "educational_content": EducationalContentManager.get_step_completion_content(6, implementation_roadmap)
                 })
                 
-                # Step 6: Generate risk assessment
+                # Step 7: Generate risk assessment
                 generate_comprehensive_strategy_polling._task_status[task_id].update({
-                    "step": 6,
-                    "progress": 60,
+                    "step": 7,
+                    "progress": 70,
                     "message": "Generating risk assessment...",
-                    "educational_content": EducationalContentManager.get_step_content(6)
+                    "educational_content": EducationalContentManager.get_step_content(7)
                 })
                 
                 risk_assessment = await strategy_generator._generate_risk_assessment({}, context)
                 
                 generate_comprehensive_strategy_polling._task_status[task_id].update({
-                    "step": 6,
-                    "progress": 65,
+                    "step": 7,
+                    "progress": 75,
                     "message": "Risk assessment generated successfully",
-                    "educational_content": EducationalContentManager.get_step_completion_content(6, risk_assessment)
+                    "educational_content": EducationalContentManager.get_step_completion_content(7, risk_assessment)
                 })
                 
-                # Step 7: Compile comprehensive strategy
+                # Step 8: Compile comprehensive strategy
                 generate_comprehensive_strategy_polling._task_status[task_id].update({
-                    "step": 7,
-                    "progress": 70,
+                    "step": 8,
+                    "progress": 80,
                     "message": "Compiling comprehensive strategy...",
-                    "educational_content": EducationalContentManager.get_step_content(7)
+                    "educational_content": EducationalContentManager.get_step_content(8)
                 })
                 
                 # Compile the comprehensive strategy (NO CONTENT CALENDAR)
@@ -553,7 +553,8 @@ async def generate_comprehensive_strategy_polling(
                     logger.error(f"❌ Error saving strategy to database: {str(db_error)}")
                     # Continue without database save, strategy is still available in memory
                 
-                generate_comprehensive_strategy_polling._task_status[task_id].update({
+                # Final completion update
+                final_status = {
                     "step": 8,
                     "progress": 100,
                     "status": "completed",
@@ -561,7 +562,12 @@ async def generate_comprehensive_strategy_polling(
                     "strategy": comprehensive_strategy,
                     "completed_at": datetime.utcnow().isoformat(),
                     "educational_content": completion_content
-                })
+                }
+                
+                generate_comprehensive_strategy_polling._task_status[task_id].update(final_status)
+                
+                logger.info(f"🎯 Final status update for task {task_id}: {final_status}")
+                logger.info(f"🎯 Task status after update: {generate_comprehensive_strategy_polling._task_status[task_id]}")
                 
                 # Store in global latest strategies for persistent access
                 _latest_strategies[user_id] = {

@@ -17,6 +17,7 @@ export interface EducationalModalProps {
   onClose: () => void;
   educationalContent: EducationalContent | null;
   generationProgress: number;
+  onReviewStrategy?: () => void;
 }
 
 // Category Detail View Types

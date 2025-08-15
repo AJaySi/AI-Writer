@@ -691,9 +691,117 @@ class ContentPlanningAPI {
   async getLatestGeneratedStrategy(userId?: number): Promise<any> {
     return this.handleRequest(async () => {
       const params = userId ? { user_id: userId } : {};
-      const response = await apiClient.get(`${this.baseURL}/enhanced-strategies/latest-generated`, { params });
+      const response = await apiClient.get(`${this.baseURL}/content-strategy/ai-generation/latest-strategy`, { params });
       return response.data;
     });
+  }
+
+  async startStrategyGenerationPolling(userId: number, strategyName: string): Promise<any> {
+    return this.handleRequest(async () => {
+      const response = await apiClient.post(`${this.baseURL}/content-strategy/ai-generation/generate-comprehensive-strategy-polling`, {
+        user_id: userId,
+        strategy_name: strategyName,
+        config: {
+          include_competitive_analysis: true,
+          include_content_calendar: true,
+          include_performance_predictions: true,
+          include_implementation_roadmap: true,
+          include_risk_assessment: true,
+          max_content_pieces: 50,
+          timeline_months: 12
+        }
+      });
+      return response.data;
+    });
+  }
+
+  async pollStrategyGeneration(
+    taskId: string,
+    onProgress: (status: any) => void,
+    onComplete: (strategy: any) => void,
+    onError: (error: string) => void,
+    interval: number = 5000,
+    maxAttempts: number = 72
+  ): Promise<void> {
+    let attempts = 0;
+    
+    const poll = async () => {
+      try {
+        attempts++;
+        console.log(`🔄 Polling attempt ${attempts}/${maxAttempts} for task ${taskId}`);
+        
+        const response = await apiClient.get(`${this.baseURL}/content-strategy/ai-generation/strategy-generation-status/${taskId}`);
+        const responseData = response.data;
+        
+        console.log('📊 Polling response:', responseData);
+        
+        // Extract the actual task status from the response data
+        const taskStatus = responseData?.data || responseData;
+        console.log('📊 Task status:', taskStatus);
+        console.log('📊 Task status type:', typeof taskStatus);
+        console.log('📊 Task status keys:', Object.keys(taskStatus || {}));
+        
+        console.log('📊 Task status check:', {
+          status: taskStatus.status,
+          progress: taskStatus.progress,
+          hasStrategy: !!taskStatus.strategy,
+          hasError: !!taskStatus.error,
+          step: taskStatus.step,
+          message: taskStatus.message
+        });
+
+        console.log('🔍 Checking completion conditions:');
+        console.log('  - taskStatus.status:', taskStatus.status);
+        console.log('  - taskStatus.progress:', taskStatus.progress);
+        console.log('  - hasStrategy:', !!taskStatus.strategy);
+        console.log('  - status === "completed":', taskStatus.status === 'completed');
+        console.log('  - hasStrategy condition:', !!taskStatus.strategy);
+        console.log('  - Both conditions met:', taskStatus.status === 'completed' && !!taskStatus.strategy);
+
+        if (taskStatus.status === 'completed' && taskStatus.strategy) {
+          console.log('✅ Strategy generation completed!');
+          console.log('📊 Final completion data:', {
+            status: taskStatus.status,
+            progress: taskStatus.progress,
+            step: taskStatus.step,
+            hasStrategy: !!taskStatus.strategy,
+            strategyKeys: taskStatus.strategy ? Object.keys(taskStatus.strategy) : []
+          });
+          onComplete(taskStatus.strategy);
+          return;
+        } else if (taskStatus.status === 'failed' || taskStatus.error) {
+          console.error('❌ Strategy generation failed:', taskStatus.error);
+          onError(taskStatus.error || 'Strategy generation failed');
+          return;
+        } else {
+          // Update progress for any non-completed, non-failed status
+          console.log('📊 Updating progress for status:', taskStatus.status);
+          onProgress(responseData); // Pass the full response to maintain structure
+          
+          // Continue polling if we haven't exceeded max attempts
+          if (attempts < maxAttempts) {
+            setTimeout(poll, interval);
+          } else {
+            console.error('⏰ Polling timeout reached');
+            onError('Strategy generation timed out. Please try again.');
+          }
+        }
+        
+        // Additional check: If progress is 100% but status is not 'completed', 
+        // we should still call onComplete to ensure the modal shows completion
+        if (taskStatus.progress >= 100 && taskStatus.strategy && taskStatus.status !== 'failed') {
+          console.log('🎯 Progress is 100% with strategy available - calling onComplete');
+          onComplete(taskStatus.strategy);
+          return;
+        }
+      } catch (error: any) {
+        console.error('❌ Polling error:', error);
+        onError(error.message || 'Polling failed');
+      }
+    };
+    
+    // Start polling
+    poll();
   }
 
   // Additional SSE Methods (for other features that need real-time updates)

@@ -1,4 +1,5 @@
   import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -60,6 +61,7 @@ import EnhancedTooltip from './ContentStrategyBuilder/EnhancedTooltip';
 import AIRecommendationsPanel from './AIRecommendationsPanel';
 import DataSourceTransparency from './DataSourceTransparency';
 import StrategyAutofillTransparencyModal from './StrategyAutofillTransparencyModal';
+import EnterpriseDatapointsModal from './EnterpriseDatapointsModal';
 
 // Import extracted hooks
 import { useCategoryReview } from './ContentStrategyBuilder/hooks/useCategoryReview';
@@ -83,6 +85,7 @@ import { contentPlanningApi } from '../../../services/contentPlanningApi';
 import CategoryDetailView from './ContentStrategyBuilder/components/CategoryDetailView';
 
 const ContentStrategyBuilder: React.FC = () => {
+  const navigate = useNavigate();
   const {
     formData,
     formErrors,
@@ -143,6 +146,31 @@ const ContentStrategyBuilder: React.FC = () => {
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [showEducationalModal, setShowEducationalModal] = useState(false);
   const [localEducationalContent, setLocalEducationalContent] = useState<any>(null);
+  const [showEnterpriseModal, setShowEnterpriseModal] = useState(false);
+  
+  // Persist enterprise modal state across hot reloads
+  useEffect(() => {
+    const savedModalState = sessionStorage.getItem('showEnterpriseModal');
+    if (savedModalState === 'true') {
+      console.log('🎯 Restoring enterprise modal state from sessionStorage');
+      setShowEnterpriseModal(true);
+    }
+  }, []);
+  
+  // Save modal state to sessionStorage when it changes
+  useEffect(() => {
+    sessionStorage.setItem('showEnterpriseModal', showEnterpriseModal.toString());
+  }, [showEnterpriseModal]);
+  
+  // Cleanup sessionStorage on component unmount
+  useEffect(() => {
+    return () => {
+      // Only clear if we're not in the middle of showing the modal
+      if (!showEnterpriseModal) {
+        sessionStorage.removeItem('showEnterpriseModal');
+      }
+    };
+  }, [showEnterpriseModal]);
   const [localGenerationProgress, setLocalGenerationProgress] = useState<number>(0);
   const [showAIRecModal, setShowAIRecModal] = useState(false);
 
@@ -178,7 +206,7 @@ const ContentStrategyBuilder: React.FC = () => {
   });
 
   // Use ActionButtons business logic hook
-  const { handleCreateStrategy, handleSaveStrategy } = useActionButtonsBusinessLogic({
+  const { handleCreateStrategy: originalHandleCreateStrategy, handleSaveStrategy } = useActionButtonsBusinessLogic({
     formData,
     error,
     currentStrategy,
@@ -195,6 +223,92 @@ const ContentStrategyBuilder: React.FC = () => {
     createEnhancedStrategy,
     contentPlanningApi
   });
+
+  // Enhanced handleCreateStrategy to show enterprise modal
+  const handleCreateStrategy = () => {
+    console.log('🎯 handleCreateStrategy called');
+    console.log('🎯 completionStats.category_completion:', completionStats.category_completion);
+    console.log('🎯 reviewedCategories:', reviewedCategories);
+    console.log('🎯 Current showEnterpriseModal state:', showEnterpriseModal);
+    console.log('🎯 Current aiGenerating state:', aiGenerating);
+    
+    // Prevent multiple calls
+    if (aiGenerating) {
+      console.log('🎯 Already generating, skipping duplicate call');
+      return;
+    }
+    
+    // Check if all categories are reviewed
+    const allCategoriesReviewed = Object.keys(completionStats.category_completion).every(
+      category => Array.from(reviewedCategories).includes(category)
+    );
+
+    console.log('🎯 allCategoriesReviewed:', allCategoriesReviewed);
+
+    if (allCategoriesReviewed) {
+      // Show enterprise modal instead of creating strategy immediately
+      console.log('🎯 Showing enterprise modal - setting to true');
+      setShowEnterpriseModal(true);
+      
+      // Add debugging to confirm modal state change
+      setTimeout(() => {
+        console.log('🎯 Enterprise modal state after setShowEnterpriseModal(true):', showEnterpriseModal);
+      }, 0);
+      
+      // Return early to prevent calling originalHandleCreateStrategy
+      return;
+    } else {
+      // If not all categories reviewed, proceed with original logic
+      console.log('🎯 Not all categories reviewed, proceeding with original logic');
+      originalHandleCreateStrategy();
+    }
+  };
+
+  // Handle proceed with current strategy (30 fields)
+  const handleProceedWithCurrentStrategy = async () => {
+    console.log('🎯 User clicked "Proceed with Current Strategy"');
+    setShowEnterpriseModal(false);
+    sessionStorage.removeItem('showEnterpriseModal'); // Clear sessionStorage
+    
+    // Add a small delay to ensure modal closes properly before showing educational modal
+    setTimeout(async () => {
+      console.log('🎯 Calling original handleCreateStrategy after enterprise modal closes');
+      try {
+        // Ensure we're not already generating
+        if (!aiGenerating) {
+          console.log('🎯 Starting strategy generation...');
+          await originalHandleCreateStrategy();
+        } else {
+          console.log('🎯 Already generating, skipping duplicate call');
+        }
+      } catch (error) {
+        console.error('🎯 Error in handleProceedWithCurrentStrategy:', error);
+      }
+    }, 300); // Increased delay to ensure modal closes completely
+  };
+
+  // Handle add enterprise datapoints (coming soon)
+  const handleAddEnterpriseDatapoints = async () => {
+    console.log('🎯 User clicked "Add Enterprise Datapoints"');
+    setShowEnterpriseModal(false);
+    sessionStorage.removeItem('showEnterpriseModal'); // Clear sessionStorage
+    
+    // For now, just proceed with current strategy
+    // In Phase 2, this will enable enterprise datapoints
+    setTimeout(async () => {
+      console.log('🎯 Calling original handleCreateStrategy for enterprise datapoints');
+      try {
+        // Ensure we're not already generating
+        if (!aiGenerating) {
+          await originalHandleCreateStrategy();
+        } else {
+          console.log('🎯 Already generating, skipping duplicate call');
+        }
+      } catch (error) {
+        console.error('🎯 Error in handleAddEnterpriseDatapoints:', error);
+      }
+    }, 200); // Increased delay to ensure modal closes completely
+  };
 
   // Auto-populate from onboarding on first load
   useEffect(() => {
@@ -230,6 +344,24 @@ const ContentStrategyBuilder: React.FC = () => {
   useEffect(() => {
     console.log('🎯 Modal state changed - transparencyModalOpen:', transparencyModalOpen);
   }, [transparencyModalOpen]);
+
+  // Monitor enterprise modal state for debugging
+  useEffect(() => {
+    console.log('🎯 Enterprise modal state changed - showEnterpriseModal:', showEnterpriseModal);
+    
+    // If modal was unexpectedly closed, log it
+    if (!showEnterpriseModal && aiGenerating) {
+      console.warn('🎯 WARNING: Enterprise modal closed while AI is generating');
+    }
+    
+    // Only warn about unexpected closure if it's not due to hot reload
+    if (!showEnterpriseModal && !aiGenerating) {
+      const savedModalState = sessionStorage.getItem('showEnterpriseModal');
+      if (savedModalState !== 'true') {
+        console.warn('🎯 WARNING: Enterprise modal closed unexpectedly (not due to hot reload)');
+      }
+    }
+  }, [showEnterpriseModal, aiGenerating]);
 
   // Monitor store data changes for debugging
   useEffect(() => {
@@ -493,20 +625,17 @@ const ContentStrategyBuilder: React.FC = () => {
                     setCurrentPhase('Complete');
                     setRefreshMessage(`AI refresh completed! Generated ${Object.keys(fieldValues).length} fields.`);
                     
-                    // Close modal after a short delay to show completion
-                    setTimeout(() => {
-                      setTransparencyModalOpen(false);
-                      setAIGenerating(false);
-                      setIsRefreshing(false);
-                      setIsGenerating(false);
-                      console.log('🎯 Polling-based AI refresh completed successfully!', {
-                        fieldsGenerated: Object.keys(fieldValues).length,
-                        confidenceScoresCount: Object.keys(confidenceScores).length,
-                        dataSourcesCount: Object.keys(sources).length,
-                        approach: 'Polling (No SSE)',
-                        timestamp: new Date().toISOString()
-                      });
-                    }, 2000);
+                    // Don't close modal automatically - let user close it manually
+                    setAIGenerating(false);
+                    setIsRefreshing(false);
+                    setIsGenerating(false);
+                    console.log('🎯 Polling-based AI refresh completed successfully!', {
+                      fieldsGenerated: Object.keys(fieldValues).length,
+                      confidenceScoresCount: Object.keys(confidenceScores).length,
+                      dataSourcesCount: Object.keys(sources).length,
+                      approach: 'Polling (No SSE)',
+                      timestamp: new Date().toISOString()
+                    });
                   } else {
                     throw new Error('Invalid response from AI refresh endpoint');
                   }
@@ -656,8 +785,16 @@ const ContentStrategyBuilder: React.FC = () => {
       <EducationalModal
         open={showEducationalModal}
         onClose={() => setShowEducationalModal(false)}
-                educationalContent={storeEducationalContent}      
+        educationalContent={storeEducationalContent}      
         generationProgress={storeGenerationProgress}
+        onReviewStrategy={() => {
+          console.log('🎯 User clicked "Next: Review Strategy and Create Calendar"');
+          setShowEducationalModal(false);
+          // Navigate to content planning dashboard with Content Strategy tab active
+          navigate('/content-planning', { 
+            state: { activeTab: 0 } // 0 = Content Strategy tab
+          });
+        }}
       />
 
       {/* Data Source Transparency Modal */}
@@ -690,7 +827,13 @@ const ContentStrategyBuilder: React.FC = () => {
       {/* Strategy Autofill Transparency Modal */}
       <StrategyAutofillTransparencyModal
         open={transparencyModalOpen}
-        onClose={() => setTransparencyModalOpen(false)}
+        onClose={() => {
+          setTransparencyModalOpen(false);
+          // Ensure form data is refreshed after modal closes
+          console.log('🎯 Modal closed - ensuring form data is updated');
+          console.log('🎯 Current autoPopulatedFields:', Object.keys(autoPopulatedFields || {}));
+          console.log('🎯 Current formData keys:', Object.keys(formData || {}));
+        }}
         autoPopulatedFields={autoPopulatedFields}
         dataSources={dataSources}
         inputDataPoints={inputDataPoints}
@@ -700,6 +843,19 @@ const ContentStrategyBuilder: React.FC = () => {
         educationalContent={storeEducationalContent}
         transparencyMessages={transparencyMessages}
         error={error}
+      />
+
+      {/* Enterprise Datapoints Modal */}
+      <EnterpriseDatapointsModal
+        open={showEnterpriseModal}
+        onClose={() => {
+          console.log('🎯 Enterprise modal onClose called');
+          console.log('🎯 Current aiGenerating state:', aiGenerating);
+          setShowEnterpriseModal(false);
+          sessionStorage.removeItem('showEnterpriseModal'); // Clear sessionStorage
+        }}
+        onProceedWithCurrent={handleProceedWithCurrentStrategy}
+        onAddEnterpriseDatapoints={handleAddEnterpriseDatapoints}
       />
 
       {/* Tooltip */}

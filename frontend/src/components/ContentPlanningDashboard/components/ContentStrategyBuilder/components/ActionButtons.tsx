@@ -38,34 +38,28 @@ export const useActionButtonsBusinessLogic = ({
       console.log('Current formData:', formData);
       console.log('FormData ID:', formData.id);
 
-      // If we have a saved strategy, use its ID
-      if (formData.id) {
-        console.log('Using existing strategy ID:', formData.id);
-        await generateAIRecommendations(formData.id);
-      } else {
-        console.log('No strategy ID found, creating new strategy...');
-        // If no strategy is saved yet, save it first, then generate AI insights
-        const isValid = validateAllFields();
-        console.log('Form validation result:', isValid);
-      
-        if (isValid) {
-          const completionStats = getCompletionStats();
-          const strategyData = {
-            ...formData,
-            completion_percentage: completionStats.completion_percentage,
-            user_id: 1, // This would come from auth context
-            name: formData.name || 'Enhanced Content Strategy',
-            industry: formData.industry || 'General'
-          };
+      // Always use the polling-based strategy generation for consistency
+      console.log('Using polling-based strategy generation...');
+      const isValid = validateAllFields();
+      console.log('Form validation result:', isValid);
+    
+      if (isValid) {
+        const completionStats = getCompletionStats();
+        const strategyData = {
+          ...formData,
+          completion_percentage: completionStats.completion_percentage,
+          user_id: 1, // This would come from auth context
+          name: formData.name || 'Enhanced Content Strategy',
+          industry: formData.industry || 'General'
+        };
 
-          console.log('Attempting to create strategy with data:', strategyData);
-          
-          // Use SSE streaming endpoint for strategy generation with educational content
-          await generateStrategyWithPolling(strategyData);
-        } else {
-          setError('Please fill in all required fields before generating AI insights.');
-          console.error('Form validation failed. Cannot generate AI insights.');
-        }
+        console.log('Attempting to create strategy with data:', strategyData);
+        
+        // Use polling-based strategy generation with educational content
+        await generateStrategyWithPolling(strategyData);
+      } else {
+        setError('Please fill in all required fields before generating AI insights.');
+        console.error('Form validation failed. Cannot generate AI insights.');
       }
     } catch (err: any) {
       setError(`Error generating AI recommendations: ${err.message || 'Unknown error'}`);
@@ -97,49 +91,79 @@ export const useActionButtonsBusinessLogic = ({
       // Show educational modal
       setShowEducationalModal(true);
 
-      // Start polling-based strategy generation directly (no basic strategy creation)
-      const generationResult = await contentPlanningApi.startStrategyGenerationPolling(1, 'Enhanced Content Strategy');
+      // Start polling-based strategy generation with actual strategy data
+      const generationResult = await contentPlanningApi.startStrategyGenerationPolling(
+        strategyData.user_id || 1, 
+        strategyData.name || 'Enhanced Content Strategy'
+      );
       console.log('Strategy generation started:', generationResult);
+      console.log('Generation result structure:', generationResult);
+      console.log('Generation result.data:', generationResult?.data);
+      console.log('Generation result.data.task_id:', generationResult?.data?.task_id);
       
-      if (generationResult && generationResult.task_id) {
-        const taskId = generationResult.task_id;
+      // Check for task_id in the correct location based on backend response structure
+      const taskId = generationResult?.data?.task_id || generationResult?.task_id;
+      console.log('Task ID extracted:', taskId);
+      
+      if (taskId) {
         console.log('Task ID received:', taskId);
         
         // Start polling for status updates
+        console.log('🎯 Starting polling for task ID:', taskId);
         contentPlanningApi.pollStrategyGeneration(
           taskId,
           // onProgress callback
           (status: any) => {
             console.log('📊 Progress update:', status);
+            console.log('📊 Status structure:', status);
+            
+            // Extract the actual task status from the response data
+            const taskStatus = status?.data || status;
+            console.log('📊 Task status:', taskStatus);
             
             // Update progress
-            if (status.progress !== undefined) {
-              setGenerationProgress(status.progress);
+            if (taskStatus.progress !== undefined) {
+              console.log('📊 Setting progress:', taskStatus.progress);
+              setGenerationProgress(taskStatus.progress);
+              
+              // Debug: Check if progress reached 100%
+              if (taskStatus.progress >= 100) {
+                console.log('🎯 Progress reached 100% - modal should show "Next" button');
+              }
             }
             
             // Update educational content
-            if (status.educational_content) {
-              console.log('📚 Updating educational content:', status.educational_content);
-              setEducationalContent(status.educational_content);
+            if (taskStatus.educational_content) {
+              console.log('📚 Updating educational content:', taskStatus.educational_content);
+              setEducationalContent(taskStatus.educational_content);
             }
             
             // Update message
-            if (status.message) {
-              console.log('📝 Status message:', status.message);
+            if (taskStatus.message) {
+              console.log('📝 Status message:', taskStatus.message);
+            }
+            
+            // Update phase if available
+            if (taskStatus.step) {
+              console.log('📊 Current step:', taskStatus.step);
             }
           },
           // onComplete callback
           (strategy: any) => {
             console.log('✅ Strategy generation completed successfully!');
             setCurrentStrategy(strategy);
-            setShowEducationalModal(false);
-            setError('Strategy created successfully! Check the Strategic Intelligence tab for detailed insights.');
+            // Set progress to 100% when completion is detected
+            setGenerationProgress(100);
+            console.log('🎯 Setting progress to 100% in onComplete callback');
+            // Don't close the modal automatically - let user click the button
+            // setShowEducationalModal(false); // REMOVED - let user control modal closure
+            console.log('🎯 Strategy generation complete - modal should stay open for user to click "Next" button');
           },
           // onError callback
           (error: string) => {
             console.error('❌ Strategy generation failed:', error);
             setError(`Strategy generation failed: ${error}`);
-            setShowEducationalModal(false);
+            setShowEducationalModal(false); // Only close on error
           },
           5000, // 5 second polling interval for faster updates
           72 // 6 minutes max (72 * 5 seconds)

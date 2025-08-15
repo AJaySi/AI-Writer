@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Box,
   Tabs,
@@ -72,6 +73,7 @@ function a11yProps(index: number) {
 }
 
 const ContentPlanningDashboard: React.FC = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState(0);
   const [serviceStatuses, setServiceStatuses] = useState<ServiceStatus[]>([]);
   const [dashboardData, setDashboardData] = useState<DashboardData>({
@@ -120,6 +122,13 @@ const ContentPlanningDashboard: React.FC = () => {
       }
     });
   }, [updateStrategies, updateCalendarEvents, updateGapAnalyses, updateAIInsights]);
+
+  // Handle navigation state for active tab
+  useEffect(() => {
+    if (location.state?.activeTab !== undefined) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
 
   // Load dashboard data using orchestrator
   useEffect(() => {
