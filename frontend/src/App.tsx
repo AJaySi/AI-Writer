@@ -5,6 +5,11 @@ import Wizard from './components/OnboardingWizard/Wizard';
 import MainDashboard from './components/MainDashboard/MainDashboard';
 import SEODashboard from './components/SEODashboard/SEODashboard';
 import ContentPlanningDashboard from './components/ContentPlanningDashboard/ContentPlanningDashboard';
+import LandingPage from './pages/LandingPage';
+import SignInPage from './components/auth/SignInPage';
+import SignUpPage from './components/auth/SignUpPage';
+import EnhancedAuthGuard from './components/auth/EnhancedAuthGuard';
+import { useAuthState } from './hooks/useAuthState';
 import { apiClient } from './api/client';
 
 interface OnboardingStatus {
@@ -16,17 +21,18 @@ interface OnboardingStatus {
 }
 
 const App: React.FC = () => {
-  const [loading, setLoading] = useState(true);
+  const { isLoaded, isSignedIn } = useAuthState();
   const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    checkOnboardingStatus();
-  }, []);
+    if (isSignedIn) {
+      checkOnboardingStatus();
+    }
+  }, [isSignedIn]);
 
   const checkOnboardingStatus = async () => {
     try {
-      setLoading(true);
       // Use the correct endpoint that exists in our backend
       const response = await apiClient.get('/api/onboarding/status');
       const status: any = response.data;
@@ -51,8 +57,6 @@ const App: React.FC = () => {
         total_steps: 6,
         completion_percentage: 0
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -61,7 +65,8 @@ const App: React.FC = () => {
     await checkOnboardingStatus();
   };
 
-  if (loading) {
+  // Show loading while Clerk is initializing
+  if (!isLoaded) {
     return (
       <Box
         display="flex"
@@ -100,39 +105,70 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        {/* Dashboard Route */}
-        <Route 
-          path="/dashboard" 
-          element={
-            <DashboardWrapper />
-          } 
-        />
-        
-        {/* SEO Dashboard Route */}
-        <Route 
-          path="/seo-dashboard" 
-          element={
-            <SEODashboard />
-          } 
-        />
-        
-        {/* Content Planning Dashboard Route */}
-        <Route 
-          path="/content-planning" 
-          element={
-            <ContentPlanningDashboard />
-          } 
-        />
-        
-        {/* Root Route - Show onboarding or redirect to dashboard */}
+        {/* Public Routes */}
         <Route 
           path="/" 
           element={
-            onboardingStatus?.onboarding_required ? (
-              <Wizard onComplete={handleOnboardingComplete} />
+            isSignedIn ? (
+              // If signed in, check onboarding status
+              onboardingStatus?.onboarding_required ? (
+                <EnhancedAuthGuard>
+                  <Wizard onComplete={handleOnboardingComplete} />
+                </EnhancedAuthGuard>
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
             ) : (
-              <Navigate to="/dashboard" replace />
+              // If not signed in, show landing page
+              <LandingPage />
             )
+          } 
+        />
+
+        {/* Authentication Routes */}
+        <Route 
+          path="/auth/signin" 
+          element={
+            <EnhancedAuthGuard requireAuth={false} redirectTo="/dashboard">
+              <SignInPage />
+            </EnhancedAuthGuard>
+          } 
+        />
+        
+        <Route 
+          path="/auth/signup" 
+          element={
+            <EnhancedAuthGuard requireAuth={false} redirectTo="/dashboard">
+              <SignUpPage />
+            </EnhancedAuthGuard>
+          } 
+        />
+
+        {/* Protected Dashboard Routes */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <EnhancedAuthGuard>
+              <DashboardWrapper />
+            </EnhancedAuthGuard>
+          } 
+        />
+        
+        <Route 
+          path="/seo-dashboard" 
+          element={
+            <EnhancedAuthGuard>
+              <SEODashboard />
+            </EnhancedAuthGuard>
+          } 
+        />
+        
+        <Route 
+          path="/content-planning" 
+          element={
+            <EnhancedAuthGuard>
+              <ContentPlanningDashboard />
+            </EnhancedAuthGuard>
           } 
         />
         

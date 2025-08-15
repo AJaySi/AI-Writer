@@ -5,8 +5,11 @@
       "title": "AI LLM Providers",
       "description": "Configure AI language model providers",
       "status": "completed",
-      "completed_at": "2025-08-11T22:04:00.811667",
-      "data": {},
+      "completed_at": "2025-08-16T01:40:25.039728",
+      "data": {
+        "timestamp": "2025-08-15T20:10:24.934Z",
+        "step_number": 1
+      },
       "validation_errors": []
     },
     {
@@ -14,8 +17,11 @@
       "title": "Website Analysis",
       "description": "Set up website analysis and crawling",
       "status": "completed",
-      "completed_at": "2025-08-11T22:03:59.687538",
-      "data": {},
+      "completed_at": "2025-08-16T01:40:46.898876",
+      "data": {
+        "timestamp": "2025-08-15T20:10:46.565Z",
+        "step_number": 2
+      },
       "validation_errors": []
     },
     {
@@ -23,8 +29,11 @@
       "title": "AI Research",
       "description": "Configure AI research capabilities",
       "status": "completed",
-      "completed_at": "2025-08-11T08:35:33.588857",
-      "data": {},
+      "completed_at": "2025-08-16T01:41:15.164169",
+      "data": {
+        "timestamp": "2025-08-15T20:11:15.034Z",
+        "step_number": 3
+      },
       "validation_errors": []
     },
     {
@@ -32,8 +41,11 @@
       "title": "Personalization",
       "description": "Set up personalization features",
       "status": "completed",
-      "completed_at": "2025-08-11T08:35:58.077566",
-      "data": {},
+      "completed_at": "2025-08-16T01:41:19.229378",
+      "data": {
+        "timestamp": "2025-08-15T20:11:19.183Z",
+        "step_number": 4
+      },
       "validation_errors": []
     },
     {
@@ -41,8 +53,11 @@
       "title": "Integrations",
       "description": "Configure ALwrity integrations",
       "status": "completed",
-      "completed_at": "2025-08-11T08:41:06.977843",
-      "data": {},
+      "completed_at": "2025-08-16T01:41:50.705339",
+      "data": {
+        "timestamp": "2025-08-15T20:11:50.323Z",
+        "step_number": 5
+      },
       "validation_errors": []
     },
     {
@@ -55,9 +70,9 @@
       "validation_errors": []
     }
   ],
-  "current_step": 2,
+  "current_step": 6,
   "started_at": "2025-08-10T22:06:16.430393",
-  "last_updated": "2025-08-11T22:04:00.811667",
+  "last_updated": "2025-08-16T01:41:50.705339",
   "is_completed": false,
   "completed_at": null
 }
