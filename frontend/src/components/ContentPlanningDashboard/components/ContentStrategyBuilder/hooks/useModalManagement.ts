@@ -1,55 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface UseModalManagementProps {
   aiGenerating: boolean;
-  originalHandleCreateStrategy: (() => Promise<void>) | null;
+  originalHandleCreateStrategy?: (() => Promise<void>) | null;
+  setShowEnterpriseModal: (show: boolean) => void;
 }
 
-export const useModalManagement = ({ aiGenerating, originalHandleCreateStrategy }: UseModalManagementProps) => {
-  const [showEducationalModal, setShowEducationalModal] = useState(false);
-  const [showEnterpriseModal, setShowEnterpriseModal] = useState(false);
+export const useModalManagement = ({ 
+  aiGenerating, 
+  originalHandleCreateStrategy,
+  setShowEnterpriseModal 
+}: UseModalManagementProps) => {
+  const originalHandleCreateStrategyRef = useRef<(() => Promise<void>) | null>(null);
   
-  // Persist enterprise modal state across hot reloads
+  // Update ref when originalHandleCreateStrategy changes
   useEffect(() => {
-    const savedModalState = sessionStorage.getItem('showEnterpriseModal');
-    if (savedModalState === 'true') {
-      console.log('🎯 Restoring enterprise modal state from sessionStorage');
-      setShowEnterpriseModal(true);
+    if (originalHandleCreateStrategy) {
+      originalHandleCreateStrategyRef.current = originalHandleCreateStrategy;
     }
-  }, []);
-  
-  // Save modal state to sessionStorage when it changes
-  useEffect(() => {
-    sessionStorage.setItem('showEnterpriseModal', showEnterpriseModal.toString());
-  }, [showEnterpriseModal]);
-  
-  // Cleanup sessionStorage on component unmount
-  useEffect(() => {
-    return () => {
-      // Only clear if we're not in the middle of showing the modal
-      if (!showEnterpriseModal) {
-        sessionStorage.removeItem('showEnterpriseModal');
-      }
-    };
-  }, [showEnterpriseModal]);
+  }, [originalHandleCreateStrategy]);
 
-  // Monitor enterprise modal state for debugging
+  // Monitor aiGenerating state for debugging
   useEffect(() => {
-    console.log('🎯 Enterprise modal state changed - showEnterpriseModal:', showEnterpriseModal);
-    
-    // If modal was unexpectedly closed, log it
-    if (!showEnterpriseModal && aiGenerating) {
-      console.warn('🎯 WARNING: Enterprise modal closed while AI is generating');
-    }
-    
-    // Only warn about unexpected closure if it's not due to hot reload
-    if (!showEnterpriseModal && !aiGenerating) {
-      const savedModalState = sessionStorage.getItem('showEnterpriseModal');
-      if (savedModalState !== 'true') {
-        console.warn('🎯 WARNING: Enterprise modal closed unexpectedly (not due to hot reload)');
-      }
-    }
-  }, [showEnterpriseModal, aiGenerating]);
+    console.log('🎯 useModalManagement: aiGenerating state changed:', aiGenerating);
+  }, [aiGenerating]);
 
   // Handle proceed with current strategy (30 fields)
   const handleProceedWithCurrentStrategy = async () => {
@@ -62,9 +36,9 @@ export const useModalManagement = ({ aiGenerating, originalHandleCreateStrategy 
       console.log('🎯 Calling original handleCreateStrategy after enterprise modal closes');
       try {
         // Ensure we're not already generating
-        if (!aiGenerating && originalHandleCreateStrategy) {
+        if (!aiGenerating && originalHandleCreateStrategyRef.current) {
           console.log('🎯 Starting strategy generation...');
-          await originalHandleCreateStrategy();
+          await originalHandleCreateStrategyRef.current();
         } else {
           console.log('🎯 Already generating, skipping duplicate call');
         }
@@ -86,8 +60,8 @@ export const useModalManagement = ({ aiGenerating, originalHandleCreateStrategy 
       console.log('🎯 Calling original handleCreateStrategy for enterprise datapoints');
       try {
         // Ensure we're not already generating
-        if (!aiGenerating && originalHandleCreateStrategy) {
-          await originalHandleCreateStrategy();
+        if (!aiGenerating && originalHandleCreateStrategyRef.current) {
+          await originalHandleCreateStrategyRef.current();
         } else {
           console.log('🎯 Already generating, skipping duplicate call');
         }
@@ -98,10 +72,6 @@ export const useModalManagement = ({ aiGenerating, originalHandleCreateStrategy 
   };
 
   return {
-    showEducationalModal,
-    setShowEducationalModal,
-    showEnterpriseModal,
-    setShowEnterpriseModal,
     handleProceedWithCurrentStrategy,
     handleAddEnterpriseDatapoints
   };

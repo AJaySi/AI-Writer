@@ -52,29 +52,27 @@ const ImplementationRoadmapCard: React.FC<ImplementationRoadmapCardProps> = ({ s
 
   if (!strategyData?.implementation_roadmap) {
     return (
-      <Grid item xs={12} lg={6}>
-        <ProgressiveCard
-          title="Implementation Roadmap"
-          subtitle="Project timeline and phases"
-          icon={<TimelineIcon sx={{ color: 'white', fontSize: 20 }} />}
-          summary={
-            <Box sx={{ textAlign: 'center', py: 2 }}>
-              <Typography variant="body1" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
-                Implementation roadmap data not available
-              </Typography>
-            </Box>
-          }
-          details={
-            <Box sx={{ textAlign: 'center', py: 2 }}>
-              <Typography variant="caption" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
-                Available data keys: {strategyData ? Object.keys(strategyData).join(', ') : 'No data'}
-              </Typography>
-            </Box>
-          }
-          trigger="hover"
-          autoCollapseDelay={3000}
-        />
-      </Grid>
+      <ProgressiveCard
+        title="Implementation Roadmap"
+        subtitle="Strategic execution plan"
+        icon={<TimelineIcon sx={{ color: 'white', fontSize: 20 }} />}
+        summary={
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            <Typography variant="body1" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
+              Implementation roadmap data not available
+            </Typography>
+          </Box>
+        }
+        details={
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            <Typography variant="caption" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
+              Available data keys: {strategyData ? Object.keys(strategyData).join(', ') : 'No data'}
+            </Typography>
+          </Box>
+        }
+        trigger="hover"
+        autoCollapseDelay={3000}
+      />
     );
   }
 
@@ -550,17 +548,16 @@ const ImplementationRoadmapCard: React.FC<ImplementationRoadmapCardProps> = ({ s
   );
 
   return (
-    <Grid item xs={12} lg={6}>
-      <ProgressiveCard
-        title="Implementation Roadmap"
-        subtitle="Project timeline and phases"
-        icon={<TimelineIcon sx={{ color: 'white', fontSize: 20 }} />}
-        summary={summaryContent}
-        details={detailedContent}
-        trigger="hover"
-        autoCollapseDelay={3000}
-      />
-    </Grid>
+    <ProgressiveCard
+      title="Implementation Roadmap"
+      subtitle="Project timeline and phases"
+      icon={<TimelineIcon sx={{ color: 'white', fontSize: 20 }} />}
+      summary={summaryContent}
+      details={detailedContent}
+      trigger="hover"
+      autoCollapseDelay={3000}
+      componentId="implementation_roadmap"
+    />
   );
 };
 

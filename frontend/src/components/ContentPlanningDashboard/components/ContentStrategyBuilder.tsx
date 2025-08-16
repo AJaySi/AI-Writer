@@ -160,6 +160,34 @@ const ContentStrategyBuilder: React.FC = () => {
     handleShowEducationalInfo
   } = useEventHandlers();
 
+  // Create a state for educational modal that can be passed to both hooks
+  const [showEducationalModal, setShowEducationalModal] = useState(false);
+  const [showEnterpriseModal, setShowEnterpriseModal] = useState(false);
+
+  // Persist enterprise modal state across hot reloads
+  useEffect(() => {
+    const savedModalState = sessionStorage.getItem('showEnterpriseModal');
+    if (savedModalState === 'true') {
+      console.log('🎯 Restoring enterprise modal state from sessionStorage');
+      setShowEnterpriseModal(true);
+    }
+  }, []);
+  
+  // Save modal state to sessionStorage when it changes
+  useEffect(() => {
+    sessionStorage.setItem('showEnterpriseModal', showEnterpriseModal.toString());
+  }, [showEnterpriseModal]);
+  
+  // Cleanup sessionStorage on component unmount
+  useEffect(() => {
+    return () => {
+      // Only clear if we're not in the middle of showing the modal
+      if (!showEnterpriseModal) {
+        sessionStorage.removeItem('showEnterpriseModal');
+      }
+    };
+  }, [showEnterpriseModal]);
+
   // Use strategy creation hook first
   const { originalHandleCreateStrategy, handleSaveStrategy } = useStrategyCreation({
     formData,
@@ -171,7 +199,7 @@ const ContentStrategyBuilder: React.FC = () => {
     setSaving,
     setGenerationProgress: setStoreGenerationProgress,
     setEducationalContent: setStoreEducationalContent,
-    setShowEducationalModal: () => {}, // Temporary placeholder
+    setShowEducationalModal, // Pass the actual setShowEducationalModal function
     validateAllFields,
     getCompletionStats,
     generateAIRecommendations: (strategyId: string) => generateAIRecommendations(strategyId),
@@ -180,15 +208,12 @@ const ContentStrategyBuilder: React.FC = () => {
   });
 
   const {
-    showEducationalModal,
-    setShowEducationalModal,
-    showEnterpriseModal,
-    setShowEnterpriseModal,
     handleProceedWithCurrentStrategy,
     handleAddEnterpriseDatapoints
   } = useModalManagement({
     aiGenerating,
-    originalHandleCreateStrategy
+    originalHandleCreateStrategy,
+    setShowEnterpriseModal
   });
 
   const {

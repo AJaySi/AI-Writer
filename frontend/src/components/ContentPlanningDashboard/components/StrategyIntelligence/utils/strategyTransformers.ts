@@ -165,6 +165,13 @@ export const transformPollingStrategyData = (strategyData: any): StrategyData =>
         competitive_risks: riskAssessment.risk_categories?.competitive_risks || [],
         technical_risks: riskAssessment.risk_categories?.technical_risks || [],
         financial_risks: riskAssessment.risk_categories?.financial_risks || []
+      },
+      mitigation_strategies: riskAssessment.mitigation_strategies || [],
+      monitoring_framework: riskAssessment.monitoring_framework || {
+        key_indicators: [],
+        monitoring_frequency: "Weekly",
+        escalation_procedures: [],
+        review_schedule: "Monthly"
       }
     } : undefined,
     

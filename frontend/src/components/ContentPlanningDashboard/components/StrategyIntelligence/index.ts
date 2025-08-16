@@ -1,5 +1,5 @@
 // Main Strategy Intelligence Tab
-export { default as StrategyIntelligenceTab } from '../StrategyIntelligenceTab';
+export { default as StrategyIntelligenceTab } from './StrategyIntelligenceTab';
 
 // Components
 export { default as StrategyHeader } from './components/StrategyHeader';

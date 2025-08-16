@@ -1,41 +1,22 @@
-import React from 'react';
-import { Box, CircularProgress, Alert, Typography, Grid } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, CircularProgress, Alert, Typography } from '@mui/material';
 import { useStrategyData } from './hooks/useStrategyData';
-import { useStrategyActions } from './hooks/useStrategyActions';
 import StrategyHeader from './components/StrategyHeader';
 import StrategicInsightsCard from './components/StrategicInsightsCard';
 import CompetitiveAnalysisCard from './components/CompetitiveAnalysisCard';
 import PerformancePredictionsCard from './components/PerformancePredictionsCard';
 import ImplementationRoadmapCard from './components/ImplementationRoadmapCard';
 import RiskAssessmentCard from './components/RiskAssessmentCard';
-import StrategyActions from './components/StrategyActions';
-import ConfirmationDialog from './components/ConfirmationDialog';
+import ReviewProgressHeader from './components/ReviewProgressHeader';
 
 const StrategyIntelligenceTab: React.FC = () => {
-  const { strategyData, loading, error, loadStrategyData } = useStrategyData();
-  const { 
-    strategyConfirmed, 
-    showConfirmDialog, 
-    setShowConfirmDialog, 
-    handleConfirmStrategy, 
-    confirmStrategy, 
-    handleGenerateContentCalendar 
-  } = useStrategyActions();
+  const { strategyData, loading, error } = useStrategyData();
+  
+  // State to control review progress visibility
+  const [showReviewProgress, setShowReviewProgress] = useState(false);
 
-  const handleConfirmStrategyClick = () => {
-    handleConfirmStrategy();
-  };
-
-  const handleConfirmStrategyAction = async () => {
-    await confirmStrategy(strategyData);
-  };
-
-  const handleGenerateContentCalendarAction = async () => {
-    try {
-      await handleGenerateContentCalendar(strategyData);
-    } catch (error) {
-      console.error('Error generating content calendar:', error);
-    }
+  const handleStartReviewProcess = () => {
+    setShowReviewProgress(true);
   };
 
   if (loading) {
@@ -70,32 +51,52 @@ const StrategyIntelligenceTab: React.FC = () => {
   return (
     <Box sx={{ p: 3 }}>
       {/* Header Section */}
-      <StrategyHeader strategyData={strategyData} strategyConfirmed={strategyConfirmed} />
+      <StrategyHeader 
+        strategyData={strategyData} 
+        strategyConfirmed={false}
+        onStartReview={handleStartReviewProcess}
+      />
+
+      {/* Review Progress Header - Only shown when review process is started */}
+      {showReviewProgress && <ReviewProgressHeader />}
 
       {/* Strategy Components Grid */}
-      <Grid container spacing={2}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: '1fr',
+            md: 'repeat(2, 1fr)',
+            lg: 'repeat(2, 1fr)',
+            xl: 'repeat(3, 1fr)'
+          },
+          gridAutoRows: 'minmax(min-content, auto)',
+          gap: 3,
+          position: 'relative',
+          minHeight: '400px',
+          padding: 2,
+          '& > *': {
+            minHeight: 'fit-content',
+            position: 'relative',
+            zIndex: 1,
+            transition: 'z-index 0.3s ease, transform 0.3s ease',
+          },
+          '& > *:hover': {
+            zIndex: 10,
+          }
+        }}
+      >
         <StrategicInsightsCard strategyData={strategyData} />
         <CompetitiveAnalysisCard strategyData={strategyData} />
         <PerformancePredictionsCard strategyData={strategyData} />
         <ImplementationRoadmapCard strategyData={strategyData} />
         <RiskAssessmentCard strategyData={strategyData} />
-      </Grid>
+      </Box>
 
-      {/* Action Buttons */}
-      <StrategyActions
-        strategyData={strategyData}
-        strategyConfirmed={strategyConfirmed}
-        onConfirmStrategy={handleConfirmStrategyClick}
-        onGenerateContentCalendar={handleGenerateContentCalendarAction}
-        onRefreshData={loadStrategyData}
-      />
+      {/* Action Buttons - Removed, functionality moved to "Confirm & Activate Strategy" button in ReviewProgressHeader */}
 
-      {/* Confirmation Dialog */}
-      <ConfirmationDialog
-        open={showConfirmDialog}
-        onClose={() => setShowConfirmDialog(false)}
-        onConfirm={handleConfirmStrategyAction}
-      />
+      {/* Confirmation Dialog - Removed, functionality moved to "Confirm & Activate Strategy" button */}
     </Box>
   );
 };

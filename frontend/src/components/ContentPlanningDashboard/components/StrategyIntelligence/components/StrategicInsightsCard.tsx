@@ -40,15 +40,7 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
   const accordionStyles = getAccordionStyles();
   const listItemStyles = getListItemStyles();
 
-  console.log('🔍 StrategicInsightsCard - strategyData:', strategyData);
-  console.log('🔍 StrategicInsightsCard - strategic_insights:', strategyData?.strategic_insights);
-  console.log('🔍 StrategicInsightsCard - market_positioning:', strategyData?.strategic_insights?.market_positioning);
-  console.log('🔍 StrategicInsightsCard - swot_analysis:', strategyData?.strategic_insights?.market_positioning?.swot_analysis);
-  console.log('🔍 StrategicInsightsCard - strengths:', strategyData?.strategic_insights?.market_positioning?.swot_analysis?.strengths);
-  console.log('🔍 StrategicInsightsCard - opportunities:', strategyData?.strategic_insights?.market_positioning?.swot_analysis?.opportunities);
-  console.log('🔍 StrategicInsightsCard - content_opportunities:', strategyData?.strategic_insights?.content_opportunities);
-  console.log('🔍 StrategicInsightsCard - growth_potential:', strategyData?.strategic_insights?.growth_potential);
-  console.log('🔍 StrategicInsightsCard - swot_summary:', strategyData?.strategic_insights?.swot_summary);
+
 
   if (!strategyData?.strategic_insights) {
     return (
@@ -587,17 +579,16 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
   );
 
   return (
-    <Grid item xs={12} lg={6}>
-      <ProgressiveCard
-        title="Strategic Insights"
-        subtitle="AI-powered market analysis"
-        icon={<LightbulbIcon sx={{ color: 'white', fontSize: 20 }} />}
-        summary={summaryContent}
-        details={detailedContent}
-        trigger="hover"
-        autoCollapseDelay={2000}
-      />
-    </Grid>
+    <ProgressiveCard
+      title="Strategic Insights"
+      subtitle="AI-powered market analysis"
+      icon={<LightbulbIcon sx={{ color: 'white', fontSize: 20 }} />}
+      summary={summaryContent}
+      details={detailedContent}
+      trigger="hover"
+      autoCollapseDelay={2000}
+      componentId="strategic_insights"
+    />
   );
 };
 

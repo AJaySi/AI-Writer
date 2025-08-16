@@ -623,11 +623,18 @@ class AIStrategyGenerator:
             {json.dumps(base_strategy, indent=2)}
             
             Please provide risk assessment including:
-            1. Risk identification and analysis
-            2. Probability and impact assessment
-            3. Mitigation strategies
-            4. Contingency planning
-            5. Risk monitoring framework
+            1. Risk identification and analysis with detailed risk descriptions
+            2. Probability and impact assessment for each risk
+            3. Specific mitigation strategies for each risk
+            4. Contingency planning for high-impact risks
+            5. Risk monitoring framework with key indicators
+            6. Categorize risks into: technical_risks, market_risks, operational_risks, financial_risks
+            
+            IMPORTANT: For risk_categories, categorize each risk into the appropriate category:
+            - technical_risks: Technology, platform, tool, or technical implementation risks
+            - market_risks: Market changes, competition, audience shifts, industry trends
+            - operational_risks: Process, resource, team, or execution risks
+            - financial_risks: Budget, ROI, cost, or financial performance risks
             
             Format as structured JSON with detailed risk analysis and mitigation plans.
             """
@@ -652,10 +659,54 @@ class AIStrategyGenerator:
                     "risk_categories": {
                         "type": "object",
                         "properties": {
-                            "technical_risks": {"type": "array", "items": {"type": "string"}},
-                            "market_risks": {"type": "array", "items": {"type": "string"}},
-                            "operational_risks": {"type": "array", "items": {"type": "string"}},
-                            "financial_risks": {"type": "array", "items": {"type": "string"}}
+                            "technical_risks": {
+                                "type": "array", 
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "risk": {"type": "string"},
+                                        "probability": {"type": "string"},
+                                        "impact": {"type": "string"},
+                                        "mitigation": {"type": "string"}
+                                    }
+                                }
+                            },
+                            "market_risks": {
+                                "type": "array", 
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "risk": {"type": "string"},
+                                        "probability": {"type": "string"},
+                                        "impact": {"type": "string"},
+                                        "mitigation": {"type": "string"}
+                                    }
+                                }
+                            },
+                            "operational_risks": {
+                                "type": "array", 
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "risk": {"type": "string"},
+                                        "probability": {"type": "string"},
+                                        "impact": {"type": "string"},
+                                        "mitigation": {"type": "string"}
+                                    }
+                                }
+                            },
+                            "financial_risks": {
+                                "type": "array", 
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "risk": {"type": "string"},
+                                        "probability": {"type": "string"},
+                                        "impact": {"type": "string"},
+                                        "mitigation": {"type": "string"}
+                                    }
+                                }
+                            }
                         }
                     },
                     "mitigation_strategies": {"type": "array", "items": {"type": "string"}},
@@ -1079,6 +1130,8 @@ class AIStrategyGenerator:
 
     def _transform_risk_assessment(self, ai_response: Dict[str, Any]) -> Dict[str, Any]:
         """Transform risk assessment to frontend format."""
+        self.logger.info(f"🔍 Transforming risk assessment. Input: {json.dumps(ai_response, indent=2)}")
+        
         transformed = {
             "risks": [],
             "overall_risk_level": "Medium",
@@ -1097,10 +1150,43 @@ class AIStrategyGenerator:
             }
         }
 
+        # Extract overall risk level
+        if ai_response.get("overall_risk_level"):
+            transformed["overall_risk_level"] = ai_response["overall_risk_level"]
+
         # Extract risk data from AI response
         risks = ai_response.get("risks", [])
         if risks:
             transformed["risks"] = risks[:5]  # Limit to 5 risks
-            transformed["mitigation_strategies"] = [risk.get("mitigation", "") for risk in risks[:3]]
 
+        # Extract risk categories from AI response
+        risk_categories = ai_response.get("risk_categories", {})
+        if risk_categories:
+            transformed["risk_categories"] = {
+                "technical_risks": risk_categories.get("technical_risks", []),
+                "market_risks": risk_categories.get("market_risks", []),
+                "operational_risks": risk_categories.get("operational_risks", []),
+                "financial_risks": risk_categories.get("financial_risks", [])
+            }
+
+        # Extract mitigation strategies from AI response
+        mitigation_strategies = ai_response.get("mitigation_strategies", [])
+        if mitigation_strategies:
+            transformed["mitigation_strategies"] = mitigation_strategies
+        else:
+            # Fallback: extract mitigation from individual risks
+            if risks:
+                transformed["mitigation_strategies"] = [risk.get("mitigation", "") for risk in risks[:3] if risk.get("mitigation")]
+
+        # Extract monitoring framework from AI response
+        monitoring_framework = ai_response.get("monitoring_framework", {})
+        if monitoring_framework:
+            transformed["monitoring_framework"] = {
+                "key_indicators": monitoring_framework.get("key_indicators", []),
+                "monitoring_frequency": monitoring_framework.get("monitoring_frequency", "Weekly"),
+                "escalation_procedures": monitoring_framework.get("escalation_procedures", []),
+                "review_schedule": monitoring_framework.get("review_schedule", "Monthly")
+            }
+
+        self.logger.info(f"🔍 Final transformed risk assessment: {json.dumps(transformed, indent=2)}")
         return transformed 

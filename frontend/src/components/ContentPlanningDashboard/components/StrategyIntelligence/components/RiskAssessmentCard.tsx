@@ -35,6 +35,8 @@ interface RiskAssessmentCardProps {
 }
 
 const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({ strategyData }) => {
+
+  
   // Get style objects
   const sectionStyles = getSectionStyles();
   const accordionStyles = getAccordionStyles();
@@ -51,29 +53,27 @@ const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({ strategyData })
 
   if (!strategyData?.risk_assessment) {
     return (
-      <Grid item xs={12} lg={6}>
-        <ProgressiveCard
-          title="Risk Assessment"
-          subtitle="Risk analysis and mitigation"
-          icon={<SecurityIcon sx={{ color: 'white', fontSize: 20 }} />}
-          summary={
-            <Box sx={{ textAlign: 'center', py: 2 }}>
-              <Typography variant="body1" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
-                Risk assessment data not available
-              </Typography>
-            </Box>
-          }
-          details={
-            <Box sx={{ textAlign: 'center', py: 2 }}>
-              <Typography variant="caption" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
-                Available data keys: {strategyData ? Object.keys(strategyData).join(', ') : 'No data'}
-              </Typography>
-            </Box>
-          }
-          trigger="hover"
-          autoCollapseDelay={3000}
-        />
-      </Grid>
+      <ProgressiveCard
+        title="Risk Assessment"
+        subtitle="Strategic risk analysis"
+        icon={<WarningIcon sx={{ color: 'white', fontSize: 20 }} />}
+        summary={
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            <Typography variant="body1" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
+              Risk assessment data not available
+            </Typography>
+          </Box>
+        }
+        details={
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            <Typography variant="caption" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
+              Available data keys: {strategyData ? Object.keys(strategyData).join(', ') : 'No data'}
+            </Typography>
+          </Box>
+        }
+        trigger="hover"
+        autoCollapseDelay={3000}
+      />
     );
   }
 
@@ -395,17 +395,16 @@ const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({ strategyData })
   );
 
   return (
-    <Grid item xs={12} lg={6}>
-      <ProgressiveCard
-        title="Risk Assessment"
-        subtitle="Risk analysis and mitigation"
-        icon={<SecurityIcon sx={{ color: 'white', fontSize: 20 }} />}
-        summary={summaryContent}
-        details={detailedContent}
-        trigger="hover"
-        autoCollapseDelay={3000}
-      />
-    </Grid>
+    <ProgressiveCard
+      title="Risk Assessment"
+      subtitle="Risk analysis and mitigation"
+      icon={<SecurityIcon sx={{ color: 'white', fontSize: 20 }} />}
+      summary={summaryContent}
+      details={detailedContent}
+      trigger="hover"
+      autoCollapseDelay={3000}
+      componentId="risk_assessment"
+    />
   );
 };
 

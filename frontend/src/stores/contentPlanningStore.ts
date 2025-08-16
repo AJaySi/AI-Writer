@@ -476,9 +476,24 @@ export const useContentPlanningStore = create<ContentPlanningStore>((set, get) =
   loadStrategies: async () => {
     set({ loading: true, error: null });
     try {
+      console.log('🔍 Loading strategies from API...');
       const strategies = await contentPlanningApi.getStrategiesSafe();
-      set({ strategies, loading: false });
+      console.log('🔍 API response for strategies:', strategies);
+      console.log('🔍 Strategies type:', typeof strategies);
+      console.log('🔍 Is Array:', Array.isArray(strategies));
+      
+      if (Array.isArray(strategies)) {
+        console.log('✅ Strategies loaded successfully (direct array):', strategies.length);
+        set({ strategies, loading: false });
+      } else if (strategies && strategies.strategies && Array.isArray(strategies.strategies)) {
+        console.log('✅ Strategies found in response.strategies:', strategies.strategies.length);
+        set({ strategies: strategies.strategies, loading: false });
+      } else {
+        console.log('❌ No strategies found in response');
+        set({ strategies: [], loading: false });
+      }
     } catch (error: any) {
+      console.error('❌ Error loading strategies:', error);
       set({ error: error.message || 'Failed to load strategies', loading: false });
     }
   },

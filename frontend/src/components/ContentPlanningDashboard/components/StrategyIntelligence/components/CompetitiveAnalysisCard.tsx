@@ -70,29 +70,27 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
 
   if (!strategyData?.competitive_analysis) {
     return (
-      <Grid item xs={12} lg={6}>
-        <ProgressiveCard
-          title="Competitive Analysis"
-          subtitle="Market positioning insights"
-          icon={<TrendingUpIcon sx={{ color: 'white', fontSize: 20 }} />}
-          summary={
-            <Box sx={{ textAlign: 'center', py: 2 }}>
-              <Typography variant="body1" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
-                Competitive analysis data not available
-              </Typography>
-            </Box>
-          }
-          details={
-            <Box sx={{ textAlign: 'center', py: 2 }}>
-              <Typography variant="caption" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
-                Available data keys: {strategyData ? Object.keys(strategyData).join(', ') : 'No data'}
-              </Typography>
-            </Box>
-          }
-          trigger="hover"
-          autoCollapseDelay={3000}
-        />
-      </Grid>
+      <ProgressiveCard
+        title="Competitive Analysis"
+        subtitle="Market positioning insights"
+        icon={<TrendingUpIcon sx={{ color: 'white', fontSize: 20 }} />}
+        summary={
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            <Typography variant="body1" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
+              Competitive analysis data not available
+            </Typography>
+          </Box>
+        }
+        details={
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            <Typography variant="caption" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
+              Available data keys: {strategyData ? Object.keys(strategyData).join(', ') : 'No data'}
+            </Typography>
+          </Box>
+        }
+        trigger="hover"
+        autoCollapseDelay={3000}
+      />
     );
   }
 
@@ -630,7 +628,7 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
   );
 
   return (
-    <Grid item xs={12} lg={6}>
+    <>
       <ProgressiveCard
         title="Competitive Analysis"
         subtitle="Market positioning insights"
@@ -639,6 +637,7 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
         details={detailedContent}
         trigger="hover"
         autoCollapseDelay={3000}
+        componentId="competitive_analysis"
       />
 
       {/* Chip Modal for detailed view */}
@@ -681,7 +680,7 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
           {chipModal.content}
         </Typography>
       </Popover>
-    </Grid>
+    </>
   );
 };
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -12,17 +12,19 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Grid,
-  CircularProgress
+  CircularProgress,
+  Paper,
+  Grid
 } from '@mui/material';
 import {
   School as SchoolIcon,
   Lightbulb as LightbulbIcon,
   Psychology as PsychologyIcon,
   Timeline as TimelineIcon,
-  CheckCircle as CheckCircleIcon
+  CheckCircle as CheckCircleIcon,
+  ExpandMore as ExpandMoreIcon
 } from '@mui/icons-material';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import StrategicInputField from '../StrategicInputField';
 import { CategoryDetailViewProps, EducationalInfoDialogProps } from '../types/contentStrategy.types';
 import { useEnhancedStrategyStore } from '../../../../../stores/enhancedStrategyStore';
@@ -116,8 +118,11 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
   getCategoryColor,
   getEducationalContent
 }) => {
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  
   // Get confidence scores from store
   const { confidenceScores } = useEnhancedStrategyStore();
+  
   if (!activeCategory) {
     return (
       <motion.div
@@ -138,6 +143,8 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
     );
   }
 
+  const categoryFields = STRATEGIC_INPUT_FIELDS.filter(field => field.category === activeCategory);
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -167,47 +174,45 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
         getEducationalContent={getEducationalContent}
       />
 
-      {/* Category Fields */}
+      {/* Category Fields with Hover Expansion */}
       <Box sx={{ mt: 1 }}>
         <Grid container spacing={2}>
-          {STRATEGIC_INPUT_FIELDS
-            .filter(field => field.category === activeCategory)
-            .map((field, index) => {
-              // Determine grid size based on field type for better layout organization
-              const type = field.type;
-              const isWideField = type === 'json';
-              const isMediumField = type === 'multiselect' || type === 'select' || type === 'text';
-              const isCompactField = type === 'number' || type === 'boolean';
-              const forceFullWidth = field.id === 'content_budget' || field.id === 'team_size';
+          {categoryFields.map((field, index) => {
+            // Determine grid size based on field type
+            const type = field.type;
+            const isWideField = type === 'json';
+            const isMediumField = type === 'multiselect' || type === 'select' || type === 'text';
+            const isCompactField = type === 'number' || type === 'boolean';
+            const forceFullWidth = field.id === 'content_budget' || field.id === 'team_size';
 
-              const gridMd = forceFullWidth ? 12 : (isWideField ? 12 : isMediumField ? 6 : 4);
-              const gridLg = forceFullWidth ? 12 : (isWideField ? 12 : isMediumField ? 6 : 4);
-              const gridSm = 12;
-            
+            const gridSm = isWideField ? 12 : isMediumField ? 6 : 4;
+            const gridMd = isWideField ? 12 : isMediumField ? 6 : 4;
+            const gridLg = isWideField ? 12 : isMediumField ? 6 : 4;
+
             return (
-                <Grid item xs={12} sm={gridSm} md={gridMd} lg={gridLg} key={field.id}>
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    transition={{ duration: 0.25, delay: index * 0.03 }}
-                  >
-                    <StrategicInputField
-                      fieldId={field.id}
-                      value={formData[field.id]}
-                      error={formErrors[field.id]}
-                      autoPopulated={!!autoPopulatedFields[field.id]}
-                      dataSource={dataSources[field.id]}
-                      confidenceLevel={confidenceScores[field.id] || (autoPopulatedFields[field.id] ? 0.8 : undefined)}
-                      dataQuality={autoPopulatedFields[field.id] ? 'High Quality' : undefined}
-                      personalizationData={personalizationData[field.id]}
-                      onChange={(value: any) => onUpdateFormField(field.id, value)}
-                      onValidate={() => onValidateFormField(field.id)}
-                      onShowTooltip={() => onShowTooltip(field.id)}
-                      onViewDataSource={() => onViewDataSource(field.id)}
-                      accentColorKey={getCategoryColor(activeCategory) as any}
-                      isCompact={isCompactField}
-                    />
-                  </motion.div>
+              <Grid item xs={12} sm={gridSm} md={gridMd} lg={gridLg} key={field.id}>
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ duration: 0.25, delay: index * 0.03 }}
+                >
+                  <StrategicInputField
+                    fieldId={field.id}
+                    value={formData[field.id]}
+                    error={formErrors[field.id]}
+                    autoPopulated={!!autoPopulatedFields[field.id]}
+                    dataSource={dataSources[field.id]}
+                    confidenceLevel={confidenceScores[field.id] || (autoPopulatedFields[field.id] ? 0.8 : undefined)}
+                    dataQuality={autoPopulatedFields[field.id] ? 'High Quality' : undefined}
+                    personalizationData={personalizationData[field.id]}
+                    onChange={(value: any) => onUpdateFormField(field.id, value)}
+                    onValidate={() => onValidateFormField(field.id)}
+                    onShowTooltip={() => onShowTooltip(field.id)}
+                    onViewDataSource={() => onViewDataSource(field.id)}
+                    accentColorKey={getCategoryColor(activeCategory) as any}
+                    isCompact={isCompactField}
+                  />
+                </motion.div>
               </Grid>
             );
           })}
@@ -218,18 +223,10 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
       <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
         {(() => {
           const isReviewed = reviewedCategories.has(activeCategory);
-          console.log('🔍 Category review status:', {
-            activeCategory,
-            isReviewed,
-            reviewedCategories: Array.from(reviewedCategories)
-          });
           return !isReviewed ? (
             <Button
               variant="contained"
               onClick={() => {
-                console.log('🔘 Button clicked! activeCategory:', activeCategory);
-                console.log('🔘 reviewedCategories:', Array.from(reviewedCategories));
-                console.log('🔘 isMarkingReviewed:', isMarkingReviewed);
                 onConfirmCategoryReview();
               }}
               startIcon={isMarkingReviewed ? <CircularProgress size={20} /> : <CheckCircleIcon />}

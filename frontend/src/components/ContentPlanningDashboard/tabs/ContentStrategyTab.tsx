@@ -51,7 +51,7 @@ import {
 } from '@mui/icons-material';
 import { useContentPlanningStore } from '../../../stores/contentPlanningStore';
 import { contentPlanningApi } from '../../../services/contentPlanningApi';
-import StrategyIntelligenceTab from '../components/StrategyIntelligenceTab';
+import StrategyIntelligenceTab from '../components/StrategyIntelligence/StrategyIntelligenceTab';
 import StrategyOnboardingDialog from '../components/StrategyOnboardingDialog';
 
 const ContentStrategyTab: React.FC = () => {
@@ -96,25 +96,70 @@ const ContentStrategyTab: React.FC = () => {
 
   // Check strategy status when strategies are loaded
   useEffect(() => {
-    if (strategies && strategies.length > 0 && !hasCheckedStrategy) {
+    console.log('🔄 useEffect triggered - strategies changed:', strategies);
+    console.log('🔄 Strategies type:', typeof strategies);
+    console.log('🔄 Is Array:', Array.isArray(strategies));
+    console.log('🔄 Strategies length:', strategies?.length);
+    console.log('🔄 Has checked strategy:', hasCheckedStrategy);
+    
+    // Handle different response formats
+    let strategiesArray: any[] = [];
+    
+    if (Array.isArray(strategies)) {
+      // Direct array
+      strategiesArray = strategies;
+    } else if (strategies && typeof strategies === 'object' && 'strategies' in strategies && Array.isArray((strategies as any).strategies)) {
+      // API response object with strategies array
+      strategiesArray = (strategies as any).strategies;
+    }
+    
+    console.log('🔄 StrategiesArray length:', strategiesArray.length);
+    
+    if (strategiesArray.length > 0) {
+      console.log('✅ Strategies found, checking status...');
       checkStrategyStatus();
-    } else if ((!strategies || strategies.length === 0) && !hasCheckedStrategy) {
+    } else if (strategiesArray.length === 0 && hasCheckedStrategy) {
+      // Only set to 'none' if we've already checked and confirmed no strategies
+      console.log('❌ No strategies found, setting status to none...');
       setStrategyStatus('none');
-      setHasCheckedStrategy(true);
       setShowOnboarding(true);
     }
-  }, [strategies, hasCheckedStrategy]);
+    // If strategiesArray.length === 0 and !hasCheckedStrategy, do nothing (wait for data to load)
+  }, [strategies, loadStrategies]);
 
   const checkStrategyStatus = () => {
-    if (strategies && strategies.length > 0) {
+    console.log('🔍 Checking strategy status...');
+    console.log('🔍 Strategies from store:', strategies);
+    console.log('🔍 Strategies type:', typeof strategies);
+    console.log('🔍 Is Array:', Array.isArray(strategies));
+    console.log('🔍 Strategies length:', strategies?.length);
+    
+    // Handle different response formats
+    let strategiesArray: any[] = [];
+    
+    if (Array.isArray(strategies)) {
+      // Direct array
+      strategiesArray = strategies;
+    } else if (strategies && typeof strategies === 'object' && 'strategies' in strategies && Array.isArray((strategies as any).strategies)) {
+      // API response object with strategies array
+      strategiesArray = (strategies as any).strategies;
+    }
+    
+    console.log('🔍 StrategiesArray length:', strategiesArray.length);
+    
+    if (strategiesArray.length > 0) {
       // Find the most recent strategy
-      const latestStrategy = strategies[0]; // Assuming strategies are sorted by date
+      const latestStrategy = strategiesArray[0]; // Assuming strategies are sorted by date
+      
+      console.log('✅ Found strategies in database:', strategiesArray.length);
+      console.log('📊 Latest strategy:', latestStrategy);
       
       // For now, we'll assume strategies are active if they exist
       // In a real implementation, you would check a status field from the database
       setStrategyStatus('active');
       setShowOnboarding(false);
     } else {
+      console.log('❌ No strategies found in database');
       setStrategyStatus('none');
       setShowOnboarding(true);
     }
@@ -154,20 +199,16 @@ const ContentStrategyTab: React.FC = () => {
       contentPlanningApi.handleSSEData(
         eventSource,
         (data) => {
-          console.log('Strategic Intelligence SSE Data:', data);
           
           if (data.type === 'status') {
             // Update loading message
-            console.log('Status:', data.message);
           } else if (data.type === 'progress') {
             // Update progress (could be used for progress bar)
-            console.log('Progress:', data.progress, '%');
           } else if (data.type === 'result' && data.status === 'success') {
             // Set the strategic intelligence data
             setStrategicIntelligence(data.data);
             setDataLoading(prev => ({ ...prev, strategicIntelligence: false }));
           } else if (data.type === 'error') {
-            console.error('Strategic Intelligence Error:', data.message);
             // Set fallback data on error
             setStrategicIntelligence({
               market_positioning: {
@@ -188,7 +229,6 @@ const ContentStrategyTab: React.FC = () => {
           }
         },
         (error) => {
-          console.error('Strategic Intelligence SSE Error:', error);
           // Set fallback data on error
           setStrategicIntelligence({
             market_positioning: {
@@ -356,13 +396,7 @@ const ContentStrategyTab: React.FC = () => {
         </Alert>
       )}
 
-      {strategyStatus === 'active' && (
-        <Alert severity="success" sx={{ mb: 3 }}>
-          <Typography variant="body1">
-            <strong>Strategy Active:</strong> Your content strategy is running and ALwrity is managing your content marketing automatically.
-          </Typography>
-        </Alert>
-      )}
+
 
       {/* Strategic Intelligence */}
       <Paper sx={{ width: '100%', mb: 3 }}>

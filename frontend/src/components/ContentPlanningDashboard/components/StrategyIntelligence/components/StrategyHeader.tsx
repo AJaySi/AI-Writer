@@ -42,9 +42,10 @@ import { getStrategyName, getStrategyGenerationDate } from '../utils/strategyTra
 interface StrategyHeaderProps {
   strategyData: StrategyData | null;
   strategyConfirmed: boolean;
+  onStartReview?: () => void;
 }
 
-const StrategyHeader: React.FC<StrategyHeaderProps> = ({ strategyData, strategyConfirmed }) => {
+const StrategyHeader: React.FC<StrategyHeaderProps> = ({ strategyData, strategyConfirmed, onStartReview }) => {
   const [showNextStepText, setShowNextStepText] = useState(false);
   
   if (!strategyData) return null;
@@ -577,13 +578,14 @@ const StrategyHeader: React.FC<StrategyHeaderProps> = ({ strategyData, strategyC
           {/* Next Steps Button - Area B */}
           <Box sx={{ mt: 1.5, display: 'flex', justifyContent: 'center' }}>
             <Tooltip 
-              title={strategyData.summary?.next_step || "Review strategy and generate content calendar"}
+              title="Start reviewing strategy components and create content calendar"
               arrow
               open={showNextStepText}
               onClose={() => setShowNextStepText(false)}
             >
               <Button
                 variant="contained"
+                onClick={onStartReview}
                 onMouseEnter={() => setShowNextStepText(true)}
                 onMouseLeave={() => setShowNextStepText(false)}
                 sx={{
@@ -606,7 +608,7 @@ const StrategyHeader: React.FC<StrategyHeaderProps> = ({ strategyData, strategyC
                 }}
                 startIcon={<ArrowForwardIcon />}
               >
-                Next Step
+                Next: Review Strategy and Create Content Calendar
               </Button>
             </Tooltip>
           </Box>

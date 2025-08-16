@@ -36,29 +36,27 @@ const PerformancePredictionsCard: React.FC<PerformancePredictionsCardProps> = ({
 
   if (!strategyData?.performance_predictions) {
     return (
-      <Grid item xs={12} lg={6}>
-        <ProgressiveCard
-          title="Performance Predictions"
-          subtitle="ROI and success metrics"
-          icon={<ShowChartIcon sx={{ color: 'white', fontSize: 20 }} />}
-          summary={
-            <Box sx={{ textAlign: 'center', py: 2 }}>
-              <Typography variant="body1" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
-                Performance predictions data not available
-              </Typography>
-            </Box>
-          }
-          details={
-            <Box sx={{ textAlign: 'center', py: 2 }}>
-              <Typography variant="caption" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
-                Available data keys: {strategyData ? Object.keys(strategyData).join(', ') : 'No data'}
-              </Typography>
-            </Box>
-          }
-          trigger="hover"
-          autoCollapseDelay={3000}
-        />
-      </Grid>
+      <ProgressiveCard
+        title="Performance Predictions"
+        subtitle="AI-powered forecasting"
+        icon={<TrendingUpIcon sx={{ color: 'white', fontSize: 20 }} />}
+        summary={
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            <Typography variant="body1" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
+              Performance predictions data not available
+            </Typography>
+          </Box>
+        }
+        details={
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            <Typography variant="caption" sx={{ color: ANALYSIS_CARD_STYLES.colors.text.secondary }}>
+              Available data keys: {strategyData ? Object.keys(strategyData).join(', ') : 'No data'}
+            </Typography>
+          </Box>
+        }
+        trigger="hover"
+        autoCollapseDelay={3000}
+      />
     );
   }
 
@@ -80,8 +78,7 @@ const PerformancePredictionsCard: React.FC<PerformancePredictionsCardProps> = ({
             display: 'flex', 
             alignItems: 'center', 
             flex: 1,
-            minWidth: 0,
-            overflow: 'hidden'
+            minWidth: 0
           }}>
             <Box sx={{ 
               width: 40, 
@@ -102,8 +99,7 @@ const PerformancePredictionsCard: React.FC<PerformancePredictionsCardProps> = ({
             </Box>
             <Box sx={{ 
               minWidth: 0, 
-              flex: 1,
-              overflow: 'hidden'
+              flex: 1
             }}>
               <Typography variant="h6" sx={{ 
                 color: ANALYSIS_CARD_STYLES.colors.text.primary, 
@@ -558,17 +554,16 @@ const PerformancePredictionsCard: React.FC<PerformancePredictionsCardProps> = ({
   );
 
   return (
-    <Grid item xs={12} lg={6}>
-      <ProgressiveCard
-        title="Performance Predictions"
-        subtitle="ROI and success metrics"
-        icon={<ShowChartIcon sx={{ color: 'white', fontSize: 20 }} />}
-        summary={summaryContent}
-        details={detailedContent}
-        trigger="hover"
-        autoCollapseDelay={3000}
-      />
-    </Grid>
+    <ProgressiveCard
+      title="Performance Predictions"
+      subtitle="ROI and success metrics"
+      icon={<ShowChartIcon sx={{ color: 'white', fontSize: 20 }} />}
+      summary={summaryContent}
+      details={detailedContent}
+      trigger="hover"
+      autoCollapseDelay={3000}
+      componentId="performance_predictions"
+    />
   );
 };
 
