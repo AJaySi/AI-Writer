@@ -10,7 +10,7 @@ from pathlib import Path
 # Add the backend directory to the path
 sys.path.append(str(Path(__file__).parent / 'backend'))
 
-from llm_providers.gemini_provider import gemini_structured_json_response, _clean_schema_for_gemini
+from services.llm_providers.gemini_provider import gemini_structured_json_response, _clean_schema_for_gemini
 
 def test_schema_cleaning():
     """Test the schema cleaning function."""

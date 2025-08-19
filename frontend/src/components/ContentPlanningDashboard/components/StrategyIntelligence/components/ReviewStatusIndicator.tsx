@@ -12,7 +12,8 @@ import {
   Schedule as ScheduleIcon,
   Warning as WarningIcon,
   Edit as EditIcon,
-  Undo as UndoIcon
+  Undo as UndoIcon,
+  PlayArrow as PlayArrowIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { ReviewStatus } from '../../../../../stores/strategyReviewStore';
@@ -35,8 +36,19 @@ const ReviewStatusIndicator: React.FC<ReviewStatusIndicatorProps> = ({
   onResetReview,
   isReviewing = false
 }) => {
+  // Debug logging for status
+  console.log('🔧 ReviewStatusIndicator received status:', status);
   const getStatusConfig = () => {
     switch (status) {
+      case 'activated':
+        return {
+          icon: <PlayArrowIcon />,
+          label: 'Activated',
+          color: ANALYSIS_CARD_STYLES.colors.primary,
+          bgColor: 'rgba(102, 126, 234, 0.1)',
+          borderColor: 'rgba(102, 126, 234, 0.3)',
+          textColor: ANALYSIS_CARD_STYLES.colors.primary
+        };
       case 'reviewed':
         return {
           icon: <CheckCircleIcon />,
@@ -101,6 +113,7 @@ const ReviewStatusIndicator: React.FC<ReviewStatusIndicatorProps> = ({
           } else if (status === 'reviewed' && onResetReview) {
             onResetReview();
           }
+          // Activated status is read-only, no action needed
         }}
       >
         {/* Status Icon */}
@@ -126,7 +139,7 @@ const ReviewStatusIndicator: React.FC<ReviewStatusIndicatorProps> = ({
         </Typography>
 
         {/* Review Date */}
-        {status === 'reviewed' && reviewedAt && (
+        {(status === 'reviewed' || status === 'activated') && reviewedAt && (
           <Typography
             variant="caption"
             sx={{
@@ -141,7 +154,10 @@ const ReviewStatusIndicator: React.FC<ReviewStatusIndicatorProps> = ({
 
         {/* Action Buttons - Enhanced for better UX */}
         <Box sx={{ display: 'flex', gap: 0.5 }}>
-          {status === 'not_reviewed' && onStartReview && (
+          {/* Only show action buttons for non-activated states */}
+          {status !== 'activated' && (
+            <>
+              {status === 'not_reviewed' && onStartReview && (
             <Tooltip title="Review Component">
               <Button
                 variant="contained"
@@ -189,51 +205,53 @@ const ReviewStatusIndicator: React.FC<ReviewStatusIndicatorProps> = ({
             </Tooltip>
           )}
 
-          {status === 'reviewed' && onResetReview && (
-            <Tooltip title="Reset Review">
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onResetReview();
-                }}
-                disabled={isReviewing}
-                startIcon={<UndoIcon />}
-                sx={{
-                  color: ANALYSIS_CARD_STYLES.colors.warning,
-                  borderColor: 'rgba(255, 152, 0, 0.5)',
-                  fontWeight: 600,
-                  fontSize: '0.7rem',
-                  px: 1.5,
-                  py: 0.5,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  minWidth: 'auto',
-                  background: 'rgba(255, 152, 0, 0.05)',
-                  '&:hover': {
-                    background: 'rgba(255, 152, 0, 0.1)',
-                    borderColor: 'rgba(255, 152, 0, 0.7)',
-                    transform: 'translateY(-1px)',
-                    boxShadow: '0 2px 8px rgba(255, 152, 0, 0.2)'
-                  },
-                  '&:active': {
-                    transform: 'translateY(0)'
-                  },
-                  '&:disabled': {
-                    color: 'rgba(255, 152, 0, 0.4)',
-                    borderColor: 'rgba(255, 152, 0, 0.2)',
-                    background: 'rgba(255, 152, 0, 0.02)',
-                    transform: 'none'
-                  },
-                  '& .MuiButton-startIcon': {
-                    marginRight: 0.5
-                  }
-                }}
-              >
-                Reset
-              </Button>
-            </Tooltip>
+              {status === 'reviewed' && onResetReview && (
+                <Tooltip title="Reset Review">
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onResetReview();
+                    }}
+                    disabled={isReviewing}
+                    startIcon={<UndoIcon />}
+                    sx={{
+                      color: ANALYSIS_CARD_STYLES.colors.warning,
+                      borderColor: 'rgba(255, 152, 0, 0.5)',
+                      fontWeight: 600,
+                      fontSize: '0.7rem',
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      minWidth: 'auto',
+                      background: 'rgba(255, 152, 0, 0.05)',
+                      '&:hover': {
+                        background: 'rgba(255, 152, 0, 0.1)',
+                        borderColor: 'rgba(255, 152, 0, 0.7)',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 2px 8px rgba(255, 152, 0, 0.2)'
+                      },
+                      '&:active': {
+                        transform: 'translateY(0)'
+                      },
+                      '&:disabled': {
+                        color: 'rgba(255, 152, 0, 0.4)',
+                        borderColor: 'rgba(255, 152, 0, 0.2)',
+                        background: 'rgba(255, 152, 0, 0.02)',
+                        transform: 'none'
+                      },
+                      '& .MuiButton-startIcon': {
+                        marginRight: 0.5
+                      }
+                    }}
+                  >
+                    Reset
+                  </Button>
+                </Tooltip>
+              )}
+            </>
           )}
         </Box>
       </Box>

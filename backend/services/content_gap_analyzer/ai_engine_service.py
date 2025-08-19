@@ -12,8 +12,8 @@ import json
 from collections import Counter, defaultdict
 
 # Import AI providers
-from llm_providers.main_text_generation import llm_text_gen
-from llm_providers.gemini_provider import gemini_structured_json_response
+from services.llm_providers.main_text_generation import llm_text_gen
+from services.llm_providers.gemini_provider import gemini_structured_json_response
 
 # Import services
 from services.ai_service_manager import AIServiceManager
@@ -213,8 +213,19 @@ class AIEngineService:
                 }
             )
             
-            # Parse and return the AI response
-            result = json.loads(response)
+            # Handle response - gemini_structured_json_response returns dict directly
+            if isinstance(response, dict):
+                result = response
+            elif isinstance(response, str):
+                # If it's a string, try to parse as JSON
+                try:
+                    result = json.loads(response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse AI response as JSON: {e}")
+                    raise Exception(f"Invalid AI response format: {str(e)}")
+            else:
+                logger.error(f"Unexpected response type from AI service: {type(response)}")
+                raise Exception(f"Unexpected response type from AI service: {type(response)}")
             recommendations = result.get('recommendations', [])
             logger.info(f"✅ Generated {len(recommendations)} AI content recommendations")
             return recommendations
@@ -355,8 +366,19 @@ class AIEngineService:
                 }
             )
             
-            # Parse and return the AI response
-            predictions = json.loads(response)
+            # Handle response - gemini_structured_json_response returns dict directly
+            if isinstance(response, dict):
+                predictions = response
+            elif isinstance(response, str):
+                # If it's a string, try to parse as JSON
+                try:
+                    predictions = json.loads(response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse AI response as JSON: {e}")
+                    raise Exception(f"Invalid AI response format: {str(e)}")
+            else:
+                logger.error(f"Unexpected response type from AI service: {type(response)}")
+                raise Exception(f"Unexpected response type from AI service: {type(response)}")
             logger.info("✅ AI performance predictions completed")
             return predictions
             
@@ -495,7 +517,19 @@ class AIEngineService:
             )
             
             # Parse and return the AI response
-            competitive_intelligence = json.loads(response)
+            # Handle response - gemini_structured_json_response returns dict directly
+            if isinstance(response, dict):
+                competitive_intelligence = response
+            elif isinstance(response, str):
+                # If it's a string, try to parse as JSON
+                try:
+                    competitive_intelligence = json.loads(response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse AI response as JSON: {e}")
+                    raise Exception(f"Invalid AI response format: {str(e)}")
+            else:
+                logger.error(f"Unexpected response type from AI service: {type(response)}")
+                raise Exception(f"Unexpected response type from AI service: {type(response)}")
             logger.info("✅ AI competitive intelligence completed")
             return competitive_intelligence
             
@@ -633,8 +667,20 @@ class AIEngineService:
                 }
             )
             
-            # Parse and return the AI response
-            result = json.loads(response)
+            # Handle response - gemini_structured_json_response returns dict directly
+            if isinstance(response, dict):
+                result = response
+            elif isinstance(response, str):
+                # If it's a string, try to parse as JSON
+                try:
+                    result = json.loads(response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse AI response as JSON: {e}")
+                    raise Exception(f"Invalid AI response format: {str(e)}")
+            else:
+                logger.error(f"Unexpected response type from AI service: {type(response)}")
+                raise Exception(f"Unexpected response type from AI service: {type(response)}")
+            
             strategic_insights = result.get('strategic_insights', [])
             logger.info(f"✅ Generated {len(strategic_insights)} AI strategic insights")
             return strategic_insights
@@ -733,8 +779,19 @@ class AIEngineService:
                 }
             )
             
-            # Parse and return the AI response
-            quality_analysis = json.loads(response)
+            # Handle response - gemini_structured_json_response returns dict directly
+            if isinstance(response, dict):
+                quality_analysis = response
+            elif isinstance(response, str):
+                # If it's a string, try to parse as JSON
+                try:
+                    quality_analysis = json.loads(response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse AI response as JSON: {e}")
+                    raise Exception(f"Invalid AI response format: {str(e)}")
+            else:
+                logger.error(f"Unexpected response type from AI service: {type(response)}")
+                raise Exception(f"Unexpected response type from AI service: {type(response)}")
             logger.info("✅ AI content quality analysis completed")
             return quality_analysis
             

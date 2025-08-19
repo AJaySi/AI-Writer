@@ -1,4 +1,4 @@
-  import React, { useState, useEffect, useRef } from 'react';
+  import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -55,7 +55,8 @@ import {
   Schedule as ScheduleIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEnhancedStrategyStore, STRATEGIC_INPUT_FIELDS } from '../../../stores/enhancedStrategyStore';
+import { useStrategyBuilderStore, STRATEGIC_INPUT_FIELDS } from '../../../stores/strategyBuilderStore';
+import { useEnhancedStrategyStore } from '../../../stores/enhancedStrategyStore';
 import StrategicInputField from './ContentStrategyBuilder/StrategicInputField';
 import EnhancedTooltip from './ContentStrategyBuilder/EnhancedTooltip';
 import AIRecommendationsPanel from './AIRecommendationsPanel';
@@ -90,53 +91,58 @@ import CategoryDetailView from './ContentStrategyBuilder/components/CategoryDeta
 
 const ContentStrategyBuilder: React.FC = () => {
   const navigate = useNavigate();
+  
+  // Strategy Builder Store (for form data, validation, auto-population)
   const {
     formData,
     formErrors,
     autoPopulatedFields,
     dataSources,
-    inputDataPoints, // Add inputDataPoints from store
+    inputDataPoints,
+    personalizationData,
     loading,
     error,
     saving,
-    aiGenerating,
-    currentStep,
-    completedSteps,
-    disclosureSteps,
     currentStrategy,
     updateFormField,
-    // Transparency state
-    transparencyModalOpen,
-    generationProgress: storeGenerationProgress,
-    currentPhase,
-    educationalContent: storeEducationalContent,
-    transparencyMessages,
-    isGenerating,
-    setTransparencyModalOpen,
-    setGenerationProgress: setStoreGenerationProgress,
-    setCurrentPhase,
-    setEducationalContent: setStoreEducationalContent,
-    addTransparencyMessage,
-    clearTransparencyMessages,
-    setIsGenerating,
     validateFormField,
     validateAllFields,
-    completeStep,
-    getNextStep,
-    getPreviousStep,
-    setCurrentStep,
-    canProceedToStep,
     resetForm,
     autoPopulateFromOnboarding,
-    generateAIRecommendations,
-    createEnhancedStrategy,
+    createStrategy: createEnhancedStrategy,
     calculateCompletionPercentage,
     getCompletionStats,
     setError,
     setCurrentStrategy,
-    setAIGenerating,
-    setSaving,
-    personalizationData
+    setSaving
+  } = useStrategyBuilderStore();
+  
+  // Enhanced Strategy Store (for AI analysis, progressive disclosure, transparency)
+  const {
+    aiGenerating,
+    currentStep,
+    completedSteps,
+    disclosureSteps,
+    transparencyModalOpen,
+    transparencyGenerationProgress: storeGenerationProgress,
+    currentPhase,
+    educationalContent: storeEducationalContent,
+    transparencyMessages,
+    transparencyGenerating: isGenerating,
+    setTransparencyModalOpen,
+    setTransparencyGenerationProgress: setStoreGenerationProgress,
+    setCurrentPhase,
+    setEducationalContent: setStoreEducationalContent,
+    addTransparencyMessage,
+    clearTransparencyMessages,
+    setTransparencyGenerating: setIsGenerating,
+    completeStep,
+    getNextStep,
+    getPreviousStep,
+    setCurrentStep,
+    canProceedToDisclosureStep: canProceedToStep,
+    generateAIRecommendations,
+    setAIGenerating
   } = useEnhancedStrategyStore();
 
   const [showAIRecommendations, setShowAIRecommendations] = useState(false);
@@ -237,8 +243,8 @@ const ContentStrategyBuilder: React.FC = () => {
     setError
   });
 
-  const completionStats = getCompletionStats();
-  const completionPercentage = calculateCompletionPercentage();
+  const completionStats = useMemo(() => getCompletionStats(), [formData]);
+  const completionPercentage = useMemo(() => calculateCompletionPercentage(), [formData]);
 
   // Use extracted hooks
   const {
@@ -314,7 +320,7 @@ const ContentStrategyBuilder: React.FC = () => {
     if (!autoPopulateAttempted) {
       autoPopulateFromOnboarding();
     }
-  }, [autoPopulateAttempted, autoPopulateFromOnboarding]);
+  }, [autoPopulateAttempted]); // Removed autoPopulateFromOnboarding from dependencies
 
   // Set default category selection
   useEffect(() => {
@@ -362,15 +368,7 @@ const ContentStrategyBuilder: React.FC = () => {
     }
   }, [showEnterpriseModal, aiGenerating]);
 
-  // Monitor store data changes for debugging
-  useEffect(() => {
-    console.log('🎯 Store data changed:', {
-      autoPopulatedFieldsCount: Object.keys(autoPopulatedFields || {}).length,
-      dataSourcesCount: Object.keys(dataSources || {}).length,
-      inputDataPointsCount: Object.keys(inputDataPoints || {}).length,
-      transparencyMessagesCount: transparencyMessages?.length || 0
-    });
-  }, [autoPopulatedFields, dataSources, inputDataPoints, transparencyMessages]);
+  // Note: Removed store monitoring useEffect to prevent infinite re-renders
 
   // Add CSS keyframes for pulse animation
   useEffect(() => {

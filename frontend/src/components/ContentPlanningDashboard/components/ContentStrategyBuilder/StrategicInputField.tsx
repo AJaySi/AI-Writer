@@ -29,7 +29,7 @@ import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon
 } from '@mui/icons-material';
-import { useEnhancedStrategyStore } from '../../../../stores/enhancedStrategyStore';
+import { useStrategyBuilderStore } from '../../../../stores/strategyBuilderStore';
 
 interface StrategicInputFieldProps {
   fieldId: string;
@@ -108,7 +108,15 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
   accentColorKey = 'primary',
   isCompact = false
 }) => {
-  const { getTooltipData } = useEnhancedStrategyStore();
+  // Since getTooltipData is not in strategyBuilderStore, we'll create a simple implementation
+  const getTooltipData = (fieldId: string) => {
+    // This is a simplified tooltip data implementation
+    return {
+      title: `About ${fieldId.replace(/_/g, ' ')}`,
+      description: `Information about ${fieldId.replace(/_/g, ' ')}`,
+      tips: [`Tip for ${fieldId}`]
+    };
+  };
   const [isEditing, setIsEditing] = useState(false);
   const [showPersonalization, setShowPersonalization] = useState(false);
 

@@ -94,7 +94,7 @@ async def check_ai_services_health():
         
         # Test Gemini provider
         try:
-            from llm_providers.gemini_provider import get_gemini_api_key
+            from services.llm_providers.gemini_provider import get_gemini_api_key
             api_key = get_gemini_api_key()
             if api_key:
                 health_status["services"]["gemini_provider"] = True

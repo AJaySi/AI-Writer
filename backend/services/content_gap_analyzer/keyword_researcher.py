@@ -12,8 +12,8 @@ import json
 from collections import Counter, defaultdict
 
 # Import AI providers
-from llm_providers.main_text_generation import llm_text_gen
-from llm_providers.gemini_provider import gemini_structured_json_response
+from services.llm_providers.main_text_generation import llm_text_gen
+from services.llm_providers.gemini_provider import gemini_structured_json_response
 
 # Import existing modules (will be updated to use FastAPI services)
 from services.database import get_db_session
@@ -155,8 +155,19 @@ class KeywordResearcher:
                 }
             )
             
-            # Parse and return the AI response
-            trend_analysis = json.loads(response)
+            # Handle response - gemini_structured_json_response returns dict directly
+            if isinstance(response, dict):
+                trend_analysis = response
+            elif isinstance(response, str):
+                # If it's a string, try to parse as JSON
+                try:
+                    trend_analysis = json.loads(response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse AI response as JSON: {e}")
+                    raise Exception(f"Invalid AI response format: {str(e)}")
+            else:
+                logger.error(f"Unexpected response type from AI service: {type(response)}")
+                raise Exception(f"Unexpected response type from AI service: {type(response)}")
             logger.info("✅ AI keyword trend analysis completed")
             return trend_analysis
             
@@ -283,8 +294,20 @@ class KeywordResearcher:
                 }
             )
             
-            # Parse and return the AI response
-            intent_analysis = json.loads(response)
+            # Handle response - gemini_structured_json_response returns dict directly
+            if isinstance(response, dict):
+                intent_analysis = response
+            elif isinstance(response, str):
+                # If it's a string, try to parse as JSON
+                try:
+                    intent_analysis = json.loads(response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse AI response as JSON: {e}")
+                    raise Exception(f"Invalid AI response format: {str(e)}")
+            else:
+                logger.error(f"Unexpected response type from AI service: {type(response)}")
+                raise Exception(f"Unexpected response type from AI service: {type(response)}")
+            
             logger.info("✅ AI search intent analysis completed")
             return intent_analysis
             
@@ -396,8 +419,20 @@ class KeywordResearcher:
                 }
             )
             
-            # Parse and return the AI response
-            result = json.loads(response)
+            # Handle response - gemini_structured_json_response returns dict directly
+            if isinstance(response, dict):
+                result = response
+            elif isinstance(response, str):
+                # If it's a string, try to parse as JSON
+                try:
+                    result = json.loads(response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse AI response as JSON: {e}")
+                    raise Exception(f"Invalid AI response format: {str(e)}")
+            else:
+                logger.error(f"Unexpected response type from AI service: {type(response)}")
+                raise Exception(f"Unexpected response type from AI service: {type(response)}")
+            
             opportunities = result.get('opportunities', [])
             logger.info(f"✅ AI opportunity identification completed: {len(opportunities)} opportunities found")
             return opportunities

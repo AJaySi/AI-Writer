@@ -34,8 +34,7 @@ const EducationalModal: React.FC<EducationalModalProps> = ({
   generationProgress,
   onReviewStrategy
 }) => {
-  // Debug: Log progress and button state
-  console.log('🎯 EducationalModal - Progress:', generationProgress, 'Show Next Button:', generationProgress >= 100);
+  // Note: Removed debug logging to prevent infinite re-renders
   return (
     <Dialog
       open={open}

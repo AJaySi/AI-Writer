@@ -10,8 +10,8 @@ import json
 import re
 
 # Import AI providers
-from llm_providers.main_text_generation import llm_text_gen
-from llm_providers.gemini_provider import gemini_structured_json_response
+from services.llm_providers.main_text_generation import llm_text_gen
+from services.llm_providers.gemini_provider import gemini_structured_json_response
 
 class AIPromptOptimizer:
     """Advanced AI prompt optimization and management service."""
@@ -299,8 +299,19 @@ Format as structured JSON with detailed metrics and strategic recommendations.
                 schema=self.schemas['strategic_content_gap_analysis']
             )
             
-            # Parse and return the AI response
-            result = json.loads(response)
+            # Handle response - gemini_structured_json_response returns dict directly
+            if isinstance(response, dict):
+                result = response
+            elif isinstance(response, str):
+                # If it's a string, try to parse as JSON
+                try:
+                    result = json.loads(response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse AI response as JSON: {e}")
+                    raise Exception(f"Invalid AI response format: {str(e)}")
+            else:
+                logger.error(f"Unexpected response type from AI service: {type(response)}")
+                raise Exception(f"Unexpected response type from AI service: {type(response)}")
             logger.info("✅ Advanced strategic content gap analysis completed")
             return result
             
@@ -336,8 +347,19 @@ Format as structured JSON with detailed metrics and strategic recommendations.
                 schema=self.schemas['market_position_analysis']
             )
             
-            # Parse and return the AI response
-            result = json.loads(response)
+            # Handle response - gemini_structured_json_response returns dict directly
+            if isinstance(response, dict):
+                result = response
+            elif isinstance(response, str):
+                # If it's a string, try to parse as JSON
+                try:
+                    result = json.loads(response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse AI response as JSON: {e}")
+                    raise Exception(f"Invalid AI response format: {str(e)}")
+            else:
+                logger.error(f"Unexpected response type from AI service: {type(response)}")
+                raise Exception(f"Unexpected response type from AI service: {type(response)}")
             logger.info("✅ Advanced market position analysis completed")
             return result
             
@@ -373,8 +395,19 @@ Format as structured JSON with detailed metrics and strategic recommendations.
                 schema=self.schemas['advanced_keyword_analysis']
             )
             
-            # Parse and return the AI response
-            result = json.loads(response)
+            # Handle response - gemini_structured_json_response returns dict directly
+            if isinstance(response, dict):
+                result = response
+            elif isinstance(response, str):
+                # If it's a string, try to parse as JSON
+                try:
+                    result = json.loads(response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse AI response as JSON: {e}")
+                    raise Exception(f"Invalid AI response format: {str(e)}")
+            else:
+                logger.error(f"Unexpected response type from AI service: {type(response)}")
+                raise Exception(f"Unexpected response type from AI service: {type(response)}")
             logger.info("✅ Advanced keyword analysis completed")
             return result
             

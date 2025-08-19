@@ -1,58 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Grid,
   Paper,
   Typography,
   Button,
-  Card,
-  CardContent,
-  CardActions,
-  Chip,
   Alert,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  LinearProgress,
-  CircularProgress,
-  Tabs,
-  Tab,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Tooltip,
-  Badge
+  CircularProgress
 } from '@mui/material';
 import {
-  TrendingUp as TrendingUpIcon,
-  Business as BusinessIcon,
-  Lightbulb as LightbulbIcon,
-  CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
-  Analytics as AnalyticsIcon,
-  Timeline as TimelineIcon,
-  Assessment as AssessmentIcon,
-  ExpandMore as ExpandMoreIcon,
-  Refresh as RefreshIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Visibility as VisibilityIcon,
-  ShowChart as ShowChartIcon,
+  PlayArrow as PlayArrowIcon,
   AutoAwesome as AutoAwesomeIcon,
-  PlayArrow as PlayArrowIcon
+  Edit as EditIcon
 } from '@mui/icons-material';
 import { useContentPlanningStore } from '../../../stores/contentPlanningStore';
 import { contentPlanningApi } from '../../../services/contentPlanningApi';
 import StrategyIntelligenceTab from '../components/StrategyIntelligence/StrategyIntelligenceTab';
 import StrategyOnboardingDialog from '../components/StrategyOnboardingDialog';
+import { StrategyData } from '../components/StrategyIntelligence/types/strategy.types';
 
 const ContentStrategyTab: React.FC = () => {
   const { 
@@ -77,6 +41,9 @@ const ContentStrategyTab: React.FC = () => {
 
   // Real data states
   const [strategicIntelligence, setStrategicIntelligence] = useState<any>(null);
+  const [strategyData, setStrategyData] = useState<StrategyData | null>(null);
+  const [strategyDataLoading, setStrategyDataLoading] = useState(false);
+  const [strategyDataError, setStrategyDataError] = useState<string | null>(null);
   const [dataLoading, setDataLoading] = useState({
     strategies: false,
     insights: false,
@@ -118,6 +85,7 @@ const ContentStrategyTab: React.FC = () => {
     if (strategiesArray.length > 0) {
       console.log('✅ Strategies found, checking status...');
       checkStrategyStatus();
+      loadStrategyData();
     } else if (strategiesArray.length === 0 && hasCheckedStrategy) {
       // Only set to 'none' if we've already checked and confirmed no strategies
       console.log('❌ No strategies found, setting status to none...');
@@ -126,6 +94,61 @@ const ContentStrategyTab: React.FC = () => {
     }
     // If strategiesArray.length === 0 and !hasCheckedStrategy, do nothing (wait for data to load)
   }, [strategies, loadStrategies]);
+
+  const loadStrategyData = async () => {
+    try {
+      setStrategyDataLoading(true);
+      setStrategyDataError(null);
+      
+      const userId = 1; // Default user ID
+      
+      // Try to get the latest generated strategy
+      try {
+        const latestStrategyResponse = await contentPlanningApi.getLatestGeneratedStrategy(userId);
+        
+        console.log('🔍 Latest strategy response from API:', latestStrategyResponse);
+        
+        if (latestStrategyResponse && latestStrategyResponse.strategic_insights) {
+          console.log('✅ Found latest generated strategy:', latestStrategyResponse);
+          setStrategyData(latestStrategyResponse);
+          return;
+        }
+      } catch (pollingError) {
+        console.log('No latest strategy found in polling system, checking database...', pollingError);
+      }
+      
+      // If no strategy found in polling system, try to get from database
+      try {
+        const strategiesResponse = await contentPlanningApi.getEnhancedStrategies(userId);
+        
+        const strategies = strategiesResponse?.data?.strategies || strategiesResponse?.strategies || [];
+        
+        if (strategies && strategies.length > 0) {
+          const latestStrategy = strategies[0];
+          
+          if (latestStrategy.comprehensive_ai_analysis) {
+            console.log('✅ Found comprehensive strategy in database:', latestStrategy);
+            setStrategyData(latestStrategy.comprehensive_ai_analysis);
+            return;
+          }
+        }
+      } catch (dbError) {
+        console.log('No comprehensive strategies found in database:', dbError);
+      }
+      
+      // If no strategy data is available
+      console.log('❌ No comprehensive strategy data found');
+      setStrategyData(null);
+      setStrategyDataError('No comprehensive strategy data available. Please generate a strategy first.');
+      
+    } catch (err: any) {
+      console.error('Error loading strategy data:', err);
+      setStrategyDataError(err.message || 'Failed to load strategy data');
+      setStrategyData(null);
+    } finally {
+      setStrategyDataLoading(false);
+    }
+  };
 
   const checkStrategyStatus = () => {
     console.log('🔍 Checking strategy status...');
@@ -178,9 +201,6 @@ const ContentStrategyTab: React.FC = () => {
         loadAIInsights(),
         loadAIRecommendations()
       ]);
-
-      // Load strategic intelligence
-      await loadStrategicIntelligence();
       
     } catch (error) {
       console.error('Error loading initial data:', error);
@@ -189,141 +209,13 @@ const ContentStrategyTab: React.FC = () => {
     }
   };
 
-  const loadStrategicIntelligence = async () => {
-    try {
-      setDataLoading(prev => ({ ...prev, strategicIntelligence: true }));
-      
-      // Use streaming endpoint for real-time updates
-      const eventSource = await contentPlanningApi.streamStrategicIntelligence(1);
-      
-      contentPlanningApi.handleSSEData(
-        eventSource,
-        (data) => {
-          
-          if (data.type === 'status') {
-            // Update loading message
-          } else if (data.type === 'progress') {
-            // Update progress (could be used for progress bar)
-          } else if (data.type === 'result' && data.status === 'success') {
-            // Set the strategic intelligence data
-            setStrategicIntelligence(data.data);
-            setDataLoading(prev => ({ ...prev, strategicIntelligence: false }));
-          } else if (data.type === 'error') {
-            // Set fallback data on error
-            setStrategicIntelligence({
-              market_positioning: {
-                score: 75,
-                strengths: ['Strong brand voice', 'Consistent content quality'],
-                weaknesses: ['Limited video content', 'Slow content production']
-              },
-              competitive_advantages: [
-                { advantage: 'AI-powered content creation', impact: 'High', implementation: 'In Progress' },
-                { advantage: 'Data-driven strategy', impact: 'Medium', implementation: 'Complete' }
-              ],
-              strategic_risks: [
-                { risk: 'Content saturation in market', probability: 'Medium', impact: 'High' },
-                { risk: 'Algorithm changes affecting reach', probability: 'High', impact: 'Medium' }
-              ]
-            });
-            setDataLoading(prev => ({ ...prev, strategicIntelligence: false }));
-          }
-        },
-        (error) => {
-          // Set fallback data on error
-          setStrategicIntelligence({
-            market_positioning: {
-              score: 75,
-              strengths: ['Strong brand voice', 'Consistent content quality'],
-              weaknesses: ['Limited video content', 'Slow content production']
-            },
-            competitive_advantages: [
-              { advantage: 'AI-powered content creation', impact: 'High', implementation: 'In Progress' },
-              { advantage: 'Data-driven strategy', impact: 'Medium', implementation: 'Complete' }
-            ],
-            strategic_risks: [
-              { risk: 'Content saturation in market', probability: 'Medium', impact: 'High' },
-              { risk: 'Algorithm changes affecting reach', probability: 'High', impact: 'Medium' }
-            ]
-          });
-          setDataLoading(prev => ({ ...prev, strategicIntelligence: false }));
-        }
-      );
-      
-    } catch (error) {
-      console.error('Error loading strategic intelligence:', error);
-      // Set fallback data on error
-      setStrategicIntelligence({
-        market_positioning: {
-          score: 75,
-          strengths: ['Strong brand voice', 'Consistent content quality'],
-          weaknesses: ['Limited video content', 'Slow content production']
-        },
-        competitive_advantages: [
-          { advantage: 'AI-powered content creation', impact: 'High', implementation: 'In Progress' },
-          { advantage: 'Data-driven strategy', impact: 'Medium', implementation: 'Complete' }
-        ],
-        strategic_risks: [
-          { risk: 'Content saturation in market', probability: 'Medium', impact: 'High' },
-          { risk: 'Algorithm changes affecting reach', probability: 'High', impact: 'Medium' }
-        ]
-      });
-      setDataLoading(prev => ({ ...prev, strategicIntelligence: false }));
-    }
-  };
-
-  const handleStrategyFormChange = (field: string, value: string) => {
-    setStrategyForm(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleCreateStrategy = async () => {
-    if (!strategyForm.name || !strategyForm.description) {
-      return;
-    }
-
-    try {
-      // Call backend API to create strategy
-      await contentPlanningApi.createStrategy({
-        name: strategyForm.name,
-        description: strategyForm.description,
-        industry: strategyForm.industry,
-        target_audience: strategyForm.target_audience,
-        content_pillars: strategyForm.content_pillars
-      });
-
-      // Reload data after creating strategy
-      await loadInitialData();
-      
-      // Reset form
-      setStrategyForm({
-        name: '',
-        description: '',
-        industry: '',
-        target_audience: '',
-        content_pillars: []
-      });
-    } catch (error) {
-      console.error('Error creating strategy:', error);
-    }
-  };
-
-  const handleRefreshData = async () => {
-    await loadInitialData();
-  };
-
-  // Onboarding dialog handlers
   const handleConfirmStrategy = async () => {
     try {
-      if (currentStrategy) {
-        // For now, we'll just close the dialog since we can't update status
-        // In a real implementation, you would update the strategy status in the database
-        setShowOnboarding(false);
-        
-        // Reload strategies to get updated data
-        await loadStrategies();
-      }
+      // In a real implementation, you would update the strategy status in the database
+      setShowOnboarding(false);
+      
+      // Reload strategies to get updated data
+      await loadStrategies();
     } catch (error) {
       console.error('Error activating strategy:', error);
     }
@@ -396,12 +288,38 @@ const ContentStrategyTab: React.FC = () => {
         </Alert>
       )}
 
+      {/* Active Strategy Status Banner */}
+      {strategyStatus === 'active' && currentStrategy && (
+        <Alert 
+          severity="success" 
+          sx={{ mb: 3 }}
+          action={
+            <Button 
+              color="inherit" 
+              size="small" 
+              onClick={() => setShowOnboarding(true)}
+              startIcon={<EditIcon />}
+            >
+              Edit Strategy
+            </Button>
+          }
+        >
+          <Typography variant="body1">
+            <strong>Strategy Active:</strong> Your AI-powered content strategy is active and being monitored. View performance analytics in the Analytics tab.
+          </Typography>
+        </Alert>
+      )}
 
-
-      {/* Strategic Intelligence */}
-      <Paper sx={{ width: '100%', mb: 3 }}>
-        <StrategyIntelligenceTab />
-      </Paper>
+      {/* Strategic Intelligence - Only show if there's an active strategy */}
+      {strategyStatus === 'active' && (
+        <Paper sx={{ width: '100%', mb: 3 }}>
+          <StrategyIntelligenceTab 
+            strategyData={strategyData}
+            loading={strategyDataLoading}
+            error={strategyDataError}
+          />
+        </Paper>
+      )}
 
       {/* Strategy Onboarding Dialog */}
       <StrategyOnboardingDialog

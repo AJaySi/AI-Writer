@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -16,27 +16,40 @@ import {
   CheckCircle as CheckCircleIcon,
   Schedule as ScheduleIcon,
   Warning as WarningIcon,
-  PlayArrow as PlayArrowIcon
+  PlayArrow as PlayArrowIcon,
+  AutoAwesome as AutoAwesomeIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { useStrategyReviewStore } from '../../../../../stores/strategyReviewStore';
+import { useStrategyReviewStore, StrategyComponent } from '../../../../../stores/strategyReviewStore';
 import { ANALYSIS_CARD_STYLES } from '../styles';
 import { contentPlanningApi } from '../../../../../services/contentPlanningApi';
+import EnhancedStrategyActivationButton from './EnhancedStrategyActivationButton';
+import { StrategyData } from '../types/strategy.types';
+import { useNavigationOrchestrator } from '../../../../../services/navigationOrchestrator';
 
-const ReviewProgressHeader: React.FC = () => {
+interface ReviewProgressHeaderProps {
+  strategyData?: StrategyData | null;
+}
+
+const ReviewProgressHeader: React.FC<ReviewProgressHeaderProps> = ({ strategyData }) => {
   const {
     components,
     reviewProgress,
     isAllReviewed,
+    isActivated,
     resetAllReviews,
     getUnreviewedComponents,
-    getReviewedComponents
+    getReviewedComponents,
+    activateStrategy
   } = useStrategyReviewStore();
 
-  // Extract domain name from strategy data (you can pass this as prop if needed)
+  // Initialize navigation orchestrator
+  const navigationOrchestrator = useNavigationOrchestrator();
+
+  // Extract domain name from strategy data
   const getDomainName = () => {
-    // For now, return a default domain - you can enhance this to get from strategy data
-    return "alwrity.com";
+    // Since StrategyMetadata doesn't have domain, we'll use a fallback
+    return "alwrity.com"; // fallback
   };
 
   const unreviewedCount = getUnreviewedComponents().length;
@@ -50,10 +63,13 @@ const ReviewProgressHeader: React.FC = () => {
     unreviewedCount,
     reviewedCount,
     totalCount,
-    isAllReviewed: isAllReviewed()
+    isAllReviewed: isAllReviewed(),
+    isActivated: isActivated(),
+    strategyData
   });
 
   const getProgressColor = () => {
+    if (isActivated()) return ANALYSIS_CARD_STYLES.colors.success;
     if (reviewProgress === 100) return ANALYSIS_CARD_STYLES.colors.success;
     if (reviewProgress >= 60) return ANALYSIS_CARD_STYLES.colors.primary;
     if (reviewProgress >= 30) return ANALYSIS_CARD_STYLES.colors.warning;
@@ -61,10 +77,53 @@ const ReviewProgressHeader: React.FC = () => {
   };
 
   const getProgressText = () => {
+    if (isActivated()) return 'Strategy Active & Monitored!';
     if (reviewProgress === 100) return 'All components reviewed!';
     if (reviewProgress >= 60) return 'Great progress!';
     if (reviewProgress >= 30) return 'Making good progress';
     return 'Getting started';
+  };
+
+  // Prepare strategy data for the enhanced button
+  const buttonStrategyData = strategyData ? {
+    id: strategyData.strategy_metadata?.user_id || strategyData.metadata?.user_id || 1,
+    business_name: strategyData.strategy_metadata?.strategy_name || strategyData.metadata?.strategy_name || "ALwrity",
+    domain: getDomainName(),
+    // Add other strategy data as needed
+  } : {
+    id: 1,
+    business_name: "ALwrity",
+    domain: getDomainName(),
+  };
+
+  const handleConfirmStrategy = async () => {
+    // This will be called by the enhanced button when activation is confirmed
+    console.log('🎯 Strategy activation confirmed');
+    
+    // Activate the strategy in the store
+    activateStrategy();
+    
+    // You can add additional logic here if needed
+  };
+
+  const handleGenerateContentCalendar = () => {
+    console.log('🎯 Generate content calendar clicked');
+    
+    // Prepare strategy context for navigation
+    const strategyContext = {
+      strategyId: (strategyData?.strategy_metadata?.user_id || strategyData?.metadata?.user_id || '1').toString(),
+      strategyData: strategyData,
+      activationStatus: 'active' as const,
+      activationTimestamp: new Date().toISOString(),
+      userPreferences: {},
+      strategicIntelligence: {}
+    };
+    
+    // Navigate to calendar wizard using navigation orchestrator
+    navigationOrchestrator.navigateToCalendarWizard(
+      strategyContext.strategyId,
+      strategyContext
+    );
   };
 
   return (
@@ -102,291 +161,99 @@ const ReviewProgressHeader: React.FC = () => {
             bottom: 0,
             background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
             animation: 'shimmer 3s infinite',
-            pointerEvents: 'none'
-          },
-          '@keyframes shimmer': {
-            '0%': { transform: 'translateX(-100%)' },
-            '100%': { transform: 'translateX(100%)' }
+            '@keyframes shimmer': {
+              '0%': { transform: 'translateX(-100%)' },
+              '100%': { transform: 'translateX(100%)' }
+            }
           }
         }}
       >
-        {/* Animated Border Lights */}
-        <motion.div
-          animate={{
-            boxShadow: [
-              '0 0 20px rgba(102, 126, 234, 0.5)',
-              '0 0 40px rgba(102, 126, 234, 0.8)',
-              '0 0 20px rgba(102, 126, 234, 0.5)'
-            ]
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            borderRadius: '12px',
-            pointerEvents: 'none'
-          }}
-        />
+        <CardContent sx={{ position: 'relative', zIndex: 1, p: 3 }}>
+          {/* Header Section */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box>
+              <Typography variant="h5" sx={{ 
+                fontWeight: 700, 
+                background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                mb: 0.5
+              }}>
+                Strategy Review Progress
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', fontWeight: 500 }}>
+                Review all strategy components to activate your content strategy
+              </Typography>
+            </Box>
 
-        <CardContent sx={{ position: 'relative', zIndex: 1, p: 2 }}>
-          {/* Header with Circular Progress and Status Chips */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              {/* Circular Progress */}
-              <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+            {/* Progress Circle */}
+            <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ position: 'relative' }}>
                 <CircularProgress
                   variant="determinate"
                   value={reviewProgress}
-                  size={50}
+                  size={60}
                   thickness={4}
                   sx={{
                     color: getProgressColor(),
                     '& .MuiCircularProgress-circle': {
                       strokeLinecap: 'round',
+                      filter: 'drop-shadow(0 0 8px rgba(102, 126, 234, 0.5))'
                     }
                   }}
                 />
                 <Box
                   sx={{
-                    top: 0,
-                    left: 0,
-                    bottom: 0,
-                    right: 0,
                     position: 'absolute',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    textAlign: 'center'
                   }}
                 >
                   <Typography variant="caption" sx={{ 
-                    color: getProgressColor(), 
-                    fontWeight: 700, 
-                    fontSize: '0.7rem' 
+                    fontSize: '0.7rem', 
+                    fontWeight: 700,
+                    color: 'white',
+                    lineHeight: 1
                   }}>
-                    {Math.round(reviewProgress)}%
+                    {reviewProgress}%
                   </Typography>
                 </Box>
               </Box>
               
+              {/* Progress Text */}
               <Box>
-                <Typography variant="h6" sx={{ 
-                  color: 'white',
-                  fontWeight: 600,
-                  mb: 0.25
-                }}>
-                  Strategy Review Progress
-                </Typography>
                 <Typography variant="body2" sx={{ 
-                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontWeight: 600, 
+                  color: getProgressColor(),
                   fontSize: '0.8rem'
                 }}>
                   {getProgressText()}
                 </Typography>
-              </Box>
-              
-              {/* Status Chips */}
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Chip
-                  icon={<CheckCircleIcon />}
-                  label={`${reviewedCount} Reviewed`}
-                  size="small"
-                  sx={{
-                    background: ANALYSIS_CARD_STYLES.colors.success,
-                    color: 'white',
-                    fontWeight: 500,
-                    fontSize: '0.65rem',
-                    height: 24,
-                    '& .MuiChip-icon': {
-                      color: 'white',
-                      fontSize: 14
-                    }
-                  }}
-                />
-                
-                {unreviewedCount > 0 && (
-                  <Chip
-                    icon={<ScheduleIcon />}
-                    label={`${unreviewedCount} Pending`}
-                    size="small"
-                    sx={{
-                      background: ANALYSIS_CARD_STYLES.colors.warning,
-                      color: 'white',
-                      fontWeight: 500,
-                      fontSize: '0.65rem',
-                      height: 24,
-                      '& .MuiChip-icon': {
-                        color: 'white',
-                        fontSize: 14
-                      }
-                    }}
-                  />
-                )}
+                <Typography variant="caption" sx={{ 
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '0.7rem'
+                }}>
+                  {reviewedCount} of {totalCount} reviewed
+                </Typography>
               </Box>
             </Box>
-
-            {/* Reset Button */}
-            <Tooltip title="Reset all reviews">
-              <IconButton
-                onClick={resetAllReviews}
-                size="small"
-                sx={{
-                  color: 'rgba(255, 255, 255, 0.8)',
-                  '&:hover': {
-                    color: '#f44336',
-                    background: 'rgba(244, 67, 54, 0.2)'
-                  }
-                }}
-              >
-                <RefreshIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
           </Box>
 
-          {/* Progress Summary */}
-          <Box sx={{ mb: 1.5 }}>
+          {/* Component Status */}
+          <Box sx={{ mb: 2 }}>
             <Typography variant="body2" sx={{ 
-              color: 'white',
-              fontWeight: 500,
-              fontSize: '0.8rem'
+              fontWeight: 600, 
+              mb: 1,
+              color: 'rgba(255, 255, 255, 0.9)'
             }}>
-              {reviewedCount} of {totalCount} components reviewed
+              Component Status:
             </Typography>
-          </Box>
-
-          {/* Informative Text */}
-          <Box sx={{ mb: 1.5 }}>
-            <Typography variant="body2" sx={{ 
-              color: 'rgba(255, 255, 255, 0.9)',
-              fontSize: '0.8rem',
-              lineHeight: 1.4,
-              background: 'rgba(255, 255, 255, 0.05)',
-              p: 1.5,
-              borderRadius: 1,
-              border: '1px solid rgba(255, 255, 255, 0.1)'
-            }}>
-              <strong>Complete review by clicking 'Not Reviewed' button and confirming datapoints of 5 analysis components below.</strong> 
-              <br />
-              <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                Important: Content strategy for <strong>{getDomainName()}</strong> will shape content generation next.
-              </span>
-            </Typography>
-          </Box>
-
-          {/* Individual Component Status and Activate Strategy Button */}
-          <Box sx={{ mb: 1.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}>
-              <Typography variant="caption" sx={{ 
-                color: 'rgba(255, 255, 255, 0.8)',
-                fontWeight: 500,
-                fontSize: '0.7rem'
-              }}>
-                Component Status
-              </Typography>
-              
-                             {/* Confirm & Activate Strategy Button */}
-               <Tooltip 
-                 title={isAllReviewed() ? "Confirm strategy and activate content generation" : "Complete all component reviews to confirm and activate strategy"}
-                 arrow
-               >
-                 <Button
-                   variant="contained"
-                   size="small"
-                   disabled={!isAllReviewed()}
-                   startIcon={<PlayArrowIcon />}
-                                     onClick={async () => {
-                    if (isAllReviewed()) {
-                      try {
-                        // Handle strategy confirmation and activation
-                        console.log('Confirming and activating strategy...');
-                        
-                        // 1. Save the strategy confirmation to backend
-                        // Note: You'll need to get the actual strategy ID from context/props
-                        const strategyId = "current_strategy_id"; // Replace with actual strategy ID
-                        
-                        try {
-                          await contentPlanningApi.updateEnhancedStrategy(
-                            strategyId,
-                            { 
-                              confirmed: true, 
-                              confirmed_at: new Date().toISOString(),
-                              review_completed: true,
-                              review_completed_at: new Date().toISOString()
-                            }
-                          );
-                          console.log('Strategy confirmation saved to backend');
-                        } catch (updateError) {
-                          console.warn('Could not save confirmation to backend:', updateError);
-                        }
-                        
-                        // 2. Show success message
-                        alert('Strategy confirmed and activated! You can now proceed to create your content calendar.');
-                        
-                        // 3. Navigate to content calendar creation
-                        // You can add navigation logic here
-                        // navigate('/content-calendar');
-                        
-                      } catch (error) {
-                        console.error('Error confirming and activating strategy:', error);
-                        alert('Error confirming strategy. Please try again.');
-                      }
-                    }
-                  }}
-                   sx={{
-                     background: isAllReviewed() 
-                       ? 'linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)'
-                       : 'rgba(255, 255, 255, 0.1)',
-                     color: isAllReviewed() ? 'white' : 'rgba(255, 255, 255, 0.5)',
-                     fontWeight: 600,
-                     fontSize: '0.7rem',
-                     px: 2,
-                     py: 0.5,
-                     borderRadius: 2,
-                     boxShadow: isAllReviewed() 
-                       ? '0 2px 8px rgba(76, 175, 80, 0.3)'
-                       : 'none',
-                     border: isAllReviewed() 
-                       ? '1px solid rgba(76, 175, 80, 0.4)'
-                       : '1px solid rgba(255, 255, 255, 0.2)',
-                     textTransform: 'none',
-                     minWidth: 'auto',
-                     '&:hover': {
-                       background: isAllReviewed()
-                         ? 'linear-gradient(135deg, #66bb6a 0%, #81c784 100%)'
-                         : 'rgba(255, 255, 255, 0.1)',
-                       boxShadow: isAllReviewed()
-                         ? '0 4px 12px rgba(76, 175, 80, 0.4)'
-                         : 'none',
-                       transform: isAllReviewed() ? 'translateY(-1px)' : 'none'
-                     },
-                     '&:active': {
-                       transform: isAllReviewed() ? 'translateY(0)' : 'none'
-                     },
-                     '&:disabled': {
-                       background: 'rgba(255, 255, 255, 0.05)',
-                       color: 'rgba(255, 255, 255, 0.3)',
-                       boxShadow: 'none',
-                       transform: 'none'
-                     },
-                     '& .MuiButton-startIcon': {
-                       marginRight: 0.5
-                     }
-                   }}
-                 >
-                   Confirm & Activate Strategy
-                 </Button>
-               </Tooltip>
-            </Box>
-            
-            <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-              {components.map((component) => (
-                <Tooltip 
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {components.map((component: StrategyComponent) => (
+                <Tooltip
                   key={component.id}
                   title={`${component.title}: ${component.status === 'reviewed' ? 'Reviewed' : 'Pending Review'}`}
                   arrow
@@ -433,7 +300,7 @@ const ReviewProgressHeader: React.FC = () => {
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               <Chip
                 icon={<CheckCircleIcon />}
-                label="Ready for Calendar Creation"
+                label={isActivated() ? "Strategy Active & Monitored" : "Ready for Calendar Creation"}
                 size="small"
                 sx={{
                   background: ANALYSIS_CARD_STYLES.colors.success,
@@ -466,7 +333,7 @@ const ReviewProgressHeader: React.FC = () => {
                 mt: 1.5, 
                 p: 1.5, 
                 borderRadius: 1,
-                background: 'rgba(76, 175, 80, 0.1)',
+                background: isActivated() ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.1)',
                 border: '1px solid rgba(76, 175, 80, 0.2)',
                 textAlign: 'center'
               }}>
@@ -475,8 +342,85 @@ const ReviewProgressHeader: React.FC = () => {
                   fontWeight: 600,
                   fontSize: '0.8rem'
                 }}>
-                  🎉 All strategy components have been reviewed! You can now proceed to create your content calendar.
+                  {isActivated() 
+                    ? '🎉 Your content strategy is now active and being monitored! AI-powered insights and performance tracking are now live.'
+                    : '🎉 All strategy components have been reviewed! You can now proceed to create your content calendar.'
+                  }
                 </Typography>
+              </Box>
+            </motion.div>
+          )}
+
+          {/* Enhanced Strategy Activation Button - Only shown when all components are reviewed and not yet activated */}
+                          {isAllReviewed() && !isActivated() && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                <EnhancedStrategyActivationButton
+                  strategyData={buttonStrategyData}
+                  strategyConfirmed={false}
+                  onConfirmStrategy={handleConfirmStrategy}
+                  onGenerateContentCalendar={handleGenerateContentCalendar}
+                  disabled={false}
+                />
+              </Box>
+            </motion.div>
+          )}
+
+          {/* Strategy Activated Success Message */}
+                          {isActivated() && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Box sx={{ 
+                mt: 3, 
+                p: 3, 
+                borderRadius: 2,
+                background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%)',
+                border: '2px solid rgba(76, 175, 80, 0.3)',
+                textAlign: 'center'
+              }}>
+                <Typography variant="h6" sx={{ 
+                  color: ANALYSIS_CARD_STYLES.colors.success,
+                  fontWeight: 700,
+                  mb: 1
+                }}>
+                  🚀 Strategy Successfully Activated!
+                </Typography>
+                <Typography variant="body2" sx={{ 
+                  color: 'text.secondary',
+                  mb: 2
+                }}>
+                  Your content strategy is now live and being monitored with AI-powered analytics.
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={handleGenerateContentCalendar}
+                  startIcon={<AutoAwesomeIcon />}
+                  sx={{
+                    background: 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)',
+                    borderRadius: 3,
+                    px: 4,
+                    py: 1.5,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    boxShadow: '0 8px 32px rgba(76, 175, 80, 0.3)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #45a049 0%, #3d8b40 100%)',
+                      boxShadow: '0 12px 40px rgba(76, 175, 80, 0.4)',
+                      transform: 'translateY(-2px)'
+                    },
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  Generate Content Calendar
+                </Button>
               </Box>
             </motion.div>
           )}

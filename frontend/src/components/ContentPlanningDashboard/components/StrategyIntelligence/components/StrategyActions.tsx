@@ -11,6 +11,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { StrategyData } from '../types/strategy.types';
+import EnhancedStrategyActivationButton from './EnhancedStrategyActivationButton';
 
 interface StrategyActionsProps {
   strategyData: StrategyData | null;
@@ -27,6 +28,16 @@ const StrategyActions: React.FC<StrategyActionsProps> = ({
   onGenerateContentCalendar,
   onRefreshData
 }) => {
+  // Convert onConfirmStrategy to async function for the enhanced button
+  const handleConfirmStrategy = async () => {
+    try {
+      await onConfirmStrategy();
+    } catch (error) {
+      console.error('Strategy confirmation failed:', error);
+      throw error; // Re-throw to let the enhanced button handle the error
+    }
+  };
+
   return (
     <Box sx={{ mt: 4 }}>
       {/* Strategy Confirmation Status */}
@@ -68,65 +79,19 @@ const StrategyActions: React.FC<StrategyActionsProps> = ({
         </motion.div>
       )}
 
+      {/* Enhanced Strategy Activation Button */}
+      <Box sx={{ mb: 3 }}>
+        <EnhancedStrategyActivationButton
+          strategyData={strategyData}
+          strategyConfirmed={strategyConfirmed}
+          onConfirmStrategy={handleConfirmStrategy}
+          onGenerateContentCalendar={onGenerateContentCalendar}
+          disabled={false}
+        />
+      </Box>
+
       {/* Action Buttons */}
       <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-        {!strategyConfirmed ? (
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Button
-              variant="contained"
-              size="large"
-              onClick={onConfirmStrategy}
-              startIcon={<CheckIcon />}
-              sx={{ 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                borderRadius: 3,
-                px: 4,
-                py: 1.5,
-                fontWeight: 600,
-                boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-                  boxShadow: '0 12px 40px rgba(102, 126, 234, 0.4)',
-                  transform: 'translateY(-2px)'
-                },
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}
-            >
-              Confirm Strategy
-            </Button>
-          </motion.div>
-        ) : (
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Button
-              variant="contained"
-              size="large"
-              onClick={onGenerateContentCalendar}
-              startIcon={<CalendarIcon />}
-              color="success"
-              sx={{ 
-                borderRadius: 3,
-                px: 4,
-                py: 1.5,
-                fontWeight: 600,
-                boxShadow: '0 8px 32px rgba(76, 175, 80, 0.3)',
-                '&:hover': {
-                  boxShadow: '0 12px 40px rgba(76, 175, 80, 0.4)',
-                  transform: 'translateY(-2px)'
-                },
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}
-            >
-              Generate Content Calendar
-            </Button>
-          </motion.div>
-        )}
-        
         <motion.div
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}

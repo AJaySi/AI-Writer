@@ -16,7 +16,7 @@ def test_gemini_import():
         print("🧪 Testing Gemini provider import...")
         
         # Test import
-        from llm_providers.gemini_provider import (
+        from services.llm_providers.gemini_provider import (
             gemini_text_response, 
             gemini_pro_text_gen, 
             test_gemini_api_key,
@@ -36,7 +36,7 @@ def test_gemini_function_signatures():
     try:
         print("🧪 Testing Gemini function signatures...")
         
-        from llm_providers.gemini_provider import (
+        from services.llm_providers.gemini_provider import (
             gemini_text_response, 
             gemini_pro_text_gen, 
             test_gemini_api_key,
@@ -96,7 +96,7 @@ def test_gemini_api_key_handling():
     try:
         print("🧪 Testing Gemini API key handling...")
         
-        from llm_providers.gemini_provider import gemini_text_response
+        from services.llm_providers.gemini_provider import gemini_text_response
         
         # Test with no API key (should raise ValueError)
         original_key = os.environ.get('GEMINI_API_KEY')

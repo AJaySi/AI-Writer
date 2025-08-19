@@ -38,6 +38,7 @@ import {
   ServiceStatus, 
   DashboardData 
 } from '../../services/contentPlanningOrchestrator';
+import { StrategyCalendarProvider } from '../../contexts/StrategyCalendarContext';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -188,7 +189,8 @@ const ContentPlanningDashboard: React.FC = () => {
   const totalAIItems = (dashboardData.aiInsights?.length || 0) + (dashboardData.aiRecommendations?.length || 0);
 
   return (
-    <Container maxWidth={false} sx={{ height: '100vh', p: 0 }}>
+    <StrategyCalendarProvider>
+      <Container maxWidth={false} sx={{ height: '100vh', p: 0 }}>
       <AppBar position="static" color="default" elevation={1}>
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
@@ -325,7 +327,8 @@ const ContentPlanningDashboard: React.FC = () => {
           </AnimatePresence>
         </Box>
       </Drawer>
-    </Container>
+      </Container>
+    </StrategyCalendarProvider>
   );
 };
 

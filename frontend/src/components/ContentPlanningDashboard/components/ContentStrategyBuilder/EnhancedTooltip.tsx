@@ -27,7 +27,7 @@ import {
   DataUsage as DataUsageIcon,
   Close as CloseIcon
 } from '@mui/icons-material';
-import { useEnhancedStrategyStore } from '../../../../stores/enhancedStrategyStore';
+import { useStrategyBuilderStore } from '../../../../stores/strategyBuilderStore';
 
 interface EnhancedTooltipProps {
   fieldId: string;
@@ -40,7 +40,19 @@ const EnhancedTooltip: React.FC<EnhancedTooltipProps> = ({
   open,
   onClose
 }) => {
-  const { getTooltipData, autoPopulatedFields, dataSources } = useEnhancedStrategyStore();
+  const { autoPopulatedFields, dataSources, confidenceScores } = useStrategyBuilderStore();
+  
+  // Since getTooltipData is not in strategyBuilderStore, we'll create a simple implementation
+  const getTooltipData = (fieldId: string) => {
+    // This is a simplified tooltip data implementation
+    // In a real scenario, you might want to move this to the strategyBuilderStore
+    return {
+      title: `About ${fieldId.replace(/_/g, ' ')}`,
+      description: `Information about ${fieldId.replace(/_/g, ' ')}`,
+      tips: [`Tip for ${fieldId}`],
+      confidence_level: confidenceScores?.[fieldId] || 0.8
+    };
+  };
   
   const tooltipData = getTooltipData(fieldId);
   const isAutoPopulated = !!(autoPopulatedFields && autoPopulatedFields[fieldId]);

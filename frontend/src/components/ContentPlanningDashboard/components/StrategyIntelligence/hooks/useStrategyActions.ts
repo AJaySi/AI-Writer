@@ -1,20 +1,28 @@
 import { useState } from 'react';
 import { contentPlanningApi } from '../../../../../services/contentPlanningApi';
 import { StrategyData } from '../types/strategy.types';
+import { useStrategyReviewStore } from '../../../../../stores/strategyReviewStore';
 
 export const useStrategyActions = () => {
   const [strategyConfirmed, setStrategyConfirmed] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isActivating, setIsActivating] = useState(false);
+  
+  // Get the activateStrategy method from the review store
+  const { activateStrategy } = useStrategyReviewStore();
 
   const handleConfirmStrategy = () => {
     setShowConfirmDialog(true);
   };
 
-  const confirmStrategy = async (strategyData: StrategyData | null) => {
+  const confirmStrategy = async (strategyData: StrategyData | null): Promise<void> => {
+    if (isActivating) {
+      throw new Error('Strategy activation already in progress');
+    }
+
+    setIsActivating(true);
+    
     try {
-      setStrategyConfirmed(true);
-      setShowConfirmDialog(false);
-      
       // Save confirmation status to backend
       const userId = strategyData?.strategy_metadata?.user_id || strategyData?.metadata?.user_id;
       if (userId) {
@@ -31,10 +39,20 @@ export const useStrategyActions = () => {
         }
       }
       
-      console.log('Strategy confirmed! Ready to generate content calendar.');
+      // Set local state
+      setStrategyConfirmed(true);
+      setShowConfirmDialog(false);
+      
+      // Activate strategy in the review store
+      activateStrategy();
+      
+      console.log('Strategy confirmed and activated! Ready to generate content calendar.');
     } catch (error) {
       console.error('Error confirming strategy:', error);
       setStrategyConfirmed(false);
+      throw error; // Re-throw to let the calling component handle the error
+    } finally {
+      setIsActivating(false);
     }
   };
 
@@ -46,30 +64,22 @@ export const useStrategyActions = () => {
         return;
       }
       
-      // Generate content calendar based on confirmed strategy
-      const calendarRequest = {
-        user_id: userId,
-        strategy_id: userId, // Using user_id as strategy_id for now
-        calendar_type: 'comprehensive',
-        industry: strategyData.base_strategy?.industry || 'technology',
-        business_size: 'medium', // TODO: Get from strategy data
-        force_refresh: false
-      };
+      console.log('🎯 Strategy Actions: Generating content calendar for strategy:', strategyData);
       
-      console.log('Generating content calendar with request:', calendarRequest);
+      // For now, we'll just log that the function was called
+      // The actual navigation is handled by the ReviewProgressHeader component
+      // which uses the NavigationOrchestrator to navigate to the calendar wizard
       
-      // Call the calendar generation API
-      const calendarResponse = await contentPlanningApi.generateCalendar(calendarRequest);
+      console.log('🎯 Strategy Actions: Calendar generation request prepared');
       
-      console.log('Content calendar generated successfully:', calendarResponse);
-      
-      // TODO: Navigate to calendar tab or show success message
-      // You could also store the calendar data in a global state
+      // TODO: In the future, this could be enhanced to:
+      // 1. Call the calendar generation API directly
+      // 2. Store the generated calendar data
+      // 3. Navigate to the calendar view with the generated data
       
     } catch (error) {
-      console.error('Error generating content calendar:', error);
-      // Show error message to user
-      throw new Error('Failed to generate content calendar. Please try again.');
+      console.error('Error in handleGenerateContentCalendar:', error);
+      throw new Error('Failed to prepare calendar generation. Please try again.');
     }
   };
 
@@ -77,6 +87,7 @@ export const useStrategyActions = () => {
     strategyConfirmed,
     showConfirmDialog,
     setShowConfirmDialog,
+    isActivating,
     handleConfirmStrategy,
     confirmStrategy,
     handleGenerateContentCalendar

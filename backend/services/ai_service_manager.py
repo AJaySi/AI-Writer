@@ -12,13 +12,13 @@ from dataclasses import dataclass
 from enum import Enum
 
 # Import AI providers
-from llm_providers.main_text_generation import llm_text_gen
+from services.llm_providers.main_text_generation import llm_text_gen
 # Prefer the extended gemini provider if available; fallback to base
 try:
     from services.llm_providers.gemini_provider import gemini_structured_json_response as _gemini_fn
     _GEMINI_EXTENDED = True
 except Exception:
-    from llm_providers.gemini_provider import gemini_structured_json_response as _gemini_fn
+    from services.llm_providers.gemini_provider import gemini_structured_json_response as _gemini_fn
     _GEMINI_EXTENDED = False
 
 class AIServiceType(Enum):

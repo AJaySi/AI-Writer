@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { Box, CircularProgress, Alert, Typography } from '@mui/material';
-import { useStrategyData } from './hooks/useStrategyData';
 import StrategyHeader from './components/StrategyHeader';
 import StrategicInsightsCard from './components/StrategicInsightsCard';
 import CompetitiveAnalysisCard from './components/CompetitiveAnalysisCard';
@@ -8,15 +7,60 @@ import PerformancePredictionsCard from './components/PerformancePredictionsCard'
 import ImplementationRoadmapCard from './components/ImplementationRoadmapCard';
 import RiskAssessmentCard from './components/RiskAssessmentCard';
 import ReviewProgressHeader from './components/ReviewProgressHeader';
+import { StrategyData } from './types/strategy.types';
+import { useStrategyReviewStore } from '../../../../stores/strategyReviewStore';
 
-const StrategyIntelligenceTab: React.FC = () => {
-  const { strategyData, loading, error } = useStrategyData();
-  
-  // State to control review progress visibility
-  const [showReviewProgress, setShowReviewProgress] = useState(false);
+interface StrategyIntelligenceTabProps {
+  strategyData?: StrategyData | null;
+  loading?: boolean;
+  error?: string | null;
+}
+
+const StrategyIntelligenceTab: React.FC<StrategyIntelligenceTabProps> = ({ 
+  strategyData, 
+  loading = false, 
+  error = null 
+}) => {
+  // Get review process state from store
+  const { reviewProcessStarted, startReviewProcess, components, initializeComponents } = useStrategyReviewStore();
+
+  // Initialize components if they don't exist
+  useEffect(() => {
+    if (components.length === 0) {
+      console.log('🔧 StrategyIntelligenceTab: Initializing components');
+      const STRATEGY_COMPONENTS = [
+        {
+          id: 'strategic_insights',
+          title: 'Strategic Insights',
+          subtitle: 'AI-powered market analysis'
+        },
+        {
+          id: 'competitive_analysis',
+          title: 'Competitive Analysis',
+          subtitle: 'Market positioning insights'
+        },
+        {
+          id: 'performance_predictions',
+          title: 'Performance Predictions',
+          subtitle: 'ROI and success metrics'
+        },
+        {
+          id: 'implementation_roadmap',
+          title: 'Implementation Roadmap',
+          subtitle: 'Project timeline and phases'
+        },
+        {
+          id: 'risk_assessment',
+          title: 'Risk Assessment',
+          subtitle: 'Risk analysis and mitigation'
+        }
+      ];
+      initializeComponents(STRATEGY_COMPONENTS);
+    }
+  }, [components.length, initializeComponents]);
 
   const handleStartReviewProcess = () => {
-    setShowReviewProgress(true);
+    startReviewProcess();
   };
 
   if (loading) {
@@ -58,9 +102,9 @@ const StrategyIntelligenceTab: React.FC = () => {
       />
 
       {/* Review Progress Header - Only shown when review process is started */}
-      {showReviewProgress && <ReviewProgressHeader />}
+      {reviewProcessStarted && <ReviewProgressHeader strategyData={strategyData} />}
 
-      {/* Strategy Components Grid */}
+      {/* Strategy Intelligence Cards */}
       <Box
         sx={{
           display: 'grid',
@@ -93,10 +137,6 @@ const StrategyIntelligenceTab: React.FC = () => {
         <ImplementationRoadmapCard strategyData={strategyData} />
         <RiskAssessmentCard strategyData={strategyData} />
       </Box>
-
-      {/* Action Buttons - Removed, functionality moved to "Confirm & Activate Strategy" button in ReviewProgressHeader */}
-
-      {/* Confirmation Dialog - Removed, functionality moved to "Confirm & Activate Strategy" button */}
     </Box>
   );
 };

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Box,
   Tabs,
@@ -12,6 +13,7 @@ import {
 import ContentStrategyBuilder from '../components/ContentStrategyBuilder';
 import CalendarGenerationWizard from '../components/CalendarGenerationWizard';
 import { contentPlanningApi } from '../../../services/contentPlanningApi';
+import { useStrategyCalendarContext } from '../../../contexts/StrategyCalendarContext';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -36,28 +38,87 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const CreateTab: React.FC = () => {
-  const [tabValue, setTabValue] = useState(0);
   const [userData, setUserData] = useState<any>({});
+  const location = useLocation();
+  
+  // Get strategy context from the provider
+  const { state: { strategyContext }, isFromStrategyActivation } = useStrategyCalendarContext();
+  
+  console.log('🔍 CreateTab: Rendering', { userData, strategyContext, locationState: location.state });
+
+  // Memoize the strategy activation status to avoid infinite re-renders
+  const fromStrategyActivation = useMemo(() => {
+    return isFromStrategyActivation();
+  }, [isFromStrategyActivation]);
+
+  // Set initial tab value based on strategy activation
+  const [tabValue, setTabValue] = useState(0); // Always start with Strategy Builder tab
 
   useEffect(() => {
-    loadUserData();
-  }, []);
+    // Only load user data once on mount
+    const loadData = async () => {
+      try {
+        const comprehensiveData = await contentPlanningApi.getComprehensiveUserData(1);
+        setUserData(comprehensiveData.data);
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        // Set empty data to prevent infinite loops
+        setUserData({});
+      }
+    };
+    
+    loadData();
+  }, []); // Empty dependency array - only run once
 
-  const loadUserData = async () => {
-    try {
-      // Load comprehensive user data for calendar generation
-      const comprehensiveData = await contentPlanningApi.getComprehensiveUserData(1); // Pass user ID
-      setUserData(comprehensiveData.data); // Extract the data from the response
-    } catch (error) {
-      console.error('Error loading user data:', error);
+  // Auto-switch to Calendar Wizard tab when coming from strategy activation
+  useEffect(() => {
+    console.log('🔍 CreateTab: Checking strategy activation status:', { fromStrategyActivation });
+    
+    // Check multiple sources for strategy activation status
+    const isFromStrategy = fromStrategyActivation || 
+                          (strategyContext?.activationStatus === 'active') ||
+                          (location.state as any)?.fromStrategyActivation;
+    
+    console.log('🔍 CreateTab: Strategy activation check:', {
+      fromStrategyActivation,
+      strategyContextActivationStatus: strategyContext?.activationStatus,
+      windowLocationState: location.state || 'N/A',
+      isFromStrategy
+    });
+    
+    if (isFromStrategy) {
+      console.log('🎯 CreateTab: Switching to Calendar Wizard tab (index 1)');
+      setTabValue(1); // Switch to Calendar Wizard tab
     }
-  };
+  }, [fromStrategyActivation, strategyContext?.activationStatus]);
+
+  // Also check on mount for immediate navigation state
+  useEffect(() => {
+    const checkNavigationState = () => {
+      const locationState = location.state as any;
+      console.log('🔍 CreateTab: Initial navigation state check:', locationState);
+      
+      if (locationState?.fromStrategyActivation || locationState?.strategyContext) {
+        console.log('🎯 CreateTab: Found navigation state, switching to Calendar Wizard tab (index 1)');
+        setTabValue(1);
+      }
+    };
+    
+    // Check immediately
+    checkNavigationState();
+    
+    // Also check after a short delay to ensure context is loaded
+    const timer = setTimeout(checkNavigationState, 100);
+    return () => clearTimeout(timer);
+  }, [location.state]);
+
+
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
-  const handleGenerateCalendar = async (calendarConfig: any) => {
+  const handleGenerateCalendar = useCallback(async (calendarConfig: any) => {
     try {
       await contentPlanningApi.generateComprehensiveCalendar({
         ...calendarConfig,
@@ -66,7 +127,7 @@ const CreateTab: React.FC = () => {
     } catch (error) {
       console.error('Error generating calendar:', error);
     }
-  };
+  }, [userData]);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -104,6 +165,8 @@ const CreateTab: React.FC = () => {
           userData={userData}
           onGenerateCalendar={handleGenerateCalendar}
           loading={false}
+          strategyContext={strategyContext}
+          fromStrategyActivation={fromStrategyActivation}
         />
       </TabPanel>
     </Box>

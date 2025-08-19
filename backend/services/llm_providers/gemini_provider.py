@@ -1,4 +1,59 @@
-# Using Gemini Pro LLM model
+"""
+Gemini Provider Module for ALwrity
+
+This module provides functions for interacting with Google's Gemini API, specifically designed
+for structured JSON output and text generation. It follows the official Gemini API documentation
+and implements best practices for reliable AI interactions.
+
+Key Features:
+- Structured JSON response generation with schema validation
+- Text response generation with retry logic
+- Comprehensive error handling and logging
+- Automatic API key management
+- Support for both gemini-2.5-flash and gemini-2.5-pro models
+
+Best Practices:
+1. Use structured output for complex, multi-field responses
+2. Keep schemas simple and flat to avoid truncation
+3. Set appropriate token limits (8192 for complex outputs)
+4. Use low temperature (0.1-0.3) for consistent structured output
+5. Implement proper error handling in calling functions
+6. Avoid fallback to text parsing for structured responses
+
+Usage Examples:
+    # Structured JSON response
+    schema = {
+        "type": "object",
+        "properties": {
+            "tasks": {
+                "type": "array",
+                "items": {"type": "object", "properties": {...}}
+            }
+        }
+    }
+    result = gemini_structured_json_response(prompt, schema, temperature=0.2, max_tokens=8192)
+    
+    # Text response
+    result = gemini_text_response(prompt, temperature=0.7, max_tokens=2048)
+
+Troubleshooting:
+- If response.parsed is None: Check schema complexity and token limits
+- If JSON parsing fails: Verify schema matches expected output structure
+- If truncation occurs: Reduce output size or increase max_tokens
+- If rate limiting: Implement exponential backoff (already included)
+
+Dependencies:
+- google.generativeai (genai)
+- tenacity (for retry logic)
+- logging (for debugging)
+- json (for fallback parsing)
+- re (for text extraction)
+
+Author: ALwrity Team
+Version: 2.0
+Last Updated: January 2025
+"""
+
 import os
 import sys
 from pathlib import Path
@@ -62,7 +117,39 @@ def get_gemini_api_key() -> str:
 
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
 def gemini_text_response(prompt, temperature, top_p, n, max_tokens, system_prompt):
-    """ Common functiont to get response from gemini pro Text. """
+    """
+    Generate text response using Google's Gemini Pro model.
+    
+    This function provides simple text generation with retry logic and error handling.
+    For structured output, use gemini_structured_json_response instead.
+    
+    Args:
+        prompt (str): The input prompt for the AI model
+        temperature (float): Controls randomness (0.0-1.0). Higher = more creative
+        top_p (float): Nucleus sampling parameter (0.0-1.0)
+        n (int): Number of responses to generate
+        max_tokens (int): Maximum tokens in response
+        system_prompt (str, optional): System instruction for the model
+    
+    Returns:
+        str: Generated text response
+        
+    Raises:
+        Exception: If API key is missing or API call fails
+        
+    Best Practices:
+        - Use temperature 0.7-0.9 for creative content
+        - Use temperature 0.1-0.3 for factual/consistent content
+        - Set appropriate max_tokens based on expected response length
+        - Implement proper error handling in calling functions
+        
+    Example:
+        result = gemini_text_response(
+            "Write a blog post about AI", 
+            temperature=0.8, 
+            max_tokens=1024
+        )
+    """
     #FIXME: Include : https://github.com/google-gemini/cookbook/blob/main/quickstarts/rest/System_instructions_REST.ipynb
     try:
         api_key = get_gemini_api_key()
@@ -97,50 +184,8 @@ def gemini_text_response(prompt, temperature, top_p, n, max_tokens, system_promp
         return response.text
     except Exception as err:
         logger.error(f"Failed to get response from Gemini: {err}. Retrying.")
+        raise
 
-
-#@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-#def gemini_blog_metadata_json(blog_content):
-#    """ Common functiont to get response from gemini pro Text. """
-#    prompt =  f"I will provide you with the content of a blog post. Based on this content, you need to generate the following elements in JSON format:\n\n1. **Blog Title**: A compelling and relevant title that summarizes the blog content.\n2. **Meta Description**: A concise meta description (up to 160 characters) that captures the essence of the blog post and encourages clicks.\n3. **Tags**: A list of 5-10 relevant tags that represent the key topics covered in the blog post.\n4. **Categories**: A list of 1-3 appropriate categories that best describe the blog post's main themes.\n\nOutput your response in the following JSON format:\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"blog_title\": {\n      \"type\": \"string\"\n    },\n    \"meta_description\": {\n      \"type\": \"string\"\n    },\n    \"tags\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"categories\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  }\n}\n\n. The Blog Content is given below: \n\n{blog_content}\n\n"
-#    
-#    try:
-#        genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-#    except Exception as err:
-#        logger.error(f"Failed to configure Gemini: {err}")
-#
-#    # Create the model
-#    generation_config = {
-#        "temperature": 1,
-#        "top_p": 0.95,
-#        "top_k": 64,
-#        "max_output_tokens": 8192,
-#        "response_schema": content.Schema(
-#        type = content.Type.OBJECT,
-#            properties = {
-#                "response": content.Schema(
-#                    type = content.Type.STRING,
-#                    ),
-#            },
-#        ),
-#        "response_mime_type": "application/json",
-#    }
-#
-#    model = genai.GenerativeModel(
-#        model_name="gemini-1.5-flash",
-#        generation_config=generation_config,
-#        # safety_settings = Adjust safety settings
-#        # See https://ai.google.dev/gemini-api/docs/safety-settings
-#        )
-#
-#        try:
-#        # text_response = []
-#        response = model.generate_content(prompt)
-#        if response:
-#            logger.info(f"Number of Token in Prompt Sent: {model.count_tokens(prompt)}")
-#            return response.text
-#    except Exception as err:
-#        logger.error(f"Failed to get SEO METADATA from Gemini: {err}. Retrying.")
 
 async def test_gemini_api_key(api_key: str) -> tuple[bool, str]:
     """
@@ -243,6 +288,8 @@ def _dict_to_types_schema(schema: Dict[str, Any]) -> types.Schema:
             return types.Schema(type=types.Type.ARRAY, items=item_schema)
         elif node_type == "NUMBER":
             return types.Schema(type=types.Type.NUMBER)
+        elif node_type == "INTEGER":
+            return types.Schema(type=types.Type.NUMBER)
         elif node_type == "BOOLEAN":
             return types.Schema(type=types.Type.BOOLEAN)
         else:
@@ -254,6 +301,49 @@ def _dict_to_types_schema(schema: Dict[str, Any]) -> types.Schema:
 def gemini_structured_json_response(prompt, schema, temperature=0.7, top_p=0.9, top_k=40, max_tokens=8192, system_prompt=None):
     """
     Generate structured JSON response using Google's Gemini Pro model.
+    
+    This function follows the official Gemini API documentation for structured output:
+    https://ai.google.dev/gemini-api/docs/structured-output#python
+    
+    Args:
+        prompt (str): The input prompt for the AI model
+        schema (dict): JSON schema defining the expected output structure
+        temperature (float): Controls randomness (0.0-1.0). Use 0.1-0.3 for structured output
+        top_p (float): Nucleus sampling parameter (0.0-1.0)
+        top_k (int): Top-k sampling parameter
+        max_tokens (int): Maximum tokens in response. Use 8192 for complex outputs
+        system_prompt (str, optional): System instruction for the model
+    
+    Returns:
+        dict: Parsed JSON response matching the provided schema
+        
+    Raises:
+        Exception: If API key is missing or API call fails
+        
+    Best Practices:
+        - Keep schemas simple and flat to avoid truncation
+        - Use low temperature (0.1-0.3) for consistent structured output
+        - Set max_tokens to 8192 for complex multi-field responses
+        - Avoid deeply nested schemas with many required fields
+        - Test with smaller outputs first, then scale up
+        
+    Example:
+        schema = {
+            "type": "object",
+            "properties": {
+                "tasks": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "title": {"type": "string"},
+                            "description": {"type": "string"}
+                        }
+                    }
+                }
+            }
+        }
+        result = gemini_structured_json_response(prompt, schema, temperature=0.2, max_tokens=8192)
     """
     try:
         # Get API key with proper error handling
@@ -261,59 +351,65 @@ def gemini_structured_json_response(prompt, schema, temperature=0.7, top_p=0.9, 
         client = genai.Client(api_key=api_key)
         logger.info("✅ Gemini client initialized for structured JSON response")
 
-        # Build config using official SDK schema type
+        # Prepare schema for SDK (dict -> types.Schema). If schema is already a types.Schema or Pydantic type, use as-is
         try:
-            types_schema = _dict_to_types_schema(schema) if isinstance(schema, dict) else schema
+            if isinstance(schema, dict):
+                types_schema = _dict_to_types_schema(schema)
+            else:
+                types_schema = schema
         except Exception as conv_err:
-            logger.warning(f"Schema conversion warning, defaulting to OBJECT: {conv_err}")
+            logger.info(f"Schema conversion warning, defaulting to OBJECT: {conv_err}")
             types_schema = types.Schema(type=types.Type.OBJECT)
 
+        # Add debugging for API call
+        logger.info(
+            "Gemini structured call | prompt_len=%s | schema_kind=%s | temp=%s | top_p=%s | top_k=%s | max_tokens=%s",
+            len(prompt) if isinstance(prompt, str) else '<non-str>',
+            type(types_schema).__name__,
+            temperature,
+            top_p,
+            top_k,
+            max_tokens,
+        )
+        
+        # Use the official SDK GenerateContentConfig with response_schema
         generation_config = types.GenerateContentConfig(
-            system_instruction=system_prompt,
+            response_mime_type='application/json',
+            response_schema=types_schema,
             max_output_tokens=max_tokens,
             temperature=temperature,
             top_p=top_p,
             top_k=top_k,
-            response_mime_type='application/json',
-            response_schema=types_schema
+            system_instruction=system_prompt,
         )
 
-        # Add debugging for API call
-        logger.debug(f"Gemini API call - prompt length: {len(prompt)}, schema keys: {list(schema.keys()) if isinstance(schema, dict) else 'N/A'}")
-        
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model="gemini-2.5-flash",
             contents=prompt,
             config=generation_config,
         )
 
         # Add debugging for response
-        logger.debug(f"Gemini response type: {type(response)}")
-        logger.debug(f"Gemini response has text: {hasattr(response, 'text')}")
-        logger.debug(f"Gemini response has parsed: {hasattr(response, 'parsed')}")
+        logger.info("Gemini response | type=%s | has_text=%s | has_parsed=%s",
+                     type(response), hasattr(response, 'text'), hasattr(response, 'parsed'))
         
         if hasattr(response, 'text'):
-            logger.debug(f"Gemini response.text: {repr(response.text)}")
+            logger.info(f"Gemini response.text: {repr(response.text)}")
         if hasattr(response, 'parsed'):
-            logger.debug(f"Gemini response.parsed: {repr(response.parsed)}")
+            logger.info(f"Gemini response.parsed: {repr(response.parsed)}")
 
-        # Prefer parsed if present and non-empty; otherwise parse text with fallbacks
-        try:
-            parsed = getattr(response, 'parsed', None)
-            if parsed:
-                logger.debug(f"Using parsed response: {type(parsed)}")
-                return parsed if isinstance(parsed, dict) else json.loads(json.dumps(parsed))
-            
-            text = (response.text or '').strip()
-            logger.debug(f"Using text response, length: {len(text)}")
-            
-            if not text:
-                logger.error("Gemini returned empty text response")
-                return {"error": "Empty response from Gemini API", "raw_response": ""}
+        # According to the documentation, we should use response.parsed for structured output
+        if hasattr(response, 'parsed') and response.parsed is not None:
+            logger.info("Using response.parsed for structured output")
+            return response.parsed
+        
+        # Fallback to text if parsed is not available
+        if hasattr(response, 'text') and response.text:
+            logger.info("Falling back to response.text parsing")
+            text = response.text.strip()
             
             # Strip markdown code fences if present
             if text.startswith('```'):
-                # remove leading ```json or ``` and trailing ```
                 if text.lower().startswith('```json'):
                     text = text[7:]
                 else:
@@ -322,61 +418,14 @@ def gemini_structured_json_response(prompt, schema, temperature=0.7, top_p=0.9, 
                     text = text[:-3]
                 text = text.strip()
             
-            # Try direct JSON parsing first
             try:
                 return json.loads(text)
             except json.JSONDecodeError as e:
-                logger.warning(f"Direct JSON parsing failed: {e}")
-                logger.debug(f"Failed to parse text: {text[:200]}...")
-                
-                # Check if response is truncated (common cause of JSON errors)
-                if text.endswith('...') or text.endswith('"') or text.endswith(','):
-                    logger.warning("Response appears to be truncated, attempting partial parsing")
-                    # Try to extract what we can from truncated response
-                    partial_result = _extract_partial_json(text)
-                    if partial_result:
-                        logger.info("Successfully extracted partial JSON from truncated response")
-                        return partial_result
-                
-                # Fallback 1: Extract likely JSON object substring
-                first = text.find('{')
-                last = text.rfind('}')
-                if first != -1 and last != -1 and last > first:
-                    candidate = text[first:last+1]
-                    try:
-                        return json.loads(candidate)
-                    except json.JSONDecodeError:
-                        logger.warning("JSON object extraction failed, trying regex")
-                
-                # Fallback 2: Regex any object
-                import re
-                match = re.search(r'\{[\s\S]*\}', text)
-                if match:
-                    try:
-                        return json.loads(match.group(0))
-                    except json.JSONDecodeError:
-                        logger.warning("Regex JSON extraction failed, trying repair")
-                
-                # Fallback 3: Attempt to repair common JSON issues
-                repaired = _repair_json_string(text)
-                if repaired:
-                    try:
-                        return json.loads(repaired)
-                    except json.JSONDecodeError:
-                        logger.warning("JSON repair failed")
-                
-                # Fallback 4: Extract and parse individual key-value pairs
-                extracted = _extract_key_value_pairs(text)
-                if extracted:
-                    return extracted
-                
-                # Final fallback: return error with raw response for debugging
-                logger.error(f"All JSON parsing attempts failed for text: {text[:200]}...")
+                logger.error(f"Failed to parse response.text as JSON: {e}")
                 return {"error": f"Failed to parse JSON response: {e}", "raw_response": text[:500]}
-                
-        except Exception as e:
-            logger.error(f"Error parsing structured response: {e}")
-            return {"error": f"Failed to parse JSON response: {e}", "raw_response": (response.text or '')}
+        
+        logger.error("No valid response content found")
+        return {"error": "No valid response content found", "raw_response": ""}
 
     except ValueError as e:
         # API key related errors

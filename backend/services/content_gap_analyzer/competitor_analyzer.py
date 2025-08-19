@@ -12,8 +12,8 @@ import json
 from collections import Counter, defaultdict
 
 # Import AI providers
-from llm_providers.main_text_generation import llm_text_gen
-from llm_providers.gemini_provider import gemini_structured_json_response
+from services.llm_providers.main_text_generation import llm_text_gen
+from services.llm_providers.gemini_provider import gemini_structured_json_response
 
 # Import existing modules (will be updated to use FastAPI services)
 from services.database import get_db_session
@@ -194,8 +194,19 @@ class CompetitorAnalyzer:
                 }
             )
             
-            # Parse and return the AI response
-            market_position = json.loads(response)
+            # Handle response - gemini_structured_json_response returns dict directly
+            if isinstance(response, dict):
+                market_position = response
+            elif isinstance(response, str):
+                # If it's a string, try to parse as JSON
+                try:
+                    market_position = json.loads(response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse AI response as JSON: {e}")
+                    raise Exception(f"Invalid AI response format: {str(e)}")
+            else:
+                logger.error(f"Unexpected response type from AI service: {type(response)}")
+                raise Exception(f"Unexpected response type from AI service: {type(response)}")
             logger.info("✅ AI market position analysis completed")
             return market_position
             
@@ -306,8 +317,20 @@ class CompetitorAnalyzer:
                 }
             )
             
-            # Parse and return the AI response
-            result = json.loads(response)
+            # Handle response - gemini_structured_json_response returns dict directly
+            if isinstance(response, dict):
+                result = response
+            elif isinstance(response, str):
+                # If it's a string, try to parse as JSON
+                try:
+                    result = json.loads(response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse AI response as JSON: {e}")
+                    raise Exception(f"Invalid AI response format: {str(e)}")
+            else:
+                logger.error(f"Unexpected response type from AI service: {type(response)}")
+                raise Exception(f"Unexpected response type from AI service: {type(response)}")
+            
             content_gaps = result.get('content_gaps', [])
             logger.info(f"✅ AI content gap identification completed: {len(content_gaps)} gaps found")
             return content_gaps
@@ -399,8 +422,20 @@ class CompetitorAnalyzer:
                 }
             )
             
-            # Parse and return the AI response
-            result = json.loads(response)
+            # Handle response - gemini_structured_json_response returns dict directly
+            if isinstance(response, dict):
+                result = response
+            elif isinstance(response, str):
+                # If it's a string, try to parse as JSON
+                try:
+                    result = json.loads(response)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse AI response as JSON: {e}")
+                    raise Exception(f"Invalid AI response format: {str(e)}")
+            else:
+                logger.error(f"Unexpected response type from AI service: {type(response)}")
+                raise Exception(f"Unexpected response type from AI service: {type(response)}")
+            
             competitive_insights = result.get('competitive_insights', [])
             logger.info(f"✅ AI competitive insights generated: {len(competitive_insights)} insights")
             return competitive_insights

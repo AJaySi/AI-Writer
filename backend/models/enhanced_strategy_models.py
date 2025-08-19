@@ -84,6 +84,12 @@ class EnhancedContentStrategy(Base):
     # Relationships
     autofill_insights = relationship("ContentStrategyAutofillInsights", back_populates="strategy", cascade="all, delete-orphan")
     
+    # Monitoring relationships
+    monitoring_plans = relationship("StrategyMonitoringPlan", back_populates="strategy", cascade="all, delete-orphan")
+    monitoring_tasks = relationship("MonitoringTask", back_populates="strategy", cascade="all, delete-orphan")
+    performance_metrics = relationship("StrategyPerformanceMetrics", back_populates="strategy", cascade="all, delete-orphan")
+    activation_status = relationship("StrategyActivationStatus", back_populates="strategy", cascade="all, delete-orphan")
+    
     def __repr__(self):
         return f"<EnhancedContentStrategy(id={self.id}, name='{self.name}', industry='{self.industry}')>"
     

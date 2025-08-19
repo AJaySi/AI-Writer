@@ -11,7 +11,7 @@ from pathlib import Path
 # Add the backend directory to the path
 sys.path.append(str(Path(__file__).parent / 'backend'))
 
-from llm_providers.gemini_provider import gemini_structured_json_response
+from services.llm_providers.gemini_provider import gemini_structured_json_response
 
 def test_json_string_return():
     """Test that the function returns JSON string instead of dict."""

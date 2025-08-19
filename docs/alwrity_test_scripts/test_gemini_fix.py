@@ -10,7 +10,7 @@ from pathlib import Path
 # Add the backend directory to the path
 sys.path.append(str(Path(__file__).parent / 'backend'))
 
-from llm_providers.gemini_provider import gemini_text_response, gemini_pro_text_gen, test_gemini_api_key
+from services.llm_providers.gemini_provider import gemini_text_response, gemini_pro_text_gen, test_gemini_api_key
 
 def test_gemini_text_response():
     """Test the basic text response function."""

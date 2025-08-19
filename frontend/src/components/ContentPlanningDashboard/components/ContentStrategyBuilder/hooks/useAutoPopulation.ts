@@ -10,14 +10,17 @@ export const useAutoPopulation = ({
   completionStats
 }: UseAutoPopulationProps) => {
   const [autoPopulateAttempted, setAutoPopulateAttempted] = useState(false);
+  const [isAutoPopulating, setIsAutoPopulating] = useState(false);
 
   // Auto-populate from onboarding on first load
   useEffect(() => {
-    if (!autoPopulateAttempted) {
+    if (!autoPopulateAttempted && !isAutoPopulating) {
+      setIsAutoPopulating(true);
       autoPopulateFromOnboarding();
       setAutoPopulateAttempted(true);
+      setIsAutoPopulating(false);
     }
-  }, [autoPopulateAttempted, autoPopulateFromOnboarding]);
+  }, [autoPopulateAttempted, isAutoPopulating]); // Removed autoPopulateFromOnboarding from dependencies
 
   return {
     autoPopulateAttempted,

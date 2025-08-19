@@ -14,6 +14,9 @@ from typing import Optional
 from models.onboarding import Base as OnboardingBase
 from models.seo_analysis import Base as SEOAnalysisBase
 from models.content_planning import Base as ContentPlanningBase
+from models.enhanced_strategy_models import Base as EnhancedStrategyBase
+# Monitoring models now use the same base as enhanced strategy models
+from models.monitoring_models import Base as MonitoringBase
 
 # Database configuration
 DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///./alwrity.db')
@@ -52,6 +55,8 @@ def init_database():
         OnboardingBase.metadata.create_all(bind=engine)
         SEOAnalysisBase.metadata.create_all(bind=engine)
         ContentPlanningBase.metadata.create_all(bind=engine)
+        EnhancedStrategyBase.metadata.create_all(bind=engine)
+        MonitoringBase.metadata.create_all(bind=engine)
         logger.info("Database initialized successfully with all models")
     except SQLAlchemyError as e:
         logger.error(f"Error initializing database: {str(e)}")

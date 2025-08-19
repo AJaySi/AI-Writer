@@ -27,7 +27,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import StrategicInputField from '../StrategicInputField';
 import { CategoryDetailViewProps, EducationalInfoDialogProps } from '../types/contentStrategy.types';
-import { useEnhancedStrategyStore } from '../../../../../stores/enhancedStrategyStore';
+import { useStrategyBuilderStore } from '../../../../../stores/strategyBuilderStore';
 
 const EducationalInfoDialog: React.FC<EducationalInfoDialogProps> = ({
   open,
@@ -121,7 +121,7 @@ const CategoryDetailView: React.FC<CategoryDetailViewProps> = ({
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   
   // Get confidence scores from store
-  const { confidenceScores } = useEnhancedStrategyStore();
+  const { confidenceScores } = useStrategyBuilderStore();
   
   if (!activeCategory) {
     return (

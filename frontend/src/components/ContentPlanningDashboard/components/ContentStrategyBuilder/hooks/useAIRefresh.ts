@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { contentPlanningApi } from '../../../../../services/contentPlanningApi';
-import { useEnhancedStrategyStore } from '../../../../../stores/enhancedStrategyStore';
+import { useStrategyBuilderStore } from '../../../../../stores/strategyBuilderStore';
 
 interface UseAIRefreshProps {
   setTransparencyModalOpen: (open: boolean) => void;
@@ -235,7 +235,7 @@ export const useAIRefresh = ({
         console.log('🎯 Field values details:', fieldValues);
         
         // Update the store with the new data
-        useEnhancedStrategyStore.setState((state) => {
+        useStrategyBuilderStore.setState((state) => {
           const newState = {
             autoPopulatedFields: { ...state.autoPopulatedFields, ...fieldValues },
             dataSources: { ...state.dataSources, ...sources },
