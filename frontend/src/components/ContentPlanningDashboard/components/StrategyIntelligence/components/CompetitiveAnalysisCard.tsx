@@ -32,6 +32,7 @@ import {
   getListItemStyles
 } from '../styles';
 import ProgressiveCard from './ProgressiveCard';
+import { safeRenderText, safeRenderArray, hasValidData, getFallbackValue } from '../utils/defensiveRendering';
 
 interface CompetitiveAnalysisCardProps {
   strategyData: StrategyData | null;
@@ -67,6 +68,8 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
     if (description.includes('SEMrush')) return 'SEMrush';
     return description.split(' ').slice(0, 2).join(' ');
   };
+
+
 
   if (!strategyData?.competitive_analysis) {
     return (
@@ -290,7 +293,7 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
                     }} />
                   </ListItemIcon>
                   <ListItemText 
-                    primary={gap}
+                    primary={safeRenderText(gap)}
                     primaryTypographyProps={{ 
                       variant: 'body2', 
                       fontSize: '0.875rem',
@@ -324,7 +327,7 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
                     }} />
                   </ListItemIcon>
                   <ListItemText 
-                    primary={opportunity}
+                    primary={safeRenderText(opportunity)}
                     primaryTypographyProps={{ 
                       variant: 'body2', 
                       fontSize: '0.875rem',
@@ -358,7 +361,7 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
                     }} />
                   </ListItemIcon>
                   <ListItemText 
-                    primary={recommendation}
+                    primary={safeRenderText(recommendation)}
                     primaryTypographyProps={{ 
                       variant: 'body2', 
                       fontSize: '0.875rem',
@@ -399,14 +402,14 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
                           opacity: 0.7
                         }} />
                       </ListItemIcon>
-                      <ListItemText 
-                        primary={area}
-                        primaryTypographyProps={{ 
-                          variant: 'body2', 
-                          fontSize: '0.875rem',
-                          sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
-                        }}
-                      />
+                                        <ListItemText 
+                    primary={safeRenderText(area)}
+                    primaryTypographyProps={{ 
+                      variant: 'body2', 
+                      fontSize: '0.875rem',
+                      sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                    }}
+                  />
                     </ListItem>
                   ))}
                 </List>
@@ -433,7 +436,7 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
                         }} />
                       </ListItemIcon>
                       <ListItemText 
-                        primary={advantage}
+                        primary={safeRenderText(advantage)}
                         primaryTypographyProps={{ 
                           variant: 'body2', 
                           fontSize: '0.875rem',
@@ -466,7 +469,7 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
                         }} />
                       </ListItemIcon>
                       <ListItemText 
-                        primary={advantage}
+                        primary={safeRenderText(advantage)}
                         primaryTypographyProps={{ 
                           variant: 'body2', 
                           fontSize: '0.875rem',
@@ -510,7 +513,7 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
                         }} />
                       </ListItemIcon>
                       <ListItemText 
-                        primary={strength}
+                        primary={safeRenderText(strength)}
                         primaryTypographyProps={{ 
                           variant: 'body2', 
                           fontSize: '0.875rem',
@@ -543,7 +546,7 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
                         }} />
                       </ListItemIcon>
                       <ListItemText 
-                        primary={weakness}
+                        primary={safeRenderText(weakness)}
                         primaryTypographyProps={{ 
                           variant: 'body2', 
                           fontSize: '0.875rem',
@@ -576,7 +579,7 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
                         }} />
                       </ListItemIcon>
                       <ListItemText 
-                        primary={opportunity}
+                        primary={safeRenderText(opportunity)}
                         primaryTypographyProps={{ 
                           variant: 'body2', 
                           fontSize: '0.875rem',
@@ -609,7 +612,7 @@ const CompetitiveAnalysisCard: React.FC<CompetitiveAnalysisCardProps> = ({ strat
                         }} />
                       </ListItemIcon>
                       <ListItemText 
-                        primary={threat}
+                        primary={safeRenderText(threat)}
                         primaryTypographyProps={{ 
                           variant: 'body2', 
                           fontSize: '0.875rem',

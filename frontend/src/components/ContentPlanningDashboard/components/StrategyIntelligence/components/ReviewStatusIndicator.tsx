@@ -37,7 +37,7 @@ const ReviewStatusIndicator: React.FC<ReviewStatusIndicatorProps> = ({
   isReviewing = false
 }) => {
   // Debug logging for status
-  console.log('🔧 ReviewStatusIndicator received status:', status);
+  // Removed verbose logging for cleaner console
   const getStatusConfig = () => {
     switch (status) {
       case 'activated':

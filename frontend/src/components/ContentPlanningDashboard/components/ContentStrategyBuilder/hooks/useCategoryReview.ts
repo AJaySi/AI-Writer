@@ -49,30 +49,18 @@ export const useCategoryReview = ({ completionStats, setError, setActiveCategory
         // Use the updated reviewedCategories state that includes the current category
         const updatedReviewedCategories = new Set([...Array.from(reviewedCategories), activeCategory]);
         
-        console.log('🔍 Navigation Debug:', {
-          activeCategory,
-          currentIndex,
-          allCategories,
-          reviewedCategories: Array.from(reviewedCategories),
-          updatedReviewedCategories: Array.from(updatedReviewedCategories)
-        });
-        
         const nextUnreviewedCategory = allCategories.find((categoryId, index) => {
           if (index <= currentIndex) return false;
           return !updatedReviewedCategories.has(categoryId);
         });
         
-        console.log('🎯 Next Category Found:', nextUnreviewedCategory);
-        
         if (nextUnreviewedCategory) {
           // Actually navigate to the next category
-          console.log('🚀 Navigating to:', nextUnreviewedCategory);
           setActiveCategory(nextUnreviewedCategory);
           setCategoryCompletionMessage(`🎯 Moving to next category: ${nextUnreviewedCategory.split('_').map(word => 
             word.charAt(0).toUpperCase() + word.slice(1)
           ).join(' ')}`);
         } else {
-          console.log('🎉 All categories reviewed!');
           setCategoryCompletionMessage('🎉 All categories reviewed and confirmed! You can now create your strategy.');
         }
       }, 1500);

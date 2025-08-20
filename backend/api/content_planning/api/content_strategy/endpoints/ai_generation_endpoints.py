@@ -662,6 +662,16 @@ async def get_latest_generated_strategy(
             logger.info(f"🔍 Querying database for strategies with user_id: {user_id}")
             
             # Query for the most recent strategy with comprehensive AI analysis
+            # First, let's see all strategies for this user
+            all_strategies = db.query(EnhancedContentStrategy).filter(
+                EnhancedContentStrategy.user_id == user_id
+            ).order_by(desc(EnhancedContentStrategy.created_at)).all()
+            
+            logger.info(f"🔍 Found {len(all_strategies)} total strategies for user {user_id}")
+            for i, strategy in enumerate(all_strategies):
+                logger.info(f"   Strategy {i+1}: ID={strategy.id}, name={strategy.name}, created_at={strategy.created_at}, has_comprehensive_ai_analysis={strategy.comprehensive_ai_analysis is not None}")
+            
+            # Now query for the most recent strategy with comprehensive AI analysis
             latest_db_strategy = db.query(EnhancedContentStrategy).filter(
                 EnhancedContentStrategy.user_id == user_id,
                 EnhancedContentStrategy.comprehensive_ai_analysis.isnot(None)
@@ -682,9 +692,31 @@ async def get_latest_generated_strategy(
                     }
                 )
             else:
-                logger.info(f"⚠️ No strategy found in database for user: {user_id}")
-                if latest_db_strategy:
-                    logger.info(f"🔍 Strategy found but no comprehensive_ai_analysis: {latest_db_strategy.id}")
+                logger.info(f"⚠️ No strategy with comprehensive_ai_analysis found in database for user: {user_id}")
+                
+                # Fallback: Try to get the most recent strategy regardless of comprehensive_ai_analysis
+                fallback_strategy = db.query(EnhancedContentStrategy).filter(
+                    EnhancedContentStrategy.user_id == user_id
+                ).order_by(desc(EnhancedContentStrategy.created_at)).first()
+                
+                if fallback_strategy:
+                    logger.info(f"🔍 Found fallback strategy: ID={fallback_strategy.id}, name={fallback_strategy.name}")
+                    logger.info(f"🔍 Fallback strategy has ai_recommendations: {fallback_strategy.ai_recommendations is not None}")
+                    
+                    # Try to use ai_recommendations as the strategy data
+                    if fallback_strategy.ai_recommendations:
+                        logger.info(f"✅ Using ai_recommendations as strategy data for fallback strategy {fallback_strategy.id}")
+                        return ResponseBuilder.create_success_response(
+                            message="Latest generated strategy retrieved successfully from database (fallback)",
+                            data={
+                                "user_id": user_id,
+                                "strategy": fallback_strategy.ai_recommendations,
+                                "completed_at": fallback_strategy.created_at.isoformat(),
+                                "strategy_id": fallback_strategy.id
+                            }
+                        )
+                    else:
+                        logger.info(f"⚠️ Fallback strategy has no ai_recommendations either")
                 else:
                     logger.info(f"🔍 No strategy record found at all for user: {user_id}")
         except Exception as db_error:

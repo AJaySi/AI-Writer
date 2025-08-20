@@ -44,7 +44,7 @@ const CreateTab: React.FC = () => {
   // Get strategy context from the provider
   const { state: { strategyContext }, isFromStrategyActivation } = useStrategyCalendarContext();
   
-  console.log('🔍 CreateTab: Rendering', { userData, strategyContext, locationState: location.state });
+  // Removed verbose logging for cleaner console
 
   // Memoize the strategy activation status to avoid infinite re-renders
   const fromStrategyActivation = useMemo(() => {
@@ -72,7 +72,7 @@ const CreateTab: React.FC = () => {
 
   // Auto-switch to Calendar Wizard tab when coming from strategy activation
   useEffect(() => {
-    console.log('🔍 CreateTab: Checking strategy activation status:', { fromStrategyActivation });
+    // Removed verbose logging for cleaner console
     
     // Check multiple sources for strategy activation status
     const isFromStrategy = fromStrategyActivation || 

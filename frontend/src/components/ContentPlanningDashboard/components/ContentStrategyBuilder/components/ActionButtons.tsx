@@ -9,6 +9,7 @@ import {
   Save as SaveIcon
 } from '@mui/icons-material';
 import { ActionButtonsProps, ActionButtonsBusinessLogicProps } from '../types/contentStrategy.types';
+import { useContentPlanningStore } from '../../../../../stores/contentPlanningStore';
 
 // Business Logic Hook
 export const useActionButtonsBusinessLogic = ({
@@ -29,10 +30,17 @@ export const useActionButtonsBusinessLogic = ({
   contentPlanningApi
 }: ActionButtonsBusinessLogicProps) => {
   
+  // Get the content planning store to cache the latest generated strategy
+  const { setLatestGeneratedStrategy } = useContentPlanningStore();
+  
   const handleCreateStrategy = async () => {
     try {
       setAIGenerating(true);
       setError(null);
+      
+      // Clear any previous cached strategy when starting new generation
+      setLatestGeneratedStrategy(null);
+      console.log('🧹 Cleared previous cached strategy for new generation');
       
       console.log('Starting strategy creation...');
       console.log('Current formData:', formData);
@@ -152,6 +160,20 @@ export const useActionButtonsBusinessLogic = ({
           (strategy: any) => {
             console.log('✅ Strategy generation completed successfully!');
             setCurrentStrategy(strategy);
+            
+            // Cache the latest generated strategy in the content planning store
+            console.log('💾 Attempting to cache strategy:', {
+              strategyId: strategy?.id || strategy?.strategy_id,
+              strategyName: strategy?.name || strategy?.strategy_name,
+              hasStrategicInsights: !!strategy?.strategic_insights,
+              hasCompetitiveAnalysis: !!strategy?.competitive_analysis,
+              hasPerformancePredictions: !!strategy?.performance_predictions,
+              hasImplementationRoadmap: !!strategy?.implementation_roadmap,
+              hasRiskAssessment: !!strategy?.risk_assessment
+            });
+            setLatestGeneratedStrategy(strategy);
+            console.log('💾 Cached latest generated strategy in store');
+            
             // Set progress to 100% when completion is detected
             setGenerationProgress(100);
             console.log('🎯 Setting progress to 100% in onComplete callback');
@@ -196,6 +218,11 @@ export const useActionButtonsBusinessLogic = ({
       
       const newStrategy = await createEnhancedStrategy(strategyData);
       setCurrentStrategy(newStrategy);
+      
+      // Update the cache with the saved strategy
+      setLatestGeneratedStrategy(newStrategy);
+      console.log('💾 Updated cache with saved strategy');
+      
       setError('Strategy saved successfully!');
     } catch (err: any) {
       setError(`Error saving strategy: ${err.message || 'Unknown error'}`);

@@ -100,6 +100,7 @@ const ContentStrategyBuilder: React.FC = () => {
     dataSources,
     inputDataPoints,
     personalizationData,
+    confidenceScores,
     loading,
     error,
     saving,
@@ -271,6 +272,48 @@ const ContentStrategyBuilder: React.FC = () => {
     completionStats
   });
 
+  // Add ref for scroll to review section
+  const reviewSectionRef = useRef<HTMLDivElement>(null);
+
+  // Handle scroll to review section
+  const handleScrollToReview = () => {
+    if (reviewSectionRef.current) {
+      reviewSectionRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }
+  };
+
+  // Handle continue with present values
+  const handleContinueWithPresent = () => {
+    console.log('🎯 Continuing with present autofilled values');
+    // This will show the next button and allow user to proceed
+  };
+
+  // Determine if we have autofill data
+  const hasAutofillData = Object.keys(autoPopulatedFields).length > 0;
+  
+  // Get last autofill time from session storage or use current time
+  const lastAutofillTime = sessionStorage.getItem('lastAutofillTime') || new Date().toISOString();
+  
+  // Get data source from store
+  const dataSource = Object.keys(dataSources).length > 0 ? 'Onboarding Database' : undefined;
+
+  // Log autofill data status for debugging
+  useEffect(() => {
+    console.log('📋 StrategyBuilder: Autofill data status:', {
+      hasAutofillData,
+      autoPopulatedFieldsCount: Object.keys(autoPopulatedFields).length,
+      dataSourcesCount: Object.keys(dataSources).length,
+      inputDataPointsCount: Object.keys(inputDataPoints).length,
+      personalizationDataCount: Object.keys(personalizationData).length,
+      confidenceScoresCount: Object.keys(confidenceScores).length,
+      lastAutofillTime,
+      dataSource
+    });
+  }, [hasAutofillData, autoPopulatedFields, dataSources, inputDataPoints, personalizationData, confidenceScores, lastAutofillTime, dataSource]);
+
 
 
   // Enhanced handleCreateStrategy to show enterprise modal
@@ -332,39 +375,16 @@ const ContentStrategyBuilder: React.FC = () => {
     
     if (Object.keys(completionStats.category_completion).length > 0) {
       const firstCategory = Object.keys(completionStats.category_completion)[0];
-      console.log('🎯 Setting default category:', firstCategory);
       setActiveCategory(firstCategory);
       hasSetDefaultCategory.current = true;
-      console.log('✅ hasSetDefaultCategory set to true');
     }
   }, [completionStats.category_completion]); // Removed activeCategory dependency
 
-  // Debug activeCategory changes
-  useEffect(() => {
-    console.log('🔄 activeCategory changed to:', activeCategory);
-    console.trace('📍 Stack trace for activeCategory change');
-  }, [activeCategory]);
-
-  // Monitor modal state for debugging
-  useEffect(() => {
-    console.log('🎯 Modal state changed - transparencyModalOpen:', transparencyModalOpen);
-  }, [transparencyModalOpen]);
-
   // Monitor enterprise modal state for debugging
   useEffect(() => {
-    console.log('🎯 Enterprise modal state changed - showEnterpriseModal:', showEnterpriseModal);
-    
     // If modal was unexpectedly closed, log it
     if (!showEnterpriseModal && aiGenerating) {
-      console.warn('🎯 WARNING: Enterprise modal closed while AI is generating');
-    }
-    
-    // Only warn about unexpected closure if it's not due to hot reload
-    if (!showEnterpriseModal && !aiGenerating) {
-      const savedModalState = sessionStorage.getItem('showEnterpriseModal');
-      if (savedModalState !== 'true') {
-        console.warn('🎯 WARNING: Enterprise modal closed unexpectedly (not due to hot reload)');
-      }
+      console.warn('Enterprise modal closed while AI is generating');
     }
   }, [showEnterpriseModal, aiGenerating]);
 
@@ -382,14 +402,27 @@ const ContentStrategyBuilder: React.FC = () => {
 
   // Wrapper for the hook function to maintain the same interface
   const handleConfirmCategoryReviewWrapper = () => {
-    console.log('🔧 Wrapper called with activeCategory:', activeCategory);
     handleConfirmCategoryReview(activeCategory);
   };
 
   return (
     <Box sx={{ p: 3 }}>
       {/* Header with Title (Region B) - Enhanced with Futuristic Styling */}
-      <HeaderSection autoPopulatedFields={autoPopulatedFields} />
+                  <HeaderSection
+              autoPopulatedFields={autoPopulatedFields}
+              dataSources={dataSources}
+              inputDataPoints={inputDataPoints}
+              personalizationData={personalizationData}
+              confidenceScores={confidenceScores}
+              loading={loading}
+              error={error}
+              onRefreshAutofill={handleAIRefresh}
+              onContinueWithPresent={handleContinueWithPresent}
+              onScrollToReview={handleScrollToReview}
+              hasAutofillData={hasAutofillData}
+              lastAutofillTime={lastAutofillTime}
+              dataSource={dataSource}
+            />
 
       {/* Error Alert */}
       <ErrorAlert
@@ -444,81 +477,49 @@ const ContentStrategyBuilder: React.FC = () => {
               onShowEducationalInfo={handleShowEducationalInfo}
             />
             
-            {/* Quick Actions */}
-            <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Quick Actions
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<AutoAwesomeIcon />}
-                  onClick={() => setShowAIRecommendations(true)}
-                  fullWidth
-                >
-                  View AI Insights
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<InfoIcon />}
-                  onClick={() => setShowDataSourceTransparency(true)}
-                  fullWidth
-                >
-                  View Data Sources
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<RefreshIcon />}
-                  onClick={() => autoPopulateFromOnboarding(true)}
-                  fullWidth
-                >
-                  Refresh Data
-                </Button>
-              </Box>
-            </Box>
+
           </Paper>
         </Grid>
 
         {/* Main Content Area */}
         <Grid item xs={12} md={8}>
           <Paper sx={{ p: 3, minHeight: '600px', background: 'linear-gradient(180deg, #faf7ff, #f1f0ff)' }}>
-            <CategoryDetailView
-              activeCategory={activeCategory}
-              formData={formData}
-              formErrors={formErrors}
-              autoPopulatedFields={autoPopulatedFields}
-              dataSources={dataSources}
-              inputDataPoints={inputDataPoints}
-              personalizationData={personalizationData}
-              completionStats={completionStats}
-              reviewedCategories={reviewedCategories}
-              isMarkingReviewed={isMarkingReviewed}
-              showEducationalInfo={showEducationalInfo}
-              STRATEGIC_INPUT_FIELDS={STRATEGIC_INPUT_FIELDS}
-              onUpdateFormField={updateFormField}
-              onValidateFormField={validateFormField}
-              onShowTooltip={setShowTooltip}
-              onViewDataSource={(fieldId) => {
-                // If a specific field is provided, show field-specific data source info
-                if (fieldId) {
-                  console.log('🎯 Viewing data source for field:', fieldId);
-                  // For now, just open the general data source transparency modal
-                  // In the future, this could open a field-specific modal
-                  setShowDataSourceTransparency(true);
-                } else {
-                  setShowDataSourceTransparency(true);
-                }
-              }}
-              onConfirmCategoryReview={handleConfirmCategoryReviewWrapper}
-              onSetActiveCategory={setActiveCategory}
-              onSetShowEducationalInfo={setShowEducationalInfo}
-              getCategoryIcon={getCategoryIcon}
-              getCategoryColor={getCategoryColor}
-              getEducationalContent={getEducationalContent}
-            />
+            <div ref={reviewSectionRef}>
+              <CategoryDetailView
+                activeCategory={activeCategory}
+                formData={formData}
+                formErrors={formErrors}
+                autoPopulatedFields={autoPopulatedFields}
+                dataSources={dataSources}
+                inputDataPoints={inputDataPoints}
+                personalizationData={personalizationData}
+                completionStats={completionStats}
+                reviewedCategories={reviewedCategories}
+                isMarkingReviewed={isMarkingReviewed}
+                showEducationalInfo={showEducationalInfo}
+                STRATEGIC_INPUT_FIELDS={STRATEGIC_INPUT_FIELDS}
+                onUpdateFormField={updateFormField}
+                onValidateFormField={validateFormField}
+                onShowTooltip={setShowTooltip}
+                onViewDataSource={(fieldId) => {
+                  // If a specific field is provided, show field-specific data source info
+                  if (fieldId) {
+                    console.log('🎯 Viewing data source for field:', fieldId);
+                    // For now, just open the general data source transparency modal
+                    // In the future, this could open a field-specific modal
+                    setShowDataSourceTransparency(true);
+                  } else {
+                    setShowDataSourceTransparency(true);
+                  }
+                }}
+                onConfirmCategoryReview={handleConfirmCategoryReviewWrapper}
+                onSetActiveCategory={setActiveCategory}
+                onSetShowEducationalInfo={setShowEducationalInfo}
+                getCategoryIcon={getCategoryIcon}
+                getCategoryColor={getCategoryColor}
+                getEducationalContent={getEducationalContent}
+              />
+            </div>
           </Paper>
         </Grid>
       </Grid>
@@ -560,11 +561,17 @@ const ContentStrategyBuilder: React.FC = () => {
                 educationalContent={storeEducationalContent}      
         generationProgress={storeGenerationProgress}
         onReviewStrategy={() => {
-          console.log('🎯 User clicked "Next: Review Strategy and Create Calendar"');
           setShowEducationalModal(false);
+          
+          // Set flag to indicate coming from strategy builder
+          sessionStorage.setItem('fromStrategyBuilder', 'true');
+          
           // Navigate to content planning dashboard with Content Strategy tab active
           navigate('/content-planning', { 
-            state: { activeTab: 0 } // 0 = Content Strategy tab
+            state: { 
+              activeTab: 0, // 0 = Content Strategy tab
+              fromStrategyBuilder: true 
+            }
           });
         }}
       />
@@ -601,10 +608,6 @@ const ContentStrategyBuilder: React.FC = () => {
         open={transparencyModalOpen}
         onClose={() => {
           setTransparencyModalOpen(false);
-          // Ensure form data is refreshed after modal closes
-          console.log('🎯 Modal closed - ensuring form data is updated');
-          console.log('🎯 Current autoPopulatedFields:', Object.keys(autoPopulatedFields || {}));
-          console.log('🎯 Current formData keys:', Object.keys(formData || {}));
         }}
         autoPopulatedFields={autoPopulatedFields}
         dataSources={dataSources}
@@ -621,8 +624,6 @@ const ContentStrategyBuilder: React.FC = () => {
       <EnterpriseDatapointsModal
         open={showEnterpriseModal}
         onClose={() => {
-          console.log('🎯 Enterprise modal onClose called');
-          console.log('🎯 Current aiGenerating state:', aiGenerating);
           setShowEnterpriseModal(false);
           sessionStorage.removeItem('showEnterpriseModal'); // Clear sessionStorage
         }}

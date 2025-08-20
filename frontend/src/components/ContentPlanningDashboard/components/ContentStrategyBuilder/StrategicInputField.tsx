@@ -426,26 +426,15 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
               return option === value;
             }}
             value={(() => {
-              // Debug logging for Autocomplete value parsing
-              console.log('🎯 Autocomplete value parsing:', {
-                fieldId,
-                originalValue: value,
-                valueType: typeof value,
-                isArray: Array.isArray(value),
-                availableOptions: multiSelectConfig.options
-              });
-
               let parsedValues: string[] = [];
 
               if (Array.isArray(value)) {
                 parsedValues = value;
-                console.log('🎯 Using array value:', parsedValues);
               } else if (typeof value === 'object' && value !== null) {
                 // Handle object values (convert to array of keys or values)
                 if (typeof value === 'object' && !Array.isArray(value)) {
                   // Convert object to array of keys or values based on context
                   const objectKeys = Object.keys(value);
-                  const objectValues = Object.values(value);
                   
                   // For traffic_sources, we might want to use the keys or convert percentages to options
                   if (fieldId === 'traffic_sources') {
@@ -466,12 +455,9 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
                     parsedValues = objectKeys
                       .map(key => trafficMapping[key.toLowerCase()])
                       .filter(Boolean);
-                    
-                    console.log('🎯 Converted object to traffic sources:', parsedValues);
                   } else {
                     // For other fields, use object keys
                     parsedValues = objectKeys;
-                    console.log('🎯 Using object keys:', parsedValues);
                   }
                 }
               } else if (typeof value === 'string') {
@@ -480,10 +466,8 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
                   const parsed = JSON.parse(value);
                   if (Array.isArray(parsed)) {
                     parsedValues = parsed;
-                    console.log('🎯 Parsed as JSON array:', parsedValues);
                   }
                 } catch (error) {
-                  console.log('🎯 JSON parse failed, trying alternative parsing');
                   // If not valid JSON, try to extract array-like content
                   if (value.startsWith('[') && value.endsWith(']')) {
                     // Remove outer brackets and try to parse as comma-separated
@@ -493,37 +477,48 @@ const StrategicInputField: React.FC<StrategicInputFieldProps> = ({
                       // Remove quotes and trim
                       return item.trim().replace(/^["']|["']$/g, '');
                     }).filter(item => item);
-                    console.log('🎯 Parsed as array-like string:', parsedValues);
                   } else if (value.includes(',')) {
                     // If not array-like, try simple comma splitting
                     parsedValues = value.split(',').map(item => item.trim()).filter(item => item);
-                    console.log('🎯 Parsed as comma-separated string:', parsedValues);
                   }
                 }
               }
 
-              // Filter values to only include valid options
+              // Filter values to only include valid options and improve matching
               const validOptions = multiSelectConfig.options || [];
               const filteredValues = parsedValues.filter(val => {
                 // Check for exact match
                 if (validOptions.includes(val)) {
                   return true;
                 }
-                // Check for partial match (case-insensitive)
-                const partialMatch = validOptions.find(option => 
-                  option.toLowerCase().includes(val.toLowerCase()) || 
-                  val.toLowerCase().includes(option.toLowerCase())
-                );
-                if (partialMatch) {
-                  console.log('🎯 Found partial match:', val, '->', partialMatch);
-                  return true;
-                }
-                console.log('🎯 No match found for:', val);
-                return false;
+                // Check for partial match (case-insensitive) with better logic
+                const partialMatch = validOptions.find(option => {
+                  const optionLower = option.toLowerCase();
+                  const valLower = val.toLowerCase();
+                  
+                  // Check if option contains the value or vice versa
+                  return optionLower.includes(valLower) || valLower.includes(optionLower);
+                });
+                
+                return !!partialMatch;
               });
 
-              console.log('🎯 Final filtered values:', filteredValues);
-              return filteredValues;
+              // Map partial matches to exact options
+              const mappedValues = filteredValues.map(val => {
+                const exactMatch = validOptions.find(option => option === val);
+                if (exactMatch) return exactMatch;
+                
+                // Find the best partial match
+                const partialMatch = validOptions.find(option => {
+                  const optionLower = option.toLowerCase();
+                  const valLower = val.toLowerCase();
+                  return optionLower.includes(valLower) || valLower.includes(optionLower);
+                });
+                
+                return partialMatch || val;
+              });
+
+              return mappedValues;
             })()}
             onChange={(_, newValue) => handleChange(newValue)}
             renderInput={(params) => (

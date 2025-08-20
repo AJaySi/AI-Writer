@@ -28,6 +28,7 @@ import {
   getListItemStyles
 } from '../styles';
 import ProgressiveCard from './ProgressiveCard';
+import { safeRenderText, safeRenderArray, hasValidData, getFallbackValue } from '../utils/defensiveRendering';
 
 interface ImplementationRoadmapCardProps {
   strategyData: StrategyData | null;
@@ -48,6 +49,15 @@ const ImplementationRoadmapCard: React.FC<ImplementationRoadmapCardProps> = ({ s
         .join(', ');
     }
     return 'Budget allocation not specified';
+  };
+
+  // Helper function to safely render text content
+  const safeRenderText = (content: any): string => {
+    if (typeof content === 'string') return content;
+    if (typeof content === 'object' && content !== null) {
+      return JSON.stringify(content);
+    }
+    return 'Data not available';
   };
 
   if (!strategyData?.implementation_roadmap) {
@@ -212,7 +222,7 @@ const ImplementationRoadmapCard: React.FC<ImplementationRoadmapCardProps> = ({ s
                       }} />
                     </ListItemIcon>
                     <ListItemText 
-                      primary={milestone}
+                      primary={safeRenderText(milestone)}
                       primaryTypographyProps={{ 
                         variant: 'body2', 
                         fontSize: '0.875rem',
@@ -295,14 +305,14 @@ const ImplementationRoadmapCard: React.FC<ImplementationRoadmapCardProps> = ({ s
                                 opacity: 0.7
                               }} />
                             </ListItemIcon>
-                            <ListItemText 
-                              primary={task}
-                              primaryTypographyProps={{ 
-                                variant: 'body2', 
-                                fontSize: '0.875rem',
-                                sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
-                              }}
-                            />
+                                              <ListItemText 
+                    primary={safeRenderText(task)}
+                    primaryTypographyProps={{ 
+                      variant: 'body2', 
+                      fontSize: '0.875rem',
+                      sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                    }}
+                  />
                           </ListItem>
                         ))}
                       </List>
@@ -322,7 +332,7 @@ const ImplementationRoadmapCard: React.FC<ImplementationRoadmapCardProps> = ({ s
                               <CheckCircleIcon sx={{ color: ANALYSIS_CARD_STYLES.colors.success, fontSize: 16 }} />
                             </ListItemIcon>
                             <ListItemText 
-                              primary={milestone}
+                              primary={safeRenderText(milestone)}
                               primaryTypographyProps={{ 
                                 variant: 'body2', 
                                 fontSize: '0.875rem',
@@ -354,7 +364,7 @@ const ImplementationRoadmapCard: React.FC<ImplementationRoadmapCardProps> = ({ s
                               }} />
                             </ListItemIcon>
                             <ListItemText 
-                              primary={resource}
+                              primary={safeRenderText(resource)}
                               primaryTypographyProps={{ 
                                 variant: 'body2', 
                                 fontSize: '0.875rem',
@@ -387,7 +397,7 @@ const ImplementationRoadmapCard: React.FC<ImplementationRoadmapCardProps> = ({ s
                     <CheckCircleIcon sx={{ color: ANALYSIS_CARD_STYLES.colors.success, fontSize: 16 }} />
                   </ListItemIcon>
                   <ListItemText 
-                    primary={milestone}
+                    primary={safeRenderText(milestone)}
                     primaryTypographyProps={{ 
                       variant: 'body2', 
                       fontSize: '0.875rem',
@@ -421,7 +431,7 @@ const ImplementationRoadmapCard: React.FC<ImplementationRoadmapCardProps> = ({ s
                     }} />
                   </ListItemIcon>
                   <ListItemText 
-                    primary={requirement}
+                    primary={safeRenderText(requirement)}
                     primaryTypographyProps={{ 
                       variant: 'body2', 
                       fontSize: '0.875rem',
@@ -455,7 +465,7 @@ const ImplementationRoadmapCard: React.FC<ImplementationRoadmapCardProps> = ({ s
                     }} />
                   </ListItemIcon>
                   <ListItemText 
-                    primary={path}
+                    primary={safeRenderText(path)}
                     primaryTypographyProps={{ 
                       variant: 'body2', 
                       fontSize: '0.875rem',
@@ -531,7 +541,7 @@ const ImplementationRoadmapCard: React.FC<ImplementationRoadmapCardProps> = ({ s
                     }} />
                   </ListItemIcon>
                   <ListItemText 
-                    primary={metric}
+                    primary={safeRenderText(metric)}
                     primaryTypographyProps={{ 
                       variant: 'body2', 
                       fontSize: '0.875rem',

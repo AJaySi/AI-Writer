@@ -42,10 +42,12 @@ import { getStrategyName, getStrategyGenerationDate } from '../utils/strategyTra
 interface StrategyHeaderProps {
   strategyData: StrategyData | null;
   strategyConfirmed: boolean;
+  strategyStatus?: 'active' | 'inactive' | 'pending' | 'none';
   onStartReview?: () => void;
+  disableCardWrapper?: boolean; // New prop to control Card wrapper rendering
 }
 
-const StrategyHeader: React.FC<StrategyHeaderProps> = ({ strategyData, strategyConfirmed, onStartReview }) => {
+const StrategyHeader: React.FC<StrategyHeaderProps> = ({ strategyData, strategyConfirmed, strategyStatus = 'none', onStartReview, disableCardWrapper = false }) => {
   const [showNextStepText, setShowNextStepText] = useState(false);
   
   if (!strategyData) return null;

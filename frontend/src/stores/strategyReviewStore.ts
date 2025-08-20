@@ -171,7 +171,24 @@ export const useStrategyReviewStore = create<ReviewState>()(
 
         // Start review process
         startReviewProcess: () => {
-          set({ reviewProcessStarted: true });
+          console.log('🔧 Starting review process - resetting all reviews first');
+          // Reset all reviews when starting a new review process
+          const { components } = get();
+          const resetComponents = components.map(comp => ({
+            ...comp,
+            status: 'not_reviewed' as ReviewStatus,
+            reviewedAt: undefined,
+            reviewedBy: undefined,
+            notes: undefined
+          }));
+          
+          set({ 
+            reviewProcessStarted: true,
+            components: resetComponents,
+            reviewProgress: 0
+          });
+          
+          console.log('🔧 Review process started with reset components');
         },
 
         // Update review progress
@@ -181,7 +198,6 @@ export const useStrategyReviewStore = create<ReviewState>()(
           const totalCount = components.length;
           const progress = totalCount > 0 ? (reviewedCount / totalCount) * 100 : 0;
           
-          console.log('🔧 Updating progress:', { reviewedCount, totalCount, progress, components: components.map(c => ({ id: c.id, status: c.status })) });
           set({ reviewProgress: progress });
         },
 

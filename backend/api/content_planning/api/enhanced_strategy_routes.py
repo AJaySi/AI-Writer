@@ -1141,7 +1141,7 @@ async def stream_autofill_refresh(
 async def refresh_autofill(
     user_id: Optional[int] = Query(None, description="User ID to build auto-fill for"),
     use_ai: bool = Query(True, description="Use AI augmentation during refresh"),
-    ai_only: bool = Query(False, description="AI-first refresh: return AI overrides when available"),
+    ai_only: bool = Query(True, description="🚨 CRITICAL: Force AI-only generation to ensure real AI values"),
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Non-stream endpoint to return a fresh auto-fill payload (no DB writes)."""
@@ -1149,7 +1149,8 @@ async def refresh_autofill(
         actual_user_id = user_id or 1
         started = datetime.utcnow()
         refresh_service = AutoFillRefreshService(db)
-        payload = await refresh_service.build_fresh_payload_with_transparency(actual_user_id, use_ai=use_ai, ai_only=ai_only)
+        # 🚨 CRITICAL: Force AI-only generation for refresh to ensure real AI values
+        payload = await refresh_service.build_fresh_payload_with_transparency(actual_user_id, use_ai=True, ai_only=True)
         total_ms = int((datetime.utcnow() - started).total_seconds() * 1000)
         meta = payload.get('meta') or {}
         meta.update({'http_total_ms': total_ms, 'http_started_at': started.isoformat()})

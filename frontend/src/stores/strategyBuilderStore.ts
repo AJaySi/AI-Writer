@@ -4,6 +4,78 @@ import { contentPlanningApi } from '../services/contentPlanningApi';
 // Global flag to prevent multiple simultaneous auto-population calls
 let isAutoPopulating = false;
 
+// Helper function to detect generic placeholder values
+const isGenericPlaceholder = (fieldId: string, value: any): boolean => {
+  if (!value) return false;
+  
+  const stringValue = String(value).toLowerCase();
+  
+  // Common generic placeholder patterns
+  const genericPatterns = [
+    'example.com',
+    'your website',
+    'your business',
+    'your industry',
+    'your target audience',
+    'your content',
+    'your goals',
+    'your objectives',
+    'your metrics',
+    'your budget',
+    'your team',
+    'your timeline',
+    'your competitors',
+    'your market',
+    'your brand',
+    'your voice',
+    'your tone',
+    'your strategy',
+    'your plan',
+    'your approach',
+    'your focus',
+    'your niche',
+    'your sector',
+    'your domain',
+    'your company',
+    'your organization',
+    'your brand',
+    'your product',
+    'your service',
+    'your offering',
+    'your solution',
+    'your value proposition',
+    'your unique selling point',
+    'your competitive advantage',
+    'your market position',
+    'your customer base',
+    'your user base',
+    'your audience',
+    'your customers',
+    'your clients',
+    'your users',
+    'your visitors',
+    'your readers',
+    'your followers',
+    'your subscribers',
+    'your leads',
+    'your prospects',
+    'your potential customers',
+    'your target market',
+    'your target segment',
+    'your target demographic',
+    'your target group',
+    'your target population',
+    'your target users',
+    'your target readers',
+    'your target audience',
+    'your target customers',
+    'your target clients'
+  ];
+  
+  // Check if the value contains any generic placeholder patterns
+  return genericPatterns.some(pattern => stringValue.includes(pattern));
+};
+
 // Enhanced Strategy Types
 export interface EnhancedStrategy {
   id: string;
@@ -638,7 +710,6 @@ export const useStrategyBuilderStore = create<StrategyBuilderStore>((set, get) =
       if (forceRefresh) {
         try {
           await contentPlanningApi.clearEnhancedCache(1);
-          console.log('♻️ Cleared enhanced strategy cache for fresh onboarding data');
         } catch (e) {
           console.warn('Cache clear failed (non-blocking):', e);
         }
@@ -646,16 +717,55 @@ export const useStrategyBuilderStore = create<StrategyBuilderStore>((set, get) =
 
       // Fetch onboarding data to auto-populate fields
       const response = await contentPlanningApi.getOnboardingData();
-      console.log('📡 Backend response:', response);
+      
+      // Enhanced logging for autofill data
+      console.log('📊 Autofill Response Structure:', {
+        hasResponse: !!response,
+        responseKeys: response ? Object.keys(response) : [],
+        fieldsCount: response?.fields ? Object.keys(response.fields).length : 0,
+        sourcesCount: response?.sources ? Object.keys(response.sources).length : 0,
+        inputDataPointsCount: response?.input_data_points ? Object.keys(response.input_data_points).length : 0,
+        hasMeta: !!response?.meta
+      });
+      
+      // Validate response structure
+      if (!response) {
+        throw new Error('Invalid response structure from backend');
+      }
       
       // Extract field values and sources from the new backend format
-      const fields = response.data?.fields || {};
-      const sources = response.data?.sources || {};
-      const inputDataPoints = response.data?.input_data_points || {};
+      const fields = response.fields || {};
+      const sources = response.sources || {};
+      const inputDataPoints = response.input_data_points || {};
       
-      console.log('📋 Extracted fields:', fields);
-      console.log('🔗 Data sources:', sources);
-      console.log('📝 Input data points:', inputDataPoints);
+      // Log detailed field information
+      console.log('🎯 Autofill Field Details:', {
+        totalFields: Object.keys(fields).length,
+        fieldIds: Object.keys(fields),
+        sampleFieldData: Object.keys(fields).slice(0, 3).map(id => ({
+          id,
+          hasValue: !!fields[id]?.value,
+          hasPersonalization: !!fields[id]?.personalization_data,
+          hasConfidence: !!fields[id]?.confidence_score,
+          valueType: typeof fields[id]?.value
+        }))
+      });
+      
+      // Validate AI generation success
+      const meta = response.meta || {};
+      console.log('🤖 AI Generation Meta:', {
+        aiUsed: meta.ai_used,
+        aiOverridesCount: meta.ai_overrides_count,
+        error: meta.error,
+        processingTime: meta.processing_time
+      });
+      
+      if (meta.ai_used === false || meta.ai_overrides_count === 0) {
+        console.log('❌ AI generation failed - no real AI values produced');
+        throw new Error(meta.error || 'AI generation failed to produce strategy fields. Please try again.');
+      }
+      
+      console.log('✅ AI generation successful:', Object.keys(fields).length, 'fields');
       
       // Transform the fields object to extract values for formData
       const fieldValues: Record<string, any> = {};
@@ -663,61 +773,77 @@ export const useStrategyBuilderStore = create<StrategyBuilderStore>((set, get) =
       const personalizationData: Record<string, any> = {};
       const confidenceScores: Record<string, number> = {};
       
-      // Check if fields is empty and provide fallback
-      if (Object.keys(fields).length === 0) {
-        console.log('⚠️ No fields found in onboarding data, using default values');
+             // Check if fields is empty - no fallback to mock data
+       if (Object.keys(fields).length === 0) {
+         console.log('❌ No fields found in onboarding data - AI generation may have failed');
+         console.log('🚫 No fallback to mock data - user must retry or provide manual input');
+         
+         // Set error state instead of mock data
+         set({ 
+           loading: false, 
+           error: 'AI generation failed to produce strategy fields. Please try again or provide manual input.',
+           autoPopulatedFields: {},
+           personalizationData: {},
+           dataSources: {},
+           inputDataPoints: {}
+         });
+         return;
+       }
+       
+               // Process actual fields from backend
+        let processedFields = 0;
+        let skippedFields = 0;
+        let fieldsWithPersonalization = 0;
+        let fieldsWithConfidence = 0;
         
-        // Set default values for strategy builder
-        const defaultFields: Record<string, any> = {
-          industry: 'Technology',
-          business_objectives: 'Increase brand awareness and drive sales',
-          target_metrics: { traffic: 10000, conversion_rate: 2.5 },
-          content_budget: 5000,
-          team_size: 3,
-          content_preferences: ['Blog posts', 'Social media', 'Email marketing'],
-          preferred_formats: ['Blog posts', 'Whitepapers', 'Videos'],
-          content_mix: { blog_posts: 40, whitepapers: 20, videos: 15, social_media: 25 }
-        };
-        
-        Object.keys(defaultFields).forEach(fieldId => {
-          fieldValues[fieldId] = defaultFields[fieldId];
-          autoPopulatedFields[fieldId] = defaultFields[fieldId];
-          confidenceScores[fieldId] = 0.7; // Medium confidence for defaults
-          console.log(`✅ Set default value for ${fieldId}:`, defaultFields[fieldId]);
-        });
-      } else {
-        // Process actual fields from backend
         Object.keys(fields).forEach(fieldId => {
           const fieldData = fields[fieldId];
-          console.log(`🔍 Processing field ${fieldId}:`, fieldData);
           
           if (fieldData && typeof fieldData === 'object' && 'value' in fieldData) {
-            fieldValues[fieldId] = fieldData.value;
-            autoPopulatedFields[fieldId] = fieldData.value;
+            // Validate that the value is not a generic placeholder
+            const value = fieldData.value;
+            const isGenericPlaceholderValue = isGenericPlaceholder(fieldId, value);
+            
+            if (isGenericPlaceholderValue) {
+              console.log(`⚠️ Skipping ${fieldId} - contains generic placeholder value: "${value}"`);
+              skippedFields++;
+              return; // Skip this field
+            }
+            
+            fieldValues[fieldId] = value;
+            autoPopulatedFields[fieldId] = value;
+            processedFields++;
             
             // Extract personalization data if available
             if (fieldData.personalization_data) {
               personalizationData[fieldId] = fieldData.personalization_data;
-              console.log(`🎯 Personalization data for ${fieldId}:`, fieldData.personalization_data);
+              fieldsWithPersonalization++;
             }
             
             // Extract confidence score if available
             if (fieldData.confidence_score) {
               confidenceScores[fieldId] = fieldData.confidence_score;
-              console.log(`💯 Confidence score for ${fieldId}:`, fieldData.confidence_score);
+              fieldsWithConfidence++;
             }
-            
-            console.log(`✅ Auto-populated ${fieldId}:`, fieldData.value);
           } else {
-            console.log(`❌ Skipping ${fieldId} - invalid data structure`);
+            console.log(`❌ Skipping ${fieldId} - invalid data structure:`, fieldData);
+            skippedFields++;
           }
         });
-      }
+        
+        // Log field processing summary
+        console.log('📈 Field Processing Summary:', {
+          totalFields: Object.keys(fields).length,
+          processedFields,
+          skippedFields,
+          fieldsWithPersonalization,
+          fieldsWithConfidence,
+          averageConfidence: fieldsWithConfidence > 0 
+            ? (Object.values(confidenceScores).filter((score): score is number => typeof score === 'number').reduce((a, b) => a + b, 0) / fieldsWithConfidence).toFixed(1)
+            : 'N/A'
+        });
       
-      console.log('📝 Final field values:', fieldValues);
-      console.log('🔄 Final auto-populated fields:', autoPopulatedFields);
-      console.log('🎯 Personalization data:', personalizationData);
-      console.log('💯 Confidence scores:', confidenceScores);
+        console.log('✅ Auto-population completed:', Object.keys(fieldValues).length, 'fields');
       
       set((state) => ({
         autoPopulatedFields,
@@ -728,85 +854,100 @@ export const useStrategyBuilderStore = create<StrategyBuilderStore>((set, get) =
         formData: { ...state.formData, ...fieldValues }
       }));
       
-      console.log('✅ Auto-population completed successfully');
-    } catch (error: any) {
-      console.error('❌ Auto-population error:', error);
-      const errorMessage = error.message || 'Failed to auto-populate from onboarding';
-      set({ 
-        error: errorMessage,
-        loading: false 
+      // Log final state summary
+      console.log('🎉 Auto-population State Summary:', {
+        autoPopulatedFieldsCount: Object.keys(autoPopulatedFields).length,
+        dataSourcesCount: Object.keys(sources).length,
+        inputDataPointsCount: Object.keys(inputDataPoints).length,
+        personalizationDataCount: Object.keys(personalizationData).length,
+        confidenceScoresCount: Object.keys(confidenceScores).length,
+        formDataUpdated: Object.keys(fieldValues).length,
+        timestamp: new Date().toISOString()
       });
       
-      // If it's a rate limit error, set a flag to prevent further attempts
-      if (errorMessage.includes('Too many requests') || errorMessage.includes('No response from server')) {
-        set({ autoPopulationBlocked: true });
-      }
-    } finally {
-      set({ loading: false });
-      isAutoPopulating = false; // Reset global flag
-    }
-  },
-  
-  updateAutoPopulatedField: (fieldId, value, source) => {
-    set((state) => ({
-      autoPopulatedFields: { ...state.autoPopulatedFields, [fieldId]: value },
-      dataSources: { ...state.dataSources, [fieldId]: source }
-    }));
-  },
-  
-  overrideAutoPopulatedField: (fieldId, value) => {
-    set((state) => ({
-      formData: { ...state.formData, [fieldId]: value },
-      autoPopulatedFields: { ...state.autoPopulatedFields, [fieldId]: value }
-    }));
-  },
-  
-  // UI Actions
-  setLoading: (loading) => set({ loading }),
-  setError: (error) => set({ error }),
-  setSaving: (saving) => set({ saving }),
-  
-  // Completion Tracking
-  calculateCompletionPercentage: () => {
-    const formData = get().formData;
-    const requiredFields = STRATEGIC_INPUT_FIELDS.filter(field => field.required);
-    const filledRequiredFields = requiredFields.filter(field => {
-      const value = formData[field.id];
-      return value && (Array.isArray(value) ? value.length > 0 : true);
-    });
-    
-    return requiredFields.length > 0 ? (filledRequiredFields.length / requiredFields.length) * 100 : 0;
-  },
-  
-  getCompletionStats: () => {
-    const formData = get().formData;
-    const totalFields = STRATEGIC_INPUT_FIELDS.length;
-    const filledFields = STRATEGIC_INPUT_FIELDS.filter(field => {
-      const value = formData[field.id];
-      return value && (Array.isArray(value) ? value.length > 0 : true);
-    }).length;
-    
-    const completionPercentage = totalFields > 0 ? (filledFields / totalFields) * 100 : 0;
-    
-    // Calculate completion by category
-    const categoryCompletion: Record<string, number> = {};
-    const categories = Array.from(new Set(STRATEGIC_INPUT_FIELDS.map(field => field.category)));
-    
-    categories.forEach(category => {
-      const categoryFields = STRATEGIC_INPUT_FIELDS.filter(field => field.category === category);
-      const filledCategoryFields = categoryFields.filter(field => {
-        const value = formData[field.id];
-        return value && (Array.isArray(value) ? value.length > 0 : true);
-      }).length;
-      
-      categoryCompletion[category] = categoryFields.length > 0 ? (filledCategoryFields / categoryFields.length) * 100 : 0;
-    });
-    
-    return {
-      total_fields: totalFields,
-      filled_fields: filledFields,
-      completion_percentage: completionPercentage,
-      category_completion: categoryCompletion
-    };
-  }
-}));
+      console.log('✅ Auto-population completed successfully');
+       
+       // Store the autofill completion time
+       sessionStorage.setItem('lastAutofillTime', new Date().toISOString());
+       
+     } catch (error: any) {
+       console.error('❌ Auto-population error:', error);
+       const errorMessage = error.message || 'Failed to auto-populate from onboarding';
+       set({ 
+         error: errorMessage,
+         loading: false 
+       });
+       
+       // If it's a rate limit error, set a flag to prevent further attempts
+       if (errorMessage.includes('Too many requests') || errorMessage.includes('No response from server')) {
+         set({ autoPopulationBlocked: true });
+       }
+     } finally {
+       set({ loading: false });
+       isAutoPopulating = false; // Reset global flag
+     }
+   },
+   
+   updateAutoPopulatedField: (fieldId: string, value: any, source: string) => {
+     set((state) => ({
+       autoPopulatedFields: { ...state.autoPopulatedFields, [fieldId]: value },
+       dataSources: { ...state.dataSources, [fieldId]: source }
+     }));
+   },
+   
+   overrideAutoPopulatedField: (fieldId: string, value: any) => {
+     set((state) => ({
+       formData: { ...state.formData, [fieldId]: value },
+       autoPopulatedFields: { ...state.autoPopulatedFields, [fieldId]: value }
+     }));
+   },
+   
+   // UI Actions
+   setLoading: (loading: boolean) => set({ loading }),
+   setError: (error: string | null) => set({ error }),
+   setSaving: (saving: boolean) => set({ saving }),
+   
+   // Completion Tracking
+   calculateCompletionPercentage: () => {
+     const formData = get().formData;
+     const requiredFields = STRATEGIC_INPUT_FIELDS.filter(field => field.required);
+     const filledRequiredFields = requiredFields.filter(field => {
+       const value = formData[field.id];
+       return value && (Array.isArray(value) ? value.length > 0 : true);
+     });
+     
+     return requiredFields.length > 0 ? (filledRequiredFields.length / requiredFields.length) * 100 : 0;
+   },
+   
+   getCompletionStats: () => {
+     const formData = get().formData;
+     const totalFields = STRATEGIC_INPUT_FIELDS.length;
+     const filledFields = STRATEGIC_INPUT_FIELDS.filter(field => {
+       const value = formData[field.id];
+       return value && (Array.isArray(value) ? value.length > 0 : true);
+     }).length;
+     
+     const completionPercentage = totalFields > 0 ? (filledFields / totalFields) * 100 : 0;
+     
+     // Calculate completion by category
+     const categoryCompletion: Record<string, number> = {};
+     const categories = Array.from(new Set(STRATEGIC_INPUT_FIELDS.map(field => field.category)));
+     
+     categories.forEach(category => {
+       const categoryFields = STRATEGIC_INPUT_FIELDS.filter(field => field.category === category);
+       const filledCategoryFields = categoryFields.filter(field => {
+         const value = formData[field.id];
+         return value && (Array.isArray(value) ? value.length > 0 : true);
+       }).length;
+       
+       categoryCompletion[category] = categoryFields.length > 0 ? (filledCategoryFields / categoryFields.length) * 100 : 0;
+     });
+     
+     return {
+       total_fields: totalFields,
+       filled_fields: filledFields,
+       completion_percentage: completionPercentage,
+       category_completion: categoryCompletion
+     };
+   }
+ }));

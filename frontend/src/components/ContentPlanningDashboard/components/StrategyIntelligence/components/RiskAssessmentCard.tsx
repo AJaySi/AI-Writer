@@ -29,6 +29,7 @@ import {
   getListItemStyles
 } from '../styles';
 import ProgressiveCard from './ProgressiveCard';
+import { safeRenderText, safeRenderArray, hasValidData, getFallbackValue } from '../utils/defensiveRendering';
 
 interface RiskAssessmentCardProps {
   strategyData: StrategyData | null;
@@ -49,6 +50,15 @@ const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({ strategyData })
     if (lowerLevel.includes('medium')) return ANALYSIS_CARD_STYLES.colors.warning;
     if (lowerLevel.includes('low')) return ANALYSIS_CARD_STYLES.colors.success;
     return ANALYSIS_CARD_STYLES.colors.info;
+  };
+
+  // Helper function to safely render text content
+  const safeRenderText = (content: any): string => {
+    if (typeof content === 'string') return content;
+    if (typeof content === 'object' && content !== null) {
+      return JSON.stringify(content);
+    }
+    return 'Data not available';
   };
 
   if (!strategyData?.risk_assessment) {
@@ -283,14 +293,14 @@ const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({ strategyData })
                   <ListItemIcon sx={listItemStyles.listItemIcon}>
                     <CheckCircleIcon sx={{ color: ANALYSIS_CARD_STYLES.colors.success, fontSize: 16 }} />
                   </ListItemIcon>
-                  <ListItemText 
-                    primary={typeof strategy === 'string' ? strategy : strategy.mitigation || strategy.risk || 'Mitigation strategy'}
-                    primaryTypographyProps={{ 
-                      variant: 'body2', 
-                      fontSize: '0.875rem',
-                      sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
-                    }}
-                  />
+                                          <ListItemText 
+                          primary={safeRenderText(typeof strategy === 'string' ? strategy : strategy.mitigation || strategy.risk || 'Mitigation strategy')}
+                          primaryTypographyProps={{ 
+                            variant: 'body2', 
+                            fontSize: '0.875rem',
+                            sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                          }}
+                        />
                 </ListItem>
               ))}
             </List>
@@ -345,14 +355,14 @@ const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({ strategyData })
                               opacity: 0.7
                             }} />
                           </ListItemIcon>
-                          <ListItemText 
-                            primary={typeof risk === 'string' ? risk : risk.risk || 'Risk'}
-                            primaryTypographyProps={{ 
-                              variant: 'body2', 
-                              fontSize: '0.875rem',
-                              sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
-                            }}
-                          />
+                                                  <ListItemText 
+                          primary={safeRenderText(typeof risk === 'string' ? risk : risk.risk || 'Risk')}
+                          primaryTypographyProps={{ 
+                            variant: 'body2', 
+                            fontSize: '0.875rem',
+                            sx: { lineHeight: 1.4, color: ANALYSIS_CARD_STYLES.colors.text.primary }
+                          }}
+                        />
                         </ListItem>
                       ))}
                     </List>

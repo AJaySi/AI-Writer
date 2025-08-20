@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -12,6 +12,7 @@ import {
   AutoAwesome as AutoAwesomeIcon,
   Edit as EditIcon
 } from '@mui/icons-material';
+import { useLocation } from 'react-router-dom';
 import { useContentPlanningStore } from '../../../stores/contentPlanningStore';
 import { contentPlanningApi } from '../../../services/contentPlanningApi';
 import StrategyIntelligenceTab from '../components/StrategyIntelligence/StrategyIntelligenceTab';
@@ -19,17 +20,19 @@ import StrategyOnboardingDialog from '../components/StrategyOnboardingDialog';
 import { StrategyData } from '../components/StrategyIntelligence/types/strategy.types';
 
 const ContentStrategyTab: React.FC = () => {
-  const { 
-    strategies, 
-    currentStrategy, 
-    aiInsights, 
-    aiRecommendations, 
-    loading, 
-    error,
-    loadStrategies,
-    loadAIInsights,
-    loadAIRecommendations
-  } = useContentPlanningStore();
+  const location = useLocation();
+  // Use selective store subscriptions to prevent unnecessary re-renders
+  const strategies = useContentPlanningStore(state => state.strategies);
+  const currentStrategy = useContentPlanningStore(state => state.currentStrategy);
+  const latestGeneratedStrategy = useContentPlanningStore(state => state.latestGeneratedStrategy);
+  const aiInsights = useContentPlanningStore(state => state.aiInsights);
+  const aiRecommendations = useContentPlanningStore(state => state.aiRecommendations);
+  const loading = useContentPlanningStore(state => state.loading);
+  const error = useContentPlanningStore(state => state.error);
+  const loadStrategies = useContentPlanningStore(state => state.loadStrategies);
+  const loadAIInsights = useContentPlanningStore(state => state.loadAIInsights);
+  const loadAIRecommendations = useContentPlanningStore(state => state.loadAIRecommendations);
+  const setLatestGeneratedStrategy = useContentPlanningStore(state => state.setLatestGeneratedStrategy);
   
   const [strategyForm, setStrategyForm] = useState({
     name: '',
@@ -52,23 +55,61 @@ const ContentStrategyTab: React.FC = () => {
   });
 
   // Strategy status and onboarding
-  const [strategyStatus, setStrategyStatus] = useState<'active' | 'inactive' | 'none'>('none');
+  const [strategyStatus, setStrategyStatus] = useState<'active' | 'inactive' | 'pending' | 'none'>('none');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [hasCheckedStrategy, setHasCheckedStrategy] = useState(false);
+
+  // Navigation state detection
+  const [isFromStrategyBuilder, setIsFromStrategyBuilder] = useState(false);
 
   // Load data on component mount
   useEffect(() => {
     loadInitialData();
   }, []);
 
+  // Check if coming from strategy builder
+  useEffect(() => {
+    const locationState = location.state as any;
+    const isFromBuilder = locationState?.fromStrategyBuilder || 
+                         locationState?.activeTab === 0 || // Content Strategy tab
+                         sessionStorage.getItem('fromStrategyBuilder') === 'true';
+    
+    console.log('🔍 ContentStrategyTab: Navigation state check:', {
+      locationState,
+      isFromBuilder,
+      sessionStorage: sessionStorage.getItem('fromStrategyBuilder')
+    });
+    
+    setIsFromStrategyBuilder(isFromBuilder);
+    
+    // Clear the session storage flag after reading it
+    if (sessionStorage.getItem('fromStrategyBuilder') === 'true') {
+      sessionStorage.removeItem('fromStrategyBuilder');
+    }
+    
+    // Clear the cache when navigating away from strategy builder
+    if (!isFromBuilder && latestGeneratedStrategy) {
+      console.log('🧹 Clearing latest generated strategy cache (navigating away from strategy builder)');
+      // Note: We don't clear the cache here as it might be needed for the current session
+    }
+  }, [location.state]);
+
+  // Track strategy status changes for debugging (with debounce)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      console.log('🔄 Strategy Status Changed:', {
+        status: strategyStatus,
+        hasStrategyData: !!strategyData,
+        strategyDataKeys: strategyData ? Object.keys(strategyData) : [],
+        isFromStrategyBuilder
+      });
+    }, 100); // 100ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [strategyStatus, strategyData, isFromStrategyBuilder]);
+
   // Check strategy status when strategies are loaded
   useEffect(() => {
-    console.log('🔄 useEffect triggered - strategies changed:', strategies);
-    console.log('🔄 Strategies type:', typeof strategies);
-    console.log('🔄 Is Array:', Array.isArray(strategies));
-    console.log('🔄 Strategies length:', strategies?.length);
-    console.log('🔄 Has checked strategy:', hasCheckedStrategy);
-    
     // Handle different response formats
     let strategiesArray: any[] = [];
     
@@ -80,64 +121,237 @@ const ContentStrategyTab: React.FC = () => {
       strategiesArray = (strategies as any).strategies;
     }
     
-    console.log('🔄 StrategiesArray length:', strategiesArray.length);
-    
     if (strategiesArray.length > 0) {
-      console.log('✅ Strategies found, checking status...');
       checkStrategyStatus();
-      loadStrategyData();
+      
+      // Add debounce to prevent rapid successive calls
+      const timeoutId = setTimeout(() => {
+        loadStrategyData();
+      }, 500); // 500ms debounce
+      
+      return () => clearTimeout(timeoutId);
     } else if (strategiesArray.length === 0 && hasCheckedStrategy) {
       // Only set to 'none' if we've already checked and confirmed no strategies
-      console.log('❌ No strategies found, setting status to none...');
       setStrategyStatus('none');
       setShowOnboarding(true);
     }
     // If strategiesArray.length === 0 and !hasCheckedStrategy, do nothing (wait for data to load)
-  }, [strategies, loadStrategies]);
+  }, [strategies, loadStrategies, isFromStrategyBuilder]);
 
   const loadStrategyData = async () => {
+    // Prevent multiple simultaneous requests
+    if (strategyDataLoading) {
+      console.log('🔄 Strategy data loading already in progress, skipping...');
+      return;
+    }
+    
     try {
       setStrategyDataLoading(true);
       setStrategyDataError(null);
       
       const userId = 1; // Default user ID
       
-      // Try to get the latest generated strategy
+      // PRIORITY 0: Check cache first for latest generated strategy
+      console.log('🔍 PRIORITY 0: Checking cache for latest generated strategy...');
+      console.log('🔍 Cache state:', {
+        hasCache: !!latestGeneratedStrategy,
+        cacheData: latestGeneratedStrategy ? {
+          hasStrategicInsights: !!latestGeneratedStrategy.strategic_insights,
+          hasCompetitiveAnalysis: !!latestGeneratedStrategy.competitive_analysis,
+          hasPerformancePredictions: !!latestGeneratedStrategy.performance_predictions,
+          hasImplementationRoadmap: !!latestGeneratedStrategy.implementation_roadmap,
+          hasRiskAssessment: !!latestGeneratedStrategy.risk_assessment
+        } : null
+      });
+      if (latestGeneratedStrategy && latestGeneratedStrategy.strategic_insights) {
+        console.log('🚀 PRIORITY 0: Found latest generated strategy in cache!');
+        console.log('📊 Cached strategy data structure:', {
+          hasStrategicInsights: !!latestGeneratedStrategy.strategic_insights,
+          hasCompetitiveAnalysis: !!latestGeneratedStrategy.competitive_analysis,
+          hasPerformancePredictions: !!latestGeneratedStrategy.performance_predictions,
+          hasImplementationRoadmap: !!latestGeneratedStrategy.implementation_roadmap,
+          hasRiskAssessment: !!latestGeneratedStrategy.risk_assessment,
+          strategyId: latestGeneratedStrategy.id,
+          strategyName: latestGeneratedStrategy.name
+        });
+        setStrategyData(latestGeneratedStrategy);
+        
+        // Set strategy status to pending for newly generated strategy (needs review)
+        setStrategyStatus('pending');
+        setShowOnboarding(false);
+        console.log('📋 Set strategy status to pending for cached strategy (needs review)');
+        console.log('🔄 Strategy Review Workflow: New strategy ready for review - User should see review process');
+        
+        return;
+      } else {
+        console.log('❌ PRIORITY 0: No strategy found in cache, proceeding to next priority...');
+      }
+      
+      // PRIORITY 1: If coming from strategy builder, prioritize the latest generated strategy
+      if (isFromStrategyBuilder) {
+        // Try with exponential backoff to handle rate limits
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          try {
+            console.log(`🔍 PRIORITY 1 (Attempt ${attempt}/2): Trying to get latest generated strategy from polling system...`);
+            
+            // Add exponential backoff delay for subsequent attempts
+            if (attempt > 1) {
+              const delay = Math.pow(2, attempt) * 1000; // 2s, 4s delays
+              console.log(`⏳ Waiting ${delay}ms before retry...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+            
+            const latestStrategyResponse = await contentPlanningApi.getLatestGeneratedStrategyWithRetry(userId);
+            
+            console.log(`🔍 Latest strategy response (attempt ${attempt}):`, latestStrategyResponse);
+            
+            if (latestStrategyResponse && latestStrategyResponse.strategic_insights) {
+              console.log('✅ Found latest generated strategy in polling system');
+              console.log('📊 Latest strategy data structure:', {
+                hasStrategicInsights: !!latestStrategyResponse.strategic_insights,
+                hasCompetitiveAnalysis: !!latestStrategyResponse.competitive_analysis,
+                hasPerformancePredictions: !!latestStrategyResponse.performance_predictions,
+                hasImplementationRoadmap: !!latestStrategyResponse.implementation_roadmap,
+                hasRiskAssessment: !!latestStrategyResponse.risk_assessment,
+                strategyId: latestStrategyResponse.id,
+                strategyName: latestStrategyResponse.name
+              });
+              setStrategyData(latestStrategyResponse);
+              
+              // Cache the strategy since it wasn't cached during generation
+              console.log('💾 Caching strategy from polling system since it was not cached during generation');
+              setLatestGeneratedStrategy(latestStrategyResponse);
+              
+              // Set strategy status to pending for newly generated strategy (needs review)
+              setStrategyStatus('pending');
+              setShowOnboarding(false);
+              console.log('📋 Set strategy status to pending for polling system strategy (needs review)');
+              
+              return;
+            } else {
+              console.log(`⚠️ Latest strategy response missing strategic_insights (attempt ${attempt}), trying database...`);
+              console.log('🔍 Latest strategy response structure:', latestStrategyResponse);
+            }
+          } catch (pollingError: any) {
+            console.log(`⚠️ Error getting latest strategy from polling system (attempt ${attempt}):`, pollingError);
+            
+            // Check if it's a rate limit error
+            if (pollingError?.response?.status === 429) {
+              console.log('🚫 Rate limit hit, will retry with longer delay...');
+              if (attempt === 2) {
+                console.log('❌ Rate limit persists, skipping polling system and trying database...');
+                break; // Exit the loop and try database instead
+              }
+            } else if (attempt === 2) {
+              console.log('❌ All attempts failed, continuing to database fallback...');
+            }
+          }
+        }
+      }
+      
+      // PRIORITY 2: Try to get the latest generated strategy from polling system
       try {
         const latestStrategyResponse = await contentPlanningApi.getLatestGeneratedStrategy(userId);
         
-        console.log('🔍 Latest strategy response from API:', latestStrategyResponse);
-        
         if (latestStrategyResponse && latestStrategyResponse.strategic_insights) {
-          console.log('✅ Found latest generated strategy:', latestStrategyResponse);
           setStrategyData(latestStrategyResponse);
+          
+          // Cache the strategy since it wasn't cached during generation
+          console.log('💾 Caching strategy from general polling since it was not cached during generation');
+          setLatestGeneratedStrategy(latestStrategyResponse);
+          
+          // Set strategy status to pending for newly generated strategy (needs review)
+          setStrategyStatus('pending');
+          setShowOnboarding(false);
+          console.log('📋 Set strategy status to pending for general polling strategy (needs review)');
+          
           return;
         }
       } catch (pollingError) {
-        console.log('No latest strategy found in polling system, checking database...', pollingError);
+        // Continue to next priority
       }
       
-      // If no strategy found in polling system, try to get from database
+      // PRIORITY 3: If no strategy found in polling system, try to get from database
+      console.log('🎯 PRIORITY 3: Checking database for strategies...');
       try {
         const strategiesResponse = await contentPlanningApi.getEnhancedStrategies(userId);
         
         const strategies = strategiesResponse?.data?.strategies || strategiesResponse?.strategies || [];
         
         if (strategies && strategies.length > 0) {
-          const latestStrategy = strategies[0];
+          console.log('🔍 Found strategies in database:', strategies.length);
+          
+          // Sort strategies by creation date (newest first) to ensure we get the latest
+          const sortedStrategies = strategies.sort((a: any, b: any) => {
+            const dateA = new Date(a.created_at || a.createdAt || 0);
+            const dateB = new Date(b.created_at || b.createdAt || 0);
+            return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
+          });
+          
+          console.log('🔍 Sorted strategies by creation date:', sortedStrategies.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            created_at: s.created_at || s.createdAt,
+            has_comprehensive_analysis: !!s.comprehensive_ai_analysis,
+            has_ai_recommendations: !!s.ai_recommendations
+          })));
+          
+          // If coming from strategy builder, prioritize strategies with comprehensive_ai_analysis
+          if (isFromStrategyBuilder) {
+            const latestComprehensiveStrategy = sortedStrategies.find((s: any) => s.comprehensive_ai_analysis);
+            if (latestComprehensiveStrategy) {
+              console.log('✅ Found latest comprehensive strategy in database:', latestComprehensiveStrategy.id);
+              setStrategyData(latestComprehensiveStrategy.comprehensive_ai_analysis);
+              
+              // Set strategy status to active for existing database strategy
+              setStrategyStatus('active');
+              setShowOnboarding(false);
+              console.log('✅ Set strategy status to active for database comprehensive strategy');
+              
+              return;
+            }
+            
+            // Fallback to ai_recommendations if comprehensive_ai_analysis not available
+            const latestWithRecommendations = sortedStrategies.find((s: any) => s.ai_recommendations);
+            if (latestWithRecommendations) {
+              console.log('✅ Found latest strategy with ai_recommendations in database:', latestWithRecommendations.id);
+              setStrategyData(latestWithRecommendations.ai_recommendations);
+              
+              // Set strategy status to active for existing database strategy
+              setStrategyStatus('active');
+              setShowOnboarding(false);
+              console.log('✅ Set strategy status to active for database recommendations strategy');
+              
+              return;
+            }
+          }
+          
+          // Get the most recent strategy (first after sorting)
+          const latestStrategy = sortedStrategies[0];
           
           if (latestStrategy.comprehensive_ai_analysis) {
-            console.log('✅ Found comprehensive strategy in database:', latestStrategy);
             setStrategyData(latestStrategy.comprehensive_ai_analysis);
+            
+            // Set strategy status to active for existing database strategy
+            setStrategyStatus('active');
+            setShowOnboarding(false);
+            console.log('✅ Set strategy status to active for database latest strategy');
+            
             return;
           }
         }
-      } catch (dbError) {
-        console.log('No comprehensive strategies found in database:', dbError);
+      } catch (dbError: any) {
+        console.error('Database error:', dbError);
+        
+        // Check if it's a rate limit error
+        if (dbError?.response?.status === 429) {
+          console.log('🚫 Database request also hit rate limit, showing error to user...');
+          setStrategyDataError('Server is temporarily overloaded. Please try again in a few moments.');
+          return;
+        }
       }
       
       // If no strategy data is available
-      console.log('❌ No comprehensive strategy data found');
       setStrategyData(null);
       setStrategyDataError('No comprehensive strategy data available. Please generate a strategy first.');
       
@@ -150,13 +364,20 @@ const ContentStrategyTab: React.FC = () => {
     }
   };
 
+  // Add a timeout to prevent infinite loading
+  useEffect(() => {
+    if (strategyDataLoading) {
+      const timeout = setTimeout(() => {
+        console.log('⏰ Strategy data loading timeout, resetting state...');
+        setStrategyDataLoading(false);
+        setStrategyDataError('Loading timeout. Please refresh the page.');
+      }, 30000); // 30 second timeout
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [strategyDataLoading]);
+
   const checkStrategyStatus = () => {
-    console.log('🔍 Checking strategy status...');
-    console.log('🔍 Strategies from store:', strategies);
-    console.log('🔍 Strategies type:', typeof strategies);
-    console.log('🔍 Is Array:', Array.isArray(strategies));
-    console.log('🔍 Strategies length:', strategies?.length);
-    
     // Handle different response formats
     let strategiesArray: any[] = [];
     
@@ -168,21 +389,15 @@ const ContentStrategyTab: React.FC = () => {
       strategiesArray = (strategies as any).strategies;
     }
     
-    console.log('🔍 StrategiesArray length:', strategiesArray.length);
-    
     if (strategiesArray.length > 0) {
       // Find the most recent strategy
       const latestStrategy = strategiesArray[0]; // Assuming strategies are sorted by date
-      
-      console.log('✅ Found strategies in database:', strategiesArray.length);
-      console.log('📊 Latest strategy:', latestStrategy);
       
       // For now, we'll assume strategies are active if they exist
       // In a real implementation, you would check a status field from the database
       setStrategyStatus('active');
       setShowOnboarding(false);
     } else {
-      console.log('❌ No strategies found in database');
       setStrategyStatus('none');
       setShowOnboarding(true);
     }
@@ -193,14 +408,30 @@ const ContentStrategyTab: React.FC = () => {
     try {
       setDataLoading({ strategies: true, insights: true, recommendations: true, strategicIntelligence: true });
       
-      // Load strategies
+      // Load strategies first (most important)
+      console.log('🔄 Loading strategies...');
       await loadStrategies();
       
-      // Load AI insights and recommendations
-      await Promise.all([
-        loadAIInsights(),
-        loadAIRecommendations()
-      ]);
+      // Add delay between requests to avoid rate limits
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Load AI insights and recommendations sequentially instead of in parallel
+      console.log('🔄 Loading AI insights...');
+      try {
+        await loadAIInsights();
+      } catch (error) {
+        console.warn('⚠️ Failed to load AI insights:', error);
+      }
+      
+      // Add delay between requests
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log('🔄 Loading AI recommendations...');
+      try {
+        await loadAIRecommendations();
+      } catch (error) {
+        console.warn('⚠️ Failed to load AI recommendations:', error);
+      }
       
     } catch (error) {
       console.error('Error loading initial data:', error);
@@ -242,6 +473,28 @@ const ContentStrategyTab: React.FC = () => {
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
+        </Alert>
+      )}
+
+      {/* Pending Strategy Status Banner */}
+      {strategyStatus === 'pending' && (
+        <Alert 
+          severity="info" 
+          sx={{ mb: 3 }}
+          action={
+            <Button 
+              color="inherit" 
+              size="small" 
+              onClick={() => setShowOnboarding(true)}
+              startIcon={<PlayArrowIcon />}
+            >
+              Review & Activate
+            </Button>
+          }
+        >
+          <Typography variant="body1">
+            <strong>Strategy Ready for Review:</strong> Your AI-generated content strategy is ready! Please review all components and confirm to activate your strategy.
+          </Typography>
         </Alert>
       )}
 
@@ -310,14 +563,40 @@ const ContentStrategyTab: React.FC = () => {
         </Alert>
       )}
 
-      {/* Strategic Intelligence - Only show if there's an active strategy */}
-      {strategyStatus === 'active' && (
+      {/* Strategic Intelligence - Show for both active and pending strategies */}
+      {(strategyStatus === 'active' || strategyStatus === 'pending') && (
         <Paper sx={{ width: '100%', mb: 3 }}>
-          <StrategyIntelligenceTab 
-            strategyData={strategyData}
-            loading={strategyDataLoading}
-            error={strategyDataError}
-          />
+          {strategyDataLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 4 }}>
+              <CircularProgress />
+              <Typography variant="body2" sx={{ ml: 2, color: 'text.secondary' }}>
+                Loading strategy data...
+              </Typography>
+            </Box>
+          ) : strategyDataError ? (
+            <Alert severity="error" sx={{ m: 2 }}>
+              {strategyDataError}
+            </Alert>
+          ) : (
+            <StrategyIntelligenceTab 
+              strategyData={strategyData}
+              loading={strategyDataLoading}
+              error={strategyDataError}
+              strategyStatus={strategyStatus}
+            />
+          )}
+        </Paper>
+      )}
+
+      {/* Loading indicator for initial data */}
+      {Object.values(dataLoading).some(loading => loading) && (
+        <Paper sx={{ width: '100%', mb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 4 }}>
+            <CircularProgress />
+            <Typography variant="body2" sx={{ ml: 2, color: 'text.secondary' }}>
+              Loading dashboard data...
+            </Typography>
+          </Box>
         </Paper>
       )}
 

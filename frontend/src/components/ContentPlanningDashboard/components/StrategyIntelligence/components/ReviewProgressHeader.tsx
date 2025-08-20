@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import {
   Box,
   Typography,
@@ -32,16 +32,15 @@ interface ReviewProgressHeaderProps {
 }
 
 const ReviewProgressHeader: React.FC<ReviewProgressHeaderProps> = ({ strategyData }) => {
-  const {
-    components,
-    reviewProgress,
-    isAllReviewed,
-    isActivated,
-    resetAllReviews,
-    getUnreviewedComponents,
-    getReviewedComponents,
-    activateStrategy
-  } = useStrategyReviewStore();
+  // Use selective store subscriptions to prevent unnecessary re-renders
+  const components = useStrategyReviewStore(state => state.components);
+  const reviewProgress = useStrategyReviewStore(state => state.reviewProgress);
+  const isAllReviewed = useStrategyReviewStore(state => state.isAllReviewed);
+  const isActivated = useStrategyReviewStore(state => state.isActivated);
+  const resetAllReviews = useStrategyReviewStore(state => state.resetAllReviews);
+  const getUnreviewedComponents = useStrategyReviewStore(state => state.getUnreviewedComponents);
+  const getReviewedComponents = useStrategyReviewStore(state => state.getReviewedComponents);
+  const activateStrategy = useStrategyReviewStore(state => state.activateStrategy);
 
   // Initialize navigation orchestrator
   const navigationOrchestrator = useNavigationOrchestrator();
@@ -56,17 +55,7 @@ const ReviewProgressHeader: React.FC<ReviewProgressHeaderProps> = ({ strategyDat
   const reviewedCount = getReviewedComponents().length;
   const totalCount = components.length;
 
-  // Debug logging
-  console.log('🔍 ReviewProgressHeader Debug:', {
-    components,
-    reviewProgress,
-    unreviewedCount,
-    reviewedCount,
-    totalCount,
-    isAllReviewed: isAllReviewed(),
-    isActivated: isActivated(),
-    strategyData
-  });
+  // Debug logging - removed for cleaner console
 
   const getProgressColor = () => {
     if (isActivated()) return ANALYSIS_CARD_STYLES.colors.success;
@@ -98,7 +87,6 @@ const ReviewProgressHeader: React.FC<ReviewProgressHeaderProps> = ({ strategyDat
 
   const handleConfirmStrategy = async () => {
     // This will be called by the enhanced button when activation is confirmed
-    console.log('🎯 Strategy activation confirmed');
     
     // Activate the strategy in the store
     activateStrategy();
@@ -107,7 +95,6 @@ const ReviewProgressHeader: React.FC<ReviewProgressHeaderProps> = ({ strategyDat
   };
 
   const handleGenerateContentCalendar = () => {
-    console.log('🎯 Generate content calendar clicked');
     
     // Prepare strategy context for navigation
     const strategyContext = {
@@ -430,4 +417,4 @@ const ReviewProgressHeader: React.FC<ReviewProgressHeaderProps> = ({ strategyDat
   );
 };
 
-export default ReviewProgressHeader;
+export default memo(ReviewProgressHeader);

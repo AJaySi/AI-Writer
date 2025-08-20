@@ -91,19 +91,9 @@ const StrategyAutofillTransparencyModal: React.FC<StrategyAutofillTransparencyMo
   const [lastMessageCount, setLastMessageCount] = useState(0);
   const [showNewMessageIndicator, setShowNewMessageIndicator] = useState(false);
 
-  // Debug logging for props
+  // Debug logging for props - removed for cleaner console
   useEffect(() => {
-    console.log('🎯 StrategyAutofillTransparencyModal Props:', {
-      open,
-      autoPopulatedFields: Object.keys(autoPopulatedFields || {}).length,
-      dataSources: Object.keys(dataSources || {}).length,
-      inputDataPoints: Object.keys(inputDataPoints || {}).length,
-      isGenerating,
-      generationProgress,
-      currentPhase,
-      transparencyMessages: transparencyMessages?.length,
-      error
-    });
+    // Props monitoring removed for cleaner console
   }, [open, autoPopulatedFields, dataSources, inputDataPoints, isGenerating, generationProgress, currentPhase, transparencyMessages, error]);
 
   // Auto-scroll to bottom when new messages arrive

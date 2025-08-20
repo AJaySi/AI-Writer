@@ -282,11 +282,6 @@ export const StrategyCalendarProvider: React.FC<StrategyCalendarProviderProps> =
     // Check if we have a preserved strategy context from navigation
     const result = state.strategyContext?.activationStatus === 'active' && 
                    state.strategyContext?.activationTimestamp !== null;
-    console.log('🔍 StrategyCalendarContext: isFromStrategyActivation check:', {
-      activationStatus: state.strategyContext?.activationStatus,
-      activationTimestamp: state.strategyContext?.activationTimestamp,
-      result
-    });
     return result;
   }, [state.strategyContext?.activationStatus, state.strategyContext?.activationTimestamp]);
 

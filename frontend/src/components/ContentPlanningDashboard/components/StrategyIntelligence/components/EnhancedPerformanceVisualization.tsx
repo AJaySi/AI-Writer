@@ -42,6 +42,7 @@ import {
   Close as CloseIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
+import { safeRenderText, safeRenderArray, hasValidData, getFallbackValue } from '../utils/defensiveRendering';
 
 // Import our advanced chart components
 import {
@@ -472,7 +473,7 @@ const EnhancedPerformanceVisualization: React.FC<EnhancedPerformanceVisualizatio
                     <ListItemIcon>
                       <LightbulbIcon color="warning" />
                     </ListItemIcon>
-                    <ListItemText primary={recommendation} />
+                    <ListItemText primary={safeRenderText(recommendation)} />
                   </ListItem>
                 ))}
               </List>

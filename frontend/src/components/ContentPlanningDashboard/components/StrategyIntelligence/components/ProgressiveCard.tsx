@@ -68,13 +68,7 @@ const ProgressiveCard: React.FC<ProgressiveCardProps> = ({
   const componentReviewedAt = component?.reviewedAt;
 
   // Debug logging for component status
-  if (componentId) {
-    console.log(`🔧 ProgressiveCard [${componentId}]:`, { 
-      componentStatus, 
-      componentReviewedAt,
-      allComponents: components.map(c => ({ id: c.id, status: c.status }))
-    });
-  }
+  // Removed verbose logging for cleaner console
 
   // Handle hover interactions
   const handleMouseEnter = () => {

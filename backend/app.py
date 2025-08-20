@@ -105,12 +105,17 @@ async def rate_limit_middleware(request: Request, call_next):
         client_ip = request.client.host if request.client else "unknown"
         current_time = time.time()
         
-        # Exempt streaming endpoints from rate limiting
+        # Exempt streaming endpoints and frequently called endpoints from rate limiting
         path = request.url.path
         if any(streaming_path in path for streaming_path in [
             "/stream/strategies",
             "/stream/strategic-intelligence", 
-            "/stream/keyword-research"
+            "/stream/keyword-research",
+            "/latest-strategy",  # Exempt latest strategy endpoint from rate limiting
+            "/ai-analytics",     # Exempt AI analytics endpoint from rate limiting
+            "/gap-analysis",     # Exempt gap analysis endpoint from rate limiting
+            "/calendar-events",  # Exempt calendar events endpoint from rate limiting
+            "/health"           # Exempt health check endpoints from rate limiting
         ]):
             # Allow streaming endpoints without rate limiting
             response = await call_next(request)
@@ -125,7 +130,12 @@ async def rate_limit_middleware(request: Request, call_next):
             logger.warning(f"Rate limit exceeded for {client_ip}")
             return JSONResponse(
                 status_code=429,
-                content={"detail": "Too many requests", "retry_after": RATE_LIMIT_WINDOW}
+                content={"detail": "Too many requests", "retry_after": RATE_LIMIT_WINDOW},
+                headers={
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "*",
+                    "Access-Control-Allow-Headers": "*"
+                }
             )
         
         # Add current request

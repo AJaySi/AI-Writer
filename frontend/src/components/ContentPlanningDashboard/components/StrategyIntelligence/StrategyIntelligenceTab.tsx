@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, memo } from 'react';
 import { Box, CircularProgress, Alert, Typography } from '@mui/material';
 import StrategyHeader from './components/StrategyHeader';
 import StrategicInsightsCard from './components/StrategicInsightsCard';
@@ -7,22 +7,33 @@ import PerformancePredictionsCard from './components/PerformancePredictionsCard'
 import ImplementationRoadmapCard from './components/ImplementationRoadmapCard';
 import RiskAssessmentCard from './components/RiskAssessmentCard';
 import ReviewProgressHeader from './components/ReviewProgressHeader';
+import StrategyErrorBoundary from './components/StrategyErrorBoundary';
 import { StrategyData } from './types/strategy.types';
 import { useStrategyReviewStore } from '../../../../stores/strategyReviewStore';
+import { hasValidData } from './utils/defensiveRendering';
+import { createSafeStrategyData, validateStrategyData } from './utils/strategyDataValidator';
 
 interface StrategyIntelligenceTabProps {
   strategyData?: StrategyData | null;
   loading?: boolean;
   error?: string | null;
+  strategyStatus?: 'active' | 'inactive' | 'pending' | 'none';
 }
 
 const StrategyIntelligenceTab: React.FC<StrategyIntelligenceTabProps> = ({ 
   strategyData, 
   loading = false, 
-  error = null 
+  error = null,
+  strategyStatus = 'none'
 }) => {
-  // Get review process state from store
-  const { reviewProcessStarted, startReviewProcess, components, initializeComponents } = useStrategyReviewStore();
+  // Get review process state from store with selective subscription
+  const reviewProcessStarted = useStrategyReviewStore(state => state.reviewProcessStarted);
+  const startReviewProcess = useStrategyReviewStore(state => state.startReviewProcess);
+  const components = useStrategyReviewStore(state => state.components);
+  const initializeComponents = useStrategyReviewStore(state => state.initializeComponents);
+  const isAllReviewed = useStrategyReviewStore(state => state.isAllReviewed);
+  const isActivated = useStrategyReviewStore(state => state.isActivated);
+  const resetAllReviews = useStrategyReviewStore(state => state.resetAllReviews);
 
   // Initialize components if they don't exist
   useEffect(() => {
@@ -59,7 +70,63 @@ const StrategyIntelligenceTab: React.FC<StrategyIntelligenceTabProps> = ({
     }
   }, [components.length, initializeComponents]);
 
+  // Create safe strategy data for rendering
+  const safeStrategyData = createSafeStrategyData(strategyData);
+
+  // Auto-start review process for pending strategies
+  useEffect(() => {
+    if (strategyStatus === 'pending' && !reviewProcessStarted && safeStrategyData) {
+      console.log('🔄 Auto-starting review process for pending strategy');
+      console.log('📋 Review Process: Starting review workflow for newly generated strategy');
+      console.log('🎯 Strategy Review Workflow: User should now see the review interface');
+      startReviewProcess();
+    }
+  }, [strategyStatus, safeStrategyData, startReviewProcess, reviewProcessStarted]);
+
+  // Log review process state changes (only when important changes occur, with debounce)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (reviewProcessStarted || strategyStatus === 'pending') {
+        console.log('🔄 Review Process State:', {
+          strategyStatus,
+          reviewProcessStarted,
+          hasStrategyData: !!safeStrategyData,
+          componentsCount: components.length,
+          isAllReviewed: isAllReviewed(),
+          isActivated: isActivated()
+        });
+      }
+    }, 150); // 150ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [strategyStatus, reviewProcessStarted, safeStrategyData, components.length, isAllReviewed, isActivated]);
+
+  // Log when review interface becomes visible
+  useEffect(() => {
+    if (reviewProcessStarted && safeStrategyData) {
+      console.log('🎯 RENDERING: Review interface is now visible to user');
+      console.log('📋 Review Interface: User can now review and confirm the strategy');
+      console.log('📊 Current Strategy Data:', {
+        hasStrategicInsights: !!safeStrategyData.strategic_insights,
+        hasCompetitiveAnalysis: !!safeStrategyData.competitive_analysis,
+        hasPerformancePredictions: !!safeStrategyData.performance_predictions,
+        hasImplementationRoadmap: !!safeStrategyData.implementation_roadmap,
+        hasRiskAssessment: !!safeStrategyData.risk_assessment
+      });
+    }
+  }, [reviewProcessStarted, safeStrategyData]);
+
+  // Log when StrategyHeader is rendered with new data
+  useEffect(() => {
+    if (safeStrategyData) {
+      console.log('🎯 RENDERING: StrategyHeader with status:', strategyStatus, 'and confirmed:', strategyStatus === 'active');
+    }
+  }, [strategyStatus, safeStrategyData]);
+
+
+
   const handleStartReviewProcess = () => {
+    console.log('🔄 Manual review process started by user');
     startReviewProcess();
   };
 
@@ -79,7 +146,23 @@ const StrategyIntelligenceTab: React.FC<StrategyIntelligenceTabProps> = ({
     );
   }
 
-  if (!strategyData) {
+  // Validate strategy data before rendering
+  const hasValidStrategyData = (data: StrategyData | null): boolean => {
+    if (!data) return false;
+    
+    // Check if the data has meaningful content
+    const hasStrategicInsights = hasValidData(data.strategic_insights);
+    const hasCompetitiveAnalysis = hasValidData(data.competitive_analysis);
+    const hasPerformancePredictions = hasValidData(data.performance_predictions);
+    const hasImplementationRoadmap = hasValidData(data.implementation_roadmap);
+    const hasRiskAssessment = hasValidData(data.risk_assessment);
+    
+    // Return true if at least one component has valid data
+    return hasStrategicInsights || hasCompetitiveAnalysis || hasPerformancePredictions || 
+           hasImplementationRoadmap || hasRiskAssessment;
+  };
+
+  if (!safeStrategyData || !hasValidStrategyData(safeStrategyData)) {
     return (
       <Box sx={{ textAlign: 'center', p: 4 }}>
         <Typography variant="h6" color="text.secondary" gutterBottom>
@@ -88,6 +171,11 @@ const StrategyIntelligenceTab: React.FC<StrategyIntelligenceTabProps> = ({
         <Typography variant="body2" color="text.secondary">
           Generate a comprehensive strategy first to view strategic intelligence.
         </Typography>
+        {strategyData && (
+          <Typography variant="caption" sx={{ display: 'block', mt: 2, color: 'text.secondary' }}>
+            Strategy data exists but contains no valid components.
+          </Typography>
+        )}
       </Box>
     );
   }
@@ -96,13 +184,14 @@ const StrategyIntelligenceTab: React.FC<StrategyIntelligenceTabProps> = ({
     <Box sx={{ p: 3 }}>
       {/* Header Section */}
       <StrategyHeader 
-        strategyData={strategyData} 
-        strategyConfirmed={false}
+        strategyData={safeStrategyData} 
+        strategyConfirmed={strategyStatus === 'active'}
+        strategyStatus={strategyStatus}
         onStartReview={handleStartReviewProcess}
       />
 
       {/* Review Progress Header - Only shown when review process is started */}
-      {reviewProcessStarted && <ReviewProgressHeader strategyData={strategyData} />}
+      {reviewProcessStarted && <ReviewProgressHeader strategyData={safeStrategyData} />}
 
       {/* Strategy Intelligence Cards */}
       <Box
@@ -131,14 +220,24 @@ const StrategyIntelligenceTab: React.FC<StrategyIntelligenceTabProps> = ({
           }
         }}
       >
-        <StrategicInsightsCard strategyData={strategyData} />
-        <CompetitiveAnalysisCard strategyData={strategyData} />
-        <PerformancePredictionsCard strategyData={strategyData} />
-        <ImplementationRoadmapCard strategyData={strategyData} />
-        <RiskAssessmentCard strategyData={strategyData} />
+        <StrategyErrorBoundary>
+          <StrategicInsightsCard strategyData={safeStrategyData} />
+        </StrategyErrorBoundary>
+        <StrategyErrorBoundary>
+          <CompetitiveAnalysisCard strategyData={safeStrategyData} />
+        </StrategyErrorBoundary>
+        <StrategyErrorBoundary>
+          <PerformancePredictionsCard strategyData={safeStrategyData} />
+        </StrategyErrorBoundary>
+        <StrategyErrorBoundary>
+          <ImplementationRoadmapCard strategyData={safeStrategyData} />
+        </StrategyErrorBoundary>
+        <StrategyErrorBoundary>
+          <RiskAssessmentCard strategyData={safeStrategyData} />
+        </StrategyErrorBoundary>
       </Box>
     </Box>
   );
 };
 
-export default StrategyIntelligenceTab; 
+export default memo(StrategyIntelligenceTab); 

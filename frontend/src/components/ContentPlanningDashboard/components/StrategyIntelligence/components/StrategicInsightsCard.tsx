@@ -29,6 +29,7 @@ import {
   getListItemStyles
 } from '../styles';
 import ProgressiveCard from './ProgressiveCard';
+import { safeRenderText, safeRenderArray, hasValidData, getFallbackValue } from '../utils/defensiveRendering';
 
 interface StrategicInsightsCardProps {
   strategyData: StrategyData | null;
@@ -79,6 +80,8 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
       default: return <LightbulbIcon />;
     }
   };
+
+
 
   // Summary content - always visible
   const summaryContent = (
@@ -236,7 +239,7 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
                             }} />
                           </ListItemIcon>
                           <ListItemText 
-                            primary={strength}
+                            primary={safeRenderText(strength)}
                             primaryTypographyProps={{ 
                               variant: 'body2', 
                               fontSize: '0.875rem',
@@ -269,7 +272,7 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
                             }} />
                           </ListItemIcon>
                           <ListItemText 
-                            primary={opportunity}
+                            primary={safeRenderText(opportunity)}
                             primaryTypographyProps={{ 
                               variant: 'body2', 
                               fontSize: '0.875rem',
@@ -327,7 +330,7 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
                         }} />
                       </ListItemIcon>
                       <ListItemText 
-                        primary={driver}
+                        primary={safeRenderText(driver)}
                         primaryTypographyProps={{ 
                           variant: 'body2', 
                           fontSize: '0.875rem',
@@ -378,7 +381,7 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
                         }} />
                       </ListItemIcon>
                       <ListItemText 
-                        primary={strength}
+                        primary={safeRenderText(strength)}
                         primaryTypographyProps={{ 
                           variant: 'body2', 
                           fontSize: '0.875rem',
@@ -411,7 +414,7 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
                         }} />
                       </ListItemIcon>
                       <ListItemText 
-                        primary={opportunity}
+                        primary={safeRenderText(opportunity)}
                         primaryTypographyProps={{ 
                           variant: 'body2', 
                           fontSize: '0.875rem',
@@ -476,8 +479,8 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
                             opacity: 0.7
                           }} />
                         </ListItemIcon>
-                        <ListItemText
-                          primary={insight.insight}
+                                                <ListItemText
+                          primary={safeRenderText(insight.insight)}
                           primaryTypographyProps={{ 
                             variant: 'body2', 
                             fontSize: '0.875rem',
@@ -487,7 +490,7 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
                             <Box sx={{ mt: 0.5 }}>
                               <Box sx={{ display: 'flex', gap: 1, mb: 0.5 }}>
                                 <Chip
-                                  label={`P: ${insight.priority || 'Medium'}`}
+                                  label={`P: ${safeRenderText(insight.priority) || 'Medium'}`}
                                   size="small"
                                   sx={getEnhancedChipStyles(
                                     insight.priority === 'High' ? ANALYSIS_CARD_STYLES.colors.error : 
@@ -496,7 +499,7 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
                                   ).chip}
                                 />
                                 <Chip
-                                  label={`I: ${insight.estimated_impact || 'Medium'}`}
+                                  label={`I: ${safeRenderText(insight.estimated_impact) || 'Medium'}`}
                                   size="small"
                                   sx={getEnhancedChipStyles(
                                     insight.estimated_impact === 'High' ? ANALYSIS_CARD_STYLES.colors.error : 
@@ -505,7 +508,7 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
                                   ).chip}
                                 />
                                 <Chip
-                                  label={`C: ${insight.confidence_level || 'Medium'}`}
+                                  label={`C: ${safeRenderText(insight.confidence_level) || 'Medium'}`}
                                   size="small"
                                   sx={getEnhancedChipStyles(
                                     insight.confidence_level === 'High' ? ANALYSIS_CARD_STYLES.colors.success : 
@@ -514,19 +517,19 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
                                   ).chip}
                                 />
                                 <Chip
-                                  label={`T: ${insight.implementation_time || '3 months'}`}
+                                  label={`T: ${safeRenderText(insight.implementation_time) || '3 months'}`}
                                   size="small"
                                   sx={getEnhancedChipStyles(ANALYSIS_CARD_STYLES.colors.info).chip}
                                 />
                               </Box>
-                              {insight.reasoning && (
+                              {hasValidData(insight.reasoning) && (
                                 <Typography variant="caption" sx={{ 
                                   display: 'block', 
                                   fontSize: '0.75rem', 
                                   color: ANALYSIS_CARD_STYLES.colors.text.secondary,
                                   fontStyle: 'italic'
                                 }}>
-                                  <strong>Reasoning:</strong> {insight.reasoning}
+                                  <strong>Reasoning:</strong> {safeRenderText(insight.reasoning)}
                                 </Typography>
                               )}
                             </Box>
@@ -562,7 +565,7 @@ const StrategicInsightsCard: React.FC<StrategicInsightsCardProps> = ({ strategyD
                     }} />
                   </ListItemIcon>
                   <ListItemText 
-                    primary={opportunity}
+                    primary={safeRenderText(opportunity)}
                     primaryTypographyProps={{ 
                       variant: 'body2', 
                       fontSize: '0.875rem',

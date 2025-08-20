@@ -68,23 +68,36 @@ class AIStrategyGenerator:
         try:
             self.logger.info(f"🚀 Generating comprehensive AI strategy for user: {user_id}")
             
+            # Track which components failed during generation
+            failed_components = []
+            
             # Step 1: Generate base strategy fields (using existing autofill system)
             base_strategy = await self._generate_base_strategy_fields(user_id, context)
             
             # Step 2: Generate strategic insights and recommendations
             strategic_insights = await self._generate_strategic_insights(base_strategy, context)
+            if strategic_insights.get("ai_generation_failed"):
+                failed_components.append("strategic_insights")
             
             # Step 3: Generate competitive analysis
             competitive_analysis = await self._generate_competitive_analysis(base_strategy, context)
+            if competitive_analysis.get("ai_generation_failed"):
+                failed_components.append("competitive_analysis")
             
             # Step 4: Generate performance predictions
             performance_predictions = await self._generate_performance_predictions(base_strategy, context)
+            if performance_predictions.get("ai_generation_failed"):
+                failed_components.append("performance_predictions")
             
             # Step 5: Generate implementation roadmap
             implementation_roadmap = await self._generate_implementation_roadmap(base_strategy, context)
+            if implementation_roadmap.get("ai_generation_failed"):
+                failed_components.append("implementation_roadmap")
             
             # Step 6: Generate risk assessment
             risk_assessment = await self._generate_risk_assessment(base_strategy, context)
+            if risk_assessment.get("ai_generation_failed"):
+                failed_components.append("risk_assessment")
             
             # Step 7: Compile comprehensive strategy (NO CONTENT CALENDAR)
             comprehensive_strategy = {
@@ -97,7 +110,9 @@ class AIStrategyGenerator:
                     "personalization_level": "high",
                     "ai_generated": True,
                     "comprehensive": True,
-                    "content_calendar_ready": False  # Indicates calendar needs to be generated separately
+                    "content_calendar_ready": False,  # Indicates calendar needs to be generated separately
+                    "failed_components": failed_components,
+                    "generation_status": "partial" if failed_components else "complete"
                 },
                 "base_strategy": base_strategy,
                 "strategic_insights": strategic_insights,
@@ -114,7 +129,11 @@ class AIStrategyGenerator:
                 }
             }
             
-            self.logger.info(f"✅ Comprehensive AI strategy generated successfully for user: {user_id}")
+            if failed_components:
+                self.logger.warning(f"⚠️ Strategy generated with partial AI components. Failed: {failed_components}")
+                self.logger.info(f"✅ Partial AI strategy generated successfully for user: {user_id}")
+            else:
+                self.logger.info(f"✅ Comprehensive AI strategy generated successfully for user: {user_id}")
             return comprehensive_strategy
             
         except Exception as e:
@@ -223,8 +242,15 @@ class AIStrategyGenerator:
             return transformed_response
             
         except Exception as e:
-            logger.error(f"❌ Error generating strategic insights: {str(e)}")
-            raise RuntimeError(f"Failed to generate strategic insights: {str(e)}")
+            logger.warning(f"⚠️ AI service overload or error during strategic insights: {str(e)}")
+            logger.info("🔄 Continuing strategy generation without strategic insights...")
+            
+            # Return empty strategic insights to allow strategy generation to continue
+            return {
+                "insights": [],
+                "ai_generation_failed": True,
+                "failure_reason": str(e)
+            }
 
     async def _generate_competitive_analysis(self, base_strategy: Dict[str, Any], context: Dict[str, Any], ai_manager: Optional[Any] = None) -> Dict[str, Any]:
         """Generate competitive analysis using AI."""
@@ -300,8 +326,18 @@ class AIStrategyGenerator:
             return transformed_response
             
         except Exception as e:
-            logger.error(f"❌ Error generating competitive analysis: {str(e)}")
-            raise RuntimeError(f"Failed to generate competitive analysis: {str(e)}")
+            logger.warning(f"⚠️ AI service overload or error during competitive analysis: {str(e)}")
+            logger.info("🔄 Continuing strategy generation without competitive analysis...")
+            
+            # Return empty competitive analysis to allow strategy generation to continue
+            return {
+                "competitors": [],
+                "market_gaps": [],
+                "opportunities": [],
+                "recommendations": [],
+                "ai_generation_failed": True,
+                "failure_reason": str(e)
+            }
 
     async def _generate_content_calendar(self, base_strategy: Dict[str, Any], context: Dict[str, Any], ai_manager: Optional[Any] = None) -> Dict[str, Any]:
         """Generate content calendar using AI."""
@@ -502,8 +538,18 @@ class AIStrategyGenerator:
             return transformed_response
             
         except Exception as e:
-            logger.error(f"❌ Error generating performance predictions: {str(e)}")
-            raise RuntimeError(f"Failed to generate performance predictions: {str(e)}")
+            logger.warning(f"⚠️ AI service overload or error during performance predictions: {str(e)}")
+            logger.info("🔄 Continuing strategy generation without performance predictions...")
+            
+            # Return empty performance predictions to allow strategy generation to continue
+            return {
+                "traffic_predictions": {},
+                "engagement_predictions": {},
+                "conversion_predictions": {},
+                "roi_predictions": {},
+                "ai_generation_failed": True,
+                "failure_reason": str(e)
+            }
 
     async def _generate_implementation_roadmap(self, base_strategy: Dict[str, Any], context: Dict[str, Any], ai_manager: Optional[Any] = None) -> Dict[str, Any]:
         """Generate implementation roadmap using AI."""
@@ -600,8 +646,19 @@ class AIStrategyGenerator:
             return transformed_response
             
         except Exception as e:
-            logger.error(f"❌ Error generating implementation roadmap: {str(e)}")
-            raise RuntimeError(f"Failed to generate implementation roadmap: {str(e)}")
+            logger.warning(f"⚠️ AI service overload or error during implementation roadmap: {str(e)}")
+            logger.info("🔄 Continuing strategy generation without implementation roadmap...")
+            
+            # Return empty implementation roadmap to allow strategy generation to continue
+            return {
+                "phases": [],
+                "timeline": {},
+                "resource_allocation": {},
+                "success_metrics": [],
+                "total_duration": "TBD",
+                "ai_generation_failed": True,
+                "failure_reason": str(e)
+            }
 
     async def _generate_risk_assessment(self, base_strategy: Dict[str, Any], context: Dict[str, Any], ai_manager: Optional[Any] = None) -> Dict[str, Any]:
         """Generate risk assessment using AI."""
@@ -738,8 +795,29 @@ class AIStrategyGenerator:
             return transformed_response
             
         except Exception as e:
-            logger.error(f"❌ Error generating risk assessment: {str(e)}")
-            raise RuntimeError(f"Failed to generate risk assessment: {str(e)}")
+            logger.warning(f"⚠️ AI service overload or error during risk assessment: {str(e)}")
+            logger.info("🔄 Continuing strategy generation without risk assessment...")
+            
+            # Return empty risk assessment to allow strategy generation to continue
+            return {
+                "risks": [],
+                "overall_risk_level": "Medium",
+                "risk_categories": {
+                    "technical_risks": [],
+                    "market_risks": [],
+                    "operational_risks": [],
+                    "financial_risks": []
+                },
+                "mitigation_strategies": [],
+                "monitoring_framework": {
+                    "key_indicators": [],
+                    "monitoring_frequency": "Monthly",
+                    "escalation_procedures": [],
+                    "review_schedule": "Quarterly"
+                },
+                "ai_generation_failed": True,
+                "failure_reason": str(e)
+            }
 
     def _build_strategic_insights_prompt(self, base_strategy: Dict[str, Any], context: Dict[str, Any]) -> str:
         """Build prompt for strategic insights generation."""

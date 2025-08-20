@@ -54,7 +54,7 @@ interface StrategyOnboardingDialogProps {
   onEditStrategy: () => void;
   onCreateNewStrategy: () => void;
   currentStrategy: any;
-  strategyStatus: 'active' | 'inactive' | 'none';
+  strategyStatus: 'active' | 'inactive' | 'pending' | 'none';
 }
 
 const StrategyOnboardingDialog: React.FC<StrategyOnboardingDialogProps> = ({

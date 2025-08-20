@@ -26,6 +26,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { ANALYSIS_CARD_STYLES } from '../styles';
+import { safeRenderText, safeRenderArray, hasValidData, getFallbackValue } from '../utils/defensiveRendering';
 
 interface ReviewConfirmationDialogProps {
   open: boolean;
@@ -204,7 +205,7 @@ const ReviewConfirmationDialog: React.FC<ReviewConfirmationDialogProps> = ({
                   }} />
                 </ListItemIcon>
                                  <ListItemText
-                   primary={item}
+                   primary={safeRenderText(item)}
                    primaryTypographyProps={{
                      variant: 'body1',
                      fontSize: '1rem',

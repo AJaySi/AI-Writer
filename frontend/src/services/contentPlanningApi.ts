@@ -458,6 +458,27 @@ class ContentPlanningAPI {
     return this.handleRequest(() => this.getAIAnalytics(userId), true);
   }
 
+  // Enhanced version with rate limit handling for AI analytics
+  async getAIAnalyticsWithRetry(userId?: number, maxRetries: number = 2): Promise<any> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await apiClient.get(`${this.baseURL}/ai-analytics/`, { 
+          params: { user_id: userId || 1 }
+        });
+        return response.data;
+      } catch (error: any) {
+        if (error.response?.status === 429 && attempt < maxRetries) {
+          // Rate limit hit, wait and retry
+          const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+          console.log(`🚫 Rate limit hit for AI analytics, waiting ${delay}ms before retry ${attempt + 1}/${maxRetries}`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        throw error; // Re-throw if it's not a rate limit or we've exhausted retries
+      }
+    }
+  }
+
   // AI Analytics with force refresh option
   async getAIAnalyticsWithRefresh(userId?: number, forceRefresh = false): Promise<any> {
     try {
@@ -517,7 +538,7 @@ class ContentPlanningAPI {
 
   async getComprehensiveUserData(userId?: number): Promise<any> {
     return this.handleRequest(async () => {
-      const response = await apiClient.get(`${this.baseURL}/comprehensive-user-data`, {
+      const response = await apiClient.get(`${this.baseURL}/calendar-generation/comprehensive-user-data`, {
         params: { user_id: userId }
       });
       return response.data;
@@ -593,30 +614,17 @@ class ContentPlanningAPI {
 
   // Non-streaming autofill refresh method
   async refreshAutofill(userId?: number, useAI: boolean = true, aiOnly: boolean = false): Promise<any> {
-    const params: any = { use_ai: useAI, ai_only: aiOnly };
+    const params: any = { 
+      use_ai: useAI, 
+      ai_only: aiOnly,
+      _t: Date.now() // 🚨 CRITICAL: Cache-busting timestamp to ensure fresh AI generation
+    };
     if (userId) params.user_id = userId;
     const response = await apiClient.post(`${this.baseURL}/enhanced-strategies/autofill/refresh`, null, { params });
-    
-    // Debug the API response
-    console.log('🎯 API refreshAutofill response:', {
-      responseType: typeof response,
-      responseKeys: Object.keys(response),
-      dataType: typeof response.data,
-      dataKeys: response.data ? Object.keys(response.data) : 'no data',
-      hasDataProperty: response.data?.hasOwnProperty('data'),
-      hasFieldsProperty: response.data?.hasOwnProperty('fields'),
-      dataDataKeys: response.data?.data ? Object.keys(response.data.data) : 'no data.data'
-    });
     
     // The backend returns ResponseBuilder format: { status, message, data, status_code, timestamp }
     // We need to return the actual payload from response.data.data
     const result = response.data?.data || response.data;
-    console.log('🎯 API refreshAutofill returning:', {
-      resultType: typeof result,
-      resultKeys: Object.keys(result),
-      hasFields: result?.hasOwnProperty('fields'),
-      fieldsCount: result?.fields ? Object.keys(result.fields).length : 0
-    });
     
     return result;
   }
@@ -714,19 +722,31 @@ class ContentPlanningAPI {
     return this.handleRequest(async () => {
       const params = userId ? { user_id: userId } : {};
       const response = await apiClient.get(`${this.baseURL}/content-strategy/ai-generation/latest-strategy`, { params });
-      console.log('🔍 getLatestGeneratedStrategy response:', response.data);
-      console.log('🔍 Response structure:', {
-        hasData: !!response.data,
-        dataKeys: Object.keys(response.data || {}),
-        hasStrategy: !!response.data?.data?.strategy,
-        strategyKeys: response.data?.data?.strategy ? Object.keys(response.data.data.strategy) : []
-      });
       // Return the strategy data from the nested response structure
       const result = response.data?.data?.strategy;
-      console.log('🔍 Returning result:', result);
-      console.log('🔍 Result keys:', Object.keys(result || {}));
       return result;
     });
+  }
+
+  // Enhanced version with rate limit handling
+  async getLatestGeneratedStrategyWithRetry(userId?: number, maxRetries: number = 2): Promise<any> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const params = userId ? { user_id: userId } : {};
+        const response = await apiClient.get(`${this.baseURL}/content-strategy/ai-generation/latest-strategy`, { params });
+        const result = response.data?.data?.strategy;
+        return result;
+      } catch (error: any) {
+        if (error.response?.status === 429 && attempt < maxRetries) {
+          // Rate limit hit, wait and retry
+          const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+          console.log(`🚫 Rate limit hit, waiting ${delay}ms before retry ${attempt + 1}/${maxRetries}`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        throw error; // Re-throw if it's not a rate limit or we've exhausted retries
+      }
+    }
   }
 
   async startStrategyGenerationPolling(userId: number, strategyName: string): Promise<any> {

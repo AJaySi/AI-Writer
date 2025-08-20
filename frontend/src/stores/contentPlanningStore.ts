@@ -151,6 +151,7 @@ interface ContentPlanningStore {
   // State
   strategies: ContentStrategy[];
   currentStrategy: ContentStrategy | null;
+  latestGeneratedStrategy: any | null; // Cache for the latest generated strategy
   calendarEvents: CalendarEvent[];
   gapAnalyses: ContentGapAnalysis[];
   aiRecommendations: AIRecommendation[];
@@ -182,6 +183,7 @@ interface ContentPlanningStore {
   updateStrategy: (id: string, updates: Partial<ContentStrategy>) => Promise<void>;
   deleteStrategy: (id: string) => Promise<void>;
   setCurrentStrategy: (strategy: ContentStrategy | null) => void;
+  setLatestGeneratedStrategy: (strategy: any | null) => void;
   
   // Calendar actions
   createEvent: (event: Omit<CalendarEvent, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
@@ -269,6 +271,7 @@ export const useContentPlanningStore = create<ContentPlanningStore>((set, get) =
   // Initial state
   strategies: [],
   currentStrategy: null,
+  latestGeneratedStrategy: null,
   calendarEvents: [],
   gapAnalyses: [],
   aiRecommendations: [],
@@ -345,6 +348,18 @@ export const useContentPlanningStore = create<ContentPlanningStore>((set, get) =
   },
   
   setCurrentStrategy: (strategy) => set({ currentStrategy: strategy }),
+      setLatestGeneratedStrategy: (strategy) => {
+      console.log('🔧 Store: Setting latest generated strategy:', {
+        strategyId: strategy?.id || strategy?.strategy_id,
+        strategyName: strategy?.name || strategy?.strategy_name,
+        hasStrategicInsights: !!strategy?.strategic_insights,
+        hasCompetitiveAnalysis: !!strategy?.competitive_analysis,
+        hasPerformancePredictions: !!strategy?.performance_predictions,
+        hasImplementationRoadmap: !!strategy?.implementation_roadmap,
+        hasRiskAssessment: !!strategy?.risk_assessment
+      });
+      set({ latestGeneratedStrategy: strategy });
+    },
   
   // Calendar actions
   createEvent: async (event) => {
@@ -476,24 +491,17 @@ export const useContentPlanningStore = create<ContentPlanningStore>((set, get) =
   loadStrategies: async () => {
     set({ loading: true, error: null });
     try {
-      console.log('🔍 Loading strategies from API...');
       const strategies = await contentPlanningApi.getStrategiesSafe();
-      console.log('🔍 API response for strategies:', strategies);
-      console.log('🔍 Strategies type:', typeof strategies);
-      console.log('🔍 Is Array:', Array.isArray(strategies));
       
       if (Array.isArray(strategies)) {
-        console.log('✅ Strategies loaded successfully (direct array):', strategies.length);
         set({ strategies, loading: false });
       } else if (strategies && strategies.strategies && Array.isArray(strategies.strategies)) {
-        console.log('✅ Strategies found in response.strategies:', strategies.strategies.length);
         set({ strategies: strategies.strategies, loading: false });
       } else {
-        console.log('❌ No strategies found in response');
         set({ strategies: [], loading: false });
       }
     } catch (error: any) {
-      console.error('❌ Error loading strategies:', error);
+      console.error('Error loading strategies:', error);
       set({ error: error.message || 'Failed to load strategies', loading: false });
     }
   },
@@ -521,7 +529,7 @@ export const useContentPlanningStore = create<ContentPlanningStore>((set, get) =
   loadAIInsights: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await contentPlanningApi.getAIAnalyticsSafe();
+      const response = await contentPlanningApi.getAIAnalyticsWithRetry();
       
       // Validate response structure
       if (!response || typeof response !== 'object') {
@@ -559,6 +567,21 @@ export const useContentPlanningStore = create<ContentPlanningStore>((set, get) =
       set({ aiInsights: transformedInsights, loading: false });
     } catch (error: any) {
       console.error('Error loading AI insights:', error);
+      
+      // Check if it's a rate limit error
+      if (error.message?.includes('rate limit') || error.message?.includes('429')) {
+        console.warn('⚠️ Rate limit hit for AI insights, using empty data');
+        set({ aiInsights: [], loading: false });
+        return;
+      }
+      
+      // Check if it's a network error
+      if (error.message?.includes('network') || error.message?.includes('connection')) {
+        console.warn('⚠️ Network error for AI insights, using empty data');
+        set({ aiInsights: [], loading: false });
+        return;
+      }
+      
       set({ error: error.message || 'Failed to load AI insights', loading: false, aiInsights: [] });
     }
   },
@@ -566,7 +589,7 @@ export const useContentPlanningStore = create<ContentPlanningStore>((set, get) =
   loadAIRecommendations: async () => {
     set({ loading: true, error: null });
     try {
-      const response = await contentPlanningApi.getAIAnalyticsSafe();
+      const response = await contentPlanningApi.getAIAnalyticsWithRetry();
       
       // Validate response structure
       if (!response || typeof response !== 'object') {
@@ -593,6 +616,21 @@ export const useContentPlanningStore = create<ContentPlanningStore>((set, get) =
       set({ aiRecommendations: transformedRecommendations, loading: false });
     } catch (error: any) {
       console.error('Error loading AI recommendations:', error);
+      
+      // Check if it's a rate limit error
+      if (error.message?.includes('rate limit') || error.message?.includes('429')) {
+        console.warn('⚠️ Rate limit hit for AI recommendations, using empty data');
+        set({ aiRecommendations: [], loading: false });
+        return;
+      }
+      
+      // Check if it's a network error
+      if (error.message?.includes('network') || error.message?.includes('connection')) {
+        console.warn('⚠️ Network error for AI recommendations, using empty data');
+        set({ aiRecommendations: [], loading: false });
+        return;
+      }
+      
       set({ error: error.message || 'Failed to load AI recommendations', loading: false, aiRecommendations: [] });
     }
   },

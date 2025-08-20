@@ -34,6 +34,7 @@ import {
   Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { safeRenderText, safeRenderArray, hasValidData, getFallbackValue } from '../utils/defensiveRendering';
 
 interface MonitoringTask {
   title: string;
@@ -433,7 +434,7 @@ const MetricTransparencyCard: React.FC<MetricTransparencyCardProps> = ({
                         <CheckCircleIcon sx={{ fontSize: 16, color: '#4caf50' }} />
                       </ListItemIcon>
                       <ListItemText 
-                        primary={rec}
+                        primary={safeRenderText(rec)}
                         sx={{
                           '& .MuiListItemText-primary': {
                             fontSize: '0.85rem',

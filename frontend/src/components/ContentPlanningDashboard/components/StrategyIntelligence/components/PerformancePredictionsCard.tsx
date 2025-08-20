@@ -24,6 +24,7 @@ import {
   getListItemStyles
 } from '../styles';
 import ProgressiveCard from './ProgressiveCard';
+import { safeRenderText, safeRenderArray, hasValidData, getFallbackValue } from '../utils/defensiveRendering';
 
 interface PerformancePredictionsCardProps {
   strategyData: StrategyData | null;
@@ -33,6 +34,15 @@ const PerformancePredictionsCard: React.FC<PerformancePredictionsCardProps> = ({
   // Get style objects
   const sectionStyles = getSectionStyles();
   const listItemStyles = getListItemStyles();
+
+  // Helper function to safely render text content
+  const safeRenderText = (content: any): string => {
+    if (typeof content === 'string') return content;
+    if (typeof content === 'object' && content !== null) {
+      return JSON.stringify(content);
+    }
+    return 'Data not available';
+  };
 
   if (!strategyData?.performance_predictions) {
     return (
