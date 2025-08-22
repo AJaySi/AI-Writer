@@ -1,29 +1,36 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
+  Typography,
   Tabs,
-  Tab,
-  Typography
+  Tab
 } from '@mui/material';
 import {
   AutoAwesome as AutoAwesomeIcon,
   CalendarToday as CalendarIcon
 } from '@mui/icons-material';
+import { useLocation } from 'react-router-dom';
+
+// Import components
 import ContentStrategyBuilder from '../components/ContentStrategyBuilder';
 import CalendarGenerationWizard from '../components/CalendarGenerationWizard';
-import { contentPlanningApi } from '../../../services/contentPlanningApi';
-import { useStrategyCalendarContext } from '../../../contexts/StrategyCalendarContext';
+import { CalendarGenerationModal } from '../components/CalendarGenerationModal';
 
+// Import hooks and services
+import { useStrategyCalendarContext } from '../../../contexts/StrategyCalendarContext';
+import { contentPlanningApi } from '../../../services/contentPlanningApi';
+
+// Import types
+import { type CalendarConfig } from '../components/CalendarWizardSteps/types';
+
+// TabPanel component
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
   value: number;
 }
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
+const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other }) => {
   return (
     <div
       role="tabpanel"
@@ -35,53 +42,27 @@ function TabPanel(props: TabPanelProps) {
       {value === index && <Box>{children}</Box>}
     </div>
   );
-}
+};
 
 const CreateTab: React.FC = () => {
-  const [userData, setUserData] = useState<any>({});
+  const [tabValue, setTabValue] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentCalendarConfig, setCurrentCalendarConfig] = useState<CalendarConfig | null>(null);
+  const [sessionId, setSessionId] = useState<string>('');
+
   const location = useLocation();
-  
-  // Get strategy context from the provider
   const { state: { strategyContext }, isFromStrategyActivation } = useStrategyCalendarContext();
-  
-  // Removed verbose logging for cleaner console
+  const [userData, setUserData] = useState<any>({});
 
-  // Memoize the strategy activation status to avoid infinite re-renders
-  const fromStrategyActivation = useMemo(() => {
-    return isFromStrategyActivation();
-  }, [isFromStrategyActivation]);
-
-  // Set initial tab value based on strategy activation
-  const [tabValue, setTabValue] = useState(0); // Always start with Strategy Builder tab
-
+  // Handle navigation from strategy activation
   useEffect(() => {
-    // Only load user data once on mount
-    const loadData = async () => {
-      try {
-        const comprehensiveData = await contentPlanningApi.getComprehensiveUserData(1);
-        setUserData(comprehensiveData.data);
-      } catch (error) {
-        console.error('Error loading user data:', error);
-        // Set empty data to prevent infinite loops
-        setUserData({});
-      }
-    };
-    
-    loadData();
-  }, []); // Empty dependency array - only run once
-
-  // Auto-switch to Calendar Wizard tab when coming from strategy activation
-  useEffect(() => {
-    // Removed verbose logging for cleaner console
-    
-    // Check multiple sources for strategy activation status
+    const fromStrategyActivation = isFromStrategyActivation();
     const isFromStrategy = fromStrategyActivation || 
-                          (strategyContext?.activationStatus === 'active') ||
-                          (location.state as any)?.fromStrategyActivation;
-    
-    console.log('🔍 CreateTab: Strategy activation check:', {
+      (location.state as any)?.fromStrategyActivation ||
+      (location.state as any)?.strategyContext;
+
+    console.log('🔍 CreateTab: Navigation state check:', {
       fromStrategyActivation,
-      strategyContextActivationStatus: strategyContext?.activationStatus,
       windowLocationState: location.state || 'N/A',
       isFromStrategy
     });
@@ -90,7 +71,7 @@ const CreateTab: React.FC = () => {
       console.log('🎯 CreateTab: Switching to Calendar Wizard tab (index 1)');
       setTabValue(1); // Switch to Calendar Wizard tab
     }
-  }, [fromStrategyActivation, strategyContext?.activationStatus]);
+  }, [isFromStrategyActivation, strategyContext?.activationStatus]);
 
   // Also check on mount for immediate navigation state
   useEffect(() => {
@@ -112,22 +93,77 @@ const CreateTab: React.FC = () => {
     return () => clearTimeout(timer);
   }, [location.state]);
 
-
-
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
-  const handleGenerateCalendar = useCallback(async (calendarConfig: any) => {
+  const handleGenerateCalendar = useCallback(async (calendarConfig: CalendarConfig) => {
     try {
-      await contentPlanningApi.generateComprehensiveCalendar({
-        ...calendarConfig,
-        userData
+      // Transform calendarConfig to match backend CalendarGenerationRequest format
+      const requestData = {
+        user_id: 1, // Default user ID
+        strategy_id: strategyContext?.strategyId ? parseInt(strategyContext.strategyId) : undefined,
+        calendar_type: calendarConfig.calendarType || 'monthly',
+        industry: userData?.industry || 'technology',
+        business_size: 'sme',
+        force_refresh: false
+      };
+      
+      console.log('🎯 Starting calendar generation with modal:', requestData);
+      
+      // Call the new start endpoint to get session ID
+      const startResponse = await fetch('/api/content-planning/calendar-generation/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
       });
+      
+      if (!startResponse.ok) {
+        throw new Error(`Failed to start calendar generation: ${startResponse.statusText}`);
+      }
+      
+      const startData = await startResponse.json();
+      const sessionId = startData.session_id;
+      
+      // Store the session ID and calendar config for the modal
+      setSessionId(sessionId);
+      setCurrentCalendarConfig(calendarConfig);
+      
+      // Open the modal to show progress
+      setIsModalOpen(true);
+      
     } catch (error) {
-      console.error('Error generating calendar:', error);
+      console.error('Error starting calendar generation:', error);
+      // The modal will handle error display
     }
-  }, [userData]);
+  }, [userData, strategyContext]);
+
+  const handleModalComplete = useCallback((results: any) => {
+    console.log('🎉 Calendar generation completed:', results);
+    setIsModalOpen(false);
+    setCurrentCalendarConfig(null);
+    setSessionId('');
+    
+    // TODO: Handle the completed calendar results
+    // This could include navigating to a calendar view, showing success message, etc.
+  }, []);
+
+  const handleModalError = useCallback((error: string) => {
+    console.error('❌ Calendar generation error:', error);
+    setIsModalOpen(false);
+    setCurrentCalendarConfig(null);
+    setSessionId('');
+    
+    // TODO: Handle error display (could show a toast notification)
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    setIsModalOpen(false);
+    setCurrentCalendarConfig(null);
+    setSessionId('');
+  }, []);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -166,9 +202,31 @@ const CreateTab: React.FC = () => {
           onGenerateCalendar={handleGenerateCalendar}
           loading={false}
           strategyContext={strategyContext}
-          fromStrategyActivation={fromStrategyActivation}
+          fromStrategyActivation={isFromStrategyActivation()}
         />
       </TabPanel>
+
+      {/* Calendar Generation Modal */}
+      {currentCalendarConfig && (
+        <CalendarGenerationModal
+          open={isModalOpen}
+          onClose={handleModalClose}
+          sessionId={sessionId}
+          initialConfig={{
+            userId: userData?.id?.toString() || '1',
+            strategyId: strategyContext?.strategyId || '',
+            calendarType: currentCalendarConfig.calendarType === 'weekly' ? 'monthly' : 
+                         currentCalendarConfig.calendarType === 'quarterly' ? 'quarterly' : 'monthly',
+            platforms: currentCalendarConfig.priorityPlatforms || [],
+            duration: currentCalendarConfig.calendarDuration || 30,
+            postingFrequency: currentCalendarConfig.postingFrequency ? 
+              (currentCalendarConfig.postingFrequency >= 7 ? 'daily' : 
+               currentCalendarConfig.postingFrequency >= 3 ? 'biweekly' : 'weekly') : 'weekly'
+          }}
+          onComplete={handleModalComplete}
+          onError={handleModalError}
+        />
+      )}
     </Box>
   );
 };

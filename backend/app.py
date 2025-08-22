@@ -12,6 +12,7 @@ from collections import defaultdict
 from loguru import logger
 from dotenv import load_dotenv
 import asyncio
+from middleware.monitoring_middleware import monitoring_middleware
 
 # Load environment variables
 load_dotenv()
@@ -92,6 +93,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add API monitoring middleware
+app.middleware("http")(monitoring_middleware)
 
 # Simple rate limiting
 request_counts = defaultdict(list)

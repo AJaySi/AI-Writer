@@ -26,8 +26,8 @@ from ..utils.constants import ERROR_MESSAGES, SUCCESS_MESSAGES
 class CalendarGenerationService:
     """Service class for calendar generation operations."""
     
-    def __init__(self):
-        self.calendar_generator_service = CalendarGeneratorService()
+    def __init__(self, db_session: Optional[Session] = None):
+        self.calendar_generator_service = CalendarGeneratorService(db_session)
     
     async def generate_comprehensive_calendar(self, user_id: int, strategy_id: Optional[int] = None, 
                                            calendar_type: str = "monthly", industry: Optional[str] = None, 
@@ -337,13 +337,19 @@ class CalendarGenerationService:
             raise ContentPlanningErrorHandler.handle_general_error(e, "get_trending_topics")
     
     async def get_comprehensive_user_data(self, user_id: int) -> Dict[str, Any]:
-        """Get comprehensive user data for calendar generation."""
+        """Get comprehensive user data for calendar generation with caching support."""
         try:
             logger.info(f"Getting comprehensive user data for user_id: {user_id}")
             
-            # Get comprehensive data using the calendar generator service
-            logger.info("Calling calendar generator service...")
-            comprehensive_data = await self.calendar_generator_service._get_comprehensive_user_data(user_id, None)
+            # Try to use cached version if available
+            try:
+                comprehensive_data = await self.calendar_generator_service.get_comprehensive_user_data(
+                    user_id, None, force_refresh=False
+                )
+            except AttributeError:
+                # Fallback to direct method if cached version not available
+                comprehensive_data = await self.calendar_generator_service._get_comprehensive_user_data(user_id, None)
+            
             logger.info(f"Calendar generator service returned: {type(comprehensive_data)}")
             
             logger.info(f"Successfully retrieved comprehensive user data for user_id: {user_id}")

@@ -69,6 +69,92 @@ LOG_LEVEL=INFO
         print(f"❌ Error creating .env file: {e}")
         return False
 
+def setup_monitoring_tables():
+    """Set up API monitoring database tables."""
+    print("📊 Setting up API monitoring tables...")
+    
+    try:
+        # Import and run the monitoring table creation
+        sys.path.append(str(Path(__file__).parent))
+        from scripts.create_monitoring_tables import create_monitoring_tables
+        
+        if create_monitoring_tables():
+            print("✅ API monitoring tables created successfully!")
+            return True
+        else:
+            print("⚠️  Warning: Failed to create monitoring tables, continuing anyway...")
+            return True  # Don't fail startup for monitoring issues
+            
+    except Exception as e:
+        print(f"⚠️  Warning: Could not set up monitoring tables: {e}")
+        print("   Monitoring will be disabled. Continuing startup...")
+        return True  # Don't fail startup for monitoring issues
+
+def setup_monitoring_middleware():
+    """Set up monitoring middleware in app.py if not already present."""
+    print("🔍 Setting up API monitoring middleware...")
+    
+    app_file = Path(__file__).parent / "app.py"
+    
+    if not app_file.exists():
+        print("⚠️  Warning: app.py not found, skipping middleware setup")
+        return True
+    
+    try:
+        with open(app_file, 'r') as f:
+            content = f.read()
+        
+        # Check if monitoring middleware is already set up
+        if "monitoring_middleware" in content:
+            print("✅ Monitoring middleware already configured")
+            return True
+        
+        # Add monitoring middleware import and setup
+        monitoring_import = "from middleware.monitoring_middleware import monitoring_middleware\n"
+        monitoring_setup = "app.middleware(\"http\")(monitoring_middleware)\n"
+        
+        # Find the right place to add the import (after other imports)
+        lines = content.split('\n')
+        import_end_index = 0
+        
+        for i, line in enumerate(lines):
+            if line.strip().startswith('import ') or line.strip().startswith('from '):
+                import_end_index = i + 1
+            elif line.strip() and not line.strip().startswith('#'):
+                break
+        
+        # Insert monitoring import
+        lines.insert(import_end_index, monitoring_import)
+        
+        # Find the right place to add middleware setup (after app creation)
+        app_creation_index = -1
+        for i, line in enumerate(lines):
+            if 'app = FastAPI(' in line or 'app = FastAPI()' in line:
+                app_creation_index = i
+                break
+        
+        if app_creation_index != -1:
+            # Find the end of app configuration
+            setup_index = app_creation_index + 1
+            for i in range(app_creation_index + 1, len(lines)):
+                if lines[i].strip() and not lines[i].strip().startswith('#'):
+                    setup_index = i + 1
+                    break
+            
+            lines.insert(setup_index, monitoring_setup)
+        
+        # Write back to file
+        with open(app_file, 'w') as f:
+            f.write('\n'.join(lines))
+        
+        print("✅ Monitoring middleware configured successfully!")
+        return True
+        
+    except Exception as e:
+        print(f"⚠️  Warning: Could not set up monitoring middleware: {e}")
+        print("   Monitoring will be disabled. Continuing startup...")
+        return True  # Don't fail startup for monitoring issues
+
 def check_dependencies():
     """Check if required dependencies are installed."""
     print("🔍 Checking dependencies...")
@@ -121,6 +207,10 @@ def setup_environment():
     # Create .env file if it doesn't exist
     create_env_file()
     
+    # Set up monitoring
+    setup_monitoring_tables()
+    setup_monitoring_middleware()
+    
     print("✅ Environment setup complete")
 
 def start_backend():
@@ -149,6 +239,7 @@ def start_backend():
         print("   📖 API Documentation: http://localhost:8000/api/docs")
         print("   🔍 Health Check: http://localhost:8000/health")
         print("   📊 ReDoc: http://localhost:8000/api/redoc")
+        print("   📈 API Monitoring: http://localhost:8000/api/content-planning/monitoring/health")
         print("\n⏹️  Press Ctrl+C to stop the server")
         print("=" * 60)
         

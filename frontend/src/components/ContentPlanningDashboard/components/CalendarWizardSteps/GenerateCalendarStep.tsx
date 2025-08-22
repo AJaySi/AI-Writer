@@ -441,21 +441,7 @@ const GenerateCalendarStep: React.FC<GenerateCalendarStepProps> = ({
         </CardContent>
       </Card>
 
-      {/* Generate Button */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={<PlayIcon />}
-          onClick={handleGenerate}
-          disabled={!canGenerate}
-          sx={{ minWidth: 200 }}
-        >
-          {loading ? 'Generating...' : 'Generate Calendar'}
-        </Button>
-      </Box>
-
-      {/* Loading Progress */}
+      {/* Note: Generate button is handled by the stepper navigation above */}
       {loading && (
         <Box sx={{ mt: 3 }}>
           <LinearProgress />

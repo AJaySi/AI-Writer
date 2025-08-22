@@ -9,16 +9,13 @@ from datetime import datetime
 from loguru import logger
 
 # Import route modules
-from .routes import strategies, calendar_events, gap_analysis, ai_analytics, calendar_generation, health_monitoring
+from .routes import strategies, calendar_events, gap_analysis, ai_analytics, calendar_generation, health_monitoring, monitoring
 
 # Import enhanced strategy routes
 from .enhanced_strategy_routes import router as enhanced_strategy_router
 
 # Import content strategy routes
 from .content_strategy.routes import router as content_strategy_router
-
-# Import monitoring routes
-from ..monitoring_routes import router as monitoring_router
 
 # Import quality analysis routes
 from ..quality_analysis_routes import router as quality_analysis_router
@@ -33,15 +30,13 @@ router.include_router(gap_analysis.router)
 router.include_router(ai_analytics.router)
 router.include_router(calendar_generation.router)
 router.include_router(health_monitoring.router)
+router.include_router(monitoring.router)
 
 # Include enhanced strategy routes with correct prefix
 router.include_router(enhanced_strategy_router, prefix="/enhanced-strategies")
 
 # Include content strategy routes
 router.include_router(content_strategy_router)
-
-# Include monitoring routes
-router.include_router(monitoring_router)
 
 # Include quality analysis routes
 router.include_router(quality_analysis_router)
@@ -67,6 +62,7 @@ async def content_planning_health_check():
                 "ai_analytics": "operational",
                 "calendar_generation": "operational",
                 "health_monitoring": "operational",
+                "monitoring": "operational",
                 "enhanced_strategies": "operational",
                 "models": "operational",
                 "utils": "operational"

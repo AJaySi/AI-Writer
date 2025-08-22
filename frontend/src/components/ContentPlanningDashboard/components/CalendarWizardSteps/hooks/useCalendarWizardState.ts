@@ -260,6 +260,49 @@ export const useCalendarWizardState = (
   return [state, actions];
 };
 
+// Helper function to get a valid timezone from user's timezone or fallback to default
+const getValidTimezone = (userTimezone: string): string => {
+  const validTimezones = [
+    'America/New_York',
+    'America/Chicago', 
+    'America/Denver',
+    'America/Los_Angeles',
+    'Europe/London',
+    'Europe/Paris',
+    'Asia/Tokyo',
+    'Asia/Shanghai',
+    'Australia/Sydney'
+  ];
+  
+  // If user's timezone is in our valid list, use it
+  if (validTimezones.includes(userTimezone)) {
+    return userTimezone;
+  }
+  
+  // Otherwise, try to map common timezones to our valid options
+  const timezoneMap: { [key: string]: string } = {
+    'Asia/Calcutta': 'Asia/Tokyo', // Map IST to JST as closest option
+    'Asia/Kolkata': 'Asia/Tokyo',  // Alternative IST name
+    'Asia/Colombo': 'Asia/Tokyo',  // Sri Lanka time
+    'Asia/Dhaka': 'Asia/Tokyo',    // Bangladesh time
+    'Asia/Karachi': 'Asia/Tokyo',  // Pakistan time
+    'UTC': 'Europe/London',        // UTC to GMT
+    'GMT': 'Europe/London',        // GMT to London
+    'EST': 'America/New_York',     // EST to Eastern Time
+    'PST': 'America/Los_Angeles',  // PST to Pacific Time
+    'CST': 'America/Chicago',      // CST to Central Time
+    'MST': 'America/Denver',       // MST to Mountain Time
+  };
+  
+  // Check if we have a mapping for the user's timezone
+  if (timezoneMap[userTimezone]) {
+    return timezoneMap[userTimezone];
+  }
+  
+  // Default fallback
+  return 'America/New_York';
+};
+
 // Helper function to create default calendar config
 const createDefaultConfig = (): CalendarConfig => {
   return {
@@ -274,7 +317,7 @@ const createDefaultConfig = (): CalendarConfig => {
     
     // Platform Scheduling
     priorityPlatforms: ['LinkedIn', 'Twitter'],
-    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, // User's timezone
+    timeZone: getValidTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone), // User's timezone or fallback
     
     // Calendar Preferences
     excludeDates: [],

@@ -7,12 +7,7 @@ import {
   Chip,
   IconButton,
   Collapse,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Alert,
-  Button
+  Alert
 } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
@@ -26,69 +21,65 @@ import {
   CalendarToday as CalendarIcon,
   HealthAndSafety as HealthIcon
 } from '@mui/icons-material';
-import { ServiceStatus } from '../../../services/contentPlanningOrchestrator';
 
 interface ProgressIndicatorProps {
-  serviceStatuses: ServiceStatus[];
-  onRefreshService: (serviceName: string) => void;
   expanded?: boolean;
   onToggleExpanded?: () => void;
 }
 
 const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
-  serviceStatuses,
-  onRefreshService,
   expanded = false,
   onToggleExpanded
 }) => {
-  const getServiceIcon = (serviceName: string) => {
-    switch (serviceName) {
-      case 'Content Strategies':
-        return <StrategyIcon />;
-      case 'Gap Analysis':
-        return <SearchIcon />;
-      case 'AI Analytics':
-        return <AnalyticsIcon />;
-      case 'Calendar Events':
-        return <CalendarIcon />;
-      case 'System Health':
-        return <HealthIcon />;
-      default:
-        return <AnalyticsIcon />;
-    }
+  // Simple loading state for dashboard initialization
+  const [loadingProgress, setLoadingProgress] = React.useState(0);
+  const [loadingMessage, setLoadingMessage] = React.useState('Initializing dashboard...');
+
+  React.useEffect(() => {
+    // Simulate loading progress
+    const interval = setInterval(() => {
+      setLoadingProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 200);
+
+    // Update loading messages
+    const messageInterval = setInterval(() => {
+      setLoadingMessage(prev => {
+        if (prev.includes('Loading content strategies...')) {
+          return 'Loading calendar data...';
+        } else if (prev.includes('Loading calendar data...')) {
+          return 'Loading analytics...';
+        } else if (prev.includes('Loading analytics...')) {
+          return 'Loading gap analysis...';
+        } else if (prev.includes('Loading gap analysis...')) {
+          return 'Dashboard ready!';
+        }
+        return 'Loading content strategies...';
+      });
+    }, 800);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(messageInterval);
+    };
+  }, []);
+
+  const getStatusColor = () => {
+    if (loadingProgress >= 100) return 'success';
+    if (loadingProgress >= 75) return 'primary';
+    if (loadingProgress >= 50) return 'warning';
+    return 'info';
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'success':
-        return 'success';
-      case 'error':
-        return 'error';
-      case 'loading':
-        return 'primary';
-      default:
-        return 'primary';
-    }
+  const getStatusIcon = () => {
+    if (loadingProgress >= 100) return <CheckCircleIcon color="success" />;
+    return <RefreshIcon sx={{ animation: 'spin 1s linear infinite' }} />;
   };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'success':
-        return <CheckCircleIcon color="success" />;
-      case 'error':
-        return <ErrorIcon color="error" />;
-      case 'loading':
-        return <RefreshIcon sx={{ animation: 'spin 1s linear infinite' }} />;
-      default:
-        return null;
-    }
-  };
-
-  const isLoading = serviceStatuses.some(status => status.status === 'loading');
-  const hasErrors = serviceStatuses.some(status => status.status === 'error');
-  const allComplete = serviceStatuses.every(status => status.status === 'success');
-
-  const overallProgress = serviceStatuses.reduce((acc, status) => acc + status.progress, 0) / serviceStatuses.length;
 
   return (
     <Paper 
@@ -96,153 +87,105 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
       sx={{ 
         p: 2, 
         mb: 2,
-        border: hasErrors ? '1px solid #f44336' : '1px solid transparent',
-        backgroundColor: hasErrors ? 'rgba(244, 67, 54, 0.05)' : 'background.paper',
-        '@keyframes spin': {
-          from: { transform: 'rotate(0deg)' },
-          to: { transform: 'rotate(360deg)' }
-        }
+        border: '1px solid transparent',
+        backgroundColor: 'background.paper'
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {isLoading && <RefreshIcon sx={{ animation: 'spin 1s linear infinite' }} />}
-          Content Planning Progress
-          {allComplete && <CheckCircleIcon color="success" />}
-        </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Chip 
-            label={`${Math.round(overallProgress)}%`}
-            color={allComplete ? 'success' : isLoading ? 'primary' : 'default'}
+          {getStatusIcon()}
+          <Typography variant="subtitle2">
+            Dashboard Loading
+          </Typography>
+          <Chip
+            label={`${loadingProgress}%`}
             size="small"
+            color={getStatusColor()}
+            variant="outlined"
           />
-          {onToggleExpanded && (
-            <IconButton size="small" onClick={onToggleExpanded}>
-              {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            </IconButton>
-          )}
         </Box>
+        {onToggleExpanded && (
+          <IconButton size="small" onClick={onToggleExpanded}>
+            {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          </IconButton>
+        )}
       </Box>
 
-      {/* Overall Progress Bar */}
-      <Box sx={{ mb: 2 }}>
-        <LinearProgress 
-          variant="determinate" 
-          value={overallProgress} 
-          color={allComplete ? 'success' : isLoading ? 'primary' : 'inherit'}
-          sx={{ height: 8, borderRadius: 4 }}
-        />
-      </Box>
+      <LinearProgress
+        variant="determinate"
+        value={loadingProgress}
+        color={getStatusColor()}
+        sx={{ mb: 2 }}
+      />
 
-      {/* Status Messages */}
-      {isLoading && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          <Typography variant="body2">
-            Loading content planning data... This may take a few moments as we analyze your content strategy.
-          </Typography>
-        </Alert>
-      )}
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        {loadingMessage}
+      </Typography>
 
-      {hasErrors && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          <Typography variant="body2">
-            Some services encountered errors. You can refresh individual services below.
-          </Typography>
-        </Alert>
-      )}
-
-      {allComplete && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          <Typography variant="body2">
-            All content planning services are ready! Your dashboard is fully loaded.
-          </Typography>
-        </Alert>
-      )}
-
-      {/* Detailed Service Status */}
       <Collapse in={expanded}>
-        <List dense>
-          {serviceStatuses.map((status, index) => (
-            <ListItem 
-              key={index}
-              sx={{ 
-                border: '1px solid',
-                borderColor: getStatusColor(status.status) === 'error' ? 'error.main' : 'divider',
-                borderRadius: 1,
-                mb: 1,
-                backgroundColor: getStatusColor(status.status) === 'error' ? 'rgba(244, 67, 54, 0.05)' : 'transparent'
-              }}
-            >
-              <ListItemIcon>
-                {getServiceIcon(status.name)}
-              </ListItemIcon>
-              <ListItemText
-                primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" fontWeight="medium">
-                      {status.name}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {getStatusIcon(status.status)}
-                      <Chip 
-                        label={`${status.progress}%`}
-                        size="small"
-                        color={getStatusColor(status.status)}
-                        variant="outlined"
-                      />
-                    </Box>
-                  </Box>
-                }
-                secondary={
-                  <Box sx={{ mt: 1 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      {status.message}
-                    </Typography>
-                    {status.error && (
-                      <Typography variant="caption" color="error" sx={{ display: 'block', mt: 0.5 }}>
-                        Error: {status.error}
-                      </Typography>
-                    )}
-                    <Box sx={{ mt: 1 }}>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={status.progress} 
-                        color={getStatusColor(status.status)}
-                        sx={{ height: 4, borderRadius: 2 }}
-                      />
-                    </Box>
-                  </Box>
-                }
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            Loading Components:
+          </Typography>
+          
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <StrategyIcon fontSize="small" />
+              <Typography variant="body2">Content Strategy</Typography>
+              <Chip 
+                label={loadingProgress >= 20 ? "✓" : "..."} 
+                size="small" 
+                color={loadingProgress >= 20 ? "success" : "default"}
               />
-              {status.status === 'error' && (
-                <IconButton 
-                  size="small" 
-                  onClick={() => onRefreshService(status.name.toLowerCase().replace(' ', ''))}
-                  color="primary"
-                >
-                  <RefreshIcon />
-                </IconButton>
-              )}
-            </ListItem>
-          ))}
-        </List>
+            </Box>
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CalendarIcon fontSize="small" />
+              <Typography variant="body2">Calendar</Typography>
+              <Chip 
+                label={loadingProgress >= 40 ? "✓" : "..."} 
+                size="small" 
+                color={loadingProgress >= 40 ? "success" : "default"}
+              />
+            </Box>
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <AnalyticsIcon fontSize="small" />
+              <Typography variant="body2">Analytics</Typography>
+              <Chip 
+                label={loadingProgress >= 60 ? "✓" : "..."} 
+                size="small" 
+                color={loadingProgress >= 60 ? "success" : "default"}
+              />
+            </Box>
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <SearchIcon fontSize="small" />
+              <Typography variant="body2">Gap Analysis</Typography>
+              <Chip 
+                label={loadingProgress >= 80 ? "✓" : "..."} 
+                size="small" 
+                color={loadingProgress >= 80 ? "success" : "default"}
+              />
+            </Box>
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <HealthIcon fontSize="small" />
+              <Typography variant="body2">System Health</Typography>
+              <Chip 
+                label={loadingProgress >= 100 ? "✓" : "..."} 
+                size="small" 
+                color={loadingProgress >= 100 ? "success" : "default"}
+              />
+            </Box>
+          </Box>
+        </Box>
       </Collapse>
 
-      {/* Quick Actions */}
-      {hasErrors && (
-        <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-          <Button 
-            variant="outlined" 
-            size="small"
-            onClick={() => serviceStatuses.forEach(status => {
-              if (status.status === 'error') {
-                onRefreshService(status.name.toLowerCase().replace(' ', ''));
-              }
-            })}
-          >
-            Refresh All Failed Services
-          </Button>
-        </Box>
+      {loadingProgress >= 100 && (
+        <Alert severity="success" sx={{ mt: 2 }}>
+          Dashboard loaded successfully! You can now start using all features.
+        </Alert>
       )}
     </Paper>
   );

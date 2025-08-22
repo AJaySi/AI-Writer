@@ -508,30 +508,31 @@ class ContentPlanningAPI {
     }
   }
 
-  // New Calendar Generation APIs
-  async generateCalendar(request: CalendarGenerationRequest): Promise<CalendarGenerationResponse> {
-    const response = await apiClient.post(`${this.baseURL}/generate-calendar`, request);
-    return response.data;
-  }
-
+  // Calendar Generation APIs (using correct endpoints)
   async optimizeContent(request: ContentOptimizationRequest): Promise<ContentOptimizationResponse> {
-    const response = await apiClient.post(`${this.baseURL}/optimize-content`, request);
-    return response.data;
+    return this.handleRequest(async () => {
+      const response = await apiClient.post(`${this.baseURL}/calendar-generation/optimize-content`, request);
+      return response.data;
+    });
   }
 
   async predictPerformance(request: PerformancePredictionRequest): Promise<PerformancePredictionResponse> {
-    const response = await apiClient.post(`${this.baseURL}/performance-predictions`, request);
-    return response.data;
+    return this.handleRequest(async () => {
+      const response = await apiClient.post(`${this.baseURL}/calendar-generation/performance-predictions`, request);
+      return response.data;
+    });
   }
 
   async repurposeContent(request: ContentRepurposingRequest): Promise<ContentRepurposingResponse> {
-    const response = await apiClient.post(`${this.baseURL}/repurpose-content`, request);
-    return response.data;
+    return this.handleRequest(async () => {
+      const response = await apiClient.post(`${this.baseURL}/calendar-generation/repurpose-content`, request);
+      return response.data;
+    });
   }
 
   async getTrendingTopics(request: TrendingTopicsRequest): Promise<TrendingTopicsResponse> {
     return this.handleRequest(async () => {
-      const response = await apiClient.post(`${this.baseURL}/trending-topics`, request);
+      const response = await apiClient.post(`${this.baseURL}/calendar-generation/trending-topics`, request);
       return response.data;
     });
   }
@@ -547,7 +548,7 @@ class ContentPlanningAPI {
 
   async generateComprehensiveCalendar(config: any): Promise<any> {
     return this.handleRequest(async () => {
-      const response = await apiClient.post(`${this.baseURL}/generate-comprehensive-calendar`, config);
+      const response = await apiClient.post(`${this.baseURL}/calendar-generation/generate-calendar`, config);
       return response.data;
     });
   }

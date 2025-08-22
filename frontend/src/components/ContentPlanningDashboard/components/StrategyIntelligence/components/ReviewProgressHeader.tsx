@@ -26,6 +26,8 @@ import { contentPlanningApi } from '../../../../../services/contentPlanningApi';
 import EnhancedStrategyActivationButton from './EnhancedStrategyActivationButton';
 import { StrategyData } from '../types/strategy.types';
 import { useNavigationOrchestrator } from '../../../../../services/navigationOrchestrator';
+import { useStrategyCalendarContext } from '../../../../../contexts/StrategyCalendarContext';
+import { useStrategyBuilderStore } from '../../../../../stores/strategyBuilderStore';
 
 interface ReviewProgressHeaderProps {
   strategyData?: StrategyData | null;
@@ -44,6 +46,12 @@ const ReviewProgressHeader: React.FC<ReviewProgressHeaderProps> = ({ strategyDat
 
   // Initialize navigation orchestrator
   const navigationOrchestrator = useNavigationOrchestrator();
+  
+  // Get strategy calendar context
+  const { setStrategyContext } = useStrategyCalendarContext();
+  
+  // Get actual strategy data from strategy builder store
+  const strategyBuilderData = useStrategyBuilderStore(state => state.currentStrategy);
 
   // Extract domain name from strategy data
   const getDomainName = () => {
@@ -96,15 +104,36 @@ const ReviewProgressHeader: React.FC<ReviewProgressHeaderProps> = ({ strategyDat
 
   const handleGenerateContentCalendar = () => {
     
+    // Use actual strategy data from strategy builder store
+    const actualStrategyData = strategyBuilderData || strategyData;
+    
+    console.log('🎯 ReviewProgressHeader: Strategy data for calendar generation:', {
+      strategyBuilderData: !!strategyBuilderData,
+      strategyData: !!strategyData,
+      actualStrategyData: !!actualStrategyData
+    });
+    
     // Prepare strategy context for navigation
     const strategyContext = {
-      strategyId: (strategyData?.strategy_metadata?.user_id || strategyData?.metadata?.user_id || '1').toString(),
-      strategyData: strategyData,
+      strategyId: (() => {
+        if (actualStrategyData && 'id' in actualStrategyData) {
+          return actualStrategyData.id.toString();
+        } else if (actualStrategyData && 'strategy_metadata' in actualStrategyData) {
+          return actualStrategyData.strategy_metadata?.user_id?.toString() || '1';
+        } else if (actualStrategyData && 'metadata' in actualStrategyData) {
+          return actualStrategyData.metadata?.user_id?.toString() || '1';
+        }
+        return '1';
+      })(),
+      strategyData: actualStrategyData,
       activationStatus: 'active' as const,
       activationTimestamp: new Date().toISOString(),
       userPreferences: {},
       strategicIntelligence: {}
     };
+    
+    // Set strategy context in the StrategyCalendarContext
+    setStrategyContext(strategyContext);
     
     // Navigate to calendar wizard using navigation orchestrator
     navigationOrchestrator.navigateToCalendarWizard(

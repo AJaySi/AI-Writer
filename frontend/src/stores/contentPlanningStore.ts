@@ -93,6 +93,24 @@ export interface GeneratedCalendar {
   onboarding_insights: any;
   processing_time: number;
   ai_confidence: number;
+  // Enhanced strategy data for 12-step prompt chaining
+  strategy_data?: any;
+  strategy_analysis?: any;
+  quality_indicators?: any;
+  data_completeness?: any;
+  strategic_alignment?: any;
+  quality_gate_data?: any;
+  prompt_chain_data?: any;
+  // Metadata for tracking
+  metadata?: {
+    generated_at: string;
+    user_id: number;
+    strategy_id?: number;
+    calendar_type: string;
+    industry: string;
+    business_size: string;
+    version: string;
+  };
 }
 
 export interface ContentOptimization {
@@ -680,7 +698,7 @@ export const useContentPlanningStore = create<ContentPlanningStore>((set, get) =
   generateCalendar: async (request) => {
     set({ calendarGenerationLoading: true, calendarGenerationError: null });
     try {
-      const generatedCalendar = await contentPlanningApi.generateCalendar(request);
+              const generatedCalendar = await contentPlanningApi.generateComprehensiveCalendar(request);
       set({ generatedCalendar, calendarGenerationLoading: false });
     } catch (error: any) {
       set({ calendarGenerationError: error.message || 'Failed to generate calendar', calendarGenerationLoading: false });

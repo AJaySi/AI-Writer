@@ -30,12 +30,11 @@ import AnalyticsTab from './tabs/AnalyticsTab';
 import GapAnalysisTab from './tabs/GapAnalysisTab';
 import CreateTab from './tabs/CreateTab';
 import AIInsightsPanel from './components/AIInsightsPanel';
-import ServiceStatusPanel from './components/ServiceStatusPanel';
+import SystemStatusIndicator from './components/SystemStatusIndicator';
 import ProgressIndicator from './components/ProgressIndicator';
 import { useContentPlanningStore } from '../../stores/contentPlanningStore';
 import { 
   contentPlanningOrchestrator, 
-  ServiceStatus, 
   DashboardData 
 } from '../../services/contentPlanningOrchestrator';
 import { StrategyCalendarProvider } from '../../contexts/StrategyCalendarContext';
@@ -76,7 +75,6 @@ function a11yProps(index: number) {
 const ContentPlanningDashboard: React.FC = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(0);
-  const [serviceStatuses, setServiceStatuses] = useState<ServiceStatus[]>([]);
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     strategies: [],
     gapAnalyses: [],
@@ -89,7 +87,6 @@ const ContentPlanningDashboard: React.FC = () => {
       aiServices: false
     }
   });
-  const [statusPanelExpanded, setStatusPanelExpanded] = useState(false);
   const [progressExpanded, setProgressExpanded] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,10 +101,6 @@ const ContentPlanningDashboard: React.FC = () => {
 
   // Initialize orchestrator callbacks
   useEffect(() => {
-    contentPlanningOrchestrator.setProgressCallback((statuses) => {
-      setServiceStatuses(statuses);
-    });
-
     contentPlanningOrchestrator.setDataUpdateCallback((data) => {
       setDashboardData(prev => ({ ...prev, ...data }));
       
@@ -134,15 +127,15 @@ const ContentPlanningDashboard: React.FC = () => {
   // Load dashboard data using orchestrator
   useEffect(() => {
     const loadDashboardData = async () => {
+      setLoading(true);
+      setError(null);
+      
       try {
-        setLoading(true);
-        setError(null);
-        
         await contentPlanningOrchestrator.loadDashboardData();
+        setLoading(false);
       } catch (error: any) {
-        console.error('Failed to load dashboard data:', error);
+        console.error('Error loading dashboard data:', error);
         setError(error.message || 'Failed to load dashboard data');
-      } finally {
         setLoading(false);
       }
     };
@@ -157,26 +150,9 @@ const ContentPlanningDashboard: React.FC = () => {
     }
   }, []);
 
-  const handleRefreshService = (serviceName: string) => {
-    contentPlanningOrchestrator.refreshService(serviceName);
-  };
-
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
-
-  const getOverallHealthStatus = () => {
-    const { healthStatus } = dashboardData;
-    if (healthStatus.backend && healthStatus.database && healthStatus.aiServices) {
-      return { status: 'success', text: 'Connected' };
-    } else if (healthStatus.backend && healthStatus.database) {
-      return { status: 'warning', text: 'Connected API & DB' };
-    } else {
-      return { status: 'error', text: 'Disconnected' };
-    }
-  };
-
-  const overallHealth = getOverallHealthStatus();
 
   const tabs = [
     { label: 'CONTENT STRATEGY', icon: <StrategyIcon />, component: <ContentStrategyTab /> },
@@ -197,12 +173,7 @@ const ContentPlanningDashboard: React.FC = () => {
             Content Planning Dashboard
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <ServiceStatusPanel 
-              serviceStatuses={serviceStatuses} 
-              onRefreshService={handleRefreshService} 
-              expanded={statusPanelExpanded} 
-              onToggleExpanded={() => setStatusPanelExpanded(!statusPanelExpanded)} 
-            />
+            <SystemStatusIndicator />
             
             {/* AI Insights Button with Badge */}
             <motion.div
@@ -244,43 +215,59 @@ const ContentPlanningDashboard: React.FC = () => {
       {loading && (
         <Box sx={{ m: 2 }}>
           <ProgressIndicator
-            serviceStatuses={serviceStatuses}
-            onRefreshService={handleRefreshService}
             expanded={progressExpanded}
             onToggleExpanded={() => setProgressExpanded(!progressExpanded)}
           />
         </Box>
       )}
 
-      <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)' }}>
-        <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs
-              value={activeTab}
-              onChange={handleTabChange}
-              aria-label="content planning tabs"
-              sx={{ px: 2 }}
+      {/* Main Content */}
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            aria-label="content planning tabs"
+            sx={{
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 600,
+                minHeight: 64,
+                fontSize: '0.875rem'
+              }
+            }}
+          >
+            {tabs.map((tab, index) => (
+              <Tab
+                key={index}
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {tab.icon}
+                    {tab.label}
+                  </Box>
+                }
+                {...a11yProps(index)}
+              />
+            ))}
+          </Tabs>
+        </Box>
+
+        <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
             >
               {tabs.map((tab, index) => (
-                <Tab
-                  key={index}
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {tab.icon}
-                      {tab.label}
-                    </Box>
-                  }
-                  {...a11yProps(index)}
-                />
+                <TabPanel key={index} value={activeTab} index={index}>
+                  {tab.component}
+                </TabPanel>
               ))}
-            </Tabs>
-          </Box>
-
-          {tabs.map((tab, index) => (
-            <TabPanel key={index} value={activeTab} index={index}>
-              {tab.component}
-            </TabPanel>
-          ))}
+            </motion.div>
+          </AnimatePresence>
         </Box>
       </Box>
 
@@ -291,43 +278,22 @@ const ContentPlanningDashboard: React.FC = () => {
         onClose={() => setAiInsightsDrawerOpen(false)}
         PaperProps={{
           sx: {
-            width: 400,
-            height: '100%',
-            backgroundColor: 'background.paper',
-            borderLeft: '1px solid',
-            borderColor: 'divider'
+            width: { xs: '100%', sm: 400 },
+            maxWidth: '100vw'
           }
         }}
       >
         <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
-              <AIInsightsIcon sx={{ mr: 1 }} />
-              AI Insights
-            </Typography>
-            <IconButton 
-              onClick={() => setAiInsightsDrawerOpen(false)}
-              size="small"
-            >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6">AI Insights & Recommendations</Typography>
+            <IconButton onClick={() => setAiInsightsDrawerOpen(false)}>
               <CloseIcon />
             </IconButton>
           </Box>
         </Box>
-        
-        <Box sx={{ flex: 1, overflow: 'auto' }}>
-          <AnimatePresence>
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <AIInsightsPanel />
-            </motion.div>
-          </AnimatePresence>
-        </Box>
+        <AIInsightsPanel />
       </Drawer>
-      </Container>
+    </Container>
     </StrategyCalendarProvider>
   );
 };

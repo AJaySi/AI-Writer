@@ -146,25 +146,25 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
         <Box sx={{ position: 'relative', zIndex: 1 }}>
           {/* Main Header */}
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography 
-                variant="h4"
-                gutterBottom 
-                sx={{ 
-                  fontWeight: 'bold',
-                  background: 'linear-gradient(45deg, #fff, #f0f0f0)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  textShadow: '0 0 20px rgba(255,255,255,0.5)',
-                  mb: 1
-                }}
-              >
-                AI Content Strategy Co-pilot
-              </Typography>
+          <Box sx={{ flex: 1 }}>
+            <Typography 
+              variant="h4"
+              gutterBottom 
+              sx={{ 
+                fontWeight: 'bold',
+                background: 'linear-gradient(45deg, #fff, #f0f0f0)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                textShadow: '0 0 20px rgba(255,255,255,0.5)',
+                mb: 1
+              }}
+            >
+              AI Content Strategy Co-pilot
+            </Typography>
               <Typography variant="body1" sx={{ opacity: 0.9, fontSize: '0.9rem' }}>
-                Build a comprehensive content strategy with 30+ strategic inputs
-              </Typography>
+              Build a comprehensive content strategy with 30+ strategic inputs
+            </Typography>
             </Box>
           </Box>
           
@@ -300,41 +300,41 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
             
           {/* Enhanced Status Chips */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
-            {cacheStatus === 'cached' && (
-              <Chip
-                icon={<CheckCircleIcon />}
-                label={`${Object.keys(autoPopulatedFields).length} fields auto-populated`}
-                sx={{
-                  backgroundColor: 'rgba(76, 175, 80, 0.2)',
-                  color: 'white',
-                  border: '1px solid rgba(76, 175, 80, 0.3)',
+              {cacheStatus === 'cached' && (
+                <Chip
+                  icon={<CheckCircleIcon />}
+                  label={`${Object.keys(autoPopulatedFields).length} fields auto-populated`}
+                  sx={{
+                    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                    color: 'white',
+                    border: '1px solid rgba(76, 175, 80, 0.3)',
                   '& .MuiChip-icon': { color: 'rgba(76, 175, 80, 0.8)' },
                   fontWeight: 500,
                   fontSize: '0.8rem'
-                }}
-              />
-            )}
-            
-            {dataSource && (
-              <Tooltip title="Click to view data source information">
-                <Chip
-                  icon={<InfoIcon />}
-                  label={`Source: ${dataSource}`}
-                  onClick={() => setShowDataInfo(!showDataInfo)}
-                  sx={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    color: 'white',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    fontSize: '0.8rem',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.2)'
-                    }
                   }}
                 />
-              </Tooltip>
-            )}
+              )}
+              
+              {dataSource && (
+                <Tooltip title="Click to view data source information">
+                  <Chip
+                    icon={<InfoIcon />}
+                    label={`Source: ${dataSource}`}
+                    onClick={() => setShowDataInfo(!showDataInfo)}
+                    sx={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      color: 'white',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      cursor: 'pointer',
+                    fontWeight: 500,
+                    fontSize: '0.8rem',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)'
+                      }
+                    }}
+                  />
+                </Tooltip>
+              )}
 
             {/* Category Distribution Chips */}
             {Object.keys(fieldCountByCategory).length > 0 && (
@@ -351,155 +351,155 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                 }}
               />
             )}
-          </Box>
+            </Box>
 
-          {/* Data Source Information */}
-          <Collapse in={showDataInfo}>
-            <Alert 
-              severity="info" 
-              sx={{ 
-                mb: 2, 
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                color: 'white',
-                '& .MuiAlert-icon': { color: 'rgba(255, 255, 255, 0.8)' }
-              }}
-            >
-              <Typography variant="body2" sx={{ mb: 1 }}>
-                <strong>Data Source:</strong> {dataSource || 'Onboarding Database'}
-              </Typography>
-              <Typography variant="body2" sx={{ mb: 1 }}>
-                <strong>Input Data Points:</strong> {Object.keys(inputDataPoints).length} available
-              </Typography>
-              <Typography variant="body2">
-                <strong>Adaptive Monitoring:</strong> ALwrity continuously monitors databases for new data points to ensure you have the latest information.
-              </Typography>
-            </Alert>
-          </Collapse>
+            {/* Data Source Information */}
+            <Collapse in={showDataInfo}>
+              <Alert 
+                severity="info" 
+                sx={{ 
+                  mb: 2, 
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  '& .MuiAlert-icon': { color: 'rgba(255, 255, 255, 0.8)' }
+                }}
+              >
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  <strong>Data Source:</strong> {dataSource || 'Onboarding Database'}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  <strong>Input Data Points:</strong> {Object.keys(inputDataPoints).length} available
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Adaptive Monitoring:</strong> ALwrity continuously monitors databases for new data points to ensure you have the latest information.
+                </Typography>
+              </Alert>
+            </Collapse>
 
-          {/* Conditional Action Buttons */}
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            {cacheStatus === 'cached' ? (
-              // Case 1: Data exists in cache - show refresh vs continue options
-              <>
+            {/* Conditional Action Buttons */}
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              {cacheStatus === 'cached' ? (
+                // Case 1: Data exists in cache - show refresh vs continue options
+                <>
+                  <Tooltip title="Refresh with latest database data and AI analysis">
+                    <Button
+                      variant="outlined"
+                      startIcon={<RefreshIcon />}
+                      onClick={onRefreshAutofill}
+                      disabled={loading}
+                      sx={{
+                        color: 'white',
+                        borderColor: 'rgba(255, 255, 255, 0.3)',
+                        '&:hover': {
+                          borderColor: 'rgba(255, 255, 255, 0.5)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                        }
+                      }}
+                    >
+                      {loading ? 'Refreshing...' : 'Refresh & Autofill Inputs'}
+                    </Button>
+                  </Tooltip>
+                  
+                  <Tooltip title="Continue with current autofilled values">
+                    <Button
+                      variant="contained"
+                      startIcon={<PlayArrowIcon />}
+                      onClick={onContinueWithPresent}
+                      sx={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        color: 'white',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 255, 255, 0.3)'
+                        }
+                      }}
+                    >
+                      Continue with Present Values
+                    </Button>
+                  </Tooltip>
+                </>
+              ) : cacheStatus === 'partial' ? (
+                // Case 2: Partial data - show refresh option
                 <Tooltip title="Refresh with latest database data and AI analysis">
                   <Button
-                    variant="outlined"
+                    variant="contained"
                     startIcon={<RefreshIcon />}
                     onClick={onRefreshAutofill}
                     disabled={loading}
                     sx={{
+                      backgroundColor: 'rgba(255, 193, 7, 0.8)',
                       color: 'white',
-                      borderColor: 'rgba(255, 255, 255, 0.3)',
                       '&:hover': {
-                        borderColor: 'rgba(255, 255, 255, 0.5)',
+                        backgroundColor: 'rgba(255, 193, 7, 0.9)'
+                      }
+                    }}
+                  >
+                    {loading ? 'Refreshing...' : 'Refresh & Autofill Strategy Inputs'}
+                  </Button>
+                </Tooltip>
+              ) : (
+                // Case 3: No data - show initial autofill
+                <Tooltip title="Fetch latest data from database and autofill strategy inputs">
+                  <Button
+                    variant="contained"
+                    startIcon={<RefreshIcon />}
+                    onClick={onRefreshAutofill}
+                    disabled={loading}
+                    sx={{
+                      backgroundColor: 'rgba(76, 175, 80, 0.8)',
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: 'rgba(76, 175, 80, 0.9)'
+                      }
+                    }}
+                  >
+                    {loading ? 'Autofilling...' : 'Refresh & Autofill Strategy Inputs'}
+                  </Button>
+                </Tooltip>
+              )}
+
+              {/* Next Step Button - shown after autofill completion */}
+              {showNextButton && (
+                <Tooltip title="Scroll to review section and mark inputs as reviewed">
+                  <Button
+                    variant="contained"
+                    startIcon={<ArrowDownwardIcon />}
+                    onClick={onScrollToReview}
+                    sx={{
+                      background: 'linear-gradient(135deg, #4caf50 0%, #66bb6a 50%, #81c784 100%)',
+                      color: 'white',
+                      fontWeight: 600,
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #66bb6a 0%, #81c784 50%, #a5d6a7 100%)',
+                        transform: 'translateY(-1px)'
+                      },
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    Next: Review Strategy Inputs & Create Strategy
+                  </Button>
+                </Tooltip>
+              )}
+
+              {/* Know More Details Button - shown when autofill data exists */}
+              {hasAutofillData && Object.keys(autoPopulatedFields).length > 0 && (
+                <Tooltip title="View detailed information about autofill data sources and AI analysis">
+                  <Button
+                    variant="text"
+                    startIcon={<VisibilityIcon />}
+                    onClick={() => setShowTransparencyModal(true)}
+                    sx={{
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      '&:hover': {
+                        color: 'white',
                         backgroundColor: 'rgba(255, 255, 255, 0.1)'
                       }
                     }}
                   >
-                    {loading ? 'Refreshing...' : 'Refresh & Autofill Inputs'}
+                    Know More Details
                   </Button>
                 </Tooltip>
-                
-                <Tooltip title="Continue with current autofilled values">
-                  <Button
-                    variant="contained"
-                    startIcon={<PlayArrowIcon />}
-                    onClick={onContinueWithPresent}
-                    sx={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                      color: 'white',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255, 255, 255, 0.3)'
-                      }
-                    }}
-                  >
-                    Continue with Present Values
-                  </Button>
-                </Tooltip>
-              </>
-            ) : cacheStatus === 'partial' ? (
-              // Case 2: Partial data - show refresh option
-              <Tooltip title="Refresh with latest database data and AI analysis">
-                <Button
-                  variant="contained"
-                  startIcon={<RefreshIcon />}
-                  onClick={onRefreshAutofill}
-                  disabled={loading}
-                  sx={{
-                    backgroundColor: 'rgba(255, 193, 7, 0.8)',
-                    color: 'white',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 193, 7, 0.9)'
-                    }
-                  }}
-                >
-                  {loading ? 'Refreshing...' : 'Refresh & Autofill Strategy Inputs'}
-                </Button>
-              </Tooltip>
-            ) : (
-              // Case 3: No data - show initial autofill
-              <Tooltip title="Fetch latest data from database and autofill strategy inputs">
-                <Button
-                  variant="contained"
-                  startIcon={<RefreshIcon />}
-                  onClick={onRefreshAutofill}
-                  disabled={loading}
-                  sx={{
-                    backgroundColor: 'rgba(76, 175, 80, 0.8)',
-                    color: 'white',
-                    '&:hover': {
-                      backgroundColor: 'rgba(76, 175, 80, 0.9)'
-                    }
-                  }}
-                >
-                  {loading ? 'Autofilling...' : 'Refresh & Autofill Strategy Inputs'}
-                </Button>
-              </Tooltip>
-            )}
-
-            {/* Next Step Button - shown after autofill completion */}
-            {showNextButton && (
-              <Tooltip title="Scroll to review section and mark inputs as reviewed">
-                <Button
-                  variant="contained"
-                  startIcon={<ArrowDownwardIcon />}
-                  onClick={onScrollToReview}
-                  sx={{
-                    background: 'linear-gradient(135deg, #4caf50 0%, #66bb6a 50%, #81c784 100%)',
-                    color: 'white',
-                    fontWeight: 600,
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #66bb6a 0%, #81c784 50%, #a5d6a7 100%)',
-                      transform: 'translateY(-1px)'
-                    },
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  Next: Review Strategy Inputs & Create Strategy
-                </Button>
-              </Tooltip>
-            )}
-
-            {/* Know More Details Button - shown when autofill data exists */}
-            {hasAutofillData && Object.keys(autoPopulatedFields).length > 0 && (
-              <Tooltip title="View detailed information about autofill data sources and AI analysis">
-                <Button
-                  variant="text"
-                  startIcon={<VisibilityIcon />}
-                  onClick={() => setShowTransparencyModal(true)}
-                  sx={{
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    '&:hover': {
-                      color: 'white',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)'
-                    }
-                  }}
-                >
-                  Know More Details
-                </Button>
-              </Tooltip>
-            )}
+              )}
           </Box>
         </Box>
       </Paper>

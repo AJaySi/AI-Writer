@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -15,7 +15,10 @@ import {
   Tooltip,
   IconButton,
   Alert,
-  FormHelperText
+  FormHelperText,
+  Button,
+  Chip,
+  LinearProgress
 } from '@mui/material';
 import {
   CalendarToday as CalendarIcon,
@@ -24,11 +27,26 @@ import {
   TrendingUp as TrendingUpIcon,
   Public as PublicIcon,
   AccessTime as AccessTimeIcon,
-  ContentPaste as ContentPasteIcon
+  ContentPaste as ContentPasteIcon,
+  AutoAwesome as AutoAwesomeIcon,
+  Lightbulb as LightbulbIcon,
+  Warning as WarningIcon,
+  CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
 
 // Import calendar-specific types
 import { type CalendarConfig } from './types';
+
+// Import simplified mapper
+import { 
+  generateSmartDefaults, 
+  generateUserGuidance, 
+  generateTransparencyIndicators,
+  applySmartDefaultsToConfig,
+  type SmartDefaults,
+  type UserGuidance,
+  type TransparencyIndicators
+} from '../../../../services/strategyCalendarMapper';
 
 interface CalendarConfigurationStepProps {
   calendarConfig: CalendarConfig;
@@ -158,6 +176,87 @@ const CalendarConfigurationStep: React.FC<CalendarConfigurationStepProps> = ({
   strategyContext,
   isFromStrategyActivation = false
 }) => {
+  // Smart defaults and guidance state
+  const [smartDefaults, setSmartDefaults] = useState<SmartDefaults | null>(null);
+  const [userGuidance, setUserGuidance] = useState<UserGuidance | null>(null);
+  const [transparencyIndicators, setTransparencyIndicators] = useState<TransparencyIndicators | null>(null);
+  const [showSmartDefaults, setShowSmartDefaults] = useState(true);
+  const [showUserGuidance, setShowUserGuidance] = useState(true);
+  const [showTransparency, setShowTransparency] = useState(true);
+
+  // Generate smart defaults and guidance when strategy context changes
+  useEffect(() => {
+    console.log('🎯 CalendarConfigurationStep: Strategy context changed:', {
+      hasStrategyContext: !!strategyContext,
+      hasStrategyData: !!strategyContext?.strategyData,
+      strategyDataType: strategyContext?.strategyData ? typeof strategyContext.strategyData : 'none'
+    });
+    
+    if (strategyContext?.strategyData) {
+      console.log('🎯 CalendarConfigurationStep: Generating smart defaults from strategy data');
+      console.log('🎯 CalendarConfigurationStep: About to call generateSmartDefaults with:', strategyContext.strategyData);
+      
+      const defaults = generateSmartDefaults(strategyContext.strategyData);
+      console.log('🎯 CalendarConfigurationStep: generateSmartDefaults returned:', defaults);
+      
+      const guidance = generateUserGuidance(strategyContext.strategyData);
+      const transparency = generateTransparencyIndicators(strategyContext.strategyData);
+      
+      console.log('🎯 CalendarConfigurationStep: Generated data:', {
+        defaults: defaults,
+        guidance: {
+          warnings: guidance.warnings.length,
+          recommendations: guidance.recommendations.length,
+          missingData: guidance.missingData.length
+        },
+        transparency: {
+          integrationLevel: transparency.integrationStatus.integrationLevel,
+          alignmentScore: transparency.strategyAlignment.alignmentScore
+        }
+      });
+      
+      setSmartDefaults(defaults);
+      setUserGuidance(guidance);
+      setTransparencyIndicators(transparency);
+      
+      console.log('🎯 CalendarConfigurationStep: Smart defaults generated:', {
+        calendarType: defaults.suggestedCalendarType,
+        postingFrequency: defaults.suggestedPostingFrequency,
+        platforms: defaults.suggestedPlatforms,
+        guidanceCount: guidance.warnings.length + guidance.recommendations.length + guidance.missingData.length
+      });
+    } else {
+      console.log('🎯 CalendarConfigurationStep: No strategy context available, using default defaults');
+      const defaults = generateSmartDefaults(null);
+      const guidance = generateUserGuidance(null);
+      const transparency = generateTransparencyIndicators(null);
+      
+      setSmartDefaults(defaults);
+      setUserGuidance(guidance);
+      setTransparencyIndicators(transparency);
+    }
+  }, [strategyContext]);
+
+  // Validate timezone on component mount and when timezone changes
+  useEffect(() => {
+    const validTimezones = timeZones.map(tz => tz.value);
+    if (!validTimezones.includes(calendarConfig.timeZone)) {
+      console.log('🎯 CalendarConfigurationStep: Invalid timezone detected, fixing:', calendarConfig.timeZone);
+      // Fix invalid timezone
+      onConfigUpdate({ timeZone: 'America/New_York' });
+    }
+  }, [calendarConfig.timeZone, onConfigUpdate]);
+
+  // Apply smart defaults to configuration
+  const handleApplySmartDefaults = (applyAll: boolean = false) => {
+    if (smartDefaults) {
+      const updates = applySmartDefaultsToConfig(calendarConfig, smartDefaults, applyAll);
+      onConfigUpdate(updates);
+      
+      console.log('🎯 CalendarConfigurationStep: Applied smart defaults:', updates);
+    }
+  };
+
   // Enhanced calendar-specific handlers
   const handleCalendarTypeChange = (type: 'weekly' | 'monthly' | 'quarterly') => {
     onConfigUpdate({ calendarType: type });
@@ -190,7 +289,14 @@ const CalendarConfigurationStep: React.FC<CalendarConfigurationStepProps> = ({
   };
 
   const handleTimeZoneChange = (timezone: string) => {
-    onConfigUpdate({ timeZone: timezone });
+    // Ensure the timezone is valid
+    const validTimezones = timeZones.map(tz => tz.value);
+    if (validTimezones.includes(timezone)) {
+      onConfigUpdate({ timeZone: timezone });
+    } else {
+      // Fallback to a valid timezone
+      onConfigUpdate({ timeZone: 'America/New_York' });
+    }
   };
 
   const handleContentDistributionChange = (distribution: 'even' | 'frontloaded' | 'backloaded') => {
@@ -254,6 +360,308 @@ const CalendarConfigurationStep: React.FC<CalendarConfigurationStepProps> = ({
           </Alert>
         )}
       </Box>
+
+      {/* Smart Defaults Section */}
+      {smartDefaults && (
+        <Card sx={{ ...ENHANCED_STYLES.card, mb: 3, background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)' }}>
+          <CardContent sx={ENHANCED_STYLES.cardContent}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ 
+                  p: 1.5, 
+                  borderRadius: 2, 
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <AutoAwesomeIcon sx={{ color: 'white', fontSize: 24 }} />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#2c3e50' }}>
+                  Smart Defaults
+                </Typography>
+              </Box>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setShowSmartDefaults(!showSmartDefaults)}
+                startIcon={<LightbulbIcon />}
+                sx={{ 
+                  borderColor: '#667eea', 
+                  color: '#667eea',
+                  '&:hover': { borderColor: '#764ba2', color: '#764ba2' }
+                }}
+              >
+                {showSmartDefaults ? 'Hide' : 'Show'} Suggestions
+              </Button>
+            </Box>
+
+            {showSmartDefaults && (
+              <Box>
+                <Typography variant="body2" color="#666" sx={{ mb: 3 }}>
+                  Based on your strategy data, here are our smart suggestions for optimal calendar configuration:
+                </Typography>
+
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                  <Grid item xs={12} md={3}>
+                    <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.7)', borderRadius: 2, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
+                      <Typography variant="caption" color="#666" display="block">Suggested Calendar Type</Typography>
+                      <Typography variant="body1" fontWeight={600} color="#2c3e50">
+                        {smartDefaults.suggestedCalendarType.charAt(0).toUpperCase() + smartDefaults.suggestedCalendarType.slice(1)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={3}>
+                    <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.7)', borderRadius: 2, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
+                      <Typography variant="caption" color="#666" display="block">Suggested Posts per Week</Typography>
+                      <Typography variant="body1" fontWeight={600} color="#2c3e50">
+                        {smartDefaults.suggestedPostingFrequency}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={3}>
+                    <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.7)', borderRadius: 2, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
+                      <Typography variant="caption" color="#666" display="block">Suggested Duration</Typography>
+                      <Typography variant="body1" fontWeight={600} color="#2c3e50">
+                        {smartDefaults.suggestedDuration} {smartDefaults.suggestedCalendarType === 'weekly' ? 'weeks' : 
+                        smartDefaults.suggestedCalendarType === 'monthly' ? 'months' : 'quarters'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={3}>
+                    <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.7)', borderRadius: 2, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
+                      <Typography variant="caption" color="#666" display="block">Suggested Platforms</Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                        {smartDefaults.suggestedPlatforms.slice(0, 2).map((platform: string, index: number) => (
+                          <Chip 
+                            key={index} 
+                            label={platform} 
+                            size="small" 
+                            sx={{ 
+                              bgcolor: 'rgba(102, 126, 234, 0.1)', 
+                              color: '#667eea',
+                              fontSize: '0.7rem'
+                            }} 
+                          />
+                        ))}
+                        {smartDefaults.suggestedPlatforms.length > 2 && (
+                          <Chip 
+                            label={`+${smartDefaults.suggestedPlatforms.length - 2}`} 
+                            size="small" 
+                            sx={{ 
+                              bgcolor: 'rgba(102, 126, 234, 0.1)', 
+                              color: '#667eea',
+                              fontSize: '0.7rem'
+                            }} 
+                          />
+                        )}
+                      </Box>
+                    </Box>
+                  </Grid>
+                </Grid>
+
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => handleApplySmartDefaults(false)}
+                    startIcon={<AutoAwesomeIcon />}
+                    sx={{ 
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      '&:hover': { background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)' }
+                    }}
+                  >
+                    Apply Smart Defaults
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => handleApplySmartDefaults(true)}
+                    sx={{ 
+                      borderColor: '#667eea', 
+                      color: '#667eea',
+                      '&:hover': { borderColor: '#764ba2', color: '#764ba2' }
+                    }}
+                  >
+                    Apply All Suggestions
+                  </Button>
+                </Box>
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* User Guidance Section */}
+      {userGuidance && (
+        <Card sx={{ ...ENHANCED_STYLES.card, mb: 3, background: 'rgba(255, 248, 220, 0.3)' }}>
+          <CardContent sx={ENHANCED_STYLES.cardContent}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ 
+                p: 1.5, 
+                borderRadius: 2, 
+                background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <LightbulbIcon sx={{ color: 'white', fontSize: 24 }} />
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#2c3e50' }}>
+                Strategy Guidance
+              </Typography>
+            </Box>
+
+            <Grid container spacing={2}>
+              {userGuidance.warnings.length > 0 && (
+                <Grid item xs={12} md={4}>
+                  <Box sx={{ p: 2, bgcolor: 'rgba(255, 193, 7, 0.1)', borderRadius: 2, border: '1px solid rgba(255, 193, 7, 0.3)' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      <WarningIcon sx={{ color: '#f57c00', fontSize: 20 }} />
+                      <Typography variant="subtitle2" fontWeight={600} color="#f57c00">
+                        Warnings ({userGuidance.warnings.length})
+                      </Typography>
+                    </Box>
+                    {userGuidance.warnings.slice(0, 2).map((warning: any, index: number) => (
+                      <Typography key={index} variant="body2" color="#666" sx={{ mb: 0.5 }}>
+                        • {warning.message}
+                      </Typography>
+                    ))}
+                  </Box>
+                </Grid>
+              )}
+
+              {userGuidance.recommendations.length > 0 && (
+                <Grid item xs={12} md={4}>
+                  <Box sx={{ p: 2, bgcolor: 'rgba(76, 175, 80, 0.1)', borderRadius: 2, border: '1px solid rgba(76, 175, 80, 0.3)' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      <LightbulbIcon sx={{ color: '#2e7d32', fontSize: 20 }} />
+                      <Typography variant="subtitle2" fontWeight={600} color="#2e7d32">
+                        Recommendations ({userGuidance.recommendations.length})
+                      </Typography>
+                    </Box>
+                    {userGuidance.recommendations.slice(0, 2).map((rec: any, index: number) => (
+                      <Typography key={index} variant="body2" color="#666" sx={{ mb: 0.5 }}>
+                        • {rec.message}
+                      </Typography>
+                    ))}
+                  </Box>
+                </Grid>
+              )}
+
+              {userGuidance.missingData.length > 0 && (
+                <Grid item xs={12} md={4}>
+                  <Box sx={{ p: 2, bgcolor: 'rgba(33, 150, 243, 0.1)', borderRadius: 2, border: '1px solid rgba(33, 150, 243, 0.3)' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      <HelpIcon sx={{ color: '#1976d2', fontSize: 20 }} />
+                      <Typography variant="subtitle2" fontWeight={600} color="#1976d2">
+                        Missing Data ({userGuidance.missingData.length})
+                      </Typography>
+                    </Box>
+                    {userGuidance.missingData.slice(0, 2).map((missing: any, index: number) => (
+                      <Typography key={index} variant="body2" color="#666" sx={{ mb: 0.5 }}>
+                        • {missing.message}
+                      </Typography>
+                    ))}
+                  </Box>
+                </Grid>
+              )}
+
+              {/* Show success state when no issues */}
+              {userGuidance.warnings.length === 0 && userGuidance.recommendations.length === 0 && userGuidance.missingData.length === 0 && (
+                <Grid item xs={12}>
+                  <Box sx={{ p: 2, bgcolor: 'rgba(76, 175, 80, 0.1)', borderRadius: 2, border: '1px solid rgba(76, 175, 80, 0.3)', textAlign: 'center' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1 }}>
+                      <CheckCircleIcon sx={{ color: '#2e7d32', fontSize: 20 }} />
+                      <Typography variant="subtitle2" fontWeight={600} color="#2e7d32">
+                        Strategy Analysis Complete
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" color="#666">
+                      Your strategy data is comprehensive and ready for calendar generation. No issues or missing data detected.
+                    </Typography>
+                  </Box>
+                </Grid>
+              )}
+            </Grid>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Transparency Indicators */}
+      {transparencyIndicators && (
+        <Card sx={{ ...ENHANCED_STYLES.card, mb: 3, background: 'rgba(240, 248, 255, 0.3)' }}>
+          <CardContent sx={ENHANCED_STYLES.cardContent}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ 
+                p: 1.5, 
+                borderRadius: 2, 
+                background: 'linear-gradient(135deg, #2196f3 0%, #1976d2 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <TrendingUpIcon sx={{ color: 'white', fontSize: 24 }} />
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#2c3e50' }}>
+                Strategy Integration Status
+              </Typography>
+            </Box>
+
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.7)', borderRadius: 2 }}>
+                  <Typography variant="subtitle2" fontWeight={600} color="#2c3e50" gutterBottom>
+                    Integration Level
+                  </Typography>
+                  <Chip 
+                    label={transparencyIndicators.integrationStatus.integrationLevel.toUpperCase()} 
+                    color={
+                      transparencyIndicators.integrationStatus.integrationLevel === 'full' ? 'success' :
+                      transparencyIndicators.integrationStatus.integrationLevel === 'enhanced' ? 'primary' :
+                      transparencyIndicators.integrationStatus.integrationLevel === 'basic' ? 'warning' : 'default'
+                    }
+                    size="small"
+                  />
+                  {transparencyIndicators.integrationStatus.integrationBenefits.length > 0 && (
+                    <Typography variant="body2" color="#666" sx={{ mt: 1 }}>
+                      {transparencyIndicators.integrationStatus.integrationBenefits[0]}
+                    </Typography>
+                  )}
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.7)', borderRadius: 2 }}>
+                  <Typography variant="subtitle2" fontWeight={600} color="#2c3e50" gutterBottom>
+                    Strategy Alignment
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={transparencyIndicators.strategyAlignment.alignmentScore} 
+                      sx={{ 
+                        flexGrow: 1, 
+                        height: 8, 
+                        borderRadius: 4,
+                        bgcolor: 'rgba(0, 0, 0, 0.1)',
+                        '& .MuiLinearProgress-bar': {
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                        }
+                      }} 
+                    />
+                    <Typography variant="body2" color="#666">
+                      {transparencyIndicators.strategyAlignment.alignmentScore}%
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="#666">
+                    {transparencyIndicators.strategyAlignment.isAligned ? 'Strategy aligned' : 'Strategy not aligned'}
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Basic Calendar Setup */}
       <Card sx={{ ...ENHANCED_STYLES.card, mb: 3 }}>

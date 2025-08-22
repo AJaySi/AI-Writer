@@ -58,7 +58,8 @@ import {
   Insights as InsightsIcon,
   Assessment as AssessmentIcon,
   Campaign as CampaignIcon,
-  Speed as SpeedIcon
+  Speed as SpeedIcon,
+  AutoAwesome as AutoAwesomeIcon
 } from '@mui/icons-material';
 import { useContentPlanningStore } from '../../../stores/contentPlanningStore';
 import { contentPlanningApi } from '../../../services/contentPlanningApi';
@@ -101,7 +102,8 @@ const CalendarTab: React.FC = () => {
     contentRepurposing,
     aiInsights,
     calendarGenerationError,
-    dataLoading
+    dataLoading,
+    calendarGenerationLoading
   } = useContentPlanningStore();
   
   const [tabValue, setTabValue] = useState(0);
@@ -257,6 +259,226 @@ const CalendarTab: React.FC = () => {
     }
   };
 
+  const renderGeneratedCalendar = () => {
+    if (!generatedCalendar) {
+      return (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <AutoAwesomeIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No AI-generated calendar available
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Generate a calendar using the Calendar Wizard to see AI-powered content recommendations
+          </Typography>
+        </Box>
+      );
+    }
+
+    return (
+      <Grid container spacing={3}>
+        {/* Calendar Overview */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3, mb: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              <AutoAwesomeIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+              AI-Generated Content Calendar
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+              <Chip label={`Type: ${generatedCalendar.calendar_type || 'Monthly'}`} variant="outlined" />
+              <Chip label={`Industry: ${generatedCalendar.industry || 'Technology'}`} variant="outlined" />
+              <Chip label={`Business Size: ${generatedCalendar.business_size || 'SME'}`} variant="outlined" />
+            </Box>
+            {generatedCalendar.metadata && (
+              <Typography variant="body2" color="text.secondary">
+                Generated: {new Date(generatedCalendar.metadata.generated_at).toLocaleString()}
+              </Typography>
+            )}
+          </Paper>
+        </Grid>
+
+        {/* Daily Schedule */}
+        {generatedCalendar.daily_schedule && generatedCalendar.daily_schedule.length > 0 && (
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                <ScheduleIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                Daily Schedule
+              </Typography>
+              <List>
+                {generatedCalendar.daily_schedule.map((item: any, index: number) => (
+                  <ListItem key={index} divider>
+                    <ListItemIcon>
+                      <EventIcon />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.topic || item.content_type}
+                      secondary={`${item.platform} • ${item.content_type} • ${item.estimated_engagement}% engagement`}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Weekly Themes */}
+        {generatedCalendar.weekly_themes && generatedCalendar.weekly_themes.length > 0 && (
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                <TimelineIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                Weekly Themes
+              </Typography>
+              <List>
+                {generatedCalendar.weekly_themes.map((theme: any, index: number) => (
+                  <ListItem key={index} divider>
+                    <ListItemIcon>
+                      <LightbulbIcon />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={`Week ${theme.week}: ${theme.theme}`}
+                      secondary={`${theme.content_count} pieces • ${theme.platforms?.join(', ')}`}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Content Recommendations */}
+        {generatedCalendar.content_recommendations && generatedCalendar.content_recommendations.length > 0 && (
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                <TrendingIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                Content Recommendations
+              </Typography>
+              <List>
+                {generatedCalendar.content_recommendations.map((rec: any, index: number) => (
+                  <ListItem key={index} divider>
+                    <ListItemIcon>
+                      <CheckCircleIcon />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={`${rec.type}: ${rec.topic}`}
+                      secondary={`Priority: ${rec.priority} • ROI: ${(rec.estimated_roi * 100).toFixed(0)}%`}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Performance Predictions */}
+        {generatedCalendar.performance_predictions && (
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                <AnalyticsIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                Performance Predictions
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Estimated Engagement</Typography>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={generatedCalendar.performance_predictions.estimated_engagement || 0} 
+                    sx={{ height: 8, borderRadius: 4 }}
+                  />
+                  <Typography variant="body2">{generatedCalendar.performance_predictions.estimated_engagement || 0}%</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Estimated Reach</Typography>
+                  <Typography variant="h6">{generatedCalendar.performance_predictions.estimated_reach || 0}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Estimated Conversions</Typography>
+                  <Typography variant="h6">{generatedCalendar.performance_predictions.estimated_conversions || 0}</Typography>
+                </Box>
+              </Box>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* AI Insights */}
+        {generatedCalendar.ai_insights && generatedCalendar.ai_insights.length > 0 && (
+          <Grid item xs={12}>
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                <PsychologyIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                AI Insights
+              </Typography>
+              <Grid container spacing={2}>
+                {generatedCalendar.ai_insights.map((insight: any, index: number) => (
+                  <Grid item xs={12} md={4} key={index}>
+                    <Card variant="outlined">
+                      <CardContent>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          Confidence: {(insight.confidence * 100).toFixed(0)}%
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                          {insight.insight}
+                        </Typography>
+                        <Typography variant="body2" color="primary">
+                          Action: {insight.action}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Strategy Data */}
+        {generatedCalendar.strategy_data && Object.keys(generatedCalendar.strategy_data).length > 0 && (
+          <Grid item xs={12}>
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                <BusinessIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                Strategy Integration
+              </Typography>
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography>Strategy Analysis & Quality Indicators</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Grid container spacing={2}>
+                    {generatedCalendar.strategy_analysis && (
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="subtitle2" gutterBottom>Strategy Analysis</Typography>
+                        <Typography variant="body2">
+                          Completion: {generatedCalendar.strategy_analysis.completion_percentage || 0}%
+                        </Typography>
+                        <Typography variant="body2">
+                          Filled Fields: {generatedCalendar.strategy_analysis.filled_fields || 0}/{generatedCalendar.strategy_analysis.total_fields || 30}
+                        </Typography>
+                      </Grid>
+                    )}
+                    {generatedCalendar.quality_indicators && (
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="subtitle2" gutterBottom>Quality Indicators</Typography>
+                        <Typography variant="body2">
+                          Overall Quality: {generatedCalendar.quality_indicators.overall_quality_score || 0}%
+                        </Typography>
+                        <Typography variant="body2">
+                          Strategic Alignment: {generatedCalendar.quality_indicators.strategic_alignment || 0}%
+                        </Typography>
+                      </Grid>
+                    )}
+                  </Grid>
+                </AccordionDetails>
+              </Accordion>
+            </Paper>
+          </Grid>
+        )}
+      </Grid>
+    );
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -294,9 +516,19 @@ const CalendarTab: React.FC = () => {
         </Alert>
       )}
 
+      {calendarGenerationLoading && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <CircularProgress size={20} />
+            <Typography>Generating AI-powered content calendar...</Typography>
+          </Box>
+        </Alert>
+      )}
+
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
           <Tab label="Calendar Events" icon={<CalendarIcon />} iconPosition="start" />
+          <Tab label="AI-Generated Calendar" icon={<AutoAwesomeIcon />} iconPosition="start" />
         </Tabs>
       </Box>
 
@@ -386,6 +618,17 @@ const CalendarTab: React.FC = () => {
               </Paper>
             </Grid>
           </Grid>
+        )}
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={1}>
+        {/* AI-Generated Calendar Tab */}
+        {dataLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          renderGeneratedCalendar()
         )}
       </TabPanel>
 
