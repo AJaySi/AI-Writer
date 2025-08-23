@@ -53,6 +53,7 @@ from api.component_logic import router as component_logic_router
 from api.content_planning.api.router import router as content_planning_router
 from api.user_data import router as user_data_router
 from api.social_connections import router as social_connections_router
+from api.gsc_website_audit import router as gsc_audit_router
 
 # Import security middleware
 from middleware.security_middleware import SecurityMiddleware, OAuth2SecurityMiddleware
@@ -391,6 +392,7 @@ app.include_router(user_data_router)
 
 # Include social connections router
 app.include_router(social_connections_router)
+app.include_router(gsc_audit_router)
 
 # SEO Dashboard endpoints
 @app.get("/api/seo-dashboard/data")

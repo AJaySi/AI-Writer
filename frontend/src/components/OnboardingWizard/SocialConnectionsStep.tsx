@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import WebsiteAuditDashboard from '../GSCWebsiteAudit/WebsiteAuditDashboard';
 import {
   Box,
   Button,
@@ -88,6 +89,7 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
   const [testingConnection, setTestingConnection] = useState<number | null>(null);
   const [connectionDetails, setConnectionDetails] = useState<any>(null);
   const [showBenefits, setShowBenefits] = useState<string | null>(null);
+  const [showWebsiteAudit, setShowWebsiteAudit] = useState(false);
 
   useEffect(() => {
     updateHeaderContent({
@@ -500,14 +502,24 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
                     </IconButton>
                   </Tooltip>
                   {platform.id === 'google_search_console' && (
-                    <Tooltip title="View GSC Demo">
-                      <IconButton
-                        color="primary"
-                        onClick={showGSCDemoData}
-                      >
-                        <AnalyticsIcon />
-                      </IconButton>
-                    </Tooltip>
+                    <>
+                      <Tooltip title="View GSC Demo">
+                        <IconButton
+                          color="primary"
+                          onClick={showGSCDemoData}
+                        >
+                          <AnalyticsIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Website Audit">
+                        <IconButton
+                          color="secondary"
+                          onClick={() => setShowWebsiteAudit(true)}
+                        >
+                          <SpeedIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </>
                   )}
                   <Tooltip title="View Benefits">
                     <IconButton
@@ -782,6 +794,27 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
 
       {/* Benefits Modal */}
       {renderBenefitsModal()}
+
+      {/* Website Audit Modal */}
+      <Dialog 
+        open={showWebsiteAudit} 
+        onClose={() => setShowWebsiteAudit(false)}
+        maxWidth="xl"
+        fullWidth
+        fullScreen
+      >
+        <DialogTitle>
+          <Typography variant="h5">
+            Google Search Console Website Audit
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <WebsiteAuditDashboard />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowWebsiteAudit(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
