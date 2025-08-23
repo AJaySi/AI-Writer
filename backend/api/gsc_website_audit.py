@@ -32,6 +32,8 @@ class AuditRequest(BaseModel):
     start_date: str = Field(..., description="Start date for analysis (YYYY-MM-DD)")
     end_date: str = Field(..., description="End date for analysis (YYYY-MM-DD)")
     include_comparisons: bool = Field(True, description="Include YoY/MoM comparisons")
+    include_trends: bool = Field(True, description="Include Google Trends analysis")
+    include_ai_insights: bool = Field(True, description="Include AI-generated insights")
     
     class Config:
         schema_extra = {
@@ -39,7 +41,9 @@ class AuditRequest(BaseModel):
                 "site_url": "https://example.com/",
                 "start_date": "2024-01-01",
                 "end_date": "2024-01-31",
-                "include_comparisons": True
+                "include_comparisons": True,
+                "include_trends": True,
+                "include_ai_insights": True
             }
         }
 
@@ -47,12 +51,14 @@ class QuickAuditRequest(BaseModel):
     """Request model for quick audit with preset date ranges."""
     site_url: str = Field(..., description="Website URL to audit")
     date_range: str = Field("last_30_days", description="Preset date range")
+    analysis_type: str = Field("comprehensive", description="Analysis depth: 'basic', 'trends', 'comprehensive'")
     
     class Config:
         schema_extra = {
             "example": {
                 "site_url": "https://example.com/",
-                "date_range": "last_30_days"
+                "date_range": "last_30_days",
+                "analysis_type": "comprehensive"
             }
         }
 
@@ -146,7 +152,9 @@ async def start_comprehensive_audit(
             start_date=audit_request.start_date,
             end_date=audit_request.end_date,
             db=db,
-            include_comparisons=audit_request.include_comparisons
+            include_comparisons=audit_request.include_comparisons,
+            include_trends=audit_request.include_trends,
+            include_ai_insights=audit_request.include_ai_insights
         )
         
         api_logger.info_connection_event(
@@ -209,20 +217,22 @@ async def quick_website_audit(
         days_back = date_ranges[audit_request.date_range]
         start_date = end_date - timedelta(days=days_back)
         
-        # Convert to audit request format
-        full_audit_request = AuditRequest(
+        # Use the enhanced audit method
+        connection = await _get_gsc_connection(user_id, db)
+        
+        report = await gsc_audit_service.conduct_enhanced_audit(
+            connection=connection,
             site_url=audit_request.site_url,
             start_date=start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d'),
-            include_comparisons=days_back >= 30  # Only include comparisons for longer periods
+            db=db,
+            analysis_type=audit_request.analysis_type
         )
         
-        # Use the main audit endpoint
-        return await start_comprehensive_audit(
-            audit_request=full_audit_request,
-            background_tasks=BackgroundTasks(),
-            user_id=user_id,
-            db=db
+        return AuditResponse(
+            success=True,
+            message="Quick audit completed successfully",
+            report=report.to_dict()
         )
         
     except HTTPException:
@@ -667,14 +677,164 @@ async def _get_gsc_connection(user_id: int, db: Session) -> SocialConnection:
     
     return connection
 
+@router.post("/ai-insights")
+async def get_ai_insights(
+    audit_request: AuditRequest,
+    user_id: int = Query(default=1),
+    db: Session = Depends(get_db)
+):
+    """
+    Get AI-powered insights for a website using combined GSC and Google Trends data.
+    
+    This endpoint provides intelligent analysis including:
+    - Strategic content recommendations
+    - Trend-based optimization opportunities
+    - Performance forecasting
+    - Risk assessment
+    - Actionable improvement plans
+    """
+    try:
+        connection = await _get_gsc_connection(user_id, db)
+        
+        # Conduct comprehensive audit with AI insights
+        report = await gsc_audit_service.conduct_comprehensive_audit(
+            connection=connection,
+            site_url=audit_request.site_url,
+            start_date=audit_request.start_date,
+            end_date=audit_request.end_date,
+            db=db,
+            include_comparisons=True,
+            include_trends=True,
+            include_ai_insights=True
+        )
+        
+        if not report.ai_analysis:
+            raise HTTPException(
+                status_code=500,
+                detail="AI analysis could not be generated"
+            )
+        
+        return {
+            'success': True,
+            'site_url': audit_request.site_url,
+            'ai_insights': report.ai_analysis.to_dict()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"AI insights generation failed: {str(e)}"
+        )
+
+@router.post("/trends-analysis")
+async def get_trends_analysis(
+    site_url: str = Query(..., description="Website URL"),
+    queries: List[str] = Query(..., description="Queries to analyze"),
+    timeframe: str = Query("today 12-m", description="Analysis timeframe"),
+    user_id: int = Query(default=1),
+    db: Session = Depends(get_db)
+):
+    """
+    Get Google Trends analysis for specific queries.
+    
+    Provides detailed trends analysis including:
+    - Search interest over time
+    - Related and rising queries
+    - Seasonal patterns
+    - Geographic distribution
+    - Query comparisons
+    """
+    try:
+        from services.google_trends_service import google_trends_service
+        
+        # Validate connection
+        await _get_gsc_connection(user_id, db)
+        
+        # Get trends data
+        trends_data = await google_trends_service.get_trends_for_queries(
+            queries=queries,
+            timeframe=timeframe
+        )
+        
+        # Get seasonal insights
+        seasonal_insights = await google_trends_service.get_seasonal_insights(
+            queries=queries[:5],  # Limit for efficiency
+            timeframe='today 5-y'
+        )
+        
+        # Get query comparisons
+        comparison = None
+        if len(queries) >= 2:
+            comparison = await google_trends_service.compare_queries(
+                queries=queries[:5],  # Limit to 5 for comparison
+                timeframe=timeframe
+            )
+        
+        return {
+            'success': True,
+            'site_url': site_url,
+            'timeframe': timeframe,
+            'trends_data': [trend.to_dict() for trend in trends_data],
+            'seasonal_insights': [insight.to_dict() for insight in seasonal_insights],
+            'query_comparison': comparison.to_dict() if comparison else None,
+            'analysis_summary': {
+                'queries_analyzed': len(queries),
+                'trends_found': len(trends_data),
+                'seasonal_patterns': len(seasonal_insights),
+                'rising_opportunities': sum(len(trend.rising_queries) for trend in trends_data)
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Trends analysis failed: {str(e)}"
+        )
+
+@router.get("/trending-topics")
+async def get_trending_topics(
+    geo: str = Query("US", description="Geographic region"),
+    category: str = Query("all", description="Trend category"),
+    user_id: int = Query(default=1),
+    db: Session = Depends(get_db)
+):
+    """Get current trending topics and searches from Google Trends."""
+    try:
+        from services.google_trends_service import google_trends_service
+        
+        # Validate connection
+        await _get_gsc_connection(user_id, db)
+        
+        trending_topics = await google_trends_service.get_trending_topics(
+            geo=geo,
+            category=category
+        )
+        
+        return {
+            'success': True,
+            'region': geo,
+            'category': category,
+            'trending_topics': trending_topics,
+            'total_topics': len(trending_topics),
+            'timestamp': datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not fetch trending topics: {str(e)}"
+        )
+
 # Health check endpoint
 @router.get("/health")
 async def audit_service_health():
     """Check the health of the audit service."""
     return {
-        'service': 'GSC Website Audit',
+        'service': 'GSC Website Audit Enhanced',
         'status': 'operational',
-        'version': '1.0.0',
+        'version': '2.0.0',
         'features': [
             'Comprehensive website audits',
             'Page-level analysis',
@@ -682,6 +842,20 @@ async def audit_service_health():
             'Content clustering',
             'Performance trends',
             'YoY/MoM comparisons',
-            'Technical signals'
+            'Technical signals',
+            'Google Trends integration',
+            'AI-powered insights',
+            'Seasonal pattern analysis',
+            'Query trend comparisons',
+            'Performance forecasting',
+            'Strategic content recommendations'
+        ],
+        'ai_capabilities': [
+            'Gemini-powered analysis',
+            'Structured JSON responses',
+            'Content strategy generation',
+            'Performance forecasting',
+            'Risk assessment',
+            'Action plan prioritization'
         ]
     }

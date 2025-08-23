@@ -33,6 +33,8 @@ from sqlalchemy.orm import Session
 from models.social_connections import SocialConnection
 from services.oauth_service import oauth_service
 from services.logging_service import testing_logger
+from services.google_trends_service import google_trends_service, TrendData, SeasonalInsight, TrendComparison
+from services.ai_insights_service import ai_insights_service, CombinedAnalysis
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +155,12 @@ class AuditReport:
     yoy_comparison: Optional[Dict[str, Any]] = None
     mom_comparison: Optional[Dict[str, Any]] = None
     
+    # Enhanced with Google Trends and AI insights
+    trends_data: List[TrendData] = None
+    seasonal_insights: List[SeasonalInsight] = None
+    trend_comparisons: List[TrendComparison] = None
+    ai_analysis: Optional[CombinedAnalysis] = None
+    
     def to_dict(self) -> Dict[str, Any]:
         """Convert report to dictionary for API response."""
         return {
@@ -183,7 +191,13 @@ class AuditReport:
                 'performance_trends': self.performance_trends,
                 'yoy_comparison': self.yoy_comparison,
                 'mom_comparison': self.mom_comparison
-            }
+            },
+            'google_trends': {
+                'trends_data': [t.to_dict() for t in self.trends_data] if self.trends_data else [],
+                'seasonal_insights': [s.to_dict() for s in self.seasonal_insights] if self.seasonal_insights else [],
+                'trend_comparisons': [c.to_dict() for c in self.trend_comparisons] if self.trend_comparisons else []
+            },
+            'ai_insights': self.ai_analysis.to_dict() if self.ai_analysis else None
         }
 
 class GSCWebsiteAuditService:
@@ -213,7 +227,9 @@ class GSCWebsiteAuditService:
         start_date: str,
         end_date: str,
         db: Session,
-        include_comparisons: bool = True
+        include_comparisons: bool = True,
+        include_trends: bool = True,
+        include_ai_insights: bool = True
     ) -> AuditReport:
         """
         Conduct a comprehensive website audit using GSC data.
@@ -225,6 +241,8 @@ class GSCWebsiteAuditService:
             end_date: End date for analysis (YYYY-MM-DD)
             db: Database session
             include_comparisons: Whether to include YoY/MoM comparisons
+            include_trends: Whether to include Google Trends analysis
+            include_ai_insights: Whether to include AI-generated insights
             
         Returns:
             Complete audit report with all insights and recommendations
@@ -279,6 +297,56 @@ class GSCWebsiteAuditService:
             # Calculate summary metrics
             summary_metrics = self._calculate_summary_metrics(page_data, query_data)
             
+            # Enhanced Google Trends Analysis
+            trends_data = []
+            seasonal_insights = []
+            trend_comparisons = []
+            ai_analysis = None
+            
+            if include_trends:
+                logger.info("Collecting Google Trends data...")
+                trends_data, seasonal_insights, trend_comparisons = await self._get_trends_analysis(
+                    query_analysis['all_queries'][:20], page_analysis['all_pages'][:20]
+                )
+            
+            # AI-powered insights
+            if include_ai_insights and (trends_data or not include_trends):
+                logger.info("Generating AI insights...")
+                try:
+                    # Create a temporary report for AI analysis
+                    temp_report = AuditReport(
+                        site_url=site_url,
+                        audit_date=datetime.utcnow(),
+                        date_range={"start": start_date, "end": end_date},
+                        total_pages=len(page_analysis['all_pages']),
+                        total_queries=len(query_analysis['all_queries']),
+                        total_impressions=summary_metrics['total_impressions'],
+                        total_clicks=summary_metrics['total_clicks'],
+                        average_ctr=summary_metrics['average_ctr'],
+                        average_position=summary_metrics['average_position'],
+                        top_performers=page_analysis['top_performers'],
+                        underperformers=page_analysis['underperformers'],
+                        low_hanging_fruit=page_analysis['low_hanging_fruit'],
+                        striking_distance=query_analysis['striking_distance'],
+                        content_decay=page_analysis['content_decay'],
+                        query_opportunities=query_analysis['opportunities'],
+                        content_clusters=content_clusters,
+                        technical_issues=technical_issues,
+                        performance_trends=trends,
+                        yoy_comparison=yoy_comparison,
+                        mom_comparison=mom_comparison
+                    )
+                    
+                    ai_analysis = await ai_insights_service.generate_comprehensive_insights(
+                        gsc_report=temp_report,
+                        trends_data=trends_data,
+                        seasonal_insights=seasonal_insights,
+                        trend_comparisons=trend_comparisons
+                    )
+                except Exception as e:
+                    logger.warning(f"AI insights generation failed: {e}")
+                    ai_analysis = None
+            
             # Generate comprehensive report
             report = AuditReport(
                 site_url=site_url,
@@ -308,7 +376,13 @@ class GSCWebsiteAuditService:
                 # Trends and comparisons
                 performance_trends=trends,
                 yoy_comparison=yoy_comparison,
-                mom_comparison=mom_comparison
+                mom_comparison=mom_comparison,
+                
+                # Enhanced insights
+                trends_data=trends_data,
+                seasonal_insights=seasonal_insights,
+                trend_comparisons=trend_comparisons,
+                ai_analysis=ai_analysis
             )
             
             logger.info(f"Audit completed successfully for {site_url}")
@@ -1191,6 +1265,105 @@ class GSCWebsiteAuditService:
             'average_ctr': round(avg_ctr, 2),
             'average_position': round(avg_position, 1)
         }
+
+    async def _get_trends_analysis(
+        self,
+        top_queries: List[QueryPerformance],
+        top_pages: List[PagePerformance]
+    ) -> Tuple[List[TrendData], List[SeasonalInsight], List[TrendComparison]]:
+        """
+        Get comprehensive Google Trends analysis for top queries.
+        
+        Args:
+            top_queries: Top performing queries from GSC
+            top_pages: Top performing pages from GSC
+            
+        Returns:
+            Tuple of (trends_data, seasonal_insights, trend_comparisons)
+        """
+        try:
+            # Extract queries for trends analysis
+            query_strings = [q.query for q in top_queries[:15]]  # Limit for API efficiency
+            
+            if not query_strings:
+                return [], [], []
+            
+            # Get trends data for individual queries
+            logger.info(f"Analyzing trends for {len(query_strings)} queries")
+            trends_data = await google_trends_service.get_trends_for_queries(
+                queries=query_strings,
+                timeframe='today 12-m'
+            )
+            
+            # Get seasonal insights (longer timeframe)
+            seasonal_insights = await google_trends_service.get_seasonal_insights(
+                queries=query_strings[:10],  # Limit for seasonal analysis
+                timeframe='today 5-y'
+            )
+            
+            # Compare top queries
+            trend_comparisons = []
+            if len(query_strings) >= 2:
+                # Compare top 5 queries in batches
+                for i in range(0, min(len(query_strings), 10), 5):
+                    batch = query_strings[i:i+5]
+                    if len(batch) >= 2:
+                        comparison = await google_trends_service.compare_queries(
+                            queries=batch,
+                            timeframe='today 12-m'
+                        )
+                        if comparison:
+                            trend_comparisons.append(comparison)
+            
+            logger.info(f"Trends analysis completed: {len(trends_data)} trends, {len(seasonal_insights)} seasonal patterns, {len(trend_comparisons)} comparisons")
+            
+            return trends_data, seasonal_insights, trend_comparisons
+            
+        except Exception as e:
+            logger.error(f"Error in trends analysis: {e}")
+            testing_logger.error_platform_api(
+                "google_trends", "trends_analysis", e,
+                {"queries_count": len(top_queries)}
+            )
+            return [], [], []
+
+    async def conduct_enhanced_audit(
+        self,
+        connection: SocialConnection,
+        site_url: str,
+        start_date: str,
+        end_date: str,
+        db: Session,
+        analysis_type: str = "comprehensive"
+    ) -> AuditReport:
+        """
+        Conduct an enhanced audit with configurable analysis depth.
+        
+        Args:
+            connection: GSC connection object
+            site_url: Website URL to audit
+            start_date: Start date for analysis
+            end_date: End date for analysis
+            db: Database session
+            analysis_type: Type of analysis ('basic', 'trends', 'comprehensive')
+            
+        Returns:
+            Enhanced audit report with appropriate level of analysis
+        """
+        include_comparisons = analysis_type in ['trends', 'comprehensive']
+        include_trends = analysis_type in ['trends', 'comprehensive']
+        include_ai_insights = analysis_type == 'comprehensive'
+        
+        return await self.conduct_comprehensive_audit(
+            connection=connection,
+            site_url=site_url,
+            start_date=start_date,
+            end_date=end_date,
+            db=db,
+            include_comparisons=include_comparisons,
+            include_trends=include_trends,
+            include_ai_insights=include_ai_insights
+        )
 
 # Global service instance
 gsc_audit_service = GSCWebsiteAuditService()

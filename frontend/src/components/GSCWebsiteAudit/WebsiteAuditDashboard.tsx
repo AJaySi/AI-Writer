@@ -86,6 +86,69 @@ interface ContentCluster {
   recommendations: string[];
 }
 
+interface TrendData {
+  query: string;
+  interest_over_time: Array<{date: string; interest: number}>;
+  average_interest: number;
+  peak_interest: number;
+  trend_direction: string;
+  seasonal_pattern: string;
+  related_queries: Array<{query: string; value: number}>;
+  rising_queries: Array<{query: string; value: number}>;
+  geographic_data: Array<{country: string; country_name: string; interest: number}>;
+}
+
+interface SeasonalInsight {
+  query: string;
+  peak_months: string[];
+  low_months: string[];
+  seasonality_score: number;
+  pattern_type: string;
+  recommendations: string[];
+}
+
+interface AIInsight {
+  insight_type: string;
+  title: string;
+  description: string;
+  priority: string;
+  confidence_score: number;
+  action_items: string[];
+  expected_impact: string;
+  timeframe: string;
+}
+
+interface ContentStrategy {
+  strategy_type: string;
+  primary_keywords: string[];
+  content_themes: string[];
+  seasonal_calendar: {[key: string]: string[]};
+  competitive_gaps: string[];
+  trending_opportunities: string[];
+  recommendations: string[];
+}
+
+interface CombinedAnalysis {
+  analysis_date: string;
+  site_url: string;
+  executive_summary: string;
+  key_insights: AIInsight[];
+  content_strategy: ContentStrategy;
+  performance_forecast: any;
+  action_plan: Array<{
+    order: number;
+    title: string;
+    description: string;
+    action_items: string[];
+    priority: string;
+    timeframe: string;
+    expected_impact: string;
+    confidence_score: number;
+    category: string;
+  }>;
+  risk_assessment: any;
+}
+
 interface AuditReport {
   site_url: string;
   audit_date: string;
@@ -118,6 +181,12 @@ interface AuditReport {
     yoy_comparison?: any;
     mom_comparison?: any;
   };
+  google_trends?: {
+    trends_data: TrendData[];
+    seasonal_insights: SeasonalInsight[];
+    trend_comparisons: any[];
+  };
+  ai_insights?: CombinedAnalysis;
 }
 
 const WebsiteAuditDashboard: React.FC = () => {
@@ -127,6 +196,7 @@ const WebsiteAuditDashboard: React.FC = () => {
   const [report, setReport] = useState<AuditReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
+  const [analysisType, setAnalysisType] = useState('comprehensive');
   const [selectedPage, setSelectedPage] = useState<string | null>(null);
   const [selectedQuery, setSelectedQuery] = useState<string | null>(null);
   const [pageAnalysis, setPageAnalysis] = useState<any>(null);
@@ -157,7 +227,8 @@ const WebsiteAuditDashboard: React.FC = () => {
         },
         body: JSON.stringify({
           site_url: siteUrl,
-          date_range: dateRange
+          date_range: dateRange,
+          analysis_type: analysisType
         })
       });
 
@@ -634,6 +705,392 @@ const WebsiteAuditDashboard: React.FC = () => {
     </Box>
   );
 
+  const renderGoogleTrendsTab = () => (
+    <Box>
+      <Typography variant="h5" gutterBottom>Google Trends Analysis</Typography>
+      
+      {report?.google_trends && (
+        <Grid container spacing={3}>
+          {/* Trends Data */}
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Search Interest Trends
+                </Typography>
+                <Grid container spacing={2}>
+                  {report.google_trends.trends_data.map((trend, index) => (
+                    <Grid item xs={12} md={6} lg={4} key={index}>
+                      <Paper sx={{ p: 2, height: '100%' }}>
+                        <Typography variant="subtitle1" gutterBottom>
+                          "{trend.query}"
+                        </Typography>
+                        
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2">
+                            Avg Interest: <strong>{trend.average_interest}</strong>
+                          </Typography>
+                          <Chip 
+                            label={trend.trend_direction} 
+                            color={
+                              trend.trend_direction === 'rising' ? 'success' : 
+                              trend.trend_direction === 'declining' ? 'error' : 'default'
+                            }
+                            size="small"
+                          />
+                        </Box>
+                        
+                        <Typography variant="body2" color="textSecondary" gutterBottom>
+                          Peak: {trend.peak_interest} | Pattern: {trend.seasonal_pattern}
+                        </Typography>
+                        
+                        {trend.rising_queries.length > 0 && (
+                          <Box sx={{ mt: 2 }}>
+                            <Typography variant="body2" fontWeight="bold">Rising Queries:</Typography>
+                            {trend.rising_queries.slice(0, 3).map((rising, idx) => (
+                              <Chip 
+                                key={idx}
+                                label={rising.query}
+                                size="small"
+                                variant="outlined"
+                                sx={{ mr: 0.5, mb: 0.5 }}
+                              />
+                            ))}
+                          </Box>
+                        )}
+                        
+                        {trend.geographic_data.length > 0 && (
+                          <Box sx={{ mt: 2 }}>
+                            <Typography variant="body2" fontWeight="bold">Top Regions:</Typography>
+                            {trend.geographic_data.slice(0, 3).map((geo, idx) => (
+                              <Typography key={idx} variant="body2">
+                                {geo.country_name}: {geo.interest}
+                              </Typography>
+                            ))}
+                          </Box>
+                        )}
+                      </Paper>
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Seasonal Insights */}
+          {report.google_trends.seasonal_insights.length > 0 && (
+            <Grid item xs={12}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Seasonal Patterns
+                  </Typography>
+                  <Grid container spacing={2}>
+                    {report.google_trends.seasonal_insights.map((insight, index) => (
+                      <Grid item xs={12} md={6} key={index}>
+                        <Paper sx={{ p: 2 }}>
+                          <Typography variant="subtitle1" gutterBottom>
+                            "{insight.query}"
+                          </Typography>
+                          
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="body2" sx={{ mr: 1 }}>
+                              Seasonality Score: 
+                            </Typography>
+                            <LinearProgress 
+                              variant="determinate" 
+                              value={Math.min(insight.seasonality_score * 50, 100)}
+                              sx={{ flexGrow: 1, mr: 1 }}
+                            />
+                            <Typography variant="body2">
+                              {insight.seasonality_score.toFixed(2)}
+                            </Typography>
+                          </Box>
+                          
+                          <Typography variant="body2" gutterBottom>
+                            Pattern: <Chip label={insight.pattern_type} size="small" />
+                          </Typography>
+                          
+                          <Typography variant="body2" gutterBottom>
+                            <strong>Peak Months:</strong> {insight.peak_months.join(', ')}
+                          </Typography>
+                          
+                          <Typography variant="body2" gutterBottom>
+                            <strong>Low Months:</strong> {insight.low_months.join(', ')}
+                          </Typography>
+                          
+                          <Accordion>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                              <Typography variant="body2">Recommendations</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                              <List dense>
+                                {insight.recommendations.map((rec, recIdx) => (
+                                  <ListItem key={recIdx} disablePadding>
+                                    <ListItemText primary={rec} />
+                                  </ListItem>
+                                ))}
+                              </List>
+                            </AccordionDetails>
+                          </Accordion>
+                        </Paper>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+          )}
+        </Grid>
+      )}
+    </Box>
+  );
+
+  const renderAIInsightsTab = () => (
+    <Box>
+      <Typography variant="h5" gutterBottom>AI-Powered Insights</Typography>
+      
+      {report?.ai_insights && (
+        <Grid container spacing={3}>
+          {/* Executive Summary */}
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Executive Summary
+                </Typography>
+                <Typography variant="body1">
+                  {report.ai_insights.executive_summary}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Key Insights */}
+          <Grid item xs={12} md={8}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Key Insights & Recommendations
+                </Typography>
+                {report.ai_insights.key_insights.map((insight, index) => (
+                  <Accordion key={index} sx={{ mb: 1 }}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                        <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
+                          {insight.title}
+                        </Typography>
+                        <Chip 
+                          label={insight.priority} 
+                          color={
+                            insight.priority === 'high' ? 'error' : 
+                            insight.priority === 'medium' ? 'warning' : 'success'
+                          }
+                          size="small"
+                          sx={{ mr: 1 }}
+                        />
+                        <Chip 
+                          label={`${(insight.confidence_score * 100).toFixed(0)}%`}
+                          color="info"
+                          size="small"
+                        />
+                      </Box>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Typography variant="body2" paragraph>
+                        {insight.description}
+                      </Typography>
+                      
+                      <Typography variant="body2" fontWeight="bold" gutterBottom>
+                        Action Items:
+                      </Typography>
+                      <List dense>
+                        {insight.action_items.map((action, actionIdx) => (
+                          <ListItem key={actionIdx} disablePadding>
+                            <ListItemIcon>
+                              <CheckCircleIcon color="primary" fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText primary={action} />
+                          </ListItem>
+                        ))}
+                      </List>
+                      
+                      <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+                        <Typography variant="body2">
+                          <strong>Expected Impact:</strong> {insight.expected_impact}
+                        </Typography>
+                        <Typography variant="body2">
+                          <strong>Timeframe:</strong> {insight.timeframe}
+                        </Typography>
+                      </Box>
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Content Strategy */}
+          <Grid item xs={12} md={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Content Strategy
+                </Typography>
+                
+                <Typography variant="body2" fontWeight="bold" gutterBottom>
+                  Primary Keywords:
+                </Typography>
+                <Box sx={{ mb: 2 }}>
+                  {report.ai_insights.content_strategy.primary_keywords.map((keyword, idx) => (
+                    <Chip 
+                      key={idx}
+                      label={keyword}
+                      size="small"
+                      sx={{ mr: 0.5, mb: 0.5 }}
+                    />
+                  ))}
+                </Box>
+                
+                <Typography variant="body2" fontWeight="bold" gutterBottom>
+                  Content Themes:
+                </Typography>
+                <List dense>
+                  {report.ai_insights.content_strategy.content_themes.map((theme, idx) => (
+                    <ListItem key={idx} disablePadding>
+                      <ListItemText primary={theme} />
+                    </ListItem>
+                  ))}
+                </List>
+                
+                <Typography variant="body2" fontWeight="bold" gutterBottom>
+                  Trending Opportunities:
+                </Typography>
+                <List dense>
+                  {report.ai_insights.content_strategy.trending_opportunities.map((opp, idx) => (
+                    <ListItem key={idx} disablePadding>
+                      <ListItemIcon>
+                        <TrendingUpIcon color="success" fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText primary={opp} />
+                    </ListItem>
+                  ))}
+                </List>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Action Plan */}
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Prioritized Action Plan
+                </Typography>
+                <TableContainer component={Paper}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>#</TableCell>
+                        <TableCell>Action</TableCell>
+                        <TableCell>Priority</TableCell>
+                        <TableCell>Timeframe</TableCell>
+                        <TableCell>Expected Impact</TableCell>
+                        <TableCell>Confidence</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {report.ai_insights.action_plan.slice(0, 10).map((action, index) => (
+                        <TableRow key={index} hover>
+                          <TableCell>{action.order}</TableCell>
+                          <TableCell>
+                            <Typography variant="body2" fontWeight="bold">
+                              {action.title}
+                            </Typography>
+                            <Typography variant="body2" color="textSecondary">
+                              {action.description.length > 100 
+                                ? action.description.substring(0, 100) + '...'
+                                : action.description
+                              }
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={action.priority} 
+                              color={
+                                action.priority === 'high' ? 'error' : 
+                                action.priority === 'medium' ? 'warning' : 'success'
+                              }
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell>{action.timeframe}</TableCell>
+                          <TableCell>{action.expected_impact}</TableCell>
+                          <TableCell>
+                            <LinearProgress 
+                              variant="determinate" 
+                              value={action.confidence_score * 100}
+                              sx={{ width: 60 }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Performance Forecast */}
+          {report.ai_insights.performance_forecast && (
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Performance Forecast
+                  </Typography>
+                  
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <Typography variant="body2">
+                        <strong>CTR Improvement:</strong><br />
+                        +{report.ai_insights.performance_forecast.expected_ctr_improvement?.toFixed(1)}%
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2">
+                        <strong>Position Improvement:</strong><br />
+                        +{report.ai_insights.performance_forecast.expected_position_improvement?.toFixed(1)} positions
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2">
+                        <strong>Traffic Growth:</strong><br />
+                        +{report.ai_insights.performance_forecast.traffic_growth_potential?.toFixed(1)}%
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="body2">
+                        <strong>Confidence:</strong><br />
+                        {report.ai_insights.performance_forecast.confidence_level}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                  
+                  <Typography variant="body2" sx={{ mt: 2 }}>
+                    <strong>Seasonal Impact:</strong><br />
+                    {report.ai_insights.performance_forecast.seasonal_impact}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          )}
+        </Grid>
+      )}
+    </Box>
+  );
+
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
@@ -654,7 +1111,7 @@ const WebsiteAuditDashboard: React.FC = () => {
                 placeholder="https://example.com"
               />
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid item xs={12} md={2}>
               <FormControl fullWidth>
                 <InputLabel>Date Range</InputLabel>
                 <Select
@@ -667,6 +1124,20 @@ const WebsiteAuditDashboard: React.FC = () => {
                       {option.label}
                     </MenuItem>
                   ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={2}>
+              <FormControl fullWidth>
+                <InputLabel>Analysis Type</InputLabel>
+                <Select
+                  value={analysisType}
+                  onChange={(e) => setAnalysisType(e.target.value)}
+                  label="Analysis Type"
+                >
+                  <MenuItem value="basic">Basic</MenuItem>
+                  <MenuItem value="trends">With Trends</MenuItem>
+                  <MenuItem value="comprehensive">Full + AI</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -713,6 +1184,8 @@ const WebsiteAuditDashboard: React.FC = () => {
               <Tab label="Queries" icon={<SearchIcon />} />
               <Tab label="Content Clusters" icon={<SpeedIcon />} />
               <Tab label="Trends" icon={<TrendingUpIcon />} />
+              {report?.google_trends && <Tab label="Google Trends" icon={<TrendingUpIcon />} />}
+              {report?.ai_insights && <Tab label="AI Insights" icon={<LightbulbIcon />} />}
             </Tabs>
           </Box>
 
@@ -721,6 +1194,9 @@ const WebsiteAuditDashboard: React.FC = () => {
           {activeTab === 2 && renderQueriesTab()}
           {activeTab === 3 && renderClustersTab()}
           {activeTab === 4 && renderTrendsTab()}
+          {activeTab === 5 && report?.google_trends && renderGoogleTrendsTab()}
+          {activeTab === 6 && report?.ai_insights && renderAIInsightsTab()}
+          {activeTab === 5 && !report?.google_trends && report?.ai_insights && renderAIInsightsTab()}
         </Box>
       )}
 
