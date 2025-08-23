@@ -33,4 +33,15 @@ pyspellchecker>=0.7.2
 
 # Utilities
 pydantic>=2.5.2,<3.0.0
-typing-extensions>=4.8.0 
+typing-extensions>=4.8.0
+
+# OAuth and Social Media Integration
+authlib>=1.3.0
+httpx>=0.25.0
+google-auth>=2.23.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.2.0
+google-api-python-client>=2.108.0
+
+# Encryption for secure token storage
+cryptography>=41.0.0 
