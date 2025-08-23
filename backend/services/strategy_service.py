@@ -13,6 +13,7 @@ from models.monitoring_models import (
 )
 from models.enhanced_strategy_models import EnhancedContentStrategy
 from services.database import get_db_session
+from services.mem0_service import Mem0Service
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ class StrategyService:
     
     def __init__(self, db_session: Optional[Session] = None):
         self.db_session = db_session or get_db_session()
+        self.mem0_service = Mem0Service()
     
     async def get_strategy_by_id(self, strategy_id: int) -> Optional[Dict[str, Any]]:
         """Get strategy by ID with all related data"""
@@ -118,6 +120,20 @@ class StrategyService:
                 logger.info(f"Strategy {strategy_id} activated successfully")
             else:
                 logger.info(f"Strategy {strategy_id} activated (no database session)")
+            
+            # Store strategy in mem0 as memory after successful activation
+            try:
+                mem0_success = await self.mem0_service.store_content_strategy(
+                    strategy_data=strategy,
+                    user_id=user_id,
+                    strategy_id=strategy_id
+                )
+                if mem0_success:
+                    logger.info(f"Strategy {strategy_id} successfully stored in mem0 memory")
+                else:
+                    logger.warning(f"Failed to store strategy {strategy_id} in mem0 memory")
+            except Exception as e:
+                logger.error(f"Error storing strategy {strategy_id} in mem0: {e}")
             
             return True
             
