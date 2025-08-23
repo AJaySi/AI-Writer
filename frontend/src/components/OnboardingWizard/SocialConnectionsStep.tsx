@@ -41,6 +41,9 @@ import {
   Twitter as TwitterIcon,
   LinkedIn as LinkedInIcon,
   YouTube as YouTubeIcon,
+  Pinterest as PinterestIcon,
+  VideoLibrary as TikTokIcon,
+  Instagram as InstagramIcon,
   Refresh as RefreshIcon,
   Settings as SettingsIcon
 } from '@mui/icons-material';
@@ -72,48 +75,7 @@ interface Connection {
 }
 
 const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinue, updateHeaderContent }) => {
-  const [platforms, setPlatforms] = useState<Platform[]>([
-    {
-      id: 'google_search_console',
-      name: 'Google Search Console',
-      description: 'Connect GSC to fetch website analytics and search performance data for content optimization',
-      icon: <GoogleIcon />,
-      features: ['SEO Analytics', 'Search Performance', 'Content Insights', 'Keyword Discovery'],
-      isConnected: false
-    },
-    {
-      id: 'youtube',
-      name: 'YouTube',
-      description: 'Connect YouTube for video analytics and content management',
-      icon: <YouTubeIcon />,
-      features: ['Video Analytics', 'Channel Management', 'Content Upload', 'Audience Insights'],
-      isConnected: false
-    },
-    {
-      id: 'facebook',
-      name: 'Facebook',
-      description: 'Connect Facebook for page management and content posting',
-      icon: <FacebookIcon />,
-      features: ['Page Management', 'Content Posting', 'Audience Analytics', 'Ad Insights'],
-      isConnected: false
-    },
-    {
-      id: 'twitter',
-      name: 'Twitter/X',
-      description: 'Connect Twitter for tweet management and analytics',
-      icon: <TwitterIcon />,
-      features: ['Tweet Posting', 'Engagement Analytics', 'Trend Analysis', 'Audience Insights'],
-      isConnected: false
-    },
-    {
-      id: 'linkedin',
-      name: 'LinkedIn',
-      description: 'Connect LinkedIn for professional content and networking',
-      icon: <LinkedInIcon />,
-      features: ['Content Posting', 'Professional Analytics', 'Network Insights', 'B2B Analytics'],
-      isConnected: false
-    }
-  ]);
+  const [platforms, setPlatforms] = useState<Platform[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -122,6 +84,10 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
   const [authWindow, setAuthWindow] = useState<Window | null>(null);
   const [showGSCDemo, setShowGSCDemo] = useState(false);
   const [gscDemoData, setGscDemoData] = useState<any>(null);
+  const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null);
+  const [testingConnection, setTestingConnection] = useState<number | null>(null);
+  const [connectionDetails, setConnectionDetails] = useState<any>(null);
+  const [showBenefits, setShowBenefits] = useState<string | null>(null);
 
   useEffect(() => {
     updateHeaderContent({
@@ -129,9 +95,47 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
       description: 'Connect your social media accounts and Google Search Console to unlock powerful analytics and automated content features.'
     });
     
-    // Load existing connections
+    // Load platforms and connections
+    loadPlatforms();
     loadConnections();
   }, [updateHeaderContent]);
+
+  const loadPlatforms = async () => {
+    try {
+      const response = await fetch('/api/social/test/platforms');
+      const data = await response.json();
+      
+      if (data.supported_platforms) {
+        const platformsWithIcons = data.supported_platforms.map((platform: any) => ({
+          ...platform,
+          icon: getPlatformIcon(platform.id),
+          isConnected: false,
+          connectionData: null
+        }));
+        setPlatforms(platformsWithIcons);
+      }
+    } catch (err) {
+      console.error('Failed to load platforms:', err);
+      setError('Failed to load available platforms');
+    }
+  };
+
+  const getPlatformIcon = (platformId: string) => {
+    const iconMap: { [key: string]: React.ReactNode } = {
+      'google_search_console': <GoogleIcon />,
+      'youtube': <YouTubeIcon />,
+      'facebook': <FacebookIcon />,
+      'instagram': <InstagramIcon />,
+      'twitter': <TwitterIcon />,
+      'linkedin': <LinkedInIcon />,
+      'tiktok': <TikTokIcon />,
+      'pinterest': <PinterestIcon />,
+      'snapchat': <SmartToyIcon />, // Using SmartToy as alternative
+      'reddit': <SmartToyIcon />, // Using SmartToy as alternative
+      'discord': <SmartToyIcon /> // Using SmartToy as alternative
+    };
+    return iconMap[platformId] || <SmartToyIcon />;
+  };
 
   const loadConnections = async () => {
     try {
@@ -157,7 +161,7 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
   };
 
   const handleConnect = async (platformId: string) => {
-    setLoading(true);
+    setConnectingPlatform(platformId);
     setError(null);
     setSuccess(null);
 
@@ -187,9 +191,20 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
             clearInterval(checkClosed);
             setAuthWindow(null);
             // Reload connections to check if successful
-            setTimeout(() => {
-              loadConnections();
-              setLoading(false);
+            setTimeout(async () => {
+              await loadConnections();
+              
+              // Check if the connection was successful and show benefits
+              const newConnection = connections.find(c => c.platform === platformId);
+              if (newConnection) {
+                setSuccess(`Successfully connected ${platformId}!`);
+                setShowBenefits(platformId);
+                
+                // Auto-hide benefits after 10 seconds
+                setTimeout(() => setShowBenefits(null), 10000);
+              }
+              
+              setConnectingPlatform(null);
             }, 1000);
           }
         }, 1000);
@@ -199,14 +214,39 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
           if (authWindow && !authWindow.closed) {
             authWindow.close();
             setAuthWindow(null);
-            setLoading(false);
+            setConnectingPlatform(null);
             setError('Authentication timed out. Please try again.');
           }
         }, 300000); // 5 minutes timeout
       }
     } catch (err) {
       setError(`Failed to connect ${platformId}. Please try again.`);
-      setLoading(false);
+      setConnectingPlatform(null);
+    }
+  };
+
+  const testConnection = async (connectionId: number) => {
+    setTestingConnection(connectionId);
+    try {
+      const response = await fetch(`/api/social/connections/${connectionId}/test`, {
+        method: 'POST'
+      });
+      const result = await response.json();
+      
+      if (result.status === 'passed') {
+        setSuccess('Connection test passed successfully!');
+      } else if (result.status === 'failed') {
+        setError(`Connection test failed: ${result.errors.join(', ')}`);
+      } else {
+        setError('Connection test completed with warnings. Check connection details.');
+      }
+      
+      setConnectionDetails(result);
+      
+    } catch (err) {
+      setError('Failed to test connection');
+    } finally {
+      setTestingConnection(null);
     }
   };
 
@@ -261,6 +301,118 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
         error: 'Failed to fetch data'
       });
     }
+  };
+
+  const getBenefitsForPlatform = (platformId: string) => {
+    const benefits: { [key: string]: string[] } = {
+      'google_search_console': [
+        'Track your website\'s search performance in real-time',
+        'Identify top-performing keywords and optimize content',
+        'Monitor search rankings and click-through rates',
+        'Discover content gaps and opportunities'
+      ],
+      'youtube': [
+        'Analyze video performance and audience engagement',
+        'Optimize video titles and descriptions with AI',
+        'Track subscriber growth and viewer demographics',
+        'Schedule and manage content uploads'
+      ],
+      'facebook': [
+        'Post content directly to your Facebook pages',
+        'Analyze post engagement and reach metrics',
+        'Schedule posts for optimal engagement times',
+        'Monitor audience growth and demographics'
+      ],
+      'instagram': [
+        'Share photos and videos to your Instagram business account',
+        'Optimize hashtags for maximum reach',
+        'Track story and post engagement metrics',
+        'Analyze follower growth and audience insights'
+      ],
+      'twitter': [
+        'Tweet content automatically or on schedule',
+        'Monitor engagement rates and retweet metrics',
+        'Analyze follower growth and audience activity',
+        'Track trending topics and hashtag performance'
+      ],
+      'linkedin': [
+        'Share professional content to boost your network',
+        'Analyze post performance in professional context',
+        'Track connection growth and engagement rates',
+        'Monitor industry-specific content performance'
+      ],
+      'tiktok': [
+        'Analyze video performance and viral potential',
+        'Track trending sounds and hashtags',
+        'Monitor follower demographics and engagement',
+        'Optimize content for TikTok algorithm'
+      ],
+      'pinterest': [
+        'Pin content to relevant boards automatically',
+        'Analyze pin performance and board engagement',
+        'Track seasonal trends and popular pins',
+        'Optimize visual content for Pinterest discovery'
+      ]
+    };
+    return benefits[platformId] || ['Enhanced analytics and automated posting capabilities'];
+  };
+
+  const renderBenefitsModal = () => {
+    if (!showBenefits) return null;
+    
+    const platform = platforms.find(p => p.id === showBenefits);
+    if (!platform) return null;
+    
+    return (
+      <Dialog 
+        open={!!showBenefits} 
+        onClose={() => setShowBenefits(null)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box sx={{ fontSize: 32 }}>{platform.icon}</Box>
+            <Box>
+              <Typography variant="h5" fontWeight={600}>
+                🎉 {platform.name} Connected Successfully!
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                You can now unlock these powerful features:
+              </Typography>
+            </Box>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2}>
+            {getBenefitsForPlatform(showBenefits).map((benefit, index) => (
+              <Grid item xs={12} key={index}>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <CheckIcon color="success" />
+                  <Typography variant="body1">{benefit}</Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+          
+          <Box mt={3} p={2} bgcolor="primary.50" borderRadius={2}>
+            <Typography variant="h6" color="primary" gutterBottom>
+              🚀 What's Next?
+            </Typography>
+            <Typography variant="body2">
+              Your {platform.name} account is now integrated with ALwrity. You can start using these features 
+              immediately in your content strategy and analytics dashboard. All data is synced automatically 
+              and refreshed regularly to keep your insights up-to-date.
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowBenefits(null)} variant="contained">
+            Got it!
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
   };
 
   const renderPlatformCard = (platform: Platform) => (
@@ -331,10 +483,22 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
                     size="small"
                     startIcon={<CheckIcon />}
                     disabled
-                    fullWidth
+                    sx={{ flex: 1 }}
                   >
                     Connected
                   </Button>
+                  <Tooltip title="Test Connection">
+                    <IconButton
+                      color="primary"
+                      onClick={() => platform.connectionData && testConnection(platform.connectionData.id)}
+                      disabled={testingConnection === platform.connectionData?.id}
+                    >
+                      {testingConnection === platform.connectionData?.id ? 
+                        <CircularProgress size={20} /> : 
+                        <RefreshIcon />
+                      }
+                    </IconButton>
+                  </Tooltip>
                   {platform.id === 'google_search_console' && (
                     <Tooltip title="View GSC Demo">
                       <IconButton
@@ -345,6 +509,14 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
                       </IconButton>
                     </Tooltip>
                   )}
+                  <Tooltip title="View Benefits">
+                    <IconButton
+                      color="info"
+                      onClick={() => setShowBenefits(platform.id)}
+                    >
+                      <InfoIcon />
+                    </IconButton>
+                  </Tooltip>
                   <Tooltip title="Disconnect">
                     <IconButton
                       color="error"
@@ -358,9 +530,12 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
                 <Button
                   variant="contained"
                   size="small"
-                  startIcon={<LinkIcon />}
+                  startIcon={connectingPlatform === platform.id ? 
+                    <CircularProgress size={16} color="inherit" /> : 
+                    <LinkIcon />
+                  }
                   onClick={() => handleConnect(platform.id)}
-                  disabled={loading}
+                  disabled={connectingPlatform === platform.id}
                   fullWidth
                   sx={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -369,7 +544,7 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
                     }
                   }}
                 >
-                  Connect
+                  {connectingPlatform === platform.id ? 'Connecting...' : 'Connect'}
                 </Button>
               )}
             </Box>
@@ -604,6 +779,9 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
           <Button onClick={() => setShowGSCDemo(false)}>Close</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Benefits Modal */}
+      {renderBenefitsModal()}
     </Box>
   );
 };

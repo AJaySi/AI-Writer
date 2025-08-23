@@ -6,6 +6,7 @@ Supports Google Search Console, Facebook, Twitter, LinkedIn, YouTube, and other 
 import os
 import json
 import secrets
+import logging
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
@@ -19,6 +20,9 @@ from googleapiclient.discovery import build
 
 from sqlalchemy.orm import Session
 from models.social_connections import SocialConnection
+
+# Setup logging
+logger = logging.getLogger(__name__)
 from services.database import get_db
 
 class OAuthService:
@@ -31,7 +35,7 @@ class OAuthService:
             'google_search_console': {
                 'client_id': os.getenv('GOOGLE_CLIENT_ID'),
                 'client_secret': os.getenv('GOOGLE_CLIENT_SECRET'),
-                'redirect_uri': os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/api/oauth/callback/google'),
+                'redirect_uri': os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/api/social/oauth/callback/google'),
                 'scopes': [
                     'https://www.googleapis.com/auth/webmasters.readonly',
                     'https://www.googleapis.com/auth/webmasters'
@@ -42,7 +46,7 @@ class OAuthService:
             'youtube': {
                 'client_id': os.getenv('GOOGLE_CLIENT_ID'),  # Same as GSC
                 'client_secret': os.getenv('GOOGLE_CLIENT_SECRET'),
-                'redirect_uri': os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/api/oauth/callback/google'),
+                'redirect_uri': os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/api/social/oauth/callback/google'),
                 'scopes': [
                     'https://www.googleapis.com/auth/youtube',
                     'https://www.googleapis.com/auth/youtube.upload',
@@ -54,13 +58,29 @@ class OAuthService:
             'facebook': {
                 'client_id': os.getenv('FACEBOOK_APP_ID'),
                 'client_secret': os.getenv('FACEBOOK_APP_SECRET'),
-                'redirect_uri': os.getenv('FACEBOOK_REDIRECT_URI', 'http://localhost:8000/api/oauth/callback/facebook'),
+                'redirect_uri': os.getenv('FACEBOOK_REDIRECT_URI', 'http://localhost:8000/api/social/oauth/callback/facebook'),
                 'scopes': [
                     'pages_manage_posts',
                     'pages_read_engagement',
                     'pages_show_list',
                     'business_management',
-                    'read_insights'
+                    'read_insights',
+                    'instagram_basic',
+                    'instagram_content_publish'
+                ],
+                'auth_url': 'https://www.facebook.com/v18.0/dialog/oauth',
+                'token_url': 'https://graph.facebook.com/v18.0/oauth/access_token'
+            },
+            'instagram': {
+                'client_id': os.getenv('FACEBOOK_APP_ID'),  # Instagram uses Facebook app
+                'client_secret': os.getenv('FACEBOOK_APP_SECRET'),
+                'redirect_uri': os.getenv('FACEBOOK_REDIRECT_URI', 'http://localhost:8000/api/social/oauth/callback/facebook'),
+                'scopes': [
+                    'instagram_basic',
+                    'instagram_content_publish',
+                    'pages_show_list',
+                    'pages_read_engagement',
+                    'business_management'
                 ],
                 'auth_url': 'https://www.facebook.com/v18.0/dialog/oauth',
                 'token_url': 'https://graph.facebook.com/v18.0/oauth/access_token'
@@ -68,7 +88,7 @@ class OAuthService:
             'twitter': {
                 'client_id': os.getenv('TWITTER_CLIENT_ID'),
                 'client_secret': os.getenv('TWITTER_CLIENT_SECRET'),
-                'redirect_uri': os.getenv('TWITTER_REDIRECT_URI', 'http://localhost:8000/api/oauth/callback/twitter'),
+                'redirect_uri': os.getenv('TWITTER_REDIRECT_URI', 'http://localhost:8000/api/social/oauth/callback/twitter'),
                 'scopes': [
                     'tweet.read',
                     'tweet.write',
@@ -81,7 +101,7 @@ class OAuthService:
             'linkedin': {
                 'client_id': os.getenv('LINKEDIN_CLIENT_ID'),
                 'client_secret': os.getenv('LINKEDIN_CLIENT_SECRET'),
-                'redirect_uri': os.getenv('LINKEDIN_REDIRECT_URI', 'http://localhost:8000/api/oauth/callback/linkedin'),
+                'redirect_uri': os.getenv('LINKEDIN_REDIRECT_URI', 'http://localhost:8000/api/social/oauth/callback/linkedin'),
                 'scopes': [
                     'w_member_social',
                     'r_liteprofile',
@@ -91,6 +111,65 @@ class OAuthService:
                 ],
                 'auth_url': 'https://www.linkedin.com/oauth/v2/authorization',
                 'token_url': 'https://www.linkedin.com/oauth/v2/accessToken'
+            },
+            'tiktok': {
+                'client_id': os.getenv('TIKTOK_CLIENT_ID'),
+                'client_secret': os.getenv('TIKTOK_CLIENT_SECRET'),
+                'redirect_uri': os.getenv('TIKTOK_REDIRECT_URI', 'http://localhost:8000/api/social/oauth/callback/tiktok'),
+                'scopes': [
+                    'user.info.basic',
+                    'video.list',
+                    'video.upload'
+                ],
+                'auth_url': 'https://www.tiktok.com/auth/authorize/',
+                'token_url': 'https://open-api.tiktok.com/oauth/access_token/'
+            },
+            'pinterest': {
+                'client_id': os.getenv('PINTEREST_CLIENT_ID'),
+                'client_secret': os.getenv('PINTEREST_CLIENT_SECRET'),
+                'redirect_uri': os.getenv('PINTEREST_REDIRECT_URI', 'http://localhost:8000/api/social/oauth/callback/pinterest'),
+                'scopes': [
+                    'read_public',
+                    'write_public',
+                    'read_secret',
+                    'write_secret'
+                ],
+                'auth_url': 'https://www.pinterest.com/oauth/',
+                'token_url': 'https://api.pinterest.com/v5/oauth/token'
+            },
+            'snapchat': {
+                'client_id': os.getenv('SNAPCHAT_CLIENT_ID'),
+                'client_secret': os.getenv('SNAPCHAT_CLIENT_SECRET'),
+                'redirect_uri': os.getenv('SNAPCHAT_REDIRECT_URI', 'http://localhost:8000/api/social/oauth/callback/snapchat'),
+                'scopes': [
+                    'snapchat-marketing-api'
+                ],
+                'auth_url': 'https://accounts.snapchat.com/login/oauth2/authorize',
+                'token_url': 'https://accounts.snapchat.com/login/oauth2/access_token'
+            },
+            'reddit': {
+                'client_id': os.getenv('REDDIT_CLIENT_ID'),
+                'client_secret': os.getenv('REDDIT_CLIENT_SECRET'),
+                'redirect_uri': os.getenv('REDDIT_REDIRECT_URI', 'http://localhost:8000/api/social/oauth/callback/reddit'),
+                'scopes': [
+                    'identity',
+                    'submit',
+                    'read'
+                ],
+                'auth_url': 'https://www.reddit.com/api/v1/authorize',
+                'token_url': 'https://www.reddit.com/api/v1/access_token'
+            },
+            'discord': {
+                'client_id': os.getenv('DISCORD_CLIENT_ID'),
+                'client_secret': os.getenv('DISCORD_CLIENT_SECRET'),
+                'redirect_uri': os.getenv('DISCORD_REDIRECT_URI', 'http://localhost:8000/api/social/oauth/callback/discord'),
+                'scopes': [
+                    'identify',
+                    'guilds',
+                    'bot'
+                ],
+                'auth_url': 'https://discord.com/api/oauth2/authorize',
+                'token_url': 'https://discord.com/api/oauth2/token'
             }
         }
 
@@ -179,12 +258,22 @@ class OAuthService:
         
         if platform.startswith('google') or platform == 'youtube':
             return await self._handle_google_callback(platform, code, state_data, config)
-        elif platform == 'facebook':
-            return await self._handle_facebook_callback(code, state_data, config)
+        elif platform in ['facebook', 'instagram']:
+            return await self._handle_facebook_callback(platform, code, state_data, config)
         elif platform == 'twitter':
             return await self._handle_twitter_callback(code, state_data, config)
         elif platform == 'linkedin':
             return await self._handle_linkedin_callback(code, state_data, config)
+        elif platform == 'tiktok':
+            return await self._handle_tiktok_callback(code, state_data, config)
+        elif platform == 'pinterest':
+            return await self._handle_pinterest_callback(code, state_data, config)
+        elif platform == 'snapchat':
+            return await self._handle_snapchat_callback(code, state_data, config)
+        elif platform == 'reddit':
+            return await self._handle_reddit_callback(code, state_data, config)
+        elif platform == 'discord':
+            return await self._handle_discord_callback(code, state_data, config)
         else:
             raise ValueError(f"Callback handler not implemented for {platform}")
 
@@ -245,7 +334,7 @@ class OAuthService:
             'platform_username': platform_username
         }
 
-    async def _handle_facebook_callback(self, code: str, state_data: Dict, config: Dict) -> Dict:
+    async def _handle_facebook_callback(self, platform: str, code: str, state_data: Dict, config: Dict) -> Dict:
         """Handle Facebook OAuth callback."""
         async with httpx.AsyncClient() as client:
             # Exchange code for access token
@@ -280,8 +369,22 @@ class OAuthService:
             pages_data = pages_response.json()
             profile_data['pages'] = pages_data.get('data', [])
             
+            # If Instagram, also get Instagram business accounts
+            if platform == 'instagram':
+                for page in profile_data['pages']:
+                    try:
+                        instagram_response = await client.get(
+                            f"https://graph.facebook.com/v18.0/{page['id']}?fields=instagram_business_account",
+                            params={'access_token': page['access_token']}
+                        )
+                        instagram_data = instagram_response.json()
+                        if 'instagram_business_account' in instagram_data:
+                            page['instagram_account'] = instagram_data['instagram_business_account']
+                    except:
+                        continue  # Skip if no Instagram account linked
+            
             return {
-                'platform': 'facebook',
+                'platform': platform,
                 'user_id': state_data['user_id'],
                 'access_token': token_data['access_token'],
                 'refresh_token': None,  # Facebook doesn't provide refresh tokens for some flows
@@ -485,6 +588,261 @@ class OAuthService:
         except Exception as e:
             print(f"Failed to refresh Google token: {e}")
             return None
+
+    async def _handle_tiktok_callback(self, code: str, state_data: Dict, config: Dict) -> Dict:
+        """Handle TikTok OAuth callback."""
+        try:
+            async with httpx.AsyncClient() as client:
+                # Exchange code for access token
+                token_response = await client.post(
+                    config['token_url'],
+                    data={
+                        'client_key': config['client_id'],
+                        'client_secret': config['client_secret'],
+                        'code': code,
+                        'grant_type': 'authorization_code',
+                        'redirect_uri': config['redirect_uri']
+                    }
+                )
+                token_data = token_response.json()
+                
+                if 'access_token' not in token_data.get('data', {}):
+                    raise ValueError("Failed to obtain TikTok access token")
+                
+                access_token = token_data['data']['access_token']
+                
+                # Get user profile
+                profile_response = await client.post(
+                    'https://open-api.tiktok.com/user/info/',
+                    headers={
+                        'Authorization': f'Bearer {access_token}'
+                    },
+                    json={
+                        'fields': ['open_id', 'union_id', 'avatar_url', 'display_name']
+                    }
+                )
+                profile_data = profile_response.json()
+                
+                return {
+                    'platform': 'tiktok',
+                    'user_id': state_data['user_id'],
+                    'access_token': access_token,
+                    'refresh_token': token_data['data'].get('refresh_token'),
+                    'expires_at': datetime.utcnow() + timedelta(seconds=token_data['data'].get('expires_in', 86400)),
+                    'scopes': config['scopes'],
+                    'profile_data': profile_data.get('data', {}),
+                    'platform_user_id': profile_data.get('data', {}).get('open_id'),
+                    'platform_username': profile_data.get('data', {}).get('display_name', 'TikTok User')
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error_message': f"TikTok OAuth error: {str(e)}"
+            }
+
+    async def _handle_pinterest_callback(self, code: str, state_data: Dict, config: Dict) -> Dict:
+        """Handle Pinterest OAuth callback."""
+        try:
+            async with httpx.AsyncClient() as client:
+                # Exchange code for access token
+                token_response = await client.post(
+                    config['token_url'],
+                    data={
+                        'grant_type': 'authorization_code',
+                        'client_id': config['client_id'],
+                        'client_secret': config['client_secret'],
+                        'code': code,
+                        'redirect_uri': config['redirect_uri']
+                    }
+                )
+                token_data = token_response.json()
+                
+                if 'access_token' not in token_data:
+                    raise ValueError("Failed to obtain Pinterest access token")
+                
+                # Get user profile
+                profile_response = await client.get(
+                    'https://api.pinterest.com/v5/user_account',
+                    headers={
+                        'Authorization': f'Bearer {token_data["access_token"]}'
+                    }
+                )
+                profile_data = profile_response.json()
+                
+                return {
+                    'platform': 'pinterest',
+                    'user_id': state_data['user_id'],
+                    'access_token': token_data['access_token'],
+                    'refresh_token': token_data.get('refresh_token'),
+                    'expires_at': datetime.utcnow() + timedelta(seconds=token_data.get('expires_in', 86400)),
+                    'scopes': config['scopes'],
+                    'profile_data': profile_data,
+                    'platform_user_id': profile_data.get('id'),
+                    'platform_username': profile_data.get('username', 'Pinterest User')
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error_message': f"Pinterest OAuth error: {str(e)}"
+            }
+
+    async def _handle_snapchat_callback(self, code: str, state_data: Dict, config: Dict) -> Dict:
+        """Handle Snapchat OAuth callback."""
+        try:
+            async with httpx.AsyncClient() as client:
+                # Exchange code for access token
+                token_response = await client.post(
+                    config['token_url'],
+                    data={
+                        'grant_type': 'authorization_code',
+                        'client_id': config['client_id'],
+                        'client_secret': config['client_secret'],
+                        'code': code,
+                        'redirect_uri': config['redirect_uri']
+                    }
+                )
+                token_data = token_response.json()
+                
+                if 'access_token' not in token_data:
+                    raise ValueError("Failed to obtain Snapchat access token")
+                
+                # Get user/organization info
+                profile_response = await client.get(
+                    'https://adsapi.snapchat.com/v1/me',
+                    headers={
+                        'Authorization': f'Bearer {token_data["access_token"]}'
+                    }
+                )
+                profile_data = profile_response.json()
+                
+                return {
+                    'platform': 'snapchat',
+                    'user_id': state_data['user_id'],
+                    'access_token': token_data['access_token'],
+                    'refresh_token': token_data.get('refresh_token'),
+                    'expires_at': datetime.utcnow() + timedelta(seconds=token_data.get('expires_in', 86400)),
+                    'scopes': config['scopes'],
+                    'profile_data': profile_data.get('organizations', []),
+                    'platform_user_id': profile_data.get('me', {}).get('id'),
+                    'platform_username': profile_data.get('me', {}).get('display_name', 'Snapchat User')
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error_message': f"Snapchat OAuth error: {str(e)}"
+            }
+
+    async def _handle_reddit_callback(self, code: str, state_data: Dict, config: Dict) -> Dict:
+        """Handle Reddit OAuth callback."""
+        try:
+            async with httpx.AsyncClient() as client:
+                # Exchange code for access token
+                token_response = await client.post(
+                    config['token_url'],
+                    data={
+                        'grant_type': 'authorization_code',
+                        'code': code,
+                        'redirect_uri': config['redirect_uri']
+                    },
+                    auth=(config['client_id'], config['client_secret']),
+                    headers={
+                        'User-Agent': 'ALwrity/1.0'
+                    }
+                )
+                token_data = token_response.json()
+                
+                if 'access_token' not in token_data:
+                    raise ValueError("Failed to obtain Reddit access token")
+                
+                # Get user profile
+                profile_response = await client.get(
+                    'https://oauth.reddit.com/api/v1/me',
+                    headers={
+                        'Authorization': f'Bearer {token_data["access_token"]}',
+                        'User-Agent': 'ALwrity/1.0'
+                    }
+                )
+                profile_data = profile_response.json()
+                
+                return {
+                    'platform': 'reddit',
+                    'user_id': state_data['user_id'],
+                    'access_token': token_data['access_token'],
+                    'refresh_token': token_data.get('refresh_token'),
+                    'expires_at': datetime.utcnow() + timedelta(seconds=token_data.get('expires_in', 86400)),
+                    'scopes': config['scopes'],
+                    'profile_data': profile_data,
+                    'platform_user_id': profile_data.get('id'),
+                    'platform_username': profile_data.get('name', 'Reddit User')
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error_message': f"Reddit OAuth error: {str(e)}"
+            }
+
+    async def _handle_discord_callback(self, code: str, state_data: Dict, config: Dict) -> Dict:
+        """Handle Discord OAuth callback."""
+        try:
+            async with httpx.AsyncClient() as client:
+                # Exchange code for access token
+                token_response = await client.post(
+                    config['token_url'],
+                    data={
+                        'grant_type': 'authorization_code',
+                        'code': code,
+                        'redirect_uri': config['redirect_uri']
+                    },
+                    headers={
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    auth=(config['client_id'], config['client_secret'])
+                )
+                token_data = token_response.json()
+                
+                if 'access_token' not in token_data:
+                    raise ValueError("Failed to obtain Discord access token")
+                
+                # Get user profile
+                profile_response = await client.get(
+                    'https://discord.com/api/users/@me',
+                    headers={
+                        'Authorization': f'Bearer {token_data["access_token"]}'
+                    }
+                )
+                profile_data = profile_response.json()
+                
+                # Get user's guilds
+                guilds_response = await client.get(
+                    'https://discord.com/api/users/@me/guilds',
+                    headers={
+                        'Authorization': f'Bearer {token_data["access_token"]}'
+                    }
+                )
+                guilds_data = guilds_response.json()
+                profile_data['guilds'] = guilds_data
+                
+                return {
+                    'platform': 'discord',
+                    'user_id': state_data['user_id'],
+                    'access_token': token_data['access_token'],
+                    'refresh_token': token_data.get('refresh_token'),
+                    'expires_at': datetime.utcnow() + timedelta(seconds=token_data.get('expires_in', 604800)),
+                    'scopes': config['scopes'],
+                    'profile_data': profile_data,
+                    'platform_user_id': profile_data.get('id'),
+                    'platform_username': f"{profile_data.get('username', 'Discord User')}#{profile_data.get('discriminator', '0000')}"
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error_message': f"Discord OAuth error: {str(e)}"
+            }
 
 # Global instance
 oauth_service = OAuthService()

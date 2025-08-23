@@ -14,6 +14,7 @@ from services.database import get_db
 from services.oauth_service import oauth_service
 from services.gsc_analytics_service import gsc_analytics_service
 from services.social_posting_service import social_posting_service
+from services.connection_testing_service import connection_testing_service
 from models.social_connections import SocialConnection, SocialAnalytics, SocialPost
 
 # Setup logging
@@ -58,6 +59,16 @@ class PostResponse(BaseModel):
     platform_post_id: Optional[str] = None
     platform_url: Optional[str] = None
 
+class ConnectionTestResponse(BaseModel):
+    connection_id: int
+    platform: str
+    status: str
+    tests_performed: List[str]
+    errors: List[str]
+    warnings: List[str]
+    recommendations: List[str]
+    performance_metrics: Dict
+
 # OAuth endpoints
 @router.get("/auth/{platform}", response_model=AuthUrlResponse)
 async def initiate_oauth(
@@ -99,11 +110,20 @@ async def oauth_callback(
         # Save the connection to database
         connection = oauth_service.save_connection(connection_data, db)
         
-        # Return success response (in production, redirect to frontend)
+        # Test the connection immediately after creation
+        try:
+            test_result = await connection_testing_service.test_connection(connection, db, comprehensive=True)
+            logger.info(f"Connection test completed for {platform}: {test_result['status']}")
+        except Exception as e:
+            logger.error(f"Connection test failed after OAuth: {e}")
+            test_result = {"status": "error", "errors": [str(e)]}
+        
+        # Return success response with test results
         return {
             "success": True,
             "message": f"Successfully connected {platform}",
-            "connection": connection.to_dict()
+            "connection": connection.to_dict(),
+            "test_result": test_result
         }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -535,6 +555,80 @@ async def get_post_analytics(
         logger.error(f"Failed to get post analytics: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve analytics")
 
+# Connection testing endpoints
+@router.post("/connections/{connection_id}/test", response_model=ConnectionTestResponse)
+async def test_connection(
+    connection_id: int,
+    comprehensive: bool = Query(default=True),
+    user_id: int = Query(default=1),
+    db: Session = Depends(get_db)
+):
+    """Test a social media connection comprehensively."""
+    try:
+        # Verify connection belongs to user
+        connection = db.query(SocialConnection).filter(
+            SocialConnection.id == connection_id,
+            SocialConnection.user_id == user_id
+        ).first()
+        
+        if not connection:
+            raise HTTPException(status_code=404, detail="Connection not found")
+        
+        # Run comprehensive test
+        test_result = await connection_testing_service.test_connection(connection, db, comprehensive)
+        
+        return ConnectionTestResponse(
+            connection_id=test_result['connection_id'],
+            platform=test_result['platform'],
+            status=test_result['status'],
+            tests_performed=test_result['tests_performed'],
+            errors=test_result['errors'],
+            warnings=test_result['warnings'],
+            recommendations=test_result['recommendations'],
+            performance_metrics=test_result['performance_metrics']
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to test connection {connection_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to test connection")
+
+@router.get("/connections/{connection_id}/test/history")
+async def get_connection_test_history(
+    connection_id: int,
+    user_id: int = Query(default=1),
+    db: Session = Depends(get_db)
+):
+    """Get test history for a connection."""
+    try:
+        # Verify connection belongs to user
+        connection = db.query(SocialConnection).filter(
+            SocialConnection.id == connection_id,
+            SocialConnection.user_id == user_id
+        ).first()
+        
+        if not connection:
+            raise HTTPException(status_code=404, detail="Connection not found")
+        
+        # Get test history from profile_data
+        test_history = []
+        if connection.profile_data and 'last_test' in connection.profile_data:
+            test_history.append(connection.profile_data['last_test'])
+        
+        return {
+            "success": True,
+            "connection_id": connection_id,
+            "platform": connection.platform,
+            "test_history": test_history
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get test history for connection {connection_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve test history")
+
 # Test endpoint for development
 @router.get("/test/platforms")
 async def test_supported_platforms():
@@ -544,32 +638,79 @@ async def test_supported_platforms():
             {
                 "id": "google_search_console",
                 "name": "Google Search Console",
-                "description": "Connect GSC to fetch website analytics and search performance data",
-                "features": ["Analytics", "Search Performance", "Index Status"]
+                "description": "Connect GSC to fetch website analytics and search performance data for content optimization",
+                "features": ["SEO Analytics", "Search Performance", "Content Insights", "Keyword Discovery"],
+                "category": "analytics"
             },
             {
                 "id": "youtube",
                 "name": "YouTube",
                 "description": "Connect YouTube for video analytics and content management",
-                "features": ["Video Analytics", "Channel Management", "Content Upload"]
+                "features": ["Video Analytics", "Channel Management", "Content Upload", "Audience Insights"],
+                "category": "social"
             },
             {
                 "id": "facebook",
                 "name": "Facebook",
                 "description": "Connect Facebook for page management and content posting",
-                "features": ["Page Management", "Content Posting", "Analytics"]
+                "features": ["Page Management", "Content Posting", "Audience Analytics", "Ad Insights"],
+                "category": "social"
+            },
+            {
+                "id": "instagram",
+                "name": "Instagram",
+                "description": "Connect Instagram for visual content posting and engagement analytics",
+                "features": ["Photo/Video Posting", "Story Management", "Engagement Analytics", "Hashtag Optimization"],
+                "category": "social"
             },
             {
                 "id": "twitter",
                 "name": "Twitter/X",
                 "description": "Connect Twitter for tweet management and analytics",
-                "features": ["Tweet Posting", "Analytics", "Trend Analysis"]
+                "features": ["Tweet Posting", "Engagement Analytics", "Trend Analysis", "Audience Insights"],
+                "category": "social"
             },
             {
                 "id": "linkedin",
                 "name": "LinkedIn",
                 "description": "Connect LinkedIn for professional content and networking",
-                "features": ["Content Posting", "Professional Analytics", "Network Insights"]
+                "features": ["Content Posting", "Professional Analytics", "Network Insights", "B2B Analytics"],
+                "category": "social"
+            },
+            {
+                "id": "tiktok",
+                "name": "TikTok",
+                "description": "Connect TikTok for video content and trend analysis",
+                "features": ["Video Content", "Trend Analysis", "Engagement Metrics", "Audience Demographics"],
+                "category": "social"
+            },
+            {
+                "id": "pinterest",
+                "name": "Pinterest",
+                "description": "Connect Pinterest for visual content and board management",
+                "features": ["Pin Management", "Board Analytics", "Visual Search Insights", "Audience Analysis"],
+                "category": "social"
+            },
+            {
+                "id": "snapchat",
+                "name": "Snapchat",
+                "description": "Connect Snapchat for story content and advertising analytics",
+                "features": ["Story Content", "Ad Analytics", "Audience Insights", "Campaign Management"],
+                "category": "social"
+            },
+            {
+                "id": "reddit",
+                "name": "Reddit",
+                "description": "Connect Reddit for community engagement and content posting",
+                "features": ["Community Posting", "Engagement Analytics", "Subreddit Insights", "Discussion Tracking"],
+                "category": "social"
+            },
+            {
+                "id": "discord",
+                "name": "Discord",
+                "description": "Connect Discord for community management and engagement",
+                "features": ["Server Management", "Community Analytics", "Member Insights", "Engagement Tracking"],
+                "category": "social"
             }
         ]
     }
