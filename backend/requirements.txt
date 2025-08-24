@@ -33,4 +33,7 @@ pyspellchecker>=0.7.2
 
 # Utilities
 pydantic>=2.5.2,<3.0.0
-typing-extensions>=4.8.0 
+typing-extensions>=4.8.0
+
+# Memory management
+mem0ai>=0.1.0 

@@ -32,6 +32,7 @@ import CreateTab from './tabs/CreateTab';
 import AIInsightsPanel from './components/AIInsightsPanel';
 import SystemStatusIndicator from './components/SystemStatusIndicator';
 import ProgressIndicator from './components/ProgressIndicator';
+import MemoryIcon from './components/MemoryIcon';
 import { useContentPlanningStore } from '../../stores/contentPlanningStore';
 import { 
   contentPlanningOrchestrator, 
@@ -173,6 +174,9 @@ const ContentPlanningDashboard: React.FC = () => {
             Content Planning Dashboard
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {/* ALwrity Memory Icon */}
+            <MemoryIcon userId={1} />
+            
             <SystemStatusIndicator />
             
             {/* AI Insights Button with Badge */}

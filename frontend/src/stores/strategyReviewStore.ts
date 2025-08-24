@@ -133,6 +133,14 @@ export const useStrategyReviewStore = create<ReviewState>()(
           
           get().updateReviewProgress();
           console.log('🔧 Strategy activated, all components now have activated status');
+          
+          // Trigger memory storage notification
+          // Note: The actual memory storage happens in the backend when the strategy is activated
+          // This just notifies the user that their memory has been updated
+          const memoryEvent = new CustomEvent('alwrity-memory-updated', {
+            detail: { domainName: 'ALwrity' }
+          });
+          window.dispatchEvent(memoryEvent);
         },
 
         // Reset review for a component
