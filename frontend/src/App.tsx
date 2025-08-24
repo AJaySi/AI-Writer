@@ -6,6 +6,7 @@ import MainDashboard from './components/MainDashboard/MainDashboard';
 import SEODashboard from './components/SEODashboard/SEODashboard';
 import ContentPlanningDashboard from './components/ContentPlanningDashboard/ContentPlanningDashboard';
 import MemoryChatPage from './components/MemoryChat/MemoryChatPage';
+import { useToast } from './components/ToastNotification';
 import { apiClient } from './api/client';
 
 interface OnboardingStatus {
@@ -20,10 +21,24 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { showMemoryToast, ToastComponent } = useToast();
 
   useEffect(() => {
     checkOnboardingStatus();
   }, []);
+
+  useEffect(() => {
+    // Listen for memory update events
+    const handleMemoryUpdate = (event: CustomEvent<{ domainName: string }>) => {
+      showMemoryToast(event.detail.domainName);
+    };
+
+    window.addEventListener('alwrity-memory-updated', handleMemoryUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('alwrity-memory-updated', handleMemoryUpdate as EventListener);
+    };
+  }, [showMemoryToast]);
 
   const checkOnboardingStatus = async () => {
     try {
@@ -148,6 +163,7 @@ const App: React.FC = () => {
         {/* Catch all other routes */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <ToastComponent />
     </Router>
   );
 };

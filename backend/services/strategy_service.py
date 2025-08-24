@@ -13,7 +13,7 @@ from models.monitoring_models import (
 )
 from models.enhanced_strategy_models import EnhancedContentStrategy
 from services.database import get_db_session
-from services.mem0_service import Mem0Service
+from services.enhanced_mem0_service import EnhancedMem0Service
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class StrategyService:
     
     def __init__(self, db_session: Optional[Session] = None):
         self.db_session = db_session or get_db_session()
-        self.mem0_service = Mem0Service()
+        self.mem0_service = EnhancedMem0Service(db_session)
     
     async def get_strategy_by_id(self, strategy_id: int) -> Optional[Dict[str, Any]]:
         """Get strategy by ID with all related data"""
@@ -121,19 +121,27 @@ class StrategyService:
             else:
                 logger.info(f"Strategy {strategy_id} activated (no database session)")
             
-            # Store strategy in mem0 as memory after successful activation
+            # Store ACTIVATED strategy in mem0 as memory with comprehensive 30+ inputs
             try:
-                mem0_success = await self.mem0_service.store_content_strategy(
-                    strategy_data=strategy,
-                    user_id=user_id,
-                    strategy_id=strategy_id
-                )
-                if mem0_success:
-                    logger.info(f"Strategy {strategy_id} successfully stored in mem0 memory")
+                # Get the complete strategy data from database with all 30+ inputs
+                complete_strategy = await self.get_complete_strategy_data(strategy_id)
+                if complete_strategy:
+                    mem0_success = await self.mem0_service.store_activated_content_strategy(
+                        strategy_data=complete_strategy,
+                        user_id=user_id,
+                        strategy_id=strategy_id,
+                        domain_name="ALwrity"
+                    )
+                    if mem0_success:
+                        logger.info(f"ACTIVATED strategy {strategy_id} successfully stored in mem0 memory with 30+ inputs")
+                        # Clear cache to ensure fresh data
+                        self.mem0_service.clear_cache(user_id)
+                    else:
+                        logger.warning(f"Failed to store ACTIVATED strategy {strategy_id} in mem0 memory")
                 else:
-                    logger.warning(f"Failed to store strategy {strategy_id} in mem0 memory")
+                    logger.error(f"Could not retrieve complete strategy data for {strategy_id}")
             except Exception as e:
-                logger.error(f"Error storing strategy {strategy_id} in mem0: {e}")
+                logger.error(f"Error storing ACTIVATED strategy {strategy_id} in mem0: {e}")
             
             return True
             
@@ -392,6 +400,96 @@ class StrategyService:
         except Exception as e:
             logger.error(f"Error resuming strategy {strategy_id}: {e}")
             return False
+    
+    async def get_complete_strategy_data(self, strategy_id: int) -> Optional[Dict[str, Any]]:
+        """Get complete strategy data with all 30+ inputs for memory storage"""
+        try:
+            if self.db_session:
+                # Query the enhanced strategy model with all fields
+                strategy = self.db_session.query(EnhancedContentStrategy).filter(
+                    EnhancedContentStrategy.id == strategy_id
+                ).first()
+                
+                if strategy:
+                    # Convert to comprehensive dictionary with all 30+ inputs
+                    strategy_dict = {
+                        # Basic Information
+                        'id': strategy.id,
+                        'user_id': strategy.user_id,
+                        'name': strategy.name,
+                        'industry': strategy.industry,
+                        'created_at': strategy.created_at.isoformat() if strategy.created_at else None,
+                        'updated_at': strategy.updated_at.isoformat() if strategy.updated_at else None,
+                        'completion_percentage': strategy.completion_percentage,
+                        
+                        # Business Context (8 inputs)
+                        'business_objectives': strategy.business_objectives,
+                        'target_metrics': strategy.target_metrics,
+                        'content_budget': strategy.content_budget,
+                        'team_size': strategy.team_size,
+                        'implementation_timeline': strategy.implementation_timeline,
+                        'market_share': strategy.market_share,
+                        'competitive_position': strategy.competitive_position,
+                        'performance_metrics': strategy.performance_metrics,
+                        
+                        # Audience Intelligence (6 inputs)
+                        'content_preferences': strategy.content_preferences,
+                        'consumption_patterns': strategy.consumption_patterns,
+                        'audience_pain_points': strategy.audience_pain_points,
+                        'buying_journey': strategy.buying_journey,
+                        'seasonal_trends': strategy.seasonal_trends,
+                        'engagement_metrics': strategy.engagement_metrics,
+                        
+                        # Competitive Intelligence (5 inputs)
+                        'top_competitors': strategy.top_competitors,
+                        'competitor_content_strategies': strategy.competitor_content_strategies,
+                        'market_gaps': strategy.market_gaps,
+                        'industry_trends': strategy.industry_trends,
+                        'emerging_trends': strategy.emerging_trends,
+                        
+                        # Content Strategy (7 inputs)
+                        'preferred_formats': strategy.preferred_formats,
+                        'content_mix': strategy.content_mix,
+                        'content_frequency': strategy.content_frequency,
+                        'optimal_timing': strategy.optimal_timing,
+                        'quality_metrics': strategy.quality_metrics,
+                        'editorial_guidelines': strategy.editorial_guidelines,
+                        'brand_voice': strategy.brand_voice,
+                        
+                        # Performance & Analytics (4 inputs)
+                        'traffic_sources': strategy.traffic_sources,
+                        'conversion_rates': strategy.conversion_rates,
+                        'content_roi_targets': strategy.content_roi_targets,
+                        'ab_testing_capabilities': strategy.ab_testing_capabilities,
+                        
+                        # Legacy fields for backward compatibility
+                        'target_audience': strategy.target_audience,
+                        'content_pillars': strategy.content_pillars,
+                        'ai_recommendations': strategy.ai_recommendations,
+                        
+                        # Enhanced AI Analysis fields
+                        'comprehensive_ai_analysis': strategy.comprehensive_ai_analysis,
+                        'onboarding_data_used': strategy.onboarding_data_used,
+                        'strategic_scores': strategy.strategic_scores,
+                        'market_positioning': strategy.market_positioning,
+                        'competitive_advantages': strategy.competitive_advantages,
+                        'strategic_risks': strategy.strategic_risks,
+                        'opportunity_analysis': strategy.opportunity_analysis,
+                        'data_source_transparency': strategy.data_source_transparency
+                    }
+                    
+                    logger.info(f"Retrieved complete strategy data for {strategy_id} with all 30+ inputs")
+                    return strategy_dict
+                else:
+                    logger.warning(f"Strategy {strategy_id} not found in database")
+                    return None
+            else:
+                logger.warning("No database session available for complete strategy retrieval")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error retrieving complete strategy data for {strategy_id}: {e}")
+            return None
     
     def __del__(self):
         """Cleanup database session"""

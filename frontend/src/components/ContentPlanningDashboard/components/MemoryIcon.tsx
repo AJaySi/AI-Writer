@@ -115,23 +115,33 @@ const MemoryIcon: React.FC<MemoryIconProps> = ({ userId }) => {
           </Typography>
 
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={6}>
+            <Grid item xs={4}>
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h4" color="primary">
-                  {memoryStats.total_memories}
+                  {memoryStats.activated_strategies}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Total Memories
+                  Activated
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={4}>
               <Box sx={{ textAlign: 'center' }}>
                 <Typography variant="h4" color="secondary">
                   {memoryStats.recent_memories}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   This Week
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={4}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h4" color="success.main">
+                  {memoryStats.cache_hits}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Cached
                 </Typography>
               </Box>
             </Grid>
@@ -221,9 +231,14 @@ const MemoryIcon: React.FC<MemoryIconProps> = ({ userId }) => {
             Chat with your memories
           </Button>
 
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
-            Status: {getStatusText()}
-          </Typography>
+          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="caption" color="text.secondary">
+              Status: {getStatusText()}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {memoryStats.audit_entries} audit entries
+            </Typography>
+          </Box>
         </>
       ) : (
         <Typography variant="body2" color="error">

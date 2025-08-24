@@ -5,11 +5,13 @@
 
 export interface MemoryStatistics {
   total_memories: number;
+  activated_strategies: number;
   categories: Record<string, number>;
   user_types: Record<string, number>;
   industries: Record<string, number>;
   recent_memories: number;
-  api_calls_today: number;
+  cache_hits: number;
+  audit_entries: number;
   available: boolean;
   formatted_categories: Array<{
     name: string;
@@ -17,7 +19,7 @@ export interface MemoryStatistics {
     percentage: number;
   }>;
   status_message: string;
-  last_updated: string;
+  cached_at: string;
 }
 
 export interface Memory {
@@ -78,15 +80,17 @@ class MemoryApiService {
       // Return safe defaults
       return {
         total_memories: 0,
+        activated_strategies: 0,
         categories: {},
         user_types: {},
         industries: {},
         recent_memories: 0,
-        api_calls_today: 0,
+        cache_hits: 0,
+        audit_entries: 0,
         available: false,
         formatted_categories: [],
         status_message: 'Memory service unavailable',
-        last_updated: new Date().toISOString()
+        cached_at: new Date().toISOString()
       };
     }
   }
@@ -263,6 +267,93 @@ class MemoryApiService {
   }
 
   /**
+   * Get audit trail for memory changes
+   */
+  async getAuditTrail(userId: number, strategyId?: number): Promise<Array<{
+    memory_id: string;
+    strategy_id: number;
+    user_id: number;
+    action: string;
+    timestamp: string;
+    changes: any;
+    metadata: any;
+    content_hash: string;
+  }>> {
+    try {
+      const params = new URLSearchParams();
+      if (strategyId) {
+        params.append('strategy_id', strategyId.toString());
+      }
+
+      const response = await fetch(`${this.baseUrl}/audit-trail/${userId}?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result.data.audit_entries;
+    } catch (error) {
+      console.error('Error getting audit trail:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Clear memory cache for user
+   */
+  async clearCache(userId: number): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseUrl}/cache/${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result.success;
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get cache performance statistics
+   */
+  async getCacheStats(): Promise<{
+    cache_size: number;
+    stats_cache_size: number;
+    audit_trail_entries: number;
+    max_cache_size: number;
+    cache_ttl_minutes: number;
+    cache_hit_ratio: string;
+  }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/cache/stats`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      console.error('Error getting cache stats:', error);
+      return {
+        cache_size: 0,
+        stats_cache_size: 0,
+        audit_trail_entries: 0,
+        max_cache_size: 0,
+        cache_ttl_minutes: 0,
+        cache_hit_ratio: '0%'
+      };
+    }
+  }
+
+  /**
    * Check memory service health
    */
   async checkHealth(): Promise<{
@@ -273,7 +364,11 @@ class MemoryApiService {
       search: boolean;
       categorization: boolean;
       chat_interface: boolean;
+      intelligent_caching: boolean;
+      audit_trail: boolean;
+      comprehensive_inputs: boolean;
     };
+    cache_stats?: any;
   }> {
     try {
       const response = await fetch(`${this.baseUrl}/health`);
@@ -293,7 +388,10 @@ class MemoryApiService {
           storage: false,
           search: false,
           categorization: false,
-          chat_interface: false
+          chat_interface: false,
+          intelligent_caching: false,
+          audit_trail: false,
+          comprehensive_inputs: false
         }
       };
     }

@@ -6,7 +6,7 @@ Handles ALwrity memory statistics, search, and CRUD operations
 from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
-from services.mem0_service import Mem0Service
+from services.enhanced_mem0_service import EnhancedMem0Service
 from loguru import logger
 
 router = APIRouter(prefix="/memory", tags=["memory"])
@@ -31,12 +31,12 @@ class MemoryDeleteRequest(BaseModel):
 
 # Initialize service
 def get_mem0_service():
-    return Mem0Service()
+    return EnhancedMem0Service()
 
 @router.get("/statistics/{user_id}")
 async def get_memory_statistics(
     user_id: int,
-    mem0_service: Mem0Service = Depends(get_mem0_service)
+    mem0_service: EnhancedMem0Service = Depends(get_mem0_service)
 ) -> Dict[str, Any]:
     """
     Get comprehensive memory statistics for the mind icon
@@ -73,7 +73,7 @@ async def get_memory_statistics(
 async def search_memories(
     user_id: int,
     search_request: MemorySearchRequest,
-    mem0_service: Mem0Service = Depends(get_mem0_service)
+    mem0_service: EnhancedMem0Service = Depends(get_mem0_service)
 ) -> Dict[str, Any]:
     """
     Search memories using advanced filtering and natural language queries
@@ -110,7 +110,7 @@ async def search_memories(
 async def chat_with_memories(
     user_id: int,
     chat_message: ChatMessage,
-    mem0_service: Mem0Service = Depends(get_mem0_service)
+    mem0_service: EnhancedMem0Service = Depends(get_mem0_service)
 ) -> Dict[str, Any]:
     """
     Chat interface for querying memories with natural language
@@ -161,7 +161,7 @@ async def get_all_memories(
     limit: int = Query(50, description="Maximum number of memories to return"),
     user_type: Optional[str] = Query(None, description="Filter by user type"),
     industry: Optional[str] = Query(None, description="Filter by industry"),
-    mem0_service: Mem0Service = Depends(get_mem0_service)
+    mem0_service: EnhancedMem0Service = Depends(get_mem0_service)
 ) -> Dict[str, Any]:
     """
     Get all memories for a user with optional filtering
@@ -195,7 +195,7 @@ async def get_all_memories(
 async def delete_memory(
     user_id: int,
     strategy_id: int,
-    mem0_service: Mem0Service = Depends(get_mem0_service)
+    mem0_service: EnhancedMem0Service = Depends(get_mem0_service)
 ) -> Dict[str, Any]:
     """
     Delete a specific memory by strategy ID
@@ -222,7 +222,7 @@ async def update_memory(
     user_id: int,
     strategy_id: int,
     update_request: MemoryUpdateRequest,
-    mem0_service: Mem0Service = Depends(get_mem0_service)
+    mem0_service: EnhancedMem0Service = Depends(get_mem0_service)
 ) -> Dict[str, Any]:
     """
     Update an existing memory with new strategy data
@@ -251,7 +251,7 @@ async def update_memory(
 @router.get("/categories/{user_id}")
 async def get_user_categories(
     user_id: int,
-    mem0_service: Mem0Service = Depends(get_mem0_service)
+    mem0_service: EnhancedMem0Service = Depends(get_mem0_service)
 ) -> Dict[str, Any]:
     """
     Get all available categories for the user for filtering purposes
@@ -280,23 +280,112 @@ async def get_user_categories(
         logger.error(f"Error getting categories for user {user_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to retrieve categories: {str(e)}")
 
+@router.get("/audit-trail/{user_id}")
+async def get_audit_trail(
+    user_id: int,
+    strategy_id: Optional[int] = Query(None, description="Filter by strategy ID"),
+    mem0_service: EnhancedMem0Service = Depends(get_mem0_service)
+) -> Dict[str, Any]:
+    """
+    Get audit trail for memory changes
+    """
+    try:
+        audit_entries = mem0_service.get_audit_trail(user_id=user_id, strategy_id=strategy_id)
+        
+        return {
+            "success": True,
+            "data": {
+                "audit_entries": audit_entries,
+                "total_entries": len(audit_entries),
+                "filtered_by": {
+                    "user_id": user_id,
+                    "strategy_id": strategy_id
+                }
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting audit trail for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve audit trail: {str(e)}")
+
+@router.delete("/cache/{user_id}")
+async def clear_user_cache(
+    user_id: int,
+    mem0_service: EnhancedMem0Service = Depends(get_mem0_service)
+) -> Dict[str, Any]:
+    """
+    Clear memory cache for a specific user
+    """
+    try:
+        mem0_service.clear_cache(user_id)
+        
+        return {
+            "success": True,
+            "message": f"Cache cleared for user {user_id}",
+            "data": {
+                "user_id": user_id,
+                "cache_cleared": True
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error clearing cache for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to clear cache: {str(e)}")
+
+@router.get("/cache/stats")
+async def get_cache_stats(
+    mem0_service: EnhancedMem0Service = Depends(get_mem0_service)
+) -> Dict[str, Any]:
+    """
+    Get cache performance statistics
+    """
+    try:
+        cache_stats = mem0_service.get_cache_stats()
+        
+        return {
+            "success": True,
+            "data": cache_stats
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting cache stats: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve cache stats: {str(e)}")
+
 @router.get("/health")
 async def memory_health_check(
-    mem0_service: Mem0Service = Depends(get_mem0_service)
+    mem0_service: EnhancedMem0Service = Depends(get_mem0_service)
 ) -> Dict[str, Any]:
     """
     Check if memory service is available and healthy
     """
-    return {
-        "success": True,
-        "data": {
-            "mem0_available": mem0_service.is_available(),
-            "service_status": "healthy" if mem0_service.is_available() else "unavailable",
-            "features": {
-                "storage": mem0_service.is_available(),
-                "search": mem0_service.is_available(),
-                "categorization": True,
-                "chat_interface": mem0_service.is_available()
+    try:
+        cache_stats = mem0_service.get_cache_stats()
+        
+        return {
+            "success": True,
+            "data": {
+                "mem0_available": mem0_service.is_available(),
+                "service_status": "healthy" if mem0_service.is_available() else "unavailable",
+                "features": {
+                    "storage": mem0_service.is_available(),
+                    "search": mem0_service.is_available(),
+                    "categorization": True,
+                    "chat_interface": mem0_service.is_available(),
+                    "intelligent_caching": True,
+                    "audit_trail": True,
+                    "comprehensive_inputs": True
+                },
+                "cache_stats": cache_stats
             }
         }
-    }
+        
+    except Exception as e:
+        logger.error(f"Error in health check: {e}")
+        return {
+            "success": False,
+            "data": {
+                "mem0_available": False,
+                "service_status": "error",
+                "error": str(e)
+            }
+        }
