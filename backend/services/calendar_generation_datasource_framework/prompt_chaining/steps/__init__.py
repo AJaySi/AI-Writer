@@ -8,6 +8,7 @@ Each step is responsible for a specific aspect of calendar generation with progr
 from .base_step import PromptStep, PlaceholderStep
 from .phase1.phase1_steps import ContentStrategyAnalysisStep, GapAnalysisStep, AudiencePlatformStrategyStep
 from .phase2.phase2_steps import CalendarFrameworkStep, ContentPillarDistributionStep, PlatformSpecificStrategyStep
+from .phase3.phase3_steps import WeeklyThemeDevelopmentStep, DailyContentPlanningStep, ContentRecommendationsStep
 
 __all__ = [
     'PromptStep',
@@ -17,5 +18,8 @@ __all__ = [
     'AudiencePlatformStrategyStep',
     'CalendarFrameworkStep',
     'ContentPillarDistributionStep',
-    'PlatformSpecificStrategyStep'
+    'PlatformSpecificStrategyStep',
+    'WeeklyThemeDevelopmentStep',
+    'DailyContentPlanningStep',
+    'ContentRecommendationsStep'
 ]

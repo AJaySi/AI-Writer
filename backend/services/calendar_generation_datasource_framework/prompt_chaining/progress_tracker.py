@@ -54,6 +54,7 @@ class ProgressTracker:
         self.progress_history = []
         
         logger.info(f"📊 Progress tracking initialized for {total_steps} steps")
+        logger.info(f"📊 Initial state - total_steps: {self.total_steps}, completed_steps: {self.completed_steps}, current_step: {self.current_step}")
     
     def update_progress(self, step_name: str, step_result: Dict[str, Any]):
         """
@@ -64,11 +65,16 @@ class ProgressTracker:
             step_result: Result from the step
         """
         try:
+            logger.info(f"📊 ProgressTracker.update_progress called for {step_name}")
+            logger.info(f"📋 Step result keys: {list(step_result.keys()) if step_result else 'None'}")
+            
             # Update step progress
             step_number = step_result.get("step_number", 0)
             execution_time = step_result.get("execution_time", 0.0)
             quality_score = step_result.get("quality_score", 0.0)
             status = step_result.get("status", "unknown")
+            
+            logger.info(f"🔢 Step number: {step_number}, Status: {status}, Quality: {quality_score}")
             
             self.step_progress[step_name] = {
                 "step_number": step_number,
@@ -84,6 +90,9 @@ class ProgressTracker:
             # Update counters
             if status == "completed":
                 self.completed_steps += 1
+            elif status == "timeout" or status == "error" or status == "failed":
+                # Don't increment completed steps for failed steps
+                logger.warning(f"Step {step_number} failed with status: {status}")
             
             self.current_step = max(self.current_step, step_number)
             
@@ -93,14 +102,22 @@ class ProgressTracker:
             # Trigger callback
             if self.progress_callback:
                 try:
-                    self.progress_callback(self.get_progress())
+                    logger.info(f"🔄 Calling progress callback for {step_name}")
+                    progress_data = self.get_progress()
+                    logger.info(f"📊 Progress data: {progress_data}")
+                    self.progress_callback(progress_data)
+                    logger.info(f"✅ Progress callback completed for {step_name}")
                 except Exception as e:
                     logger.error(f"❌ Error in progress callback: {str(e)}")
+            else:
+                logger.warning(f"⚠️ No progress callback registered for {step_name}")
             
             logger.info(f"📊 Progress updated: {self.completed_steps}/{self.total_steps} steps completed")
             
         except Exception as e:
-            logger.error(f"❌ Error updating progress: {str(e)}")
+            logger.error(f"❌ Error updating progress for {step_name}: {str(e)}")
+            import traceback
+            logger.error(f"📋 Traceback: {traceback.format_exc()}")
     
     def _add_to_history(self, step_name: str, step_result: Dict[str, Any]):
         """Add progress update to history."""
@@ -138,7 +155,7 @@ class ProgressTracker:
         # Calculate overall quality score
         overall_quality_score = self._calculate_overall_quality_score()
         
-        return {
+        progress_data = {
             "total_steps": self.total_steps,
             "completed_steps": self.completed_steps,
             "current_step": self.current_step,
@@ -151,6 +168,15 @@ class ProgressTracker:
             "status": self._get_overall_status(),
             "timestamp": datetime.now().isoformat()
         }
+        
+        # Debug logging
+        logger.info(f"📊 Progress tracker returning data:")
+        logger.info(f"   - total_steps: {progress_data['total_steps']}")
+        logger.info(f"   - completed_steps: {progress_data['completed_steps']}")
+        logger.info(f"   - current_step: {progress_data['current_step']}")
+        logger.info(f"   - progress_percentage: {progress_data['progress_percentage']}")
+        
+        return progress_data
     
     def get_progress_percentage(self) -> float:
         """

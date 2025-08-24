@@ -46,6 +46,9 @@ import {
   type QualityScores
 } from './calendarGenerationModalPanels';
 
+// Import new StepProgressTracker component
+import StepProgressTracker from './calendarGenerationModalPanels/StepProgressTracker';
+
 // Import styles
 import {
   dialogStyles,
@@ -268,25 +271,42 @@ const CalendarGenerationModal: React.FC<CalendarGenerationModalProps> = ({
   });
 
   // Use polling hook for real backend data only
-  const { progress, isPolling, error, startPolling, stopPolling } = useCalendarGenerationPolling(sessionId);
+  const { 
+    progress, 
+    isPolling, 
+    error, 
+    startPolling, 
+    stopPolling,
+    getStepStatus,
+    getStepQualityScore,
+    getStepErrors,
+    getStepWarnings
+  } = useCalendarGenerationPolling(sessionId);
   
   // Use only real progress data - no fallback to mock data
   const currentProgress = progress;
 
   useEffect(() => {
     if (open && sessionId) {
-      // Start real polling when modal opens
+      // Start real polling when modal opens with session ID
+      console.log('🎯 Modal opened, starting polling for session:', sessionId);
       startPolling();
+    } else if (open && !sessionId) {
+      // Modal opened but no session ID yet - show loading state
+      console.log('🎯 Modal opened, waiting for session ID...');
     } else if (!open) {
+      console.log('🔒 Modal closed, stopping polling');
       stopPolling();
     }
   }, [open, sessionId, startPolling, stopPolling]);
 
   useEffect(() => {
+    console.log('📊 Progress updated:', currentProgress);
     if (currentProgress?.status === 'completed') {
       // Handle completion
-      console.log('Calendar generation completed');
+      console.log('🎉 Calendar generation completed');
     } else if (currentProgress?.status === 'error') {
+      console.log('❌ Calendar generation error:', currentProgress.errors);
       onError(currentProgress.errors[0]?.message || 'Unknown error');
     }
   }, [currentProgress?.status, currentProgress?.errors, onError]);
@@ -376,16 +396,10 @@ const CalendarGenerationModal: React.FC<CalendarGenerationModalProps> = ({
                   transition={{ delay: 0.3, duration: 0.5 }}
                 >
                   <Typography variant="h6" sx={{ mt: 2 }}>
-                    Initializing Calendar Generation...
+                    {!sessionId ? 'Starting Calendar Generation...' : 'Initializing Calendar Generation...'}
                   </Typography>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5, duration: 0.5 }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    Please wait while we set up your generation session
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    {!sessionId ? 'Please wait while we prepare your session...' : 'Please wait while we initialize the process...'}
                   </Typography>
                 </motion.div>
               </Box>
@@ -428,8 +442,8 @@ const CalendarGenerationModal: React.FC<CalendarGenerationModalProps> = ({
                            </Box>
                           <motion.div
                             key={currentProgress.overallProgress}
-                            initial={{ scale: 1.2, color: '#1976d2' }}
-                            animate={{ scale: 1, color: 'inherit' }}
+                            initial={{ scale: 1.2 }}
+                            animate={{ scale: 1 }}
                             transition={{ duration: 0.3 }}
                           >
                             <Typography variant="body2" color="text.secondary">
@@ -545,12 +559,13 @@ const CalendarGenerationModal: React.FC<CalendarGenerationModalProps> = ({
                   {/* Tabs with Enhanced Animations */}
                   <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
                     <Grid container spacing={1}>
-                      {[
-                        { id: 0, label: 'Live Progress' },
-                        { id: 1, label: 'Step Results' },
-                        { id: 2, label: 'Data Sources' },
-                        { id: 3, label: 'Quality Gates' }
-                      ].map((tab, index) => (
+                                             {[
+                         { id: 0, label: 'Live Progress' },
+                         { id: 1, label: 'Step Results' },
+                         { id: 2, label: 'Step Tracker' },
+                         { id: 3, label: 'Data Sources' },
+                         { id: 4, label: 'Quality Gates' }
+                       ].map((tab, index) => (
                         <Grid item key={tab.id}>
                           <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -595,26 +610,46 @@ const CalendarGenerationModal: React.FC<CalendarGenerationModalProps> = ({
                          transition={{ duration: 0.4, ease: animationEasing.easeInOut }}
                        >
                         <StepResultsPanel
+                          progress={currentProgress}
+                          getStepStatus={getStepStatus}
+                          getStepQualityScore={getStepQualityScore}
+                          getStepErrors={getStepErrors}
+                          getStepWarnings={getStepWarnings}
+                        />
+                      </motion.div>
+                                         )}
+                     
+                     {activeTab === 2 && (
+                       <motion.div
+                         key="step-tracker"
+                         {...fadeInLeft}
+                         transition={{ duration: 0.4, ease: animationEasing.easeInOut }}
+                       >
+                         <StepProgressTracker
+                           progress={currentProgress}
+                           isPolling={isPolling}
+                           getStepStatus={getStepStatus}
+                           getStepQualityScore={getStepQualityScore}
+                           getStepErrors={getStepErrors}
+                           getStepWarnings={getStepWarnings}
+                         />
+                       </motion.div>
+                     )}
+                     
+                     {activeTab === 3 && (
+                       <motion.div
+                         key="data-sources"
+                         {...fadeInLeft}
+                         transition={{ duration: 0.4, ease: animationEasing.easeInOut }}
+                       >
+                        <DataSourcePanel 
+                          currentStep={currentProgress.currentStep}
                           stepResults={currentProgress.stepResults}
-                          qualityScores={currentProgress.qualityScores}
                         />
                       </motion.div>
                     )}
-                    
-                                                             {activeTab === 2 && (
-                      <motion.div
-                        key="data-sources"
-                        {...fadeInLeft}
-                        transition={{ duration: 0.4, ease: animationEasing.easeInOut }}
-                      >
-                       <DataSourcePanel 
-                         currentStep={currentProgress.currentStep}
-                         stepResults={currentProgress.stepResults}
-                       />
-                     </motion.div>
-                   )}
-                    
-                                         {activeTab === 3 && (
+                     
+                     {activeTab === 4 && (
                        <motion.div
                          key="quality-gates"
                          {...fadeInLeft}

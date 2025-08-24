@@ -18,6 +18,10 @@ from .error_handler import ErrorHandler
 from .steps.base_step import PromptStep, PlaceholderStep
 from .steps.phase1.phase1_steps import ContentStrategyAnalysisStep, GapAnalysisStep, AudiencePlatformStrategyStep
 from .steps.phase2.phase2_steps import CalendarFrameworkStep, ContentPillarDistributionStep, PlatformSpecificStrategyStep
+from .steps.phase3.phase3_steps import WeeklyThemeDevelopmentStep, DailyContentPlanningStep, ContentRecommendationsStep
+from .steps.phase4.step10_implementation import PerformanceOptimizationStep
+from .steps.phase4.step11_implementation import StrategyAlignmentValidationStep
+from .steps.phase4.step12_implementation import FinalCalendarAssemblyStep
 
 # Import data processing modules
 import sys
@@ -60,15 +64,23 @@ class PromptChainOrchestrator:
     - Progress tracking and monitoring
     """
     
-    def __init__(self):
+    def __init__(self, db_session=None):
         """Initialize the prompt chain orchestrator."""
         self.step_manager = StepManager()
         self.context_manager = ContextManager()
         self.progress_tracker = ProgressTracker()
         self.error_handler = ErrorHandler()
         
+        # Store database session for injection
+        self.db_session = db_session
+        
         # Data processing modules for 12-step preparation
         self.comprehensive_user_processor = ComprehensiveUserDataProcessor()
+        
+        # Inject database service if available
+        if hasattr(self.comprehensive_user_processor, 'content_planning_db_service') and db_session:
+            self.comprehensive_user_processor.content_planning_db_service = db_session
+            logger.info("✅ Database service injected into comprehensive user processor")
         
         # 12-step configuration
         self.steps = self._initialize_steps()
@@ -90,15 +102,15 @@ class PromptChainOrchestrator:
         steps["step_05"] = ContentPillarDistributionStep()
         steps["step_06"] = PlatformSpecificStrategyStep()
         
-        # Phase 3: Content (Steps 7-9) - PLACEHOLDERS
-        steps["step_07"] = PlaceholderStep("Weekly Theme Development", 7)
-        steps["step_08"] = PlaceholderStep("Daily Content Planning", 8)
-        steps["step_09"] = PlaceholderStep("Content Recommendations", 9)
+        # Phase 3: Content (Steps 7-9) - REAL IMPLEMENTATIONS
+        steps["step_07"] = WeeklyThemeDevelopmentStep()
+        steps["step_08"] = DailyContentPlanningStep()
+        steps["step_09"] = ContentRecommendationsStep()
         
-        # Phase 4: Optimization (Steps 10-12) - PLACEHOLDERS
-        steps["step_10"] = PlaceholderStep("Performance Optimization", 10)
-        steps["step_11"] = PlaceholderStep("Strategy Alignment Validation", 11)
-        steps["step_12"] = PlaceholderStep("Final Calendar Assembly", 12)
+        # Phase 4: Optimization (Steps 10-12) - REAL IMPLEMENTATIONS
+        steps["step_10"] = PerformanceOptimizationStep()
+        steps["step_11"] = StrategyAlignmentValidationStep()
+        steps["step_12"] = FinalCalendarAssemblyStep()
         
         return steps
     
@@ -251,6 +263,7 @@ class PromptChainOrchestrator:
         """Execute the complete 12-step process."""
         try:
             logger.info("🔄 Starting 12-step execution process")
+            logger.info(f"📊 Context keys: {list(context.keys())}")
             
             # Execute steps sequentially by number
             for step_num in range(1, 13):
@@ -258,27 +271,52 @@ class PromptChainOrchestrator:
                 step = self.steps[step_key]
                 
                 logger.info(f"🎯 Executing {step.name} (Step {step_num}/12)")
+                logger.info(f"📋 Step key: {step_key}")
+                logger.info(f"🔧 Step type: {type(step)}")
                 
                 context["current_step"] = step_num
                 context["phase"] = self._get_phase_for_step(step_num)
                 
-                step_result = await step.run(context)
+                logger.info(f"🚀 Calling step.run() for {step_key}")
+                try:
+                    step_result = await step.run(context)
+                    logger.info(f"✅ Step {step_num} completed with result keys: {list(step_result.keys()) if step_result else 'None'}")
+                except Exception as step_error:
+                    logger.error(f"❌ Step {step_num} ({step.name}) execution failed - FAILING FAST")
+                    logger.error(f"🚨 FAIL FAST: Step execution error: {str(step_error)}")
+                    raise Exception(f"Step {step_num} ({step.name}) execution failed: {str(step_error)}")
                 
                 context["step_results"][step_key] = step_result
                 context["quality_scores"][step_key] = step_result.get("quality_score", 0.0)
                 
                 # Update progress with correct signature
+                logger.info(f"📊 Updating progress for {step_key}")
                 self.progress_tracker.update_progress(step_key, step_result)
                 
                 # Update context with correct signature
+                logger.info(f"🔄 Updating context for {step_key}")
                 await self.context_manager.update_context(step_key, step_result)
                 
                 # Validate step result
-                await self._validate_step_result(step_key, step_result, context)
+                logger.info(f"🔍 Validating step result for {step_key}")
+                validation_passed = await self._validate_step_result(step_key, step_result, context)
                 
-                logger.info(f"✅ {step.name} completed (Quality: {step_result.get('quality_score', 0.0):.2f})")
+                if validation_passed:
+                    logger.info(f"✅ {step.name} completed (Quality: {step_result.get('quality_score', 0.0):.2f})")
+                else:
+                    logger.error(f"❌ {step.name} validation failed - FAILING FAST")
+                    # Update step result to indicate validation failure
+                    step_result["validation_passed"] = False
+                    step_result["status"] = "failed"
+                    context["step_results"][step_key] = step_result
+                    
+                    # FAIL FAST: Stop execution and return error
+                    error_message = f"Step {step_num} ({step.name}) validation failed. Stopping calendar generation."
+                    logger.error(f"🚨 FAIL FAST: {error_message}")
+                    raise Exception(error_message)
             
             # Generate final calendar
+            logger.info("🎯 Generating final calendar from all steps")
             final_calendar = await self._generate_final_calendar(context)
             
             logger.info("✅ 12-step execution completed successfully")
@@ -286,6 +324,8 @@ class PromptChainOrchestrator:
             
         except Exception as e:
             logger.error(f"❌ Error in 12-step execution: {str(e)}")
+            import traceback
+            logger.error(f"📋 Traceback: {traceback.format_exc()}")
             raise
     
 
@@ -298,18 +338,40 @@ class PromptChainOrchestrator:
     ) -> bool:
         """Validate step result using quality gates."""
         try:
-            # TODO: Implement quality gate validation
             logger.info(f"🔍 Validating {step_name} result")
             
-            # For now, basic validation
-            if not step_result or "error" in step_result:
-                raise ValueError(f"Step {step_name} failed validation")
+            # Check if step_result exists
+            if not step_result:
+                logger.error(f"❌ {step_name}: Step result is None or empty")
+                return False
             
-            logger.info(f"✅ {step_name} validation passed")
-            return True
+            # Extract the actual result from the wrapped step response
+            # The step_result from orchestrator contains the wrapped response from base step's run() method
+            # We need to extract the actual result that the step's validate_result() method expects
+            actual_result = step_result.get("result", step_result)
+            
+            # Get the step instance to call its validate_result method
+            step_key = step_name
+            if step_key in self.steps:
+                step = self.steps[step_key]
+                
+                # Call the step's validate_result method with the actual result
+                validation_passed = step.validate_result(actual_result)
+                
+                if validation_passed:
+                    logger.info(f"✅ {step_name} validation passed using step's validate_result method")
+                    return True
+                else:
+                    logger.error(f"❌ {step_name} validation failed using step's validate_result method")
+                    return False
+            else:
+                logger.error(f"❌ {step_name}: Step not found in orchestrator steps")
+                return False
             
         except Exception as e:
             logger.error(f"❌ {step_name} validation failed: {str(e)}")
+            import traceback
+            logger.error(f"📋 Validation traceback: {traceback.format_exc()}")
             return False
     
     async def _generate_final_calendar(self, context: Dict[str, Any]) -> Dict[str, Any]:

@@ -3,40 +3,79 @@ Gap Analysis Data Processor
 
 Extracted from calendar_generator_service.py to improve maintainability
 and align with 12-step implementation plan.
+
+NO MOCK DATA - Only real data sources allowed.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 from loguru import logger
+
+import sys
+import os
+
+# Add the services directory to the path for proper imports
+services_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+if services_dir not in sys.path:
+    sys.path.insert(0, services_dir)
+
+# Import real services - NO FALLBACKS
+from services.content_planning_db import ContentPlanningDBService
+
+logger.info("✅ Successfully imported real data processing services")
 
 
 class GapAnalysisDataProcessor:
-    """Process gap analysis data from database."""
+    """Process gap analysis data for 12-step prompt chaining."""
     
     def __init__(self):
         self.content_planning_db_service = None  # Will be injected
     
     async def get_gap_analysis_data(self, user_id: int) -> Dict[str, Any]:
-        """Get gap analysis data from database."""
+        """Get gap analysis data from database for 12-step prompt chaining."""
         try:
+            logger.info(f"🔍 Retrieving gap analysis data for user {user_id}")
+            
             # Check if database service is available
             if self.content_planning_db_service is None:
-                logger.warning("ContentPlanningDBService not available, returning empty gap analysis data")
-                return {}
+                raise ValueError("ContentPlanningDBService not available - cannot retrieve gap analysis data")
             
-            # Get latest gap analysis results using the correct method name
+            # Get gap analysis data from database
             gap_analyses = await self.content_planning_db_service.get_user_content_gap_analyses(user_id)
             
-            if gap_analyses:
-                latest_analysis = gap_analyses[0]  # Get most recent
-                return {
-                    "content_gaps": latest_analysis.get("analysis_results", {}).get("content_gaps", []),
-                    "keyword_opportunities": latest_analysis.get("analysis_results", {}).get("keyword_opportunities", []),
-                    "competitor_insights": latest_analysis.get("analysis_results", {}).get("competitor_insights", []),
-                    "recommendations": latest_analysis.get("recommendations", []),
-                    "opportunities": latest_analysis.get("opportunities", [])
-                }
-            return {}
+            if not gap_analyses:
+                raise ValueError(f"No gap analysis data found for user_id: {user_id}")
+            
+            # Get the latest gap analysis (highest ID)
+            latest_analysis = max(gap_analyses, key=lambda x: x.id) if gap_analyses else None
+            
+            if not latest_analysis:
+                raise ValueError(f"No gap analysis results found for user_id: {user_id}")
+            
+            # Convert to dictionary for processing
+            analysis_dict = latest_analysis.to_dict() if hasattr(latest_analysis, 'to_dict') else {
+                'id': latest_analysis.id,
+                'user_id': latest_analysis.user_id,
+                'analysis_results': latest_analysis.analysis_results,
+                'recommendations': latest_analysis.recommendations,
+                'created_at': latest_analysis.created_at.isoformat() if latest_analysis.created_at else None
+            }
+            
+            # Extract and structure gap analysis data
+            gap_analysis_data = {
+                "content_gaps": analysis_dict.get("analysis_results", {}).get("content_gaps", []),
+                "keyword_opportunities": analysis_dict.get("analysis_results", {}).get("keyword_opportunities", []),
+                "competitor_insights": analysis_dict.get("analysis_results", {}).get("competitor_insights", []),
+                "recommendations": analysis_dict.get("recommendations", []),
+                "opportunities": analysis_dict.get("analysis_results", {}).get("opportunities", [])
+            }
+            
+            # Validate that we have meaningful data
+            if not gap_analysis_data["content_gaps"] and not gap_analysis_data["keyword_opportunities"]:
+                raise ValueError(f"Gap analysis data is empty for user_id: {user_id}")
+            
+            logger.info(f"✅ Successfully retrieved gap analysis data for user {user_id}")
+            return gap_analysis_data
             
         except Exception as e:
-            logger.warning(f"Could not get gap analysis data: {str(e)}")
-            return {}
+            logger.error(f"❌ Error getting gap analysis data: {str(e)}")
+            raise Exception(f"Failed to get gap analysis data: {str(e)}")

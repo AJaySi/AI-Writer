@@ -9,7 +9,8 @@ import { SxProps, Theme } from '@mui/material/styles';
 export const dialogStyles = {
   paper: {
     height: '90vh',
-    maxHeight: '90vh'
+    maxHeight: '90vh',
+    zIndex: 9999 // Ensure modal appears above everything
   }
 };
 
@@ -325,8 +326,8 @@ export const smallPulseAnimation = {
 
 // Color Animation Config
 export const colorPulseAnimation = {
-  scale: [1, 1.2, 1],
-  backgroundColor: ['#1976d2', '#42a5f5', '#1976d2']
+  scale: [1, 1.2, 1]
+  // Removed backgroundColor animation to prevent "inherit" animation warning
 };
 
 // Progress Animation Config

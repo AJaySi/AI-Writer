@@ -29,7 +29,6 @@ import { type CalendarConfig } from './types';
 interface GenerateCalendarStepProps {
   calendarConfig: CalendarConfig;
   onGenerateCalendar: (config: CalendarConfig) => void;
-  loading?: boolean;
   strategyContext?: any;
   isFromStrategyActivation?: boolean; // Strategy context available for generation
 }
@@ -37,7 +36,6 @@ interface GenerateCalendarStepProps {
 const GenerateCalendarStep: React.FC<GenerateCalendarStepProps> = ({
   calendarConfig,
   onGenerateCalendar,
-  loading = false,
   strategyContext,
   isFromStrategyActivation = false
 }) => {
@@ -115,7 +113,7 @@ const GenerateCalendarStep: React.FC<GenerateCalendarStepProps> = ({
     onGenerateCalendar(enhancedConfig);
   };
 
-  const canGenerate = validationErrors.length === 0 && !loading;
+  const canGenerate = validationErrors.length === 0;
 
   return (
     <Box sx={{ p: 2 }}>
@@ -442,14 +440,7 @@ const GenerateCalendarStep: React.FC<GenerateCalendarStepProps> = ({
       </Card>
 
       {/* Note: Generate button is handled by the stepper navigation above */}
-      {loading && (
-        <Box sx={{ mt: 3 }}>
-          <LinearProgress />
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
-            Generating your optimized content calendar...
-          </Typography>
-        </Box>
-      )}
+      {/* REMOVED: Loading state display - Let modal handle all progress */}
     </Box>
   );
 };

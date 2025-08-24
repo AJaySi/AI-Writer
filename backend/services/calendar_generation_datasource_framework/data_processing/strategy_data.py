@@ -3,6 +3,8 @@ Strategy Data Processor
 
 Extracted from calendar_generator_service.py to improve maintainability
 and align with 12-step implementation plan.
+
+NO MOCK DATA - Only real data sources allowed.
 """
 
 from typing import Dict, Any
@@ -16,13 +18,10 @@ services_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 if services_dir not in sys.path:
     sys.path.insert(0, services_dir)
 
-try:
-    from content_planning_db import ContentPlanningDBService
-except ImportError:
-    # Fallback for testing environments - create mock class
-    class ContentPlanningDBService:
-        async def get_content_strategy(self, strategy_id):
-            return None
+# Import real services - NO FALLBACKS
+from services.content_planning_db import ContentPlanningDBService
+
+logger.info("✅ Successfully imported real data processing services")
 
 
 class StrategyDataProcessor:
@@ -38,14 +37,12 @@ class StrategyDataProcessor:
             
             # Check if database service is available
             if self.content_planning_db_service is None:
-                logger.warning("ContentPlanningDBService not available, returning empty strategy data")
-                return {}
+                raise ValueError("ContentPlanningDBService not available - cannot retrieve strategy data")
             
             # Get basic strategy data
             strategy = await self.content_planning_db_service.get_content_strategy(strategy_id)
             if not strategy:
-                logger.warning(f"No strategy found for ID {strategy_id}")
-                return {}
+                raise ValueError(f"No strategy found for ID {strategy_id}")
             
             # Convert to dictionary for processing
             strategy_dict = strategy.to_dict() if hasattr(strategy, 'to_dict') else {
@@ -100,7 +97,40 @@ class StrategyDataProcessor:
             
         except Exception as e:
             logger.error(f"❌ Error getting comprehensive strategy data: {str(e)}")
-            return {}
+            raise Exception(f"Failed to get strategy data: {str(e)}")
+    
+    async def validate_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate strategy data quality."""
+        try:
+            if not data:
+                raise ValueError("Strategy data is empty")
+            
+            # Basic validation
+            required_fields = ["strategy_id", "strategy_name", "industry", "target_audience", "content_pillars"]
+            
+            missing_fields = []
+            for field in required_fields:
+                if not data.get(field):
+                    missing_fields.append(field)
+            
+            if missing_fields:
+                raise ValueError(f"Missing required fields: {missing_fields}")
+            
+            # Quality assessment
+            quality_score = 0.8  # Base score for valid data
+            
+            # Add quality indicators
+            validation_result = {
+                "quality_score": quality_score,
+                "missing_fields": missing_fields,
+                "recommendations": []
+            }
+            
+            return validation_result
+            
+        except Exception as e:
+            logger.error(f"Error validating strategy data: {str(e)}")
+            raise Exception(f"Strategy data validation failed: {str(e)}")
     
     async def _get_enhanced_strategy_data(self, strategy_id: int) -> Dict[str, Any]:
         """Get enhanced strategy data from enhanced strategy models."""
