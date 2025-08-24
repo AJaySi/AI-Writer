@@ -48,6 +48,9 @@ from api.onboarding import (
 # Import component logic endpoints
 from api.component_logic import router as component_logic_router
 
+# Import memory management endpoints
+from api.memory_routes import router as memory_router
+
 # Import user data endpoints
 # Import content planning endpoints
 from api.content_planning.api.router import router as content_planning_router
@@ -359,6 +362,9 @@ async def research_preferences_data():
 
 # Include component logic router
 app.include_router(component_logic_router)
+
+# Include memory management router
+app.include_router(memory_router)
 
 # Include user data router
 # Include content planning router

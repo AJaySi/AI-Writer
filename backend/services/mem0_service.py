@@ -59,51 +59,69 @@ class Mem0Service:
     
     def _determine_user_type(self, strategy_data: Dict[str, Any]) -> str:
         """Determine user type based on strategy data for intelligent categorization"""
-        # Check for digital marketer indicators
-        if any(key in strategy_data for key in ['conversion_rates', 'traffic_sources', 'content_roi_targets', 'performance_metrics']):
-            return "digital_marketer"
+        if not strategy_data or not isinstance(strategy_data, dict):
+            return "content_creator"  # Safe default
         
-        # Check for content creator indicators
-        if any(key in strategy_data for key in ['brand_voice', 'editorial_guidelines', 'content_mix', 'preferred_formats']):
+        try:
+            # Check for digital marketer indicators
+            if any(key in strategy_data for key in ['conversion_rates', 'traffic_sources', 'content_roi_targets', 'performance_metrics']):
+                return "digital_marketer"
+            
+            # Check for content creator indicators
+            if any(key in strategy_data for key in ['brand_voice', 'editorial_guidelines', 'content_mix', 'preferred_formats']):
+                return "content_creator"
+            
+            # Default to content creator
             return "content_creator"
-        
-        # Default to content creator
-        return "content_creator"
+        except Exception as e:
+            logger.warning(f"Error determining user type: {e}, defaulting to content_creator")
+            return "content_creator"
     
     def _categorize_strategy(self, strategy_data: Dict[str, Any], user_type: str) -> List[str]:
         """Intelligently categorize strategy based on content and user type"""
-        categories = []
+        if not strategy_data or not isinstance(strategy_data, dict):
+            return ["general"]  # Safe default
         
-        # Add industry category
-        industry = strategy_data.get('industry', '').lower()
-        if industry in self.INDUSTRY_CATEGORIES:
-            categories.append(industry)
-        elif industry:
-            categories.append("other_industry")
-        
-        # Add user-type specific categories
-        if user_type == "digital_marketer":
-            if strategy_data.get('top_competitors') or strategy_data.get('competitor_content_strategies'):
-                categories.append("competitive_analysis")
-            if strategy_data.get('conversion_rates') or strategy_data.get('content_roi_targets'):
-                categories.append("conversion_optimization")
-            if strategy_data.get('performance_metrics') or strategy_data.get('traffic_sources'):
-                categories.append("performance_metrics")
-            categories.append("marketing_strategy")
-        else:  # content_creator
-            if strategy_data.get('content_pillars'):
-                categories.append("content_pillars")
-            if strategy_data.get('brand_voice') or strategy_data.get('editorial_guidelines'):
-                categories.append("brand_voice")
-            if strategy_data.get('preferred_formats') or strategy_data.get('content_mix'):
-                categories.append("content_formats")
-            categories.append("creative_strategy")
-        
-        # Add seasonal category if seasonal trends exist
-        if strategy_data.get('seasonal_trends'):
-            categories.append("seasonal_content")
-        
-        return categories
+        try:
+            categories = []
+            
+            # Add industry category
+            industry = str(strategy_data.get('industry', '')).lower().strip()
+            if industry in self.INDUSTRY_CATEGORIES:
+                categories.append(industry)
+            elif industry:
+                categories.append("other_industry")
+            
+            # Add user-type specific categories
+            if user_type == "digital_marketer":
+                if strategy_data.get('top_competitors') or strategy_data.get('competitor_content_strategies'):
+                    categories.append("competitive_analysis")
+                if strategy_data.get('conversion_rates') or strategy_data.get('content_roi_targets'):
+                    categories.append("conversion_optimization")
+                if strategy_data.get('performance_metrics') or strategy_data.get('traffic_sources'):
+                    categories.append("performance_metrics")
+                categories.append("marketing_strategy")
+            else:  # content_creator
+                if strategy_data.get('content_pillars'):
+                    categories.append("content_pillars")
+                if strategy_data.get('brand_voice') or strategy_data.get('editorial_guidelines'):
+                    categories.append("brand_voice")
+                if strategy_data.get('preferred_formats') or strategy_data.get('content_mix'):
+                    categories.append("content_formats")
+                categories.append("creative_strategy")
+            
+            # Add seasonal category if seasonal trends exist
+            if strategy_data.get('seasonal_trends'):
+                categories.append("seasonal_content")
+            
+            # Ensure we always have at least one category
+            if not categories:
+                categories = ["general"]
+            
+            return categories
+        except Exception as e:
+            logger.warning(f"Error categorizing strategy: {e}, returning default category")
+            return ["general"]
 
     async def store_content_strategy(self, 
                                    strategy_data: Dict[str, Any], 
@@ -505,3 +523,130 @@ class Mem0Service:
         except Exception as e:
             logger.error(f"Error updating strategy memory: {e}")
             return False
+    
+    async def get_memory_statistics(self, user_id: int) -> Dict[str, Any]:
+        """
+        Get comprehensive memory statistics for user dashboard
+        
+        Args:
+            user_id: User ID
+            
+        Returns:
+            Dict containing memory statistics
+        """
+        if not self.is_available():
+            return {
+                "total_memories": 0,
+                "categories": {},
+                "user_types": {},
+                "industries": {},
+                "recent_memories": 0,
+                "api_calls_today": 0,
+                "available": False
+            }
+        
+        try:
+            # Get all user memories
+            all_memories = await self.retrieve_strategy_memories(user_id=user_id, limit=1000)
+            
+            stats = {
+                "total_memories": len(all_memories),
+                "categories": {},
+                "user_types": {},
+                "industries": {},
+                "recent_memories": 0,
+                "api_calls_today": 0,  # This would need to be tracked separately
+                "available": True,
+                "last_updated": datetime.utcnow().isoformat()
+            }
+            
+            # Analyze memories
+            for memory in all_memories:
+                metadata = memory.get('metadata', {})
+                
+                # Count categories
+                categories = metadata.get('categories', [])
+                for category in categories:
+                    stats["categories"][category] = stats["categories"].get(category, 0) + 1
+                
+                # Count user types
+                user_type = metadata.get('user_type', 'unknown')
+                stats["user_types"][user_type] = stats["user_types"].get(user_type, 0) + 1
+                
+                # Count industries
+                industry = metadata.get('industry', 'unknown')
+                stats["industries"][industry] = stats["industries"].get(industry, 0) + 1
+                
+                # Count recent memories (last 7 days)
+                activation_date = metadata.get('activation_date')
+                if activation_date:
+                    try:
+                        from datetime import datetime, timedelta
+                        memory_date = datetime.fromisoformat(activation_date.replace('Z', '+00:00'))
+                        if memory_date > datetime.now() - timedelta(days=7):
+                            stats["recent_memories"] += 1
+                    except:
+                        pass
+            
+            logger.info(f"Retrieved memory statistics for user {user_id}: {stats['total_memories']} memories")
+            return stats
+            
+        except Exception as e:
+            logger.error(f"Error getting memory statistics: {e}")
+            return {
+                "total_memories": 0,
+                "categories": {},
+                "user_types": {},
+                "industries": {},
+                "recent_memories": 0,
+                "api_calls_today": 0,
+                "available": False,
+                "error": str(e)
+            }
+    
+    async def search_memories_with_query(self, user_id: int, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Search memories using natural language query for chat interface
+        
+        Args:
+            user_id: User ID
+            query: Natural language search query
+            limit: Maximum results
+            
+        Returns:
+            List of relevant memories
+        """
+        if not self.is_available():
+            logger.warning("Mem0 service not available for search")
+            return []
+        
+        try:
+            results = await self.retrieve_strategy_memories(
+                user_id=user_id,
+                query=query,
+                limit=limit
+            )
+            
+            # Enhance results with formatted content for chat
+            enhanced_results = []
+            for result in results:
+                metadata = result.get('metadata', {})
+                enhanced_result = {
+                    "id": result.get('id'),
+                    "strategy_name": metadata.get('strategy_name', 'Unknown Strategy'),
+                    "strategy_id": metadata.get('strategy_id'),
+                    "industry": metadata.get('industry', 'General'),
+                    "user_type": metadata.get('user_type', 'unknown'),
+                    "categories": metadata.get('categories', []),
+                    "activation_date": metadata.get('activation_date'),
+                    "content": result.get('content', ''),
+                    "relevance_score": result.get('score', 0)
+                }
+                enhanced_results.append(enhanced_result)
+            
+            logger.info(f"Found {len(enhanced_results)} memories for query: {query}")
+            return enhanced_results
+            
+        except Exception as e:
+            logger.error(f"Error searching memories with query '{query}': {e}")
+            return []

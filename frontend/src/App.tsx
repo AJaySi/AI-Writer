@@ -5,6 +5,7 @@ import Wizard from './components/OnboardingWizard/Wizard';
 import MainDashboard from './components/MainDashboard/MainDashboard';
 import SEODashboard from './components/SEODashboard/SEODashboard';
 import ContentPlanningDashboard from './components/ContentPlanningDashboard/ContentPlanningDashboard';
+import MemoryChatPage from './components/MemoryChat/MemoryChatPage';
 import { apiClient } from './api/client';
 
 interface OnboardingStatus {
@@ -121,6 +122,14 @@ const App: React.FC = () => {
           path="/content-planning" 
           element={
             <ContentPlanningDashboard />
+          } 
+        />
+        
+        {/* Memory Chat Route */}
+        <Route 
+          path="/memory-chat" 
+          element={
+            <MemoryChatPage />
           } 
         />
         
