@@ -261,7 +261,7 @@ class AIInsightsService:
         
         try:
             # Import Gemini provider
-            from services.ai_providers.gemini_provider import gemini_provider
+            from services.llm_providers.gemini_provider import gemini_provider
             
             prompt = self._create_insights_prompt(analysis_data)
             
@@ -461,7 +461,7 @@ Ensure insights are data-driven, actionable, and combine both GSC and Trends int
         """Generate content strategy using Gemini AI."""
         
         try:
-            from services.ai_providers.gemini_provider import gemini_provider
+            from services.llm_providers.gemini_provider import gemini_provider
             
             prompt = f"""
 Based on the previous analysis and the following insights, create a comprehensive content strategy:
@@ -529,7 +529,7 @@ Ensure the strategy combines both current performance data and future trend pred
         """Generate performance forecast based on trends and GSC data."""
         
         try:
-            from services.ai_providers.gemini_provider import gemini_provider
+            from services.llm_providers.gemini_provider import gemini_provider
             
             prompt = f"""
 Based on the current GSC performance and Google Trends data, provide a 6-month performance forecast:
@@ -682,7 +682,7 @@ Be conservative but optimistic in projections.
         """Create executive summary of the analysis."""
         
         try:
-            from services.ai_providers.gemini_provider import gemini_provider
+            from services.llm_providers.gemini_provider import gemini_provider
             
             high_priority_insights = [i for i in insights if i.priority == "high"]
             

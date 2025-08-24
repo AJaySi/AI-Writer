@@ -763,7 +763,7 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
                       <Grid item xs={6} md={3}>
                         <Paper sx={{ p: 2, textAlign: 'center' }}>
                           <Typography variant="h5" color="success.main">
-                            {(gscDemoData.performance.totals?.ctr * 100).toFixed(2) || 0}%
+                            {gscDemoData.performance.totals?.ctr ? (gscDemoData.performance.totals.ctr * 100).toFixed(2) : '0.00'}%
                           </Typography>
                           <Typography variant="body2">CTR</Typography>
                         </Paper>
@@ -771,7 +771,7 @@ const SocialConnectionsStep: React.FC<SocialConnectionsStepProps> = ({ onContinu
                       <Grid item xs={6} md={3}>
                         <Paper sx={{ p: 2, textAlign: 'center' }}>
                           <Typography variant="h5" color="warning.main">
-                            {gscDemoData.performance.totals?.position?.toFixed(1) || 0}
+                            {gscDemoData.performance.totals?.position ? gscDemoData.performance.totals.position.toFixed(1) : '0.0'}
                           </Typography>
                           <Typography variant="body2">Avg Position</Typography>
                         </Paper>

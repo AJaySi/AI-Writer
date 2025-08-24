@@ -27,7 +27,20 @@ from services.database import get_db
 
 class OAuthService:
     def __init__(self):
-        self.encryption_key = os.getenv('OAUTH_ENCRYPTION_KEY', Fernet.generate_key())
+        # Get encryption key from environment or generate a consistent one
+        encryption_key_env = os.getenv('OAUTH_ENCRYPTION_KEY')
+        if encryption_key_env:
+            self.encryption_key = encryption_key_env.encode() if isinstance(encryption_key_env, str) else encryption_key_env
+        else:
+            # Generate a consistent key based on a secret to avoid token invalidation
+            logger.warning("OAUTH_ENCRYPTION_KEY not set. Using deterministic fallback based on SECRET_KEY. Set OAUTH_ENCRYPTION_KEY for production!")
+            import hashlib
+            import base64
+            secret_base = os.getenv('SECRET_KEY', 'ALwrity-default-oauth-secret-change-in-production')
+            # Create a deterministic 32-byte key from the secret
+            key_material = hashlib.sha256(f"oauth-encryption-{secret_base}".encode()).digest()
+            self.encryption_key = base64.urlsafe_b64encode(key_material)
+        
         self.fernet = Fernet(self.encryption_key)
         
         # OAuth configurations for different platforms
