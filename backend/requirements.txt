@@ -30,6 +30,8 @@ numpy>=1.24.0
 advertools>=0.14.0
 textstat>=0.7.3
 pyspellchecker>=0.7.2
+aiofiles>=23.2.0
+crawl4ai>=0.2.0
 
 # Utilities
 pydantic>=2.5.2,<3.0.0
