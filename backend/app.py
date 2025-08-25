@@ -52,6 +52,11 @@ from api.component_logic import router as component_logic_router
 # Import content planning endpoints
 from api.content_planning.api.router import router as content_planning_router
 from api.user_data import router as user_data_router
+from api.social_connections import router as social_connections_router
+from api.gsc_website_audit import router as gsc_audit_router
+
+# Import security middleware
+from middleware.security_middleware import SecurityMiddleware, OAuth2SecurityMiddleware
 
 # Import database service
 from services.database import init_database, close_database
@@ -96,6 +101,26 @@ app.add_middleware(
 
 # Add API monitoring middleware
 app.middleware("http")(monitoring_middleware)
+
+# Add enhanced security middleware
+app.add_middleware(
+    SecurityMiddleware,
+    excluded_paths=[
+        "/health", 
+        "/api/health", 
+        "/docs", 
+        "/redoc", 
+        "/openapi.json",
+        "/stream/strategies",
+        "/stream/strategic-intelligence", 
+        "/stream/seo-analytics",
+        "/stream/competitive-analysis",
+        "/stream/market-research"
+    ]
+)
+
+# Add OAuth-specific security middleware
+app.add_middleware(OAuth2SecurityMiddleware)
 
 # Simple rate limiting
 request_counts = defaultdict(list)
@@ -365,6 +390,10 @@ app.include_router(component_logic_router)
 # Include content planning router
 app.include_router(content_planning_router)
 app.include_router(user_data_router)
+
+# Include social connections router
+app.include_router(social_connections_router)
+app.include_router(gsc_audit_router)
 
 # SEO Dashboard endpoints
 @app.get("/api/seo-dashboard/data")

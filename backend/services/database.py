@@ -17,6 +17,7 @@ from models.content_planning import Base as ContentPlanningBase
 from models.enhanced_strategy_models import Base as EnhancedStrategyBase
 # Monitoring models now use the same base as enhanced strategy models
 from models.monitoring_models import Base as MonitoringBase
+from models.social_connections import Base as SocialConnectionsBase
 
 # Database configuration
 DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///./alwrity.db')
@@ -57,7 +58,8 @@ def init_database():
         ContentPlanningBase.metadata.create_all(bind=engine)
         EnhancedStrategyBase.metadata.create_all(bind=engine)
         MonitoringBase.metadata.create_all(bind=engine)
-        logger.info("Database initialized successfully with all models")
+        SocialConnectionsBase.metadata.create_all(bind=engine)
+        logger.info("Database initialized successfully with all models including social connections")
     except SQLAlchemyError as e:
         logger.error(f"Error initializing database: {str(e)}")
         raise

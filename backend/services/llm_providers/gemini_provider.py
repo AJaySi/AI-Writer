@@ -654,3 +654,62 @@ def _extract_key_value_pairs(text: str) -> Optional[Dict[str, Any]]:
             result[key] = items
     
     return result if result else None
+
+
+class GeminiProvider:
+    """Wrapper class to provide consistent interface for AI insights service."""
+    
+    async def get_structured_response(
+        self, 
+        prompt: str, 
+        schema: dict, 
+        temperature: float = 0.7,
+        max_tokens: int = 8192
+    ) -> dict:
+        """Get structured JSON response from Gemini."""
+        try:
+            # Use the existing function but make it async-compatible
+            import asyncio
+            loop = asyncio.get_event_loop()
+            
+            # Run the synchronous function in a thread pool
+            result = await loop.run_in_executor(
+                None,
+                lambda: gemini_structured_json_response(
+                    prompt=prompt,
+                    schema=schema,
+                    temperature=temperature,
+                    max_tokens=max_tokens
+                )
+            )
+            return result
+        except Exception as e:
+            raise Exception(f"Gemini structured response failed: {str(e)}")
+    
+    async def generate_content_async(
+        self,
+        prompt: str,
+        max_tokens: int = 2048,
+        temperature: float = 0.7
+    ) -> str:
+        """Generate simple text content from Gemini."""
+        try:
+            import asyncio
+            loop = asyncio.get_event_loop()
+            
+            # Run the synchronous function in a thread pool
+            result = await loop.run_in_executor(
+                None,
+                lambda: gemini_pro_text_gen(
+                    prompt=prompt,
+                    max_tokens=max_tokens,
+                    temperature=temperature
+                )
+            )
+            return result if result else ""
+        except Exception as e:
+            raise Exception(f"Gemini content generation failed: {str(e)}")
+
+
+# Global instance for import
+gemini_provider = GeminiProvider()
