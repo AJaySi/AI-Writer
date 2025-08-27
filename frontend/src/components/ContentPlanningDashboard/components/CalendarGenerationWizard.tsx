@@ -31,7 +31,6 @@ import { type CalendarConfig } from './CalendarWizardSteps/types';
 interface CalendarGenerationWizardProps {
   userData: any;
   onGenerateCalendar: (calendarConfig: any) => void;
-  loading?: boolean;
   strategyContext?: any;
   fromStrategyActivation?: boolean;
 }
@@ -39,17 +38,19 @@ interface CalendarGenerationWizardProps {
 const CalendarGenerationWizard: React.FC<CalendarGenerationWizardProps> = ({
   userData,
   onGenerateCalendar,
-  loading = false,
   strategyContext,
   fromStrategyActivation = false
 }) => {
   // SIMPLIFIED CALENDAR WIZARD - Focused on calendar-specific inputs only
   // Strategy context is used internally during generation, not for mapping
   
-  console.log('🔍 CalendarGenerationWizard: Starting calendar wizard', { 
-    fromStrategyActivation, 
-    hasStrategyContext: !!strategyContext
-  });
+    // Only log when component mounts or key props change
+  useEffect(() => {
+    console.log('🔍 CalendarGenerationWizard: Starting calendar wizard', {
+      fromStrategyActivation,
+      hasStrategyContext: !!strategyContext
+    });
+  }, [fromStrategyActivation, strategyContext]);
 
   // Use enhanced state management with calendar-specific config
   const [state, actions] = useCalendarWizardState(onGenerateCalendar);
@@ -89,18 +90,13 @@ const CalendarGenerationWizard: React.FC<CalendarGenerationWizardProps> = ({
 
   // Create stable callback for generate calendar
   const handleGenerateCalendar = useCallback(() => {
+    console.log('🎯 CalendarGenerationWizard: handleGenerateCalendar called');
+    console.log('🎯 CalendarGenerationWizard: calendarConfig:', calendarConfig);
     onGenerateCalendar(calendarConfig);
   }, [onGenerateCalendar, calendarConfig]);
 
-  // Show loading state if generating
-  if (isGenerating) {
-    return (
-      <CalendarGenerationLoading 
-        progress={generationProgress} 
-        error={error || undefined}
-      />
-    );
-  }
+  // REMOVED: Show loading state if generating - Let modal handle progress display
+  // The modal should open immediately and show progress inside
 
   // Show error state if there's an error
   if (error) {
@@ -136,7 +132,6 @@ const CalendarGenerationWizard: React.FC<CalendarGenerationWizardProps> = ({
           <GenerateCalendarStep
             calendarConfig={calendarConfig}
             onGenerateCalendar={handleGenerateCalendar}
-            loading={loading}
             strategyContext={strategyContext}
             isFromStrategyActivation={fromStrategyActivation}
           />
@@ -182,9 +177,16 @@ const CalendarGenerationWizard: React.FC<CalendarGenerationWizardProps> = ({
                   <Box sx={{ mt: 2 }}>
                     <Button
                       variant="contained"
-                      onClick={index === steps.length - 1 ? handleGenerateCalendar : handleNext}
+                      onClick={(e) => {
+                        console.log('🎯 Button clicked:', { index, isLastStep: index === steps.length - 1 });
+                        if (index === steps.length - 1) {
+                          handleGenerateCalendar();
+                        } else {
+                          handleNext();
+                        }
+                      }}
                       sx={{ mr: 1 }}
-                      disabled={loading || !actions.canProceedToStep(index + 1)}
+                      disabled={isLoading || !actions.canProceedToStep(index + 1)}
                     >
                       {index === steps.length - 1 ? 'Generate Calendar' : 'Continue'}
                     </Button>

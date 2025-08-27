@@ -6,10 +6,12 @@ const TestCalendarGenerationModal: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = () => {
+    console.log('🎯 TestModal: Opening modal');
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
+    console.log('🎯 TestModal: Closing modal');
     setIsModalOpen(false);
   };
 
@@ -32,6 +34,8 @@ const TestCalendarGenerationModal: React.FC = () => {
     postingFrequency: 'daily' as const
   };
 
+  console.log('🎯 TestModal render:', { isModalOpen });
+
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
@@ -45,6 +49,10 @@ const TestCalendarGenerationModal: React.FC = () => {
       >
         Open Calendar Generation Modal
       </Button>
+
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+        Modal state: {isModalOpen ? 'OPEN' : 'CLOSED'}
+      </Typography>
 
       <CalendarGenerationModal
         open={isModalOpen}

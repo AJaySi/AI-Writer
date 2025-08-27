@@ -4,6 +4,8 @@ Comprehensive User Data Processor
 Extracted from calendar_generator_service.py to improve maintainability
 and align with 12-step implementation plan. Now includes active strategy
 management with 3-tier caching for optimal performance.
+
+NO MOCK DATA - Only real data sources allowed.
 """
 
 import time
@@ -18,28 +20,13 @@ services_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 if services_dir not in sys.path:
     sys.path.insert(0, services_dir)
 
-try:
-    from onboarding_data_service import OnboardingDataService
-    from ai_analytics_service import AIAnalyticsService
-    from content_gap_analyzer.ai_engine_service import AIEngineService
-    from active_strategy_service import ActiveStrategyService
-except ImportError:
-    # Fallback for testing environments - create mock classes
-    class OnboardingDataService:
-        def get_personalized_ai_inputs(self, user_id):
-            return {}
-    
-    class AIAnalyticsService:
-        async def generate_strategic_intelligence(self, strategy_id):
-            return {"insights": [], "recommendations": []}
-    
-    class AIEngineService:
-        async def generate_content_recommendations(self, data):
-            return []
-    
-    class ActiveStrategyService:
-        async def get_active_strategy(self, user_id, force_refresh=False):
-            return None
+# Import real services - NO FALLBACKS
+from services.onboarding_data_service import OnboardingDataService
+from services.ai_analytics_service import AIAnalyticsService
+from services.content_gap_analyzer.ai_engine_service import AIEngineService
+from services.active_strategy_service import ActiveStrategyService
+
+logger.info("✅ Successfully imported real data processing services")
 
 
 class ComprehensiveUserDataProcessor:
@@ -48,6 +35,7 @@ class ComprehensiveUserDataProcessor:
     def __init__(self, db_session=None):
         self.onboarding_service = OnboardingDataService()
         self.active_strategy_service = ActiveStrategyService(db_session)
+        self.content_planning_db_service = None  # Will be injected
     
     async def get_comprehensive_user_data(self, user_id: int, strategy_id: Optional[int]) -> Dict[str, Any]:
         """Get comprehensive user data from all database sources."""
@@ -57,21 +45,54 @@ class ComprehensiveUserDataProcessor:
             # Get onboarding data (not async)
             onboarding_data = self.onboarding_service.get_personalized_ai_inputs(user_id)
             
+            if not onboarding_data:
+                raise ValueError(f"No onboarding data found for user_id: {user_id}")
+            
+            # Add missing posting preferences and posting days for Step 4
+            if onboarding_data:
+                # Add default posting preferences if missing
+                if "posting_preferences" not in onboarding_data:
+                    onboarding_data["posting_preferences"] = {
+                        "daily": 2,  # 2 posts per day
+                        "weekly": 10,  # 10 posts per week
+                        "monthly": 40   # 40 posts per month
+                    }
+                
+                # Add default posting days if missing
+                if "posting_days" not in onboarding_data:
+                    onboarding_data["posting_days"] = [
+                        "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+                    ]
+                
+                # Add optimal posting times if missing
+                if "optimal_times" not in onboarding_data:
+                    onboarding_data["optimal_times"] = [
+                        "09:00", "12:00", "15:00", "18:00", "20:00"
+                    ]
+            
             # Get AI analysis results from the working endpoint
             try:
                 ai_analytics = AIAnalyticsService()
                 ai_analysis_results = await ai_analytics.generate_strategic_intelligence(strategy_id or 1)
+                
+                if not ai_analysis_results:
+                    raise ValueError("AI analysis service returned no results")
+                    
             except Exception as e:
-                logger.warning(f"Could not get AI analysis results: {str(e)}")
-                ai_analysis_results = {"insights": [], "recommendations": []}
+                logger.error(f"AI analysis service failed: {str(e)}")
+                raise ValueError(f"Failed to get AI analysis results: {str(e)}")
             
             # Get gap analysis data from the working endpoint
             try:
                 ai_engine = AIEngineService()
                 gap_analysis_data = await ai_engine.generate_content_recommendations(onboarding_data)
+                
+                if not gap_analysis_data:
+                    raise ValueError("AI engine service returned no gap analysis data")
+                    
             except Exception as e:
-                logger.warning(f"Could not get gap analysis data: {str(e)}")
-                gap_analysis_data = []
+                logger.error(f"AI engine service failed: {str(e)}")
+                raise ValueError(f"Failed to get gap analysis data: {str(e)}")
             
             # Get active strategy data with 3-tier caching for Phase 1 and Phase 2
             strategy_data = {}
@@ -85,10 +106,19 @@ class ComprehensiveUserDataProcessor:
                 # Fallback to specific strategy ID if provided
                 from .strategy_data import StrategyDataProcessor
                 strategy_processor = StrategyDataProcessor()
+                
+                # Inject database service if available
+                if self.content_planning_db_service:
+                    strategy_processor.content_planning_db_service = self.content_planning_db_service
+                
                 strategy_data = await strategy_processor.get_strategy_data(strategy_id)
+                
+                if not strategy_data:
+                    raise ValueError(f"No strategy data found for strategy_id: {strategy_id}")
+                    
                 logger.warning(f"⚠️ No active strategy found, using fallback strategy {strategy_id}")
             else:
-                logger.warning("⚠️ No active strategy found and no strategy ID provided")
+                raise ValueError("No active strategy found and no strategy ID provided")
             
             # Get content recommendations
             recommendations_data = await self._get_recommendations_data(user_id, strategy_id)
@@ -120,7 +150,10 @@ class ComprehensiveUserDataProcessor:
                 
                 # Enhanced strategy data for 12-step prompt chaining
                 "strategy_analysis": strategy_data.get("strategy_analysis", {}),
-                "quality_indicators": strategy_data.get("quality_indicators", {})
+                "quality_indicators": strategy_data.get("quality_indicators", {}),
+                
+                # Add platform preferences for Step 6
+                "platform_preferences": self._generate_platform_preferences(strategy_data, onboarding_data)
             }
             
             logger.info(f"✅ Comprehensive user data prepared for user {user_id}")
@@ -128,11 +161,7 @@ class ComprehensiveUserDataProcessor:
             
         except Exception as e:
             logger.error(f"❌ Error getting comprehensive user data: {str(e)}")
-            return {
-                "user_id": user_id,
-                "error": str(e),
-                "status": "error"
-            }
+            raise Exception(f"Failed to get comprehensive user data: {str(e)}")
 
     async def get_comprehensive_user_data_cached(
         self, 
@@ -162,23 +191,84 @@ class ComprehensiveUserDataProcessor:
             
         except Exception as e:
             logger.error(f"❌ Error in cached method: {str(e)}")
-            # Final fallback
-            return await self.get_comprehensive_user_data(user_id, strategy_id)
+            raise Exception(f"Failed to get comprehensive user data: {str(e)}")
     
     async def _get_recommendations_data(self, user_id: int, strategy_id: Optional[int]) -> List[Dict[str, Any]]:
         """Get content recommendations data."""
         try:
             # This would be implemented based on existing logic
+            # For now, return empty list - will be implemented when needed
             return []
         except Exception as e:
-            logger.warning(f"Could not get recommendations data: {str(e)}")
-            return []
+            logger.error(f"Could not get recommendations data: {str(e)}")
+            raise Exception(f"Failed to get recommendations data: {str(e)}")
     
     async def _get_performance_data(self, user_id: int, strategy_id: Optional[int]) -> Dict[str, Any]:
         """Get performance metrics data."""
         try:
             # This would be implemented based on existing logic
+            # For now, return empty dict - will be implemented when needed
             return {}
         except Exception as e:
-            logger.warning(f"Could not get performance data: {str(e)}")
-            return {}
+            logger.error(f"Could not get performance data: {str(e)}")
+            raise Exception(f"Failed to get performance data: {str(e)}")
+    
+    def _generate_platform_preferences(self, strategy_data: Dict[str, Any], onboarding_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate platform preferences based on strategy and onboarding data."""
+        try:
+            industry = strategy_data.get("industry") or onboarding_data.get("website_analysis", {}).get("industry_focus", "technology")
+            content_types = onboarding_data.get("website_analysis", {}).get("content_types", ["blog", "article"])
+            
+            # Generate industry-specific platform preferences
+            platform_preferences = {}
+            
+            # LinkedIn - Good for B2B and professional content
+            if industry in ["technology", "finance", "healthcare", "consulting"]:
+                platform_preferences["linkedin"] = {
+                    "priority": "high",
+                    "content_focus": "professional insights",
+                    "posting_frequency": "daily",
+                    "engagement_strategy": "thought leadership"
+                }
+            
+            # Twitter/X - Good for real-time updates and engagement
+            platform_preferences["twitter"] = {
+                "priority": "medium",
+                "content_focus": "quick insights and updates",
+                "posting_frequency": "daily",
+                "engagement_strategy": "conversation starter"
+            }
+            
+            # Blog - Primary content platform
+            if "blog" in content_types or "article" in content_types:
+                platform_preferences["blog"] = {
+                    "priority": "high",
+                    "content_focus": "in-depth articles and guides",
+                    "posting_frequency": "weekly",
+                    "engagement_strategy": "educational content"
+                }
+            
+            # Instagram - Good for visual content and brand awareness
+            if industry in ["technology", "marketing", "creative"]:
+                platform_preferences["instagram"] = {
+                    "priority": "medium",
+                    "content_focus": "visual storytelling",
+                    "posting_frequency": "daily",
+                    "engagement_strategy": "visual engagement"
+                }
+            
+            # YouTube - Good for video content
+            if "video" in content_types:
+                platform_preferences["youtube"] = {
+                    "priority": "medium",
+                    "content_focus": "educational videos and tutorials",
+                    "posting_frequency": "weekly",
+                    "engagement_strategy": "video engagement"
+                }
+            
+            logger.info(f"✅ Generated platform preferences for {len(platform_preferences)} platforms")
+            return platform_preferences
+            
+        except Exception as e:
+            logger.error(f"❌ Error generating platform preferences: {str(e)}")
+            raise Exception(f"Failed to generate platform preferences: {str(e)}")

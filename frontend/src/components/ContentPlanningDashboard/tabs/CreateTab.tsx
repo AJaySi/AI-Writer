@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
   Tabs,
-  Tab
+  Tab,
+  Button
 } from '@mui/material';
 import {
   AutoAwesome as AutoAwesomeIcon,
@@ -49,6 +50,7 @@ const CreateTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentCalendarConfig, setCurrentCalendarConfig] = useState<CalendarConfig | null>(null);
   const [sessionId, setSessionId] = useState<string>('');
+  const [isStartingGeneration, setIsStartingGeneration] = useState(false);
 
   const location = useLocation();
   const { state: { strategyContext }, isFromStrategyActivation } = useStrategyCalendarContext();
@@ -99,6 +101,16 @@ const CreateTab: React.FC = () => {
 
   const handleGenerateCalendar = useCallback(async (calendarConfig: CalendarConfig) => {
     try {
+      console.log('🎯 handleGenerateCalendar called with config:', calendarConfig);
+      
+      // OPEN MODAL IMMEDIATELY - Don't wait for backend response
+      console.log('🎯 Opening modal immediately');
+      setCurrentCalendarConfig(calendarConfig);
+      setIsModalOpen(true);
+      
+      // Set loading state to prevent multiple clicks
+      setIsStartingGeneration(true);
+      
       // Transform calendarConfig to match backend CalendarGenerationRequest format
       const requestData = {
         user_id: 1, // Default user ID
@@ -109,34 +121,74 @@ const CreateTab: React.FC = () => {
         force_refresh: false
       };
       
-      console.log('🎯 Starting calendar generation with modal:', requestData);
+      console.log('🎯 Starting calendar generation request:', requestData);
       
-      // Call the new start endpoint to get session ID
-      const startResponse = await fetch('/api/content-planning/calendar-generation/start', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-      });
+      // Call the new start endpoint to get session ID with retry logic
+      let startResponse;
+      let retryCount = 0;
+      const maxRetries = 3;
       
-      if (!startResponse.ok) {
-        throw new Error(`Failed to start calendar generation: ${startResponse.statusText}`);
+      while (retryCount < maxRetries) {
+        try {
+          startResponse = await fetch('/api/content-planning/calendar-generation/start', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData),
+          });
+          
+          if (startResponse.ok) {
+            break; // Success, exit retry loop
+          } else {
+            console.warn(`⚠️ Attempt ${retryCount + 1} failed with status: ${startResponse.status}`);
+            retryCount++;
+            if (retryCount < maxRetries) {
+              // Wait before retry (exponential backoff)
+              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+            }
+          }
+        } catch (error) {
+          console.warn(`⚠️ Attempt ${retryCount + 1} failed with error:`, error);
+          retryCount++;
+          if (retryCount < maxRetries) {
+            // Wait before retry (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          }
+        }
+      }
+      
+      if (!startResponse || !startResponse.ok) {
+        throw new Error(`Failed to start calendar generation after ${maxRetries} attempts: ${startResponse?.statusText || 'Network error'}`);
       }
       
       const startData = await startResponse.json();
       const sessionId = startData.session_id;
       
-      // Store the session ID and calendar config for the modal
-      setSessionId(sessionId);
-      setCurrentCalendarConfig(calendarConfig);
+      console.log('🎯 Backend response received, session ID:', sessionId);
+      console.log('🎯 Session status:', startData.status);
       
-      // Open the modal to show progress
-      setIsModalOpen(true);
+      // Update modal with the real session ID
+      console.log('🎯 Updating modal with real session ID');
+      setSessionId(sessionId);
+      
+      console.log('🎯 Modal updated with session ID - polling should start immediately');
       
     } catch (error) {
       console.error('Error starting calendar generation:', error);
-      // The modal will handle error display
+      
+      // Show user-friendly error message
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start calendar generation';
+      console.error('❌ Calendar generation failed:', errorMessage);
+      
+      // Show error to user and close modal
+      alert(`Failed to start calendar generation: ${errorMessage}`);
+      setIsModalOpen(false);
+      setCurrentCalendarConfig(null);
+      setSessionId('');
+    } finally {
+      // Clear loading state
+      setIsStartingGeneration(false);
     }
   }, [userData, strategyContext]);
 
@@ -165,11 +217,15 @@ const CreateTab: React.FC = () => {
     setSessionId('');
   }, []);
 
+
+
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
         Create
       </Typography>
+      
+
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={tabValue} onChange={handleTabChange} aria-label="create tabs">
@@ -200,33 +256,30 @@ const CreateTab: React.FC = () => {
         <CalendarGenerationWizard
           userData={userData}
           onGenerateCalendar={handleGenerateCalendar}
-          loading={false}
           strategyContext={strategyContext}
           fromStrategyActivation={isFromStrategyActivation()}
         />
       </TabPanel>
 
       {/* Calendar Generation Modal */}
-      {currentCalendarConfig && (
-        <CalendarGenerationModal
-          open={isModalOpen}
-          onClose={handleModalClose}
-          sessionId={sessionId}
-          initialConfig={{
-            userId: userData?.id?.toString() || '1',
-            strategyId: strategyContext?.strategyId || '',
-            calendarType: currentCalendarConfig.calendarType === 'weekly' ? 'monthly' : 
-                         currentCalendarConfig.calendarType === 'quarterly' ? 'quarterly' : 'monthly',
-            platforms: currentCalendarConfig.priorityPlatforms || [],
-            duration: currentCalendarConfig.calendarDuration || 30,
-            postingFrequency: currentCalendarConfig.postingFrequency ? 
-              (currentCalendarConfig.postingFrequency >= 7 ? 'daily' : 
-               currentCalendarConfig.postingFrequency >= 3 ? 'biweekly' : 'weekly') : 'weekly'
-          }}
-          onComplete={handleModalComplete}
-          onError={handleModalError}
-        />
-      )}
+      <CalendarGenerationModal
+        open={isModalOpen}
+        onClose={handleModalClose}
+        sessionId={sessionId}
+        initialConfig={{
+          userId: userData?.id?.toString() || '1',
+          strategyId: strategyContext?.strategyId || '',
+          calendarType: currentCalendarConfig?.calendarType === 'weekly' ? 'monthly' : 
+                       currentCalendarConfig?.calendarType === 'quarterly' ? 'quarterly' : 'monthly',
+          platforms: currentCalendarConfig?.priorityPlatforms || [],
+          duration: currentCalendarConfig?.calendarDuration || 30,
+          postingFrequency: currentCalendarConfig?.postingFrequency ? 
+            (currentCalendarConfig.postingFrequency >= 7 ? 'daily' : 
+             currentCalendarConfig.postingFrequency >= 3 ? 'biweekly' : 'weekly') : 'weekly'
+        }}
+        onComplete={handleModalComplete}
+        onError={handleModalError}
+      />
     </Box>
   );
 };

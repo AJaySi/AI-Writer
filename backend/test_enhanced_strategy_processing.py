@@ -13,15 +13,15 @@ from pathlib import Path
 backend_dir = Path(__file__).parent
 sys.path.insert(0, str(backend_dir))
 
-from services.calendar_generator_service import CalendarGeneratorService
+from services.content_planning_db import ContentPlanningDBService
 
 async def test_enhanced_strategy_processing():
     """Test the enhanced strategy data processing functionality."""
     print("🧪 Testing Enhanced Strategy Data Processing...")
     
     try:
-        # Initialize the calendar generator service
-        calendar_service = CalendarGeneratorService()
+        # Initialize the database service
+        db_service = ContentPlanningDBService()
         
         # Test with a sample strategy ID
         strategy_id = 1  # You can change this to test with different strategies
@@ -29,7 +29,7 @@ async def test_enhanced_strategy_processing():
         print(f"📊 Testing strategy data retrieval for strategy ID: {strategy_id}")
         
         # Test the enhanced strategy data retrieval
-        strategy_data = await calendar_service._get_strategy_data(strategy_id)
+        strategy_data = await db_service.get_strategy_data(strategy_id)
         
         if strategy_data:
             print("✅ Strategy data retrieved successfully!")
@@ -112,8 +112,8 @@ async def test_comprehensive_user_data():
     print("\n🧪 Testing Comprehensive User Data with Enhanced Strategy...")
     
     try:
-        # Initialize the calendar generator service
-        calendar_service = CalendarGeneratorService()
+        # Initialize the database service
+        db_service = ContentPlanningDBService()
         
         # Test with a sample user ID and strategy ID
         user_id = 1

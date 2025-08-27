@@ -1,0 +1,563 @@
+{
+  "user_id": 2,
+  "strategy_id": 2,
+  "strategy_data": {
+    "strategy_id": 2,
+    "strategy_name": "Consulting Content Strategy 2",
+    "industry": "consulting",
+    "target_audience": {
+      "primary": "Developers",
+      "secondary": "Industry professionals",
+      "demographics": {
+        "age_range": "25-45",
+        "location": "Global",
+        "company_size": "Startup"
+      },
+      "interests": [
+        "Industry trends",
+        "Best practices",
+        "Innovation",
+        "Professional development",
+        "Technology adoption"
+      ]
+    },
+    "content_pillars": [
+      "Case Studies",
+      "Best Practices",
+      "Expert Interviews"
+    ],
+    "business_goals": [
+      "Improve customer engagement",
+      "Drive website traffic",
+      "Boost conversions",
+      "Generate leads"
+    ],
+    "kpi_mapping": {
+      "awareness": [
+        "Website traffic",
+        "Social media reach",
+        "Brand mentions"
+      ],
+      "engagement": [
+        "Time on page",
+        "Social shares",
+        "Comments"
+      ],
+      "conversion": [
+        "Lead generation",
+        "Email signups",
+        "Demo requests"
+      ],
+      "retention": [
+        "Return visitors",
+        "Email open rates",
+        "Customer satisfaction"
+      ]
+    },
+    "brand_voice": "Professional",
+    "editorial_guidelines": [
+      "Use clear, concise language",
+      "Include data and statistics when possible",
+      "Focus on actionable insights",
+      "Maintain consistent tone and style",
+      "Include relevant examples and case studies"
+    ],
+    "competitive_landscape": {
+      "top_competitors": [
+        "Competitor 1",
+        "Competitor 2",
+        "Competitor 3",
+        "Competitor 4"
+      ],
+      "competitive_advantages": [
+        "Unique industry expertise",
+        "Comprehensive solution offering",
+        "Strong customer relationships",
+        "Innovative technology approach"
+      ],
+      "market_positioning": "Leading consulting solution provider"
+    }
+  },
+  "onboarding_data": {
+    "website_analysis": {
+      "industry_focus": "real_estate",
+      "target_audience": "Developers",
+      "current_content_volume": 20,
+      "content_gaps": [
+        "Industry-specific insights",
+        "Technical tutorials",
+        "Customer success stories",
+        "Thought leadership content"
+      ]
+    },
+    "competitor_analysis": {
+      "top_performers": [
+        "Competitor 1",
+        "Competitor 2",
+        "Competitor 3",
+        "Competitor 4"
+      ],
+      "content_themes": [
+        "Industry trends",
+        "Best practices",
+        "Product updates",
+        "Customer success",
+        "Expert insights"
+      ],
+      "performance_metrics": {
+        "engagement_rate": 7.9740122383037875,
+        "conversion_rate": 4.814385725455148,
+        "traffic_growth": 10.086240714053547
+      }
+    },
+    "keyword_analysis": {
+      "high_value_keywords": [
+        "keyword_1",
+        "keyword_2",
+        "keyword_3",
+        "keyword_4",
+        "keyword_5",
+        "keyword_6",
+        "keyword_7",
+        "keyword_8",
+        "keyword_9",
+        "keyword_10",
+        "keyword_11",
+        "keyword_12",
+        "keyword_13",
+        "keyword_14",
+        "keyword_15",
+        "keyword_16",
+        "keyword_17",
+        "keyword_18",
+        "keyword_19",
+        "keyword_20"
+      ],
+      "search_volume": 9754,
+      "competition_level": "High",
+      "opportunity_score": 0.6874650301541098
+    }
+  },
+  "ai_analysis_results": {
+    "strategic_intelligence": {
+      "market_trends": [
+        "Increased focus on digital transformation",
+        "Growing demand for automation solutions",
+        "Rising importance of data security"
+      ],
+      "content_opportunities": [
+        "Industry-specific case studies",
+        "Technical implementation guides",
+        "Expert interview series"
+      ],
+      "competitive_insights": [
+        "Gap in thought leadership content",
+        "Opportunity for technical tutorials",
+        "Need for customer success stories"
+      ]
+    },
+    "performance_predictions": {
+      "expected_traffic_growth": 65.55870552021292,
+      "engagement_improvement": 28.714441634846306,
+      "conversion_rate_boost": 13.10352040776483
+    }
+  },
+  "gap_analysis": {
+    "content_gaps": [
+      {
+        "gap_type": "Topic Coverage",
+        "description": "Missing content on emerging technologies",
+        "priority": "High",
+        "impact_score": 0.7519186071667772
+      },
+      {
+        "gap_type": "Content Format",
+        "description": "Need for video tutorials and webinars",
+        "priority": "Medium",
+        "impact_score": 0.6494064517901526
+      }
+    ],
+    "keyword_opportunities": [
+      {
+        "keyword": "opportunity_keyword_1",
+        "search_volume": 1536,
+        "competition": "Medium",
+        "relevance_score": 0.9475621371627778
+      },
+      {
+        "keyword": "opportunity_keyword_2",
+        "search_volume": 2317,
+        "competition": "Medium",
+        "relevance_score": 0.8777912942121116
+      },
+      {
+        "keyword": "opportunity_keyword_3",
+        "search_volume": 1794,
+        "competition": "Low",
+        "relevance_score": 0.899279171437537
+      },
+      {
+        "keyword": "opportunity_keyword_4",
+        "search_volume": 2130,
+        "competition": "Medium",
+        "relevance_score": 0.8049242524212595
+      },
+      {
+        "keyword": "opportunity_keyword_5",
+        "search_volume": 2822,
+        "competition": "Low",
+        "relevance_score": 0.925583793343256
+      },
+      {
+        "keyword": "opportunity_keyword_6",
+        "search_volume": 4020,
+        "competition": "Medium",
+        "relevance_score": 0.8415639609309764
+      },
+      {
+        "keyword": "opportunity_keyword_7",
+        "search_volume": 696,
+        "competition": "Medium",
+        "relevance_score": 0.9017545305537127
+      },
+      {
+        "keyword": "opportunity_keyword_8",
+        "search_volume": 3254,
+        "competition": "Low",
+        "relevance_score": 0.8630718366263956
+      },
+      {
+        "keyword": "opportunity_keyword_9",
+        "search_volume": 3551,
+        "competition": "Low",
+        "relevance_score": 0.8915333227374084
+      },
+      {
+        "keyword": "opportunity_keyword_10",
+        "search_volume": 732,
+        "competition": "Low",
+        "relevance_score": 0.9414328578448485
+      }
+    ],
+    "competitor_insights": [
+      {
+        "competitor": "Competitor 1",
+        "strength": "Content quality",
+        "opportunity": "Gap in technical content coverage"
+      },
+      {
+        "competitor": "Competitor 2",
+        "strength": "Content quality",
+        "opportunity": "Gap in technical content coverage"
+      },
+      {
+        "competitor": "Competitor 3",
+        "strength": "Content quality",
+        "opportunity": "Gap in technical content coverage"
+      },
+      {
+        "competitor": "Competitor 4",
+        "strength": "Content quality",
+        "opportunity": "Gap in technical content coverage"
+      },
+      {
+        "competitor": "Competitor 5",
+        "strength": "Publishing frequency",
+        "opportunity": "Gap in technical content coverage"
+      },
+      {
+        "competitor": "Competitor 6",
+        "strength": "SEO optimization",
+        "opportunity": "Gap in technical content coverage"
+      }
+    ]
+  },
+  "performance_data": {
+    "content_performance": {
+      "top_performing_content": [
+        {
+          "title": "Top Content 1",
+          "views": 3017,
+          "engagement_rate": 6.595977639736283,
+          "conversion_rate": 2.0233509731908286
+        },
+        {
+          "title": "Top Content 2",
+          "views": 6721,
+          "engagement_rate": 3.3633812646556334,
+          "conversion_rate": 3.3162018660048673
+        },
+        {
+          "title": "Top Content 3",
+          "views": 9854,
+          "engagement_rate": 7.240250379774741,
+          "conversion_rate": 2.202270997057759
+        },
+        {
+          "title": "Top Content 4",
+          "views": 4737,
+          "engagement_rate": 3.539442596376803,
+          "conversion_rate": 2.3020914696331385
+        },
+        {
+          "title": "Top Content 5",
+          "views": 3330,
+          "engagement_rate": 6.770160665967097,
+          "conversion_rate": 3.482053863248193
+        },
+        {
+          "title": "Top Content 6",
+          "views": 2972,
+          "engagement_rate": 5.778640140261465,
+          "conversion_rate": 3.968936736626511
+        },
+        {
+          "title": "Top Content 7",
+          "views": 9092,
+          "engagement_rate": 5.303361389931805,
+          "conversion_rate": 5.709179971289545
+        }
+      ],
+      "underperforming_content": [
+        {
+          "title": "Underperforming Content 1",
+          "views": 434,
+          "engagement_rate": 1.8058355842057692,
+          "conversion_rate": 0.8420931915388971
+        },
+        {
+          "title": "Underperforming Content 2",
+          "views": 284,
+          "engagement_rate": 0.782863716097007,
+          "conversion_rate": 0.30014673886484416
+        },
+        {
+          "title": "Underperforming Content 3",
+          "views": 467,
+          "engagement_rate": 0.5333409318169717,
+          "conversion_rate": 0.1624334505074497
+        }
+      ]
+    },
+    "platform_performance": {
+      "blog": {
+        "traffic": 6173,
+        "engagement": 5.022428478609477,
+        "conversions": 659
+      },
+      "social_media": {
+        "reach": 38267,
+        "engagement": 3.587636461050471,
+        "followers": 2967
+      },
+      "email": {
+        "subscribers": 2842,
+        "open_rate": 28.167602210871863,
+        "click_rate": 7.402531162686986
+      }
+    }
+  },
+  "recommendations_data": {
+    "content_recommendations": [
+      {
+        "type": "Blog Post",
+        "title": "Recommended Content 1",
+        "topic": "Industry trends",
+        "priority": "Medium",
+        "expected_impact": 0.6497853113284896
+      },
+      {
+        "type": "Blog Post",
+        "title": "Recommended Content 2",
+        "topic": "Tutorial",
+        "priority": "Low",
+        "expected_impact": 0.8553034638345339
+      },
+      {
+        "type": "Blog Post",
+        "title": "Recommended Content 3",
+        "topic": "Product update",
+        "priority": "Low",
+        "expected_impact": 0.731683506848534
+      },
+      {
+        "type": "Blog Post",
+        "title": "Recommended Content 4",
+        "topic": "Best practices",
+        "priority": "High",
+        "expected_impact": 0.8198689422767442
+      },
+      {
+        "type": "Blog Post",
+        "title": "Recommended Content 5",
+        "topic": "Expert interview",
+        "priority": "Low",
+        "expected_impact": 0.6068007410761912
+      },
+      {
+        "type": "Blog Post",
+        "title": "Recommended Content 6",
+        "topic": "Product update",
+        "priority": "Low",
+        "expected_impact": 0.7913036894910537
+      },
+      {
+        "type": "Blog Post",
+        "title": "Recommended Content 7",
+        "topic": "Expert interview",
+        "priority": "High",
+        "expected_impact": 0.8732952607078548
+      },
+      {
+        "type": "Blog Post",
+        "title": "Recommended Content 8",
+        "topic": "Tutorial",
+        "priority": "Low",
+        "expected_impact": 0.645720739174389
+      },
+      {
+        "type": "Blog Post",
+        "title": "Recommended Content 9",
+        "topic": "Industry trends",
+        "priority": "Medium",
+        "expected_impact": 0.860480477131154
+      },
+      {
+        "type": "Blog Post",
+        "title": "Recommended Content 10",
+        "topic": "Tutorial",
+        "priority": "Medium",
+        "expected_impact": 0.83141651309
+      },
+      {
+        "type": "Blog Post",
+        "title": "Recommended Content 11",
+        "topic": "Case study",
+        "priority": "Low",
+        "expected_impact": 0.7532486428277387
+      },
+      {
+        "type": "Blog Post",
+        "title": "Recommended Content 12",
+        "topic": "Product update",
+        "priority": "High",
+        "expected_impact": 0.603736259397402
+      },
+      {
+        "type": "Blog Post",
+        "title": "Recommended Content 13",
+        "topic": "Product update",
+        "priority": "Medium",
+        "expected_impact": 0.7612327710857363
+      }
+    ],
+    "optimization_recommendations": [
+      {
+        "area": "Distribution",
+        "recommendation": "Optimization recommendation 1",
+        "impact": 0.3873956878748826
+      },
+      {
+        "area": "Content Quality",
+        "recommendation": "Optimization recommendation 2",
+        "impact": 0.6343234996003145
+      },
+      {
+        "area": "Distribution",
+        "recommendation": "Optimization recommendation 3",
+        "impact": 0.7235034106959006
+      }
+    ]
+  },
+  "industry": "consulting",
+  "target_audience": {
+    "primary": "Developers",
+    "secondary": "Industry professionals",
+    "demographics": {
+      "age_range": "25-45",
+      "location": "Global",
+      "company_size": "Startup"
+    },
+    "interests": [
+      "Industry trends",
+      "Best practices",
+      "Innovation",
+      "Professional development",
+      "Technology adoption"
+    ]
+  },
+  "business_goals": [
+    "Improve customer engagement",
+    "Drive website traffic",
+    "Boost conversions",
+    "Generate leads"
+  ],
+  "website_analysis": {
+    "industry_focus": "real_estate",
+    "target_audience": "Developers",
+    "current_content_volume": 20,
+    "content_gaps": [
+      "Industry-specific insights",
+      "Technical tutorials",
+      "Customer success stories",
+      "Thought leadership content"
+    ]
+  },
+  "competitor_analysis": {
+    "top_performers": [
+      "Competitor 1",
+      "Competitor 2",
+      "Competitor 3",
+      "Competitor 4"
+    ],
+    "content_themes": [
+      "Industry trends",
+      "Best practices",
+      "Product updates",
+      "Customer success",
+      "Expert insights"
+    ],
+    "performance_metrics": {
+      "engagement_rate": 7.9740122383037875,
+      "conversion_rate": 4.814385725455148,
+      "traffic_growth": 10.086240714053547
+    }
+  },
+  "keyword_analysis": {
+    "high_value_keywords": [
+      "keyword_1",
+      "keyword_2",
+      "keyword_3",
+      "keyword_4",
+      "keyword_5",
+      "keyword_6",
+      "keyword_7",
+      "keyword_8",
+      "keyword_9",
+      "keyword_10",
+      "keyword_11",
+      "keyword_12",
+      "keyword_13",
+      "keyword_14",
+      "keyword_15",
+      "keyword_16",
+      "keyword_17",
+      "keyword_18",
+      "keyword_19",
+      "keyword_20"
+    ],
+    "search_volume": 9754,
+    "competition_level": "High",
+    "opportunity_score": 0.6874650301541098
+  },
+  "strategy_analysis": {
+    "completeness_score": 0.7427493561439076,
+    "quality_score": 0.8683723535497643,
+    "alignment_score": 0.882917103287294
+  },
+  "quality_indicators": {
+    "data_completeness": 0.8918331238082507,
+    "strategic_alignment": 0.833348107732385,
+    "market_relevance": 0.8401525445587501
+  }
+}

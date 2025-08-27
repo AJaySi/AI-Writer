@@ -34,7 +34,7 @@ from ...utils.response_builders import ResponseBuilder
 from ...utils.constants import ERROR_MESSAGES, SUCCESS_MESSAGES
 
 # Import services
-from services.calendar_generator_service import CalendarGeneratorService
+# Removed old service import - using orchestrator only
 from ...services.calendar_generation_service import CalendarGenerationService
 
 # Create router
@@ -300,26 +300,27 @@ async def get_calendar_generation_progress(session_id: str, db: Session = Depend
         # Initialize service with database session for active strategy access
         calendar_service = CalendarGenerationService(db)
         
-        # Get progress from the calendar generator service
-        progress = calendar_service.calendar_generator_service.get_generation_progress(session_id)
+        # Get progress from orchestrator only - no fallbacks
+        orchestrator_progress = calendar_service.get_orchestrator_progress(session_id)
         
-        if not progress:
+        if not orchestrator_progress:
             raise HTTPException(status_code=404, detail="Session not found")
         
+        # Return orchestrator progress (data is already in the correct format)
         return {
             "session_id": session_id,
-            "status": progress.get("status", "initializing"),
-            "current_step": progress.get("current_step", 0),
-            "step_progress": progress.get("step_progress", 0),
-            "overall_progress": progress.get("overall_progress", 0),
-            "step_results": progress.get("step_results", {}),
-            "quality_scores": progress.get("quality_scores", {}),
-            "transparency_messages": progress.get("transparency_messages", []),
-            "educational_content": progress.get("educational_content", []),
-            "errors": progress.get("errors", []),
-            "warnings": progress.get("warnings", []),
-            "estimated_completion": progress.get("estimated_completion"),
-            "last_updated": progress.get("last_updated")
+            "status": orchestrator_progress.get("status", "initializing"),
+            "current_step": orchestrator_progress.get("current_step", 0),
+            "step_progress": orchestrator_progress.get("step_progress", 0),
+            "overall_progress": orchestrator_progress.get("overall_progress", 0),
+            "step_results": orchestrator_progress.get("step_results", {}),
+            "quality_scores": orchestrator_progress.get("quality_scores", {}),
+            "transparency_messages": orchestrator_progress.get("transparency_messages", []),
+            "educational_content": orchestrator_progress.get("educational_content", []),
+            "errors": orchestrator_progress.get("errors", []),
+            "warnings": orchestrator_progress.get("warnings", []),
+            "estimated_completion": orchestrator_progress.get("estimated_completion"),
+            "last_updated": orchestrator_progress.get("last_updated")
         }
         
     except Exception as e:
@@ -330,25 +331,42 @@ async def get_calendar_generation_progress(session_id: str, db: Session = Depend
 async def start_calendar_generation(request: CalendarGenerationRequest, db: Session = Depends(get_db)):
     """
     Start calendar generation and return a session ID for progress tracking.
+    Prevents duplicate sessions for the same user.
     """
     try:
         # Initialize service with database session for active strategy access
         calendar_service = CalendarGenerationService(db)
         
+        # Check if user already has an active session
+        user_id = request.user_id
+        existing_session = calendar_service._get_active_session_for_user(user_id)
+        
+        if existing_session:
+            logger.info(f"🔄 User {user_id} already has active session: {existing_session}")
+            return {
+                "session_id": existing_session,
+                "status": "existing",
+                "message": "Using existing active session",
+                "estimated_duration": "2-3 minutes"
+            }
+        
         # Generate a unique session ID
         session_id = f"calendar-session-{int(time.time())}-{random.randint(1000, 9999)}"
         
-        # Initialize progress tracking
-        calendar_service.calendar_generator_service.initialize_generation_session(session_id, request.dict())
+        # Initialize orchestrator session
+        success = calendar_service.initialize_orchestrator_session(session_id, request.dict())
         
-        # Start the generation process asynchronously
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to initialize orchestrator session")
+        
+        # Start the generation process asynchronously using orchestrator
         # This will run in the background while the frontend polls for progress
-        asyncio.create_task(calendar_service.calendar_generator_service.generate_calendar_async(session_id, request.dict()))
+        asyncio.create_task(calendar_service.start_orchestrator_generation(session_id, request.dict()))
         
         return {
             "session_id": session_id,
             "status": "started",
-            "message": "Calendar generation started successfully",
+            "message": "Calendar generation started successfully with 12-step orchestrator",
             "estimated_duration": "2-3 minutes"
         }
         
@@ -365,7 +383,12 @@ async def cancel_calendar_generation(session_id: str, db: Session = Depends(get_
         # Initialize service with database session for active strategy access
         calendar_service = CalendarGenerationService(db)
         
-        success = calendar_service.calendar_generator_service.cancel_generation_session(session_id)
+        # Cancel orchestrator session
+        if session_id in calendar_service.orchestrator_sessions:
+            calendar_service.orchestrator_sessions[session_id]["status"] = "cancelled"
+            success = True
+        else:
+            success = False
         
         if not success:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -436,3 +459,71 @@ async def cleanup_expired_cache(db: Session = Depends(get_db)) -> Dict[str, Any]
     except Exception as e:
         logger.error(f"Error cleaning up cache: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to clean up cache")
+
+@router.get("/sessions")
+async def list_active_sessions(db: Session = Depends(get_db)):
+    """
+    List all active calendar generation sessions.
+    """
+    try:
+        # Initialize service with database session for active strategy access
+        calendar_service = CalendarGenerationService(db)
+        
+        sessions = []
+        for session_id, session_data in calendar_service.orchestrator_sessions.items():
+            sessions.append({
+                "session_id": session_id,
+                "user_id": session_data.get("user_id"),
+                "status": session_data.get("status"),
+                "start_time": session_data.get("start_time").isoformat() if session_data.get("start_time") else None,
+                "progress": session_data.get("progress", {})
+            })
+        
+        return {
+            "sessions": sessions,
+            "total_sessions": len(sessions),
+            "active_sessions": len([s for s in sessions if s["status"] in ["initializing", "running"]])
+        }
+        
+    except Exception as e:
+        logger.error(f"Error listing sessions: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to list sessions")
+
+@router.delete("/sessions/cleanup")
+async def cleanup_old_sessions(db: Session = Depends(get_db)):
+    """
+    Clean up old sessions.
+    """
+    try:
+        # Initialize service with database session for active strategy access
+        calendar_service = CalendarGenerationService(db)
+        
+        # Clean up old sessions for all users
+        current_time = datetime.now()
+        sessions_to_remove = []
+        
+        for session_id, session_data in list(calendar_service.orchestrator_sessions.items()):
+            start_time = session_data.get("start_time")
+            if start_time:
+                # Remove sessions older than 1 hour
+                if (current_time - start_time).total_seconds() > 3600:  # 1 hour
+                    sessions_to_remove.append(session_id)
+                # Also remove completed/error sessions older than 10 minutes
+                elif session_data.get("status") in ["completed", "error", "cancelled"]:
+                    if (current_time - start_time).total_seconds() > 600:  # 10 minutes
+                        sessions_to_remove.append(session_id)
+        
+        # Remove the sessions
+        for session_id in sessions_to_remove:
+            del calendar_service.orchestrator_sessions[session_id]
+            logger.info(f"🧹 Cleaned up old session: {session_id}")
+        
+        return {
+            "status": "success",
+            "message": f"Cleaned up {len(sessions_to_remove)} old sessions",
+            "cleaned_count": len(sessions_to_remove)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error cleaning up sessions: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to cleanup sessions")

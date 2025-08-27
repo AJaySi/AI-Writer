@@ -47,11 +47,11 @@ class ContentStrategyDataSource(DataSourceInterface):
             Dictionary containing comprehensive strategy data
         """
         try:
-            # Import here to avoid circular imports
-            from services.calendar_generator_service import CalendarGeneratorService
+            # Get strategy data from database directly
+            from services.content_planning_db import ContentPlanningDBService
             
-            calendar_service = CalendarGeneratorService()
-            strategy_data = await calendar_service._get_strategy_data(strategy_id)
+            db_service = ContentPlanningDBService()
+            strategy_data = await db_service.get_strategy_data(strategy_id)
             
             self.mark_updated()
             logger.info(f"Retrieved content strategy data for strategy {strategy_id}")

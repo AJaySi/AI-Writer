@@ -10,7 +10,7 @@ import time
 from typing import Dict, Any, List, Optional
 from loguru import logger
 
-from ..base_step import PromptStep
+from services.calendar_generation_datasource_framework.prompt_chaining.steps.base_step import PromptStep
 import sys
 import os
 
@@ -26,9 +26,9 @@ try:
         StrategyDataProcessor,
         GapAnalysisDataProcessor
     )
-    from content_gap_analyzer.ai_engine_service import AIEngineService
-    from content_gap_analyzer.keyword_researcher import KeywordResearcher
-    from content_gap_analyzer.competitor_analyzer import CompetitorAnalyzer
+    from services.content_gap_analyzer.ai_engine_service import AIEngineService
+    from services.content_gap_analyzer.keyword_researcher import KeywordResearcher
+    from services.content_gap_analyzer.competitor_analyzer import CompetitorAnalyzer
 except ImportError:
     # Fallback imports for testing
     ComprehensiveUserDataProcessor = None
@@ -80,9 +80,36 @@ class PlatformSpecificStrategyStep(PromptStep):
             business_size = context.get("business_size", "sme")
             
             # Get data from previous steps
-            previous_steps = context.get("previous_step_results", {})
-            calendar_structure = previous_steps.get(4, {}).get("results", {}).get("calendarStructure", {})
-            pillar_mapping = previous_steps.get(5, {}).get("results", {}).get("pillarMapping", {})
+            step_results = context.get("step_results", {})
+            
+            # Try to get calendar structure from Step 4's results
+            step_04_result = step_results.get("step_04", {})
+            if step_04_result:
+                # Check if it's the wrapped result from base step
+                if "result" in step_04_result:
+                    # Base step wrapped the result
+                    calendar_structure = step_04_result.get("result", {}).get("results", {}).get("calendarStructure", {})
+                else:
+                    # Direct result from Step 4
+                    calendar_structure = step_04_result.get("results", {}).get("calendarStructure", {})
+            else:
+                calendar_structure = {}
+            
+            # Try to get pillar mapping from Step 5's results
+            step_05_result = step_results.get("step_05", {})
+            if step_05_result:
+                # Check if it's the wrapped result from base step
+                if "result" in step_05_result:
+                    # Base step wrapped the result
+                    pillar_mapping = step_05_result.get("result", {}).get("pillarMapping", {})
+                else:
+                    # Direct result from Step 5
+                    pillar_mapping = step_05_result.get("pillarMapping", {})
+            else:
+                pillar_mapping = {}
+            
+            logger.info(f"📋 Step 6: Retrieved calendar structure from Step 4: {list(calendar_structure.keys()) if calendar_structure else 'None'}")
+            logger.info(f"📋 Step 6: Retrieved pillar mapping from Step 5: {list(pillar_mapping.keys()) if pillar_mapping else 'None'}")
             
             # Get comprehensive user data
             if self.comprehensive_user_processor:
@@ -115,21 +142,19 @@ class PlatformSpecificStrategyStep(PromptStep):
             # Calculate execution time
             execution_time = time.time() - start_time
             
-            # Generate step results
+            # Calculate quality score first
+            quality_score = self._calculate_platform_quality_score(
+                platform_optimization, content_adaptation, cross_platform_coordination, uniqueness_validation
+            )
+            logger.info(f"📊 Step 6 quality score calculated: {quality_score:.2f}")
+            
+            # Generate step results (simpler format for base step to wrap)
             step_results = {
-                "stepNumber": 6,
-                "stepName": "Platform-Specific Strategy",
-                "results": {
-                    "platformOptimization": platform_optimization,
-                    "contentAdaptation": content_adaptation,
-                    "crossPlatformCoordination": cross_platform_coordination,
-                    "uniquenessValidation": uniqueness_validation
-                },
-                "qualityScore": self._calculate_platform_quality_score(
-                    platform_optimization, content_adaptation, cross_platform_coordination, uniqueness_validation
-                ),
-                "executionTime": f"{execution_time:.1f}s",
-                "dataSourcesUsed": ["Platform Performance Data", "Content Adaptation Algorithms", "Cross-Platform Coordination"],
+                "platformOptimization": platform_optimization,
+                "contentAdaptation": content_adaptation,
+                "crossPlatformCoordination": cross_platform_coordination,
+                "uniquenessValidation": uniqueness_validation,
+                "quality_score": quality_score,
                 "insights": [
                     f"Platform strategy optimized with {platform_optimization.get('optimization_score', 0):.1%} effectiveness",
                     f"Content adaptation quality scored {content_adaptation.get('adaptation_score', 0):.1%}",
@@ -144,7 +169,7 @@ class PlatformSpecificStrategyStep(PromptStep):
                 ]
             }
             
-            logger.info(f"✅ Step 6 completed with quality score: {step_results['qualityScore']:.2f}")
+            logger.info(f"✅ Step 6 completed with quality score: {step_results['quality_score']:.2f}")
             return step_results
             
         except Exception as e:
@@ -154,7 +179,12 @@ class PlatformSpecificStrategyStep(PromptStep):
     async def _optimize_platform_strategy(self, user_data: Dict, calendar_structure: Dict, pillar_mapping: Dict, industry: str, business_size: str) -> Dict[str, Any]:
         """Optimize platform strategy for maximum effectiveness."""
         try:
-            platform_preferences = user_data.get("onboarding_data", {}).get("platform_preferences", {})
+            # Check for platform preferences - fail if not available
+            platform_preferences = user_data.get("platform_preferences")
+            
+            if not platform_preferences:
+                logger.error("❌ Missing platform preferences for platform strategy optimization")
+                raise ValueError("Platform strategy optimization requires platform preferences from user data.")
             
             # Get industry-specific platform strategies
             industry_strategies = self._get_industry_platform_strategies(industry, business_size)
@@ -821,32 +851,31 @@ class PlatformSpecificStrategyStep(PromptStep):
     def validate_result(self, result: Dict[str, Any]) -> bool:
         """Validate the Step 6 result."""
         try:
-            # Check required fields
-            required_fields = [
-                "stepNumber", "stepName", "results", "qualityScore", 
-                "executionTime", "dataSourcesUsed", "insights", "recommendations"
-            ]
+            logger.info(f"🔍 Validating Step 6 result with keys: {list(result.keys()) if result else 'None'}")
             
-            for field in required_fields:
-                if field not in result:
-                    logger.error(f"Missing required field: {field}")
-                    return False
-            
-            # Validate step number
-            if result.get("stepNumber") != 6:
-                logger.error(f"Invalid step number: {result.get('stepNumber')}")
+            if not result:
+                logger.error("Result is None or empty")
                 return False
             
-            # Validate results structure
-            results = result.get("results", {})
-            required_results = ["platformOptimization", "contentAdaptation", "crossPlatformCoordination", "uniquenessValidation"]
+            # Check required result components
+            result_components = ["platformOptimization", "contentAdaptation", "crossPlatformCoordination", "uniquenessValidation"]
+            found_components = [comp for comp in result_components if comp in result]
             
-            for result_field in required_results:
-                if result_field not in results:
-                    logger.error(f"Missing result field: {result_field}")
-                    return False
+            if not found_components:
+                logger.error(f"No result components found. Expected: {result_components}")
+                return False
             
-            logger.info(f"✅ Step 6 result validation passed with quality score: {result.get('qualityScore', 0):.2f}")
+            # Check for quality score
+            if "quality_score" not in result:
+                logger.error("Missing quality_score in result")
+                return False
+            
+            # Check for insights
+            if "insights" not in result:
+                logger.error("Missing insights in result")
+                return False
+            
+            logger.info(f"✅ Step 6 result validation passed with {len(found_components)} components")
             return True
             
         except Exception as e:

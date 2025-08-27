@@ -168,46 +168,23 @@ export const useCalendarWizardState = (
     }
   }, [canProceedToStep, clearErrors]);
 
-  // Generate calendar with progress tracking
+  // Generate calendar - simplified to just call the callback
+  // Let the modal handle all progress display
   const generateCalendar = useCallback(async () => {
     if (!validateAllSteps()) {
       setError('Please fix validation errors before generating calendar');
       return;
     }
 
-    setIsGenerating(true);
-    setGenerationProgress(0);
     setError(null);
 
     try {
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        setGenerationProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 200);
-
+      // Simply call the callback - let the modal handle progress
       await onGenerateCalendarRef.current(calendarConfig);
-      
-      clearInterval(progressInterval);
-      setGenerationProgress(100);
-      
-      // Reset after successful generation
-      setTimeout(() => {
-        setIsGenerating(false);
-        setGenerationProgress(0);
-      }, 1000);
-
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate calendar');
-      setIsGenerating(false);
-      setGenerationProgress(0);
     }
-  }, [calendarConfig, validateAllSteps]); // Remove onGenerateCalendar dependency
+  }, [calendarConfig, validateAllSteps]);
 
   const state: WizardState = useMemo(() => ({
     activeStep,

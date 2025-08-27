@@ -103,7 +103,7 @@ app.middleware("http")(monitoring_middleware)
 # Simple rate limiting
 request_counts = defaultdict(list)
 RATE_LIMIT_WINDOW = 60  # 60 seconds
-RATE_LIMIT_MAX_REQUESTS = 60  # Increased from 30 to 60 requests per minute
+RATE_LIMIT_MAX_REQUESTS = 200  # Increased for testing - calendar generation polling
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
@@ -122,6 +122,7 @@ async def rate_limit_middleware(request: Request, call_next):
             "/ai-analytics",     # Exempt AI analytics endpoint from rate limiting
             "/gap-analysis",     # Exempt gap analysis endpoint from rate limiting
             "/calendar-events",  # Exempt calendar events endpoint from rate limiting
+            "/calendar-generation/progress",  # Exempt calendar generation progress from rate limiting
             "/health"           # Exempt health check endpoints from rate limiting
         ]):
             # Allow streaming endpoints without rate limiting

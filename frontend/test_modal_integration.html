@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .test-button:hover {
+            background-color: #1565c0;
+        }
+        .log-container {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .log-info { background-color: #d1ecf1; }
+        .log-success { background-color: #d4edda; }
+        .log-error { background-color: #f8d7da; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Calendar Generation Modal Integration Test</h1>
+        <p>This test verifies that the calendar generation modal can be triggered and displays properly.</p>
+        
+        <h2>Test Steps:</h2>
+        <ol>
+            <li>Click the "Test Modal Integration" button below</li>
+            <li>Check if the modal opens and displays progress</li>
+            <li>Monitor the logs for any errors</li>
+        </ol>
+        
+        <button class="test-button" onclick="testModalIntegration()">
+            Test Modal Integration
+        </button>
+        
+        <button class="test-button" onclick="testBackendConnection()">
+            Test Backend Connection
+        </button>
+        
+        <div class="log-container" id="logContainer">
+            <div class="log-entry log-info">Ready to test modal integration...</div>
+        </div>
+    </div>
+
+    <script>
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        async function testBackendConnection() {
+            addLog('Testing backend connection...', 'info');
+            
+            try {
+                const response = await fetch('/api/content-planning/calendar-generation/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: 1,
+                        calendar_type: 'monthly',
+                        industry: 'technology',
+                        business_size: 'sme',
+                        force_refresh: false
+                    }),
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog(`Backend connection successful! Session ID: ${data.session_id}`, 'success');
+                } else {
+                    addLog(`Backend connection failed: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                addLog(`Backend connection error: ${error.message}`, 'error');
+            }
+        }
+
+        function testModalIntegration() {
+            addLog('Testing modal integration...', 'info');
+            
+            // Simulate the calendar generation flow
+            const mockCalendarConfig = {
+                calendarType: 'monthly',
+                startDate: '2024-01-01',
+                calendarDuration: 30,
+                postingFrequency: 3,
+                priorityPlatforms: ['LinkedIn', 'Twitter'],
+                timeZone: 'UTC',
+                includeWeekends: true,
+                autoSchedule: true,
+                generateTopics: true
+            };
+            
+            addLog(`Calendar config prepared: ${JSON.stringify(mockCalendarConfig)}`, 'info');
+            
+            // Simulate the API call that should trigger the modal
+            testBackendConnection().then(() => {
+                addLog('Modal should now be visible if integration is working correctly', 'success');
+                addLog('Check the main application for the modal display', 'info');
+            });
+        }
+
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            addLog('Page loaded, ready for testing', 'info');
+        });
+    </script>
+</body>
+</html>
