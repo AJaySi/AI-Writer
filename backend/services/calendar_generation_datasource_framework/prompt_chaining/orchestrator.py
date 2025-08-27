@@ -78,9 +78,15 @@ class PromptChainOrchestrator:
         self.comprehensive_user_processor = ComprehensiveUserDataProcessor()
         
         # Inject database service if available
-        if hasattr(self.comprehensive_user_processor, 'content_planning_db_service') and db_session:
-            self.comprehensive_user_processor.content_planning_db_service = db_session
-            logger.info("✅ Database service injected into comprehensive user processor")
+        if db_session:
+            try:
+                from services.content_planning_db import ContentPlanningDBService
+                db_service = ContentPlanningDBService(db_session)
+                self.comprehensive_user_processor.content_planning_db_service = db_service
+                logger.info("✅ Database service injected into comprehensive user processor")
+            except Exception as e:
+                logger.error(f"❌ Failed to inject database service: {e}")
+                self.comprehensive_user_processor.content_planning_db_service = None
         
         # 12-step configuration
         self.steps = self._initialize_steps()
@@ -92,20 +98,77 @@ class PromptChainOrchestrator:
         """Initialize all 12 steps of the prompt chain."""
         steps = {}
         
+        # Create database service if available
+        db_service = None
+        if self.db_session:
+            try:
+                from services.content_planning_db import ContentPlanningDBService
+                db_service = ContentPlanningDBService(self.db_session)
+                logger.info("✅ Database service created for step injection")
+            except Exception as e:
+                logger.error(f"❌ Failed to create database service for steps: {e}")
+        
         # Phase 1: Foundation (Steps 1-3) - REAL IMPLEMENTATIONS
         steps["step_01"] = ContentStrategyAnalysisStep()
         steps["step_02"] = GapAnalysisStep()
         steps["step_03"] = AudiencePlatformStrategyStep()
+        
+        # Inject database service into Phase 1 steps
+        if db_service:
+            # Step 1: Content Strategy Analysis
+            if hasattr(steps["step_01"], 'strategy_processor'):
+                steps["step_01"].strategy_processor.content_planning_db_service = db_service
+                logger.info("✅ Database service injected into Step 1 strategy processor")
+            
+            # Step 2: Gap Analysis
+            if hasattr(steps["step_02"], 'gap_processor'):
+                steps["step_02"].gap_processor.content_planning_db_service = db_service
+                logger.info("✅ Database service injected into Step 2 gap processor")
+            
+            # Step 3: Audience Platform Strategy
+            if hasattr(steps["step_03"], 'comprehensive_processor'):
+                steps["step_03"].comprehensive_processor.content_planning_db_service = db_service
+                logger.info("✅ Database service injected into Step 3 comprehensive processor")
         
         # Phase 2: Structure (Steps 4-6) - REAL IMPLEMENTATIONS
         steps["step_04"] = CalendarFrameworkStep()
         steps["step_05"] = ContentPillarDistributionStep()
         steps["step_06"] = PlatformSpecificStrategyStep()
         
+        # Inject database service into Phase 2 steps
+        if db_service:
+            # Step 4: Calendar Framework
+            if hasattr(steps["step_04"], 'comprehensive_user_processor'):
+                steps["step_04"].comprehensive_user_processor.content_planning_db_service = db_service
+                logger.info("✅ Database service injected into Step 4 comprehensive processor")
+            
+            # Step 5: Content Pillar Distribution
+            if hasattr(steps["step_05"], 'comprehensive_user_processor'):
+                steps["step_05"].comprehensive_user_processor.content_planning_db_service = db_service
+                logger.info("✅ Database service injected into Step 5 comprehensive processor")
+            
+            # Step 6: Platform Specific Strategy
+            if hasattr(steps["step_06"], 'comprehensive_user_processor'):
+                steps["step_06"].comprehensive_user_processor.content_planning_db_service = db_service
+                logger.info("✅ Database service injected into Step 6 comprehensive processor")
+        
         # Phase 3: Content (Steps 7-9) - REAL IMPLEMENTATIONS
         steps["step_07"] = WeeklyThemeDevelopmentStep()
         steps["step_08"] = DailyContentPlanningStep()
         steps["step_09"] = ContentRecommendationsStep()
+        
+        # Inject database service into Phase 3 steps
+        if db_service:
+            # Step 7: Weekly Theme Development
+            if hasattr(steps["step_07"], 'comprehensive_user_processor'):
+                steps["step_07"].comprehensive_user_processor.content_planning_db_service = db_service
+                logger.info("✅ Database service injected into Step 7 comprehensive processor")
+            if hasattr(steps["step_07"], 'strategy_processor'):
+                steps["step_07"].strategy_processor.content_planning_db_service = db_service
+                logger.info("✅ Database service injected into Step 7 strategy processor")
+            if hasattr(steps["step_07"], 'gap_analysis_processor'):
+                steps["step_07"].gap_analysis_processor.content_planning_db_service = db_service
+                logger.info("✅ Database service injected into Step 7 gap analysis processor")
         
         # Phase 4: Optimization (Steps 10-12) - REAL IMPLEMENTATIONS
         steps["step_10"] = PerformanceOptimizationStep()
