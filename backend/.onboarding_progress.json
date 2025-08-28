@@ -50,14 +50,14 @@
       "title": "Complete Setup",
       "description": "Finalize and complete onboarding",
       "status": "completed",
-      "completed_at": "2025-07-31T12:18:48.982697",
+      "completed_at": "2025-08-28T13:33:52.944161",
       "data": {},
       "validation_errors": []
     }
   ],
   "current_step": 6,
   "started_at": "2025-07-30T18:45:53.838059",
-  "last_updated": "2025-07-31T12:18:48.992288",
+  "last_updated": "2025-08-28T13:33:52.958699",
   "is_completed": true,
-  "completed_at": "2025-07-31T12:18:48.992276"
+  "completed_at": "2025-08-28T13:33:52.958699"
 }

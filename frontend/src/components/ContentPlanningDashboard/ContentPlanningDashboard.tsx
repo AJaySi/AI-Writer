@@ -39,6 +39,8 @@ import {
 } from '../../services/contentPlanningOrchestrator';
 import { StrategyCalendarProvider } from '../../contexts/StrategyCalendarContext';
 
+// CopilotKit actions will be initialized in a separate component
+
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -98,6 +100,9 @@ const ContentPlanningDashboard: React.FC = () => {
     updateGapAnalyses,
     updateAIInsights
   } = useContentPlanningStore();
+
+  // CopilotKit actions will be initialized in a separate component
+  // that's rendered inside the CopilotSidebar context
 
   // Initialize orchestrator callbacks
   useEffect(() => {

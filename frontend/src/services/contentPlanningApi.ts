@@ -868,6 +868,66 @@ class ContentPlanningAPI {
     const url = `${this.baseURL}/enhanced-strategies/stream/ai-generation-status?strategy_id=${strategyId}`;
     return new EventSource(url);
   }
+
+  /**
+   * Generate data for a specific category using CopilotKit
+   */
+  async generateCategoryData(category: string, userDescription: string, currentFormData: any) {
+    try {
+      const response = await apiClient.post('/api/content-planning/strategy/generate-category-data', {
+        category,
+        userDescription,
+        currentFormData
+      });
+      return response;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to generate category data');
+    }
+  }
+
+  /**
+   * Validate a specific strategy field using CopilotKit
+   */
+  async validateField(fieldId: string, value: any) {
+    try {
+      const response = await apiClient.post('/api/content-planning/strategy/validate-field', {
+        fieldId,
+        value
+      });
+      return response;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to validate field');
+    }
+  }
+
+  /**
+   * Analyze complete strategy using CopilotKit
+   */
+  async analyzeStrategy(formData: any) {
+    try {
+      const response = await apiClient.post('/api/content-planning/strategy/analyze', {
+        formData
+      });
+      return response;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to analyze strategy');
+    }
+  }
+
+  /**
+   * Generate suggestions for a specific field using CopilotKit
+   */
+  async generateFieldSuggestions(fieldId: string, currentFormData: any) {
+    try {
+      const response = await apiClient.post('/api/content-planning/strategy/generate-suggestions', {
+        fieldId,
+        currentFormData
+      });
+      return response;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to generate suggestions');
+    }
+  }
 }
 
 // Export singleton instance

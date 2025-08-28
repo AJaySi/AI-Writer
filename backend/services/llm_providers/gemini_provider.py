@@ -169,7 +169,7 @@ def gemini_text_response(prompt, temperature, top_p, n, max_tokens, system_promp
     # FIXME: Expose model_name in main_config
     try:
         response = client.models.generate_content(
-            model='gemini-2.5-pro',
+            model='gemini-2.0-flash-lite',
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_prompt,

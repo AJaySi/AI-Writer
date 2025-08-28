@@ -9,6 +9,8 @@ tenacity>=8.2.3
 # Database dependencies   
 sqlalchemy>=2.0.25
 
+copilotkit
+
 # AI/ML dependencies - using more flexible versions
 openai>=1.3.0
 anthropic>=0.7.0
