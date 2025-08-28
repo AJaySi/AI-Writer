@@ -9,6 +9,7 @@ import os
 import sys
 import subprocess
 import time
+import argparse
 from pathlib import Path
 
 def install_requirements():
@@ -213,18 +214,25 @@ def setup_environment():
     
     print("✅ Environment setup complete")
 
-def start_backend():
+def start_backend(enable_reload=False):
     """Start the backend server."""
     print("🚀 Starting ALwrity Backend...")
     
     # Set environment variables
     os.environ.setdefault("HOST", "0.0.0.0")
     os.environ.setdefault("PORT", "8000")
-    os.environ.setdefault("RELOAD", "true")
+    
+    # Set reload based on argument or environment variable
+    if enable_reload:
+        os.environ.setdefault("RELOAD", "true")
+        print("   🔄 Development mode: Auto-reload enabled")
+    else:
+        os.environ.setdefault("RELOAD", "false")
+        print("   🏭 Production mode: Auto-reload disabled")
     
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "8000"))
-    reload = os.getenv("RELOAD", "true").lower() == "true"
+    reload = os.getenv("RELOAD", "false").lower() == "true"
     
     print(f"   📍 Host: {host}")
     print(f"   🔌 Port: {port}")
@@ -242,12 +250,48 @@ def start_backend():
         print("   📈 API Monitoring: http://localhost:8000/api/content-planning/monitoring/health")
         print("\n⏹️  Press Ctrl+C to stop the server")
         print("=" * 60)
+        print("\n💡 Usage:")
+        print("   Production mode (default): python start_alwrity_backend.py")
+        print("   Development mode: python start_alwrity_backend.py --dev")
+        print("   With auto-reload: python start_alwrity_backend.py --reload")
+        print("=" * 60)
         
         uvicorn.run(
             "app:app",
             host=host,
             port=port,
             reload=reload,
+            reload_excludes=[
+                "*.pyc",
+                "*.pyo", 
+                "*.pyd",
+                "__pycache__",
+                "*.log",
+                "*.sqlite",
+                "*.db",
+                "*.tmp",
+                "*.temp",
+                "test_*.py",
+                "temp_*.py",
+                "monitoring_data_service.py",
+                "test_monitoring_save.py",
+                "*.json",
+                "*.yaml",
+                "*.yml",
+                ".env*",
+                "logs/*",
+                "cache/*",
+                "tmp/*",
+                "temp/*",
+                "middleware/*",
+                "models/*",
+                "scripts/*"
+            ],
+            reload_includes=[
+                "app.py",
+                "api/**/*.py",
+                "services/**/*.py"
+            ],
             log_level="info"
         )
         
@@ -261,6 +305,12 @@ def start_backend():
 
 def main():
     """Main function to set up and start the backend."""
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="ALwrity Backend Server")
+    parser.add_argument("--reload", action="store_true", help="Enable auto-reload for development")
+    parser.add_argument("--dev", action="store_true", help="Enable development mode (auto-reload)")
+    args = parser.parse_args()
+    
     print("🎯 ALwrity Backend Server")
     print("=" * 40)
     
@@ -279,8 +329,9 @@ def main():
     # Setup environment
     setup_environment()
     
-    # Start backend
-    return start_backend()
+    # Start backend with reload option
+    enable_reload = args.reload or args.dev
+    return start_backend(enable_reload=enable_reload)
 
 if __name__ == "__main__":
     success = main()
