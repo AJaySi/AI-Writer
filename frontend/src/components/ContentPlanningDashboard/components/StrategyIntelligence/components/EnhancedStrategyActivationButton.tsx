@@ -17,6 +17,7 @@ import { motion, AnimatePresence, easeOut } from 'framer-motion';
 import StrategyActivationModal from '../../StrategyActivationModal';
 import { useNavigationOrchestrator } from '../../../../../services/navigationOrchestrator';
 
+
 interface EnhancedStrategyActivationButtonProps {
   strategyData: any;
   strategyConfirmed: boolean;
@@ -45,16 +46,7 @@ const EnhancedStrategyActivationButton: React.FC<EnhancedStrategyActivationButto
     console.log('🎯 EnhancedStrategyActivationButton: handleActivation called');
     if (isLoading || disabled) return;
 
-    // For now, directly call the activation function instead of opening the modal
-    console.log('🎯 EnhancedStrategyActivationButton: Directly calling onConfirmStrategy');
-    try {
-      await onConfirmStrategy();
-      console.log('🎯 EnhancedStrategyActivationButton: onConfirmStrategy completed successfully');
-    } catch (error) {
-      console.error('🎯 EnhancedStrategyActivationButton: onConfirmStrategy failed:', error);
-    }
-    
-    // Open the activation modal instead of calling onConfirmStrategy directly
+    // Open the activation modal to show monitoring setup
     console.log('🎯 EnhancedStrategyActivationButton: Opening activation modal');
     setShowActivationModal(true);
   };
@@ -70,21 +62,59 @@ const EnhancedStrategyActivationButton: React.FC<EnhancedStrategyActivationButto
   const handleSetupMonitoring = async (monitoringPlan: any) => {
     try {
       console.log('🎯 EnhancedStrategyActivationButton: handleSetupMonitoring called');
-      // Call the actual activation function
+      
+      // Get strategy ID
+      const strategyId = strategyData?.id || 1;
+      
+      // Step 1: Generate monitoring plan if not provided
+      let finalMonitoringPlan = monitoringPlan;
+      if (!finalMonitoringPlan) {
+        console.log('🎯 Generating monitoring plan...');
+        try {
+          const response = await fetch(`/api/content-planning/strategy/${strategyId}/generate-monitoring-plan`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const planResponse = await response.json();
+          finalMonitoringPlan = planResponse.data;
+          console.log('🎯 Monitoring plan generated:', finalMonitoringPlan);
+        } catch (error) {
+          console.warn('Could not generate monitoring plan:', error);
+          // Continue without monitoring plan
+        }
+      }
+      
+      // Step 2: Activate strategy with monitoring plan
+      console.log('🎯 Activating strategy with monitoring...');
+      try {
+        const response = await fetch(`/api/content-planning/strategy/${strategyId}/activate-with-monitoring`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(finalMonitoringPlan)
+        });
+        const activationResponse = await response.json();
+        console.log('🎯 Strategy activated with monitoring:', activationResponse);
+      } catch (error) {
+        console.warn('Could not activate strategy with monitoring:', error);
+        // Continue with local activation only
+      }
+      
+      // Step 3: Call the local confirmation function
       console.log('🎯 EnhancedStrategyActivationButton: Calling onConfirmStrategy()');
       await onConfirmStrategy();
       console.log('🎯 EnhancedStrategyActivationButton: onConfirmStrategy() completed');
       
-      // Update strategy state to confirmed/active
-      // This will trigger UI updates in parent components
+      // Step 4: Update analytics and monitoring data
+      console.log('🎯 Setting up analytics and monitoring...');
+      await setupAnalyticsAndMonitoring(strategyId, finalMonitoringPlan);
       
       // Show success state
       setIsSuccess(true);
       setShowSuccessMessage(true);
       
       // Use navigation orchestrator to handle successful activation
-      const strategyId = strategyData?.strategy_metadata?.user_id || strategyData?.metadata?.user_id || '1';
-      navigationOrchestrator.handleStrategyActivationSuccess(strategyId, strategyData);
+      const userId = strategyData?.strategy_metadata?.user_id || strategyData?.metadata?.user_id || '1';
+      navigationOrchestrator.handleStrategyActivationSuccess(userId, strategyData);
       
       // Reset after success animation
       setTimeout(() => {
@@ -95,6 +125,34 @@ const EnhancedStrategyActivationButton: React.FC<EnhancedStrategyActivationButto
     } catch (error) {
       console.error('Strategy activation failed:', error);
       throw error;
+    }
+  };
+
+  const setupAnalyticsAndMonitoring = async (strategyId: number, monitoringPlan: any) => {
+    try {
+      console.log('🎯 Setting up analytics and monitoring for strategy:', strategyId);
+      
+      // Update analytics page with monitoring data
+      // This will populate the analytics dashboard with the new monitoring tasks
+      const analyticsData = {
+        strategy_id: strategyId,
+        monitoring_plan: monitoringPlan,
+        activation_date: new Date().toISOString(),
+        status: 'active'
+      };
+      
+      // Store analytics data in localStorage for the analytics page to access
+      localStorage.setItem('strategy_analytics_data', JSON.stringify(analyticsData));
+      
+      // Also store monitoring tasks for the data transparency panel
+      const monitoringTasks = monitoringPlan?.monitoringTasks || [];
+      localStorage.setItem('strategy_monitoring_tasks', JSON.stringify(monitoringTasks));
+      
+      console.log('🎯 Analytics and monitoring setup completed');
+      
+    } catch (error) {
+      console.error('Error setting up analytics and monitoring:', error);
+      // Don't fail the activation if analytics setup fails
     }
   };
 

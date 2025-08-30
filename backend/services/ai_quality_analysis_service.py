@@ -177,7 +177,7 @@ class AIQualityAnalysisService:
             Focus on strategic depth, clarity, and measurability.
             """
             
-            ai_response = await gemini_structured_json_response(
+            ai_response = gemini_structured_json_response(
                 prompt=prompt,
                 schema=QUALITY_ANALYSIS_SCHEMA,
                 temperature=0.3,

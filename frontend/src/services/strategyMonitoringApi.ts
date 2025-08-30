@@ -1,4 +1,4 @@
-import { apiClient } from '../api/client';
+import { apiClient, aiApiClient } from '../api/client';
 import { useState } from 'react';
 
 export interface MonitoringTask {
@@ -154,7 +154,7 @@ export const strategyMonitoringApi = {
    */
   async getTrendData(strategyId: number, timeRange: string = '30d'): Promise<{ success: boolean; data: any; message: string }> {
     try {
-      const response = await apiClient.get(`/api/content-planning/strategy/${strategyId}/trend-data?time_range=${timeRange}`);
+      const response = await aiApiClient.get(`/api/content-planning/strategy/${strategyId}/trend-data?time_range=${timeRange}`);
       return response.data;
     } catch (error: any) {
       console.error('Error getting trend data:', error);
@@ -196,7 +196,7 @@ export const strategyMonitoringApi = {
   // Quality Analysis API methods
   async getQualityAnalysis(strategyId: number): Promise<{ success: boolean; data: any; message: string }> {
     try {
-      const response = await apiClient.post(`/api/content-planning/quality-analysis/${strategyId}/analyze`);
+      const response = await aiApiClient.post(`/api/content-planning/quality-analysis/${strategyId}/analyze`);
       return response.data;
     } catch (error: any) {
       console.error('Error fetching quality analysis:', error);

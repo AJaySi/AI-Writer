@@ -73,6 +73,11 @@ import { useAIRefresh } from './ContentStrategyBuilder/hooks/useAIRefresh';
 import { useEventHandlers } from './ContentStrategyBuilder/hooks/useEventHandlers';
 import { useStrategyCreation } from './ContentStrategyBuilder/hooks/useStrategyCreation';
 
+// CopilotKit actions are now initialized at the dashboard level
+
+// Import CopilotKit hooks
+import { useCopilotReadable, useCopilotAdditionalInstructions } from "@copilotkit/react-core";
+
 // Import extracted utilities
 import { getCategoryIcon, getCategoryColor, getCategoryName, getCategoryStatus } from './ContentStrategyBuilder/utils/categoryHelpers';
 import { getEducationalContent } from './ContentStrategyBuilder/utils/educationalContent';
@@ -88,6 +93,8 @@ import StrategyDisplay from './ContentStrategyBuilder/components/StrategyDisplay
 import ErrorAlert from './ContentStrategyBuilder/components/ErrorAlert';
 import { contentPlanningApi } from '../../../services/contentPlanningApi';
 import CategoryDetailView from './ContentStrategyBuilder/components/CategoryDetailView';
+import { CopilotSidebar } from '@copilotkit/react-ui';
+import { useCopilotActions } from './ContentStrategyBuilder/CopilotActions';
 
 const ContentStrategyBuilder: React.FC = () => {
   const navigate = useNavigate();
@@ -146,6 +153,24 @@ const ContentStrategyBuilder: React.FC = () => {
     setAIGenerating
   } = useEnhancedStrategyStore();
 
+  // Initialize Copilot actions (component is only rendered when Strategy Builder tab is active)
+  useCopilotActions();
+
+  // Check if this component is currently visible (active tab)
+  const [isVisible, setIsVisible] = useState(false);
+  
+  useEffect(() => {
+    // Use a small delay to ensure the component is actually rendered
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 100);
+    
+    return () => {
+      clearTimeout(timer);
+      setIsVisible(false);
+    };
+  }, []);
+
   const [showAIRecommendations, setShowAIRecommendations] = useState(false);
   const [showDataSourceTransparency, setShowDataSourceTransparency] = useState(false);
   const [localEducationalContent, setLocalEducationalContent] = useState<any>(null);
@@ -166,6 +191,111 @@ const ContentStrategyBuilder: React.FC = () => {
     handleReviewCategory,
     handleShowEducationalInfo
   } = useEventHandlers();
+
+    // Provide context to CopilotKit for intelligent assistance
+  console.log("🚀 Initializing CopilotKit context provision...");
+
+  // Provide form state context
+  useCopilotReadable({
+    description: "Current strategy form state and field data. This shows the current state of the 30+ strategy form fields.",
+    value: {
+      formData,
+      completionPercentage: calculateCompletionPercentage(),
+      filledFields: Object.keys(formData).filter(key => {
+        const value = formData[key];
+        return value && typeof value === 'string' && value.trim() !== '';
+      }),
+      emptyFields: Object.keys(formData).filter(key => {
+        const value = formData[key];
+        return !value || typeof value !== 'string' || value.trim() === '';
+      }),
+      categoryProgress: getCompletionStats().category_completion,
+      activeCategory,
+      formErrors,
+      totalFields: 30,
+      filledCount: Object.keys(formData).filter(key => {
+        const value = formData[key];
+        return value && typeof value === 'string' && value.trim() !== '';
+      }).length
+    }
+  });
+
+  // Provide field definitions context
+  useCopilotReadable({
+    description: "Strategy field definitions and requirements. This contains all 30+ form fields with their descriptions, requirements, and categories.",
+    value: STRATEGIC_INPUT_FIELDS.map(field => ({
+      id: field.id,
+      label: field.label,
+      description: field.description,
+      tooltip: field.tooltip,
+      required: field.required,
+      type: field.type,
+      options: field.options,
+      category: field.category,
+      currentValue: formData[field.id] || null
+    }))
+  });
+
+  // Provide onboarding data context
+  useCopilotReadable({
+    description: "User onboarding data for personalization. This contains the user's website analysis, research preferences, and profile information.",
+    value: {
+      websiteAnalysis: personalizationData?.website_analysis,
+      researchPreferences: personalizationData?.research_preferences,
+      apiKeys: personalizationData?.api_keys,
+      userProfile: personalizationData?.user_profile,
+      hasOnboardingData: !!personalizationData
+    }
+  });
+
+  // Provide dynamic instructions
+  useCopilotAdditionalInstructions({
+    instructions: `
+      You are ALwrity's Strategy Assistant, helping users create comprehensive content strategies.
+      
+      IMPORTANT CONTEXT:
+      - You are working with a form that has 30+ strategy fields
+      - Current form completion: ${calculateCompletionPercentage()}%
+      - Active category: ${activeCategory}
+      - Filled fields: ${Object.keys(formData).filter(k => {
+        const value = formData[k];
+        return value && typeof value === 'string' && value.trim() !== '';
+      }).length}/30
+      - Empty fields: ${Object.keys(formData).filter(k => {
+        const value = formData[k];
+        return !value || typeof value !== 'string' || value.trim() === '';
+      }).length}/30
+      
+      AVAILABLE ACTIONS:
+      - testAction: Test if actions are working
+      - populateStrategyField: Fill a specific field
+      - populateStrategyCategory: Fill multiple fields in a category
+      - validateStrategyField: Check if a field is valid
+      - reviewStrategy: Get overall strategy review
+      - generateSuggestions: Get suggestions for a field
+      - autoPopulateFromOnboarding: Auto-fill using onboarding data
+      
+      SUGGESTIONS CONTEXT:
+      - Users can click on suggestion buttons to quickly start common tasks
+      - Suggestions are context-aware and change based on form completion
+      - Always acknowledge when a user clicks a suggestion and explain what you'll do
+      - Provide immediate value when suggestions are used
+      
+      GUIDELINES:
+      - When users ask about "fields", they mean the 30+ strategy form fields
+      - Always reference real onboarding data when available
+      - Provide specific, actionable suggestions
+      - Explain the reasoning behind recommendations
+      - Help users understand field relationships
+      - Suggest next steps based on current progress
+      - Use actual database data, never mock data
+      - Be specific about which fields you're referring to
+      - When users click suggestions, immediately execute the requested action
+      - Provide clear feedback on what you're doing and why
+    `
+  });
+
+  console.log("✅ CopilotKit context provision initialized successfully");
 
   // Create a state for educational modal that can be passed to both hooks
   const [showEducationalModal, setShowEducationalModal] = useState(false);
@@ -405,8 +535,98 @@ const ContentStrategyBuilder: React.FC = () => {
     handleConfirmCategoryReview(activeCategory);
   };
 
+  // Generate comprehensive suggestions for all 7 CopilotKit actions
+  const getSuggestions = () => {
+    const filledFields = Object.keys(formData).filter(key => {
+      const value = formData[key];
+      return value && typeof value === 'string' && value.trim() !== '';
+    }).length;
+    const totalFields = Object.keys(STRATEGIC_INPUT_FIELDS).length;
+    const emptyFields = totalFields - filledFields;
+    const completionPercentage = calculateCompletionPercentage();
+    
+    // All 7 CopilotKit actions as suggestions
+    const allSuggestions = [
+      {
+        title: "🚀 Auto-populate from onboarding",
+        message: "auto populate the strategy fields using my onboarding data with detailed progress tracking"
+      },
+      {
+        title: "📊 Review my strategy",
+        message: "review the overall strategy and identify gaps"
+      },
+      {
+        title: "✅ Validate strategy quality",
+        message: "validate my strategy fields and suggest improvements"
+      },
+      {
+        title: "💡 Get field suggestions",
+        message: "generate contextual suggestions for incomplete fields"
+      },
+      {
+        title: "📝 Fill specific field",
+        message: "help me populate a specific strategy field with intelligent data"
+      },
+      {
+        title: "🎯 Populate category",
+        message: "fill multiple fields in a specific category based on my description"
+      },
+      {
+        title: "🧪 Test CopilotKit",
+        message: "test if all CopilotKit actions are working properly"
+      }
+    ];
+
+    // Add context-aware dynamic suggestions based on completion
+    const dynamicSuggestions = [];
+
+    if (emptyFields > 0) {
+      dynamicSuggestions.push({
+        title: `🔧 Fill ${emptyFields} empty fields`,
+        message: `help me populate the ${emptyFields} remaining empty fields in my strategy`
+      });
+    }
+
+    // Add category-specific suggestions
+    if (activeCategory) {
+      dynamicSuggestions.push({
+        title: `🎯 Improve ${activeCategory}`,
+        message: `generate suggestions for the ${activeCategory} category`
+      });
+    }
+
+    // Add next steps suggestion for high completion
+    if (completionPercentage > 80) {
+      dynamicSuggestions.push({
+        title: "🚀 Next steps",
+        message: "what are the next steps to complete my content strategy?"
+      });
+    }
+
+    // Combine all suggestions - prioritize dynamic ones first, then all actions
+    const combinedSuggestions = [...dynamicSuggestions, ...allSuggestions];
+    
+    // Return all suggestions (no limit) to show full CopilotKit capabilities
+    return combinedSuggestions;
+  };
+
+  // Memoize suggestions to prevent unnecessary re-renders
+  const suggestions = useMemo(() => getSuggestions(), [formData, activeCategory, calculateCompletionPercentage]);
+
   return (
-    <Box sx={{ p: 3 }}>
+    <CopilotSidebar
+      labels={{
+        title: "ALwrity Strategy Assistant",
+        initial: "Hi! I'm here to help you build your content strategy. I can auto-populate fields, provide guidance, and ensure your strategy is comprehensive. Check out the suggestions below to see all available actions, or just ask me anything!"
+      }}
+      suggestions={suggestions}
+      observabilityHooks={{
+        onChatExpanded: () => console.log("Strategy assistant opened"),
+        onMessageSent: (message) => console.log("Strategy message sent", { message }),
+        onFeedbackGiven: (messageId, type) => console.log("Strategy feedback", { messageId, type })
+      }}
+    >
+      <Box sx={{ p: 3 }}>
       {/* Header with Title (Region B) - Enhanced with Futuristic Styling */}
                   <HeaderSection
               autoPopulatedFields={autoPopulatedFields}
@@ -640,6 +860,7 @@ const ContentStrategyBuilder: React.FC = () => {
         />
       )}
     </Box>
+    </CopilotSidebar>
   );
 };
 

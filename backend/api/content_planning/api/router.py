@@ -20,6 +20,9 @@ from .content_strategy.routes import router as content_strategy_router
 # Import quality analysis routes
 from ..quality_analysis_routes import router as quality_analysis_router
 
+# Import monitoring routes
+from ..monitoring_routes import router as monitoring_routes_router
+
 # Create main router
 router = APIRouter(prefix="/api/content-planning", tags=["content-planning"])
 
@@ -40,6 +43,9 @@ router.include_router(content_strategy_router)
 
 # Include quality analysis routes
 router.include_router(quality_analysis_router)
+
+# Include monitoring routes
+router.include_router(monitoring_routes_router)
 
 # Add health check endpoint
 @router.get("/health")

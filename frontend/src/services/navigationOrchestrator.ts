@@ -220,7 +220,23 @@ class NavigationOrchestrator {
       strategicIntelligence: strategyData.strategicIntelligence || {}
     };
 
-    // Navigate to calendar wizard
+    // Store strategy context for analytics page
+    this.preserveContext('strategy', strategyContext);
+    
+    // Navigate to analytics page first to show monitoring setup
+    const navigate = this.getNavigateFunction();
+    if (navigate) {
+      navigate('/content-planning', { 
+        state: { 
+          activeTab: 2, // Analytics tab
+          strategyContext,
+          fromStrategyActivation: true,
+          showMonitoringSetup: true
+        }
+      });
+    }
+    
+    // Also preserve context for calendar wizard navigation
     this.navigateToCalendarWizard(strategyId, strategyContext);
   }
 

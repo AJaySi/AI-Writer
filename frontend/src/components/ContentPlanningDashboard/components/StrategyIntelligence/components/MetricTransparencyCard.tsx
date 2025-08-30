@@ -293,6 +293,33 @@ const MetricTransparencyCard: React.FC<MetricTransparencyCardProps> = ({
                         {task.description}
                       </Typography>
                       
+                      <Box display="flex" gap={2} mb={1}>
+                        {task.frequency && (
+                          <Chip
+                            label={`${task.frequency}`}
+                            size="small"
+                            icon={<ScheduleIcon />}
+                            sx={{
+                              background: 'rgba(255,255,255,0.1)',
+                              color: 'white',
+                              fontSize: '0.6rem'
+                            }}
+                          />
+                        )}
+                        {task.metric && (
+                          <Chip
+                            label={`${task.metric}`}
+                            size="small"
+                            icon={<AssessmentIcon />}
+                            sx={{
+                              background: 'rgba(255,255,255,0.1)',
+                              color: 'white',
+                              fontSize: '0.6rem'
+                            }}
+                          />
+                        )}
+                      </Box>
+                      
                       <Grid container spacing={2} sx={{ width: '100%' }}>
                         <Grid item xs={12} sm={6}>
                           <Typography variant="caption" sx={{ fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>
@@ -310,6 +337,26 @@ const MetricTransparencyCard: React.FC<MetricTransparencyCardProps> = ({
                             {task.successCriteria}
                           </Typography>
                         </Grid>
+                        {task.alertThreshold && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>
+                              Alert Threshold
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontSize: '0.75rem', opacity: 0.8 }}>
+                              {task.alertThreshold}
+                            </Typography>
+                          </Grid>
+                        )}
+                        {task.actionableInsights && (
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>
+                              Actionable Insights
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontSize: '0.75rem', opacity: 0.8 }}>
+                              {task.actionableInsights}
+                            </Typography>
+                          </Grid>
+                        )}
                       </Grid>
                     </ListItem>
                   ))}

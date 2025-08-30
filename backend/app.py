@@ -56,6 +56,9 @@ from routers.seo_tools import router as seo_tools_router
 from api.content_planning.api.router import router as content_planning_router
 from api.user_data import router as user_data_router
 
+# Import strategy copilot endpoints
+from api.content_planning.strategy_copilot import router as strategy_copilot_router
+
 # Import database service
 from services.database import init_database, close_database
 
@@ -79,9 +82,7 @@ from api.seo_dashboard import (
 app = FastAPI(
     title="ALwrity Backend API",
     description="Backend API for ALwrity - AI-powered content creation platform",
-    version="2.0.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc"
+    version="1.0.0"
 )
 
 # Add CORS middleware
@@ -371,6 +372,7 @@ app.include_router(seo_tools_router)
 # Include content planning router
 app.include_router(content_planning_router)
 app.include_router(user_data_router)
+app.include_router(strategy_copilot_router)
 
 # SEO Dashboard endpoints
 @app.get("/api/seo-dashboard/data")

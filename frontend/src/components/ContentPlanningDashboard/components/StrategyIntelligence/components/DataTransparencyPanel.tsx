@@ -74,6 +74,63 @@ const DataTransparencyPanel: React.FC<DataTransparencyPanelProps> = ({
     };
   }, [refreshInterval]);
 
+  const convertMonitoringTasksToTransparencyData = (monitoringTasks: any[]) => {
+    try {
+      // Group tasks by component
+      const tasksByComponent = monitoringTasks.reduce((acc, task) => {
+        const component = task.component || 'General';
+        if (!acc[component]) {
+          acc[component] = [];
+        }
+        acc[component].push(task);
+        return acc;
+      }, {});
+
+      // Convert to transparency data format
+      return Object.entries(tasksByComponent).map(([component, tasks]: [string, any]) => ({
+        metricName: component,
+        currentValue: tasks.length,
+        unit: "tasks",
+        dataFreshness: {
+          lastUpdated: new Date().toISOString(),
+          updateFrequency: "Real-time",
+          dataSource: "Monitoring Tasks"
+        },
+        measurementMethod: "AI-powered monitoring",
+        successCriteria: `${tasks.length} active monitoring tasks`,
+        monitoringTasks: tasks.map((task: any) => ({
+          title: task.title,
+          description: task.description,
+          assignee: task.assignee,
+          frequency: task.frequency,
+          metric: task.metric,
+          measurementMethod: task.measurementMethod,
+          successCriteria: task.successCriteria,
+          alertThreshold: task.alertThreshold,
+          actionableInsights: task.actionableInsights,
+          status: task.status || 'active',
+          lastExecuted: task.last_executed,
+          nextExecution: task.next_execution
+        })),
+        insights: [
+          `Active monitoring for ${component} with ${tasks.length} tasks`,
+          "AI-powered performance tracking enabled",
+          "Real-time alerts and notifications configured",
+          `Monitoring frequency: ${tasks[0]?.frequency || 'Monthly'}`
+        ],
+        recommendations: [
+          "Monitor task execution status regularly",
+          "Review performance metrics weekly",
+          "Adjust thresholds based on performance trends",
+          `Focus on ${tasks.filter((t: any) => t.assignee === 'ALwrity').length} AI-managed tasks`
+        ]
+      }));
+    } catch (error) {
+      console.error('Error converting monitoring tasks to transparency data:', error);
+      return [];
+    }
+  };
+
   const loadTransparencyData = async () => {
     try {
       setLoading(true);
@@ -87,7 +144,30 @@ const DataTransparencyPanel: React.FC<DataTransparencyPanelProps> = ({
           return;
         }
       } catch (apiError) {
-        console.warn('API call failed, falling back to mock data:', apiError);
+        console.warn('API call failed, trying localStorage:', apiError);
+        // Try to load from localStorage
+        const analyticsData = localStorage.getItem('strategy_analytics_data');
+        if (analyticsData) {
+          try {
+            const data = JSON.parse(analyticsData);
+            console.log('Loaded analytics data from localStorage:', data);
+            
+            // Extract monitoring tasks from analytics data
+            const monitoringTasks = data.monitoring_tasks || [];
+            console.log('Extracted monitoring tasks:', monitoringTasks);
+            
+            if (monitoringTasks.length > 0) {
+              // Convert monitoring tasks to transparency data format
+              const transparencyDataFromTasks = convertMonitoringTasksToTransparencyData(monitoringTasks);
+              setTransparencyData(transparencyDataFromTasks);
+              return;
+            } else {
+              console.warn('No monitoring tasks found in analytics data');
+            }
+          } catch (parseError) {
+            console.warn('Failed to parse analytics data from localStorage:', parseError);
+          }
+        }
         // Continue to mock data as fallback
       }
 

@@ -12,7 +12,8 @@ import {
   CircularProgress,
   LinearProgress,
   Tabs,
-  Tab
+  Tab,
+  Button
 } from '@mui/material';
 import {
   TrendingUp as TrendingUpIcon,
@@ -21,7 +22,8 @@ import {
   Assessment as AssessmentIcon,
   Visibility as VisibilityIcon,
   Timeline as TimelineIcon,
-  AutoAwesome as AutoAwesomeIcon
+  AutoAwesome as AutoAwesomeIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { useContentPlanningStore } from '../../../stores/contentPlanningStore';
 import { contentPlanningApi } from '../../../services/contentPlanningApi';
@@ -53,18 +55,18 @@ function TabPanel(props: TabPanelProps) {
 
 const AnalyticsTab: React.FC = () => {
   const { 
-    performanceMetrics, 
-    aiInsights, 
     currentStrategy,
-    loading, 
-    error,
-    loadAIInsights,
-    loadAIRecommendations
+    error: storeError
   } = useContentPlanningStore();
   
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [dataLoading, setDataLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
+  
+  // Cache for analytics data to prevent redundant calls
+  const [lastLoadTime, setLastLoadTime] = useState<number>(0);
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   useEffect(() => {
     loadAnalyticsData();
@@ -72,35 +74,89 @@ const AnalyticsTab: React.FC = () => {
 
   const loadAnalyticsData = async () => {
     try {
+      // Check if we have recent cached data to avoid redundant calls
+      const now = Date.now();
+      if (analyticsData && (now - lastLoadTime) < CACHE_DURATION) {
+        console.log('🎯 Using cached analytics data (cache valid for', Math.round((CACHE_DURATION - (now - lastLoadTime)) / 1000), 'seconds)');
+        return;
+      }
+      
       setDataLoading(true);
+      setError(null);
       
-      console.log('Loading analytics data...');
+      console.log('🎯 Loading analytics data...');
       
-      // Load AI insights and recommendations
-      await Promise.all([
-        loadAIInsights(),
-        loadAIRecommendations()
-      ]);
+      // Get strategy ID
+      const strategyId = Number(currentStrategy?.id) || currentStrategy?.user_id || 1;
       
-      // Load analytics data from backend
-      const response = await contentPlanningApi.getAIAnalyticsSafe();
+      // First, try to load from database (monitoring data)
+      try {
+        console.log('🎯 Fetching analytics data from database...');
+        const response = await fetch(`/api/content-planning/strategy/${strategyId}/analytics-data`);
+        
+        if (response.ok) {
+          const result = await response.json();
+          const dbAnalyticsData = result.data;
+          
+          console.log('✅ Analytics data from database:', dbAnalyticsData);
+          setAnalyticsData(dbAnalyticsData);
+          setLastLoadTime(Date.now());
+          return;
+        } else {
+          console.warn('⚠️ Database fetch failed, trying cache...');
+        }
+      } catch (dbError) {
+        console.warn('⚠️ Database fetch error, trying cache:', dbError);
+      }
       
-      console.log('Analytics Response:', response);
+      // Fallback to cached monitoring data
+      const strategyAnalyticsData = localStorage.getItem('strategy_analytics_data');
+      const monitoringTasks = localStorage.getItem('strategy_monitoring_tasks');
       
-      if (response) {
+      console.log('🎯 Checking cached monitoring data...');
+      
+      if (strategyAnalyticsData && monitoringTasks) {
+        console.log('✅ Found cached monitoring data');
+        
+        const cachedData = JSON.parse(strategyAnalyticsData);
+        const tasks = JSON.parse(monitoringTasks);
+        
         const analyticsData = {
-          performance_trends: response.performance_trends || {},
-          content_evolution: response.content_evolution || {},
-          engagement_patterns: response.engagement_patterns || {},
-          recommendations: response.recommendations || [],
-          insights: response.insights || []
+          performance_trends: cachedData.monitoring_plan?.performance_metrics || {},
+          content_evolution: cachedData.monitoring_plan?.content_evolution || {},
+          engagement_patterns: cachedData.monitoring_plan?.engagement_patterns || {},
+          recommendations: cachedData.monitoring_plan?.recommendations || [],
+          insights: cachedData.monitoring_plan?.insights || [],
+          monitoring_data: cachedData,
+          monitoring_tasks: tasks,
+          _source: 'cached_monitoring'
         };
         
-        console.log('Analytics Data:', analyticsData);
+        console.log('✅ Analytics Data from cache:', analyticsData);
         setAnalyticsData(analyticsData);
+        setLastLoadTime(Date.now());
+        
+      } else {
+        // No data available
+        console.log('⚠️ No monitoring data found in database or cache');
+        const emptyData = {
+          performance_trends: {},
+          content_evolution: {},
+          engagement_patterns: {},
+          recommendations: [],
+          insights: [],
+          monitoring_data: null,
+          monitoring_tasks: [],
+          _source: 'empty'
+        };
+        
+        setAnalyticsData(emptyData);
+        setLastLoadTime(Date.now());
+        setError('No monitoring data available. Please activate a strategy first.');
       }
     } catch (error) {
-      console.error('Error loading analytics data:', error);
+      console.error('❌ Error loading analytics data:', error);
+      setError('Failed to load analytics data. Please try again.');
     } finally {
       setDataLoading(false);
     }
@@ -108,6 +164,12 @@ const AnalyticsTab: React.FC = () => {
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
+  };
+
+  const handleRefresh = () => {
+    console.log('🔄 Manual refresh requested');
+    setLastLoadTime(0); // Reset cache
+    loadAnalyticsData();
   };
 
   const getPerformanceColor = (value: number) => {
@@ -121,15 +183,48 @@ const AnalyticsTab: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Analytics Dashboard
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4">
+          Analytics Dashboard
+        </Typography>
+        <Button
+          variant="outlined"
+          startIcon={<RefreshIcon />}
+          onClick={handleRefresh}
+          disabled={dataLoading}
+          sx={{ minWidth: 120 }}
+        >
+          {dataLoading ? 'Refreshing...' : 'Refresh'}
+        </Button>
+      </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+              {(error || storeError) && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error || storeError}
+          </Alert>
+        )}
+
+        {/* Data Source Indicator */}
+        {analyticsData && (
+          <Alert 
+            severity="info" 
+            sx={{ mb: 2 }}
+            action={
+              <Chip 
+                label={analyticsData._source === 'database_monitoring' ? 'Database' : 
+                       analyticsData._source === 'cached_monitoring' ? 'Cache' : 
+                       analyticsData._source === 'empty' ? 'No Data' : 'Unknown'} 
+                size="small" 
+                color="primary" 
+                variant="outlined"
+              />
+            }
+          >
+            Data source: {analyticsData._source === 'database_monitoring' ? 'Monitoring database' : 
+                         analyticsData._source === 'cached_monitoring' ? 'Local cache' : 
+                         analyticsData._source === 'empty' ? 'No monitoring data available' : 'Unknown source'}
+          </Alert>
+        )}
 
       {/* Tabs Navigation */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
@@ -191,38 +286,38 @@ const AnalyticsTab: React.FC = () => {
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
                 
-                {performanceMetrics ? (
+                {analyticsData && analyticsData.performance_trends ? (
                   <Grid container spacing={2}>
                     <Grid item xs={6}>
                       <Typography variant="body2" color="text.secondary">
                         Engagement Rate
                       </Typography>
-                      <Typography variant="h4" color={getPerformanceColor(performanceMetrics.engagement)}>
-                        {performanceMetrics.engagement}%
+                      <Typography variant="h4" color={getPerformanceColor(analyticsData.performance_trends.engagement_rate || 0)}>
+                        {analyticsData.performance_trends.engagement_rate || 0}%
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body2" color="text.secondary">
-                        Reach
+                        Traffic Growth
                       </Typography>
                       <Typography variant="h4" color="primary">
-                        {performanceMetrics.reach.toLocaleString()}
+                        {analyticsData.performance_trends.traffic_growth || 0}%
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body2" color="text.secondary">
                         Conversion Rate
                       </Typography>
-                      <Typography variant="h4" color={getPerformanceColor(performanceMetrics.conversion)}>
-                        {performanceMetrics.conversion}%
+                      <Typography variant="h4" color={getPerformanceColor(analyticsData.performance_trends.conversion_rate || 0)}>
+                        {analyticsData.performance_trends.conversion_rate || 0}%
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body2" color="text.secondary">
-                        ROI
+                        Content Quality
                       </Typography>
                       <Typography variant="h4" color="success.main">
-                        ${performanceMetrics.roi.toLocaleString()}
+                        {analyticsData.performance_trends.content_quality_score || 0}/100
                       </Typography>
                     </Grid>
                   </Grid>
@@ -243,18 +338,18 @@ const AnalyticsTab: React.FC = () => {
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
                 
-                {aiInsights && aiInsights.length > 0 ? (
+                {analyticsData && analyticsData.insights && analyticsData.insights.length > 0 ? (
                   <Box>
-                    {aiInsights.slice(0, 3).map((insight, index) => (
+                    {analyticsData.insights.slice(0, 3).map((insight: any, index: number) => (
                       <Box key={index} sx={{ mb: 2 }}>
                         <Typography variant="subtitle2" gutterBottom>
-                          {insight.title}
+                          {insight.title || `Insight ${index + 1}`}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          {insight.description}
+                          {insight.description || insight}
                         </Typography>
                         <Chip 
-                          label={insight.priority} 
+                          label={insight.priority || 'medium'} 
                           color={insight.priority === 'high' ? 'error' : insight.priority === 'medium' ? 'warning' : 'success'}
                           size="small"
                         />
@@ -263,7 +358,7 @@ const AnalyticsTab: React.FC = () => {
                   </Box>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
-                    No AI insights available
+                    No insights available
                   </Typography>
                 )}
               </Paper>
