@@ -13,7 +13,7 @@ from loguru import logger
 import os
 
 from ..llm_providers.main_text_generation import llm_text_gen
-from ...middleware.logging_middleware import seo_logger
+from middleware.logging_middleware import seo_logger
 
 
 class PageSpeedService:

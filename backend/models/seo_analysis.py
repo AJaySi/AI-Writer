@@ -2,13 +2,89 @@
 Database models for SEO analysis data storage
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Text, JSON, Float, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Text, JSON, Float, Boolean, ForeignKey, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from typing import Dict, Any, List
 
 Base = declarative_base()
+
+class SEOActionType(Base):
+    """Catalog of supported SEO action types (17 actions)."""
+    __tablename__ = 'seo_action_types'
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(100), unique=True, nullable=False)  # e.g., analyze_page_speed
+    name = Column(String(200), nullable=False)
+    category = Column(String(50), nullable=True)  # content, technical, performance, etc.
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    def __repr__(self):
+        return f"<SEOActionType(code='{self.code}', category='{self.category}')>"
+
+class SEOAnalysisSession(Base):
+    """Anchor session for a set of SEO actions and summary."""
+    __tablename__ = 'seo_analysis_sessions'
+
+    id = Column(Integer, primary_key=True, index=True)
+    url = Column(String(500), nullable=False, index=True)
+    triggered_by_user_id = Column(String(64), nullable=True)
+    trigger_source = Column(String(32), nullable=True)  # manual, schedule, action_followup, system
+    input_context = Column(JSON, nullable=True)
+    status = Column(String(20), default='success')  # queued, running, success, failed, cancelled
+    started_at = Column(DateTime, default=func.now(), nullable=False)
+    completed_at = Column(DateTime, nullable=True)
+    summary = Column(Text, nullable=True)
+    overall_score = Column(Integer, nullable=True)
+    health_label = Column(String(50), nullable=True)
+    metrics = Column(JSON, nullable=True)
+    issues_overview = Column(JSON, nullable=True)
+
+    # Relationships
+    action_runs = relationship("SEOActionRun", back_populates="session", cascade="all, delete-orphan")
+    analyses = relationship("SEOAnalysis", back_populates="session", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<SEOAnalysisSession(url='{self.url}', status='{self.status}')>"
+
+class SEOActionRun(Base):
+    """Each execution of a specific action (one of the 17)."""
+    __tablename__ = 'seo_action_runs'
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey('seo_analysis_sessions.id'), nullable=False)
+    action_type_id = Column(Integer, ForeignKey('seo_action_types.id'), nullable=False)
+    triggered_by_user_id = Column(String(64), nullable=True)
+    input_params = Column(JSON, nullable=True)
+    status = Column(String(20), default='success')
+    started_at = Column(DateTime, default=func.now(), nullable=False)
+    completed_at = Column(DateTime, nullable=True)
+    result_summary = Column(Text, nullable=True)
+    result = Column(JSON, nullable=True)
+    diagnostics = Column(JSON, nullable=True)
+
+    # Relationships
+    session = relationship("SEOAnalysisSession", back_populates="action_runs")
+    action_type = relationship("SEOActionType")
+
+    def __repr__(self):
+        return f"<SEOActionRun(action_type_id={self.action_type_id}, status='{self.status}')>"
+
+class SEOActionRunLink(Base):
+    """Graph relations between action runs for narrative linkage."""
+    __tablename__ = 'seo_action_run_links'
+
+    id = Column(Integer, primary_key=True, index=True)
+    from_action_run_id = Column(Integer, ForeignKey('seo_action_runs.id'), nullable=False)
+    to_action_run_id = Column(Integer, ForeignKey('seo_action_runs.id'), nullable=False)
+    relation = Column(String(50), nullable=False)  # followup_of, supports, caused_by
+    created_at = Column(DateTime, default=func.now())
+
+    def __repr__(self):
+        return f"<SEOActionRunLink(relation='{self.relation}')>"
 
 class SEOAnalysis(Base):
     """Main SEO analysis record"""
@@ -20,12 +96,14 @@ class SEOAnalysis(Base):
     health_status = Column(String(50), nullable=False)  # excellent, good, needs_improvement, poor, error
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
     analysis_data = Column(JSON, nullable=True)  # Store complete analysis data
+    session_id = Column(Integer, ForeignKey('seo_analysis_sessions.id'), nullable=True)
     
     # Relationships
     critical_issues = relationship("SEOIssue", back_populates="analysis", cascade="all, delete-orphan")
     warnings = relationship("SEOWarning", back_populates="analysis", cascade="all, delete-orphan")
     recommendations = relationship("SEORecommendation", back_populates="analysis", cascade="all, delete-orphan")
     category_scores = relationship("SEOCategoryScore", back_populates="analysis", cascade="all, delete-orphan")
+    session = relationship("SEOAnalysisSession", back_populates="analyses")
     
     def __repr__(self):
         return f"<SEOAnalysis(url='{self.url}', score={self.overall_score}, status='{self.health_status}')>"
@@ -36,6 +114,8 @@ class SEOIssue(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     analysis_id = Column(Integer, ForeignKey('seo_analyses.id'), nullable=False)
+    session_id = Column(Integer, ForeignKey('seo_analysis_sessions.id'), nullable=True)
+    action_run_id = Column(Integer, ForeignKey('seo_action_runs.id'), nullable=True)
     issue_text = Column(Text, nullable=False)
     category = Column(String(100), nullable=True)  # url_structure, meta_data, content, etc.
     priority = Column(String(20), default='critical')  # critical, high, medium, low
@@ -53,6 +133,8 @@ class SEOWarning(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     analysis_id = Column(Integer, ForeignKey('seo_analyses.id'), nullable=False)
+    session_id = Column(Integer, ForeignKey('seo_analysis_sessions.id'), nullable=True)
+    action_run_id = Column(Integer, ForeignKey('seo_action_runs.id'), nullable=True)
     warning_text = Column(Text, nullable=False)
     category = Column(String(100), nullable=True)
     priority = Column(String(20), default='medium')
@@ -70,6 +152,8 @@ class SEORecommendation(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     analysis_id = Column(Integer, ForeignKey('seo_analyses.id'), nullable=False)
+    session_id = Column(Integer, ForeignKey('seo_analysis_sessions.id'), nullable=True)
+    action_run_id = Column(Integer, ForeignKey('seo_action_runs.id'), nullable=True)
     recommendation_text = Column(Text, nullable=False)
     category = Column(String(100), nullable=True)
     difficulty = Column(String(20), default='medium')  # easy, medium, hard

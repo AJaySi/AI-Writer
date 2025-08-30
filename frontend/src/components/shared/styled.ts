@@ -4,17 +4,19 @@ import { styled } from '@mui/material/styles';
 // Shared styled components for dashboard components
 export const DashboardContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
-  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
-  padding: theme.spacing(4),
+  background:
+    'radial-gradient(1200px 600px at 10% -10%, rgba(255,255,255,0.08) 0%, transparent 60%),\
+     radial-gradient(900px 500px at 110% 10%, rgba(255,255,255,0.06) 0%, transparent 60%),\
+     linear-gradient(135deg, #0f1226 0%, #1b1e3b 35%, #2a2f59 70%, #3a3f7a 100%)',
+  padding: theme.spacing(5, 4, 6, 4),
   position: 'relative',
+  color: 'rgba(255,255,255,0.9)',
   '&::before': {
     content: '""',
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'url("data:image/svg+xml,%3Csvg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.03"%3E%3Ccircle cx="40" cy="40" r="3"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+    inset: 0,
+    background:
+      'url("data:image/svg+xml,%3Csvg width=\'80\' height=\'80\' viewBox=\'0 0 80 80\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.03\'%3E%3Ccircle cx=\'40\' cy=\'40\' r=\'2\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
     pointerEvents: 'none',
   },
   '&::after': {
@@ -22,40 +24,43 @@ export const DashboardContainer = styled(Box)(({ theme }) => ({
     position: 'absolute',
     top: '50%',
     left: '50%',
-    width: '600px',
-    height: '600px',
-    background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)',
+    width: '900px',
+    height: '900px',
+    background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 65%)',
     transform: 'translate(-50%, -50%)',
+    filter: 'blur(20px)',
     pointerEvents: 'none',
     zIndex: 0,
   },
 }));
 
 export const GlassCard = styled(Card)(({ theme }) => ({
-  background: 'rgba(255, 255, 255, 0.08)',
-  backdropFilter: 'blur(24px)',
-  border: '1px solid rgba(255, 255, 255, 0.12)',
-  borderRadius: theme.spacing(3),
-  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.12)',
-  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+  background: 'linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.08) 100%)',
+  backdropFilter: 'blur(22px)',
+  WebkitBackdropFilter: 'blur(22px)',
+  border: '1px solid rgba(255, 255, 255, 0.16)',
+  borderRadius: theme.spacing(3.5),
+  boxShadow:
+    '0 18px 50px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.1)',
+  transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.35s',
   position: 'relative',
   overflow: 'hidden',
   '&::before': {
     content: '""',
     position: 'absolute',
     top: 0,
-    left: '-100%',
+    left: '-120%',
     width: '100%',
     height: '100%',
-    background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent)',
+    background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.10), transparent)',
     transition: 'left 0.6s ease-in-out',
   },
   '&:hover': {
-    transform: 'translateY(-12px) scale(1.02)',
-    boxShadow: '0 24px 60px rgba(0, 0, 0, 0.18)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
+    transform: 'translateY(-10px) scale(1.015)',
+    boxShadow: '0 30px 80px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.3)',
+    border: '1px solid rgba(255, 255, 255, 0.22)',
     '&::before': {
-      left: '100%',
+      left: '120%',
     },
   },
 }));

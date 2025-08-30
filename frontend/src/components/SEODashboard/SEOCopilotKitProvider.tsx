@@ -1,0 +1,336 @@
+// SEO CopilotKit Provider Component
+// Main provider that wraps all SEO CopilotKit functionality
+
+import React, { useEffect, useMemo, useState } from 'react';
+import { CopilotKit } from '@copilotkit/react-core';
+import { CopilotSidebar } from '@copilotkit/react-ui';
+import '@copilotkit/react-ui/styles.css';
+import SEOCopilotContext from './SEOCopilotContext';
+import SEOCopilotActions from './SEOCopilotActions';
+import { useSEOCopilotStore } from '../../stores/seoCopilotStore';
+
+interface SEOCopilotKitProviderProps {
+  children: React.ReactNode;
+  enableDebugMode?: boolean;
+}
+
+const SEOCopilotKitProvider: React.FC<SEOCopilotKitProviderProps> = ({ 
+  children, 
+  enableDebugMode = false 
+}) => {
+  const { 
+    loadPersonalizationData, 
+    error, 
+    clearError,
+    isLoading 
+  } = useSEOCopilotStore();
+  const { analysisData } = useSEOCopilotStore();
+
+  // Get the CopilotKit API key from environment variables
+  const publicApiKey = process.env.REACT_APP_COPILOTKIT_API_KEY;
+
+  // Suggestions model: progressive disclosure
+  const topLevelGroups = useMemo(() => ([
+    { title: 'Content analysis', message: 'Content analysis' },
+    { title: 'Website/URL analysis', message: 'Web URL analysis' },
+    { title: 'Technical SEO', message: 'Technical SEO' },
+    { title: 'Strategy & planning', message: 'Strategy and planning' },
+    { title: 'Monitoring & health', message: 'Monitoring and health' }
+  ]), []);
+
+  const subSuggestionsByGroup = useMemo(() => ({
+    'Content analysis': [
+      { title: 'Comprehensive content analysis', message: 'Analyze content comprehensively for my site' },
+      { title: 'Optimize page content', message: 'Optimize page content for SEO' },
+      { title: 'Generate meta descriptions', message: 'Generate meta descriptions for key pages' }
+    ],
+    'Web URL analysis': [
+      { title: 'Comprehensive SEO analysis', message: 'Run comprehensive SEO analysis for a URL' },
+      { title: 'Analyze page speed', message: 'Analyze page speed for a URL' },
+      { title: 'Analyze sitemap', message: 'Analyze sitemap for my site' },
+      { title: 'Generate OpenGraph tags', message: 'Generate OpenGraph tags for a URL' }
+    ],
+    'Technical SEO': [
+      { title: 'Technical SEO audit', message: 'Run a technical SEO audit' },
+      { title: 'Check SEO health', message: 'Check overall SEO health' },
+      { title: 'Image alt text', message: 'Generate image alt text for pages' }
+    ],
+    'Strategy and planning': [
+      { title: 'Enterprise SEO analysis', message: 'Run enterprise SEO analysis' },
+      { title: 'Content strategy', message: 'Analyze content strategy and recommendations' },
+      { title: 'Customize SEO dashboard', message: 'Customize the SEO dashboard' }
+    ],
+    'Monitoring and health': [
+      { title: 'Website audit', message: 'Perform a website audit' },
+      { title: 'Update SEO charts', message: 'Update SEO charts and visualizations' },
+      { title: 'Explain an SEO concept', message: 'Explain an SEO concept in simple terms' }
+    ]
+  }), []);
+
+  const [chatSuggestions, setChatSuggestions] = useState(topLevelGroups);
+  const backChip = useMemo(() => ({ title: '← Back to categories', message: 'back' }), []);
+  const displayedSuggestions = useMemo(() => {
+    // Always show a back chip when not on top-level
+    const isTop = chatSuggestions === topLevelGroups;
+    return isTop ? chatSuggestions : [...chatSuggestions, backChip];
+  }, [chatSuggestions, topLevelGroups, backChip]);
+
+  // Initialize the provider
+  useEffect(() => {
+    const initializeProvider = async () => {
+      try {
+        // Load personalization data on mount
+        await loadPersonalizationData();
+        
+        if (enableDebugMode) {
+          console.log('🔧 SEO CopilotKit Provider initialized successfully');
+          console.log('🔑 CopilotKit API Key:', publicApiKey ? 'Configured' : 'Missing');
+        }
+      } catch (error) {
+        console.error('❌ Failed to initialize SEO CopilotKit Provider:', error);
+      }
+    };
+
+    initializeProvider();
+  }, [loadPersonalizationData, enableDebugMode, publicApiKey]);
+
+  // Error handling
+  useEffect(() => {
+    if (error && enableDebugMode) {
+      console.error('🚨 SEO CopilotKit Error:', error);
+    }
+  }, [error, enableDebugMode]);
+
+  // Auto-clear errors after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        clearError();
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [error, clearError]);
+
+  return (
+    <CopilotKit publicApiKey={publicApiKey}>
+      <CopilotSidebar
+        labels={{
+          title: "SEO Assistant",
+          initial: "Hi! 👋 I'm your SEO expert assistant. I can help you analyze your website, generate meta descriptions, check page speed, and much more. What would you like to work on today?",
+        }}
+        suggestions={displayedSuggestions}
+        makeSystemMessage={(context: string, additionalInstructions?: string) => {
+          const websiteUrl = analysisData?.url;
+          const urlLine = websiteUrl ? `The user's current website URL is ${websiteUrl}. If the user does not provide a URL explicitly, default to this URL.` : '';
+          const guidance = `
+You are ALwrity's SEO Expert Assistant. ${urlLine}
+Never ask for the URL if you already have it in context unless the user wants to switch URLs.
+Focus on actionable recommendations and use the registered tools.
+          `.trim();
+          return [guidance, additionalInstructions].filter(Boolean).join('\n\n');
+        }}
+        onSubmitMessage={(message: string) => {
+          const text = (message || '').trim();
+          const match = Object.keys(subSuggestionsByGroup).find(key => key.toLowerCase() === text.toLowerCase());
+          if (match) {
+            setChatSuggestions(subSuggestionsByGroup[match as keyof typeof subSuggestionsByGroup]);
+          } else if (text.toLowerCase() === 'back' || text.toLowerCase() === 'categories') {
+            setChatSuggestions(topLevelGroups);
+          }
+        }}
+        observabilityHooks={{
+          onChatExpanded: () => {
+            if (enableDebugMode) {
+              console.log('🔧 SEO CopilotKit Sidebar opened');
+            }
+          },
+          onChatMinimized: () => {
+            if (enableDebugMode) {
+              console.log('🔧 SEO CopilotKit Sidebar closed');
+            }
+          },
+        }}
+      >
+        <div className="seo-copilotkit-provider">
+          {/* Suggestions controller sets progressive suggestions */}
+          {/* SEOSuggestionsController */}
+          {/* SEO CopilotKit Context - Provides data and instructions */}
+          <SEOCopilotContext>
+            {/* SEO CopilotKit Actions - Defines available actions */}
+            <SEOCopilotActions />
+            
+            {/* Loading indicator */}
+            {isLoading && (
+              <div className="seo-copilotkit-loading">
+                <div className="loading-spinner">
+                  <div className="spinner"></div>
+                  <p>Loading SEO Assistant...</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Error display */}
+            {error && (
+              <div className="seo-copilotkit-error">
+                <div className="error-message">
+                  <span className="error-icon">⚠️</span>
+                  <span className="error-text">{error}</span>
+                  <button 
+                    className="error-dismiss"
+                    onClick={clearError}
+                    aria-label="Dismiss error"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {/* Main content */}
+            <div className="seo-copilotkit-content">
+              {children}
+            </div>
+          </SEOCopilotContext>
+
+          {/* Copilot debug info removed */}
+
+          <style>{`
+            .seo-copilotkit-provider {
+              position: relative;
+              width: 100%;
+              height: 100%;
+            }
+
+            .seo-copilotkit-loading {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: rgba(255, 255, 255, 0.9);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              z-index: 1000;
+            }
+
+            .loading-spinner {
+              text-align: center;
+              padding: 20px;
+              background: white;
+              border-radius: 8px;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+
+            .spinner {
+              width: 40px;
+              height: 40px;
+              border: 4px solid #f3f3f3;
+              border-top: 4px solid #3498db;
+              border-radius: 50%;
+              animation: spin 1s linear infinite;
+              margin: 0 auto 10px;
+            }
+
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+
+            .seo-copilotkit-error {
+              position: fixed;
+              top: 20px;
+              right: 20px;
+              z-index: 1001;
+              max-width: 400px;
+            }
+
+            .error-message {
+              background: #fee;
+              border: 1px solid #fcc;
+              border-radius: 6px;
+              padding: 12px 16px;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .error-icon {
+              font-size: 16px;
+              flex-shrink: 0;
+            }
+
+            .error-text {
+              flex: 1;
+              color: #c33;
+              font-size: 14px;
+            }
+
+            .error-dismiss {
+              background: none;
+              border: none;
+              color: #c33;
+              font-size: 18px;
+              cursor: pointer;
+              padding: 0;
+              width: 20px;
+              height: 20px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border-radius: 50%;
+              transition: background-color 0.2s;
+            }
+
+            .error-dismiss:hover {
+              background: rgba(204, 51, 51, 0.1);
+            }
+
+            .seo-copilotkit-content {
+              width: 100%;
+              height: 100%;
+            }
+
+            .seo-copilotkit-debug {
+              position: fixed;
+              bottom: 20px;
+              left: 20px;
+              z-index: 999;
+              background: rgba(0, 0, 0, 0.8);
+              color: white;
+              border-radius: 6px;
+              padding: 8px;
+              font-size: 12px;
+            }
+
+            .seo-copilotkit-debug summary {
+              cursor: pointer;
+              padding: 4px 8px;
+              border-radius: 4px;
+              transition: background-color 0.2s;
+            }
+
+            .seo-copilotkit-debug summary:hover {
+              background: rgba(255, 255, 255, 0.1);
+            }
+
+            .debug-content {
+              padding: 8px;
+              border-top: 1px solid rgba(255, 255, 255, 0.2);
+              margin-top: 4px;
+            }
+
+            .debug-content p {
+              margin: 4px 0;
+              font-size: 11px;
+            }
+          `}</style>
+        </div>
+      </CopilotSidebar>
+    </CopilotKit>
+  );
+};
+
+export default SEOCopilotKitProvider;

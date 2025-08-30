@@ -15,7 +15,7 @@ from urllib.parse import urlparse, urljoin
 import pandas as pd
 
 from ..llm_providers.main_text_generation import llm_text_gen
-from ...middleware.logging_middleware import seo_logger
+from middleware.logging_middleware import seo_logger
 
 
 class SitemapService:

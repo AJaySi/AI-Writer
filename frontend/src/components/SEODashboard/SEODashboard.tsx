@@ -6,13 +6,18 @@ import {
   Typography,
   Alert,
   Skeleton,
-  useTheme
+  useTheme,
+  Chip,
+  Button
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Shared components
 import { DashboardContainer, GlassCard } from '../shared/styled';
 import SEOAnalyzerPanel from './components/SEOAnalyzerPanel';
+import { SEOCopilotKitProvider, SEOCopilotSuggestions } from './index';
+// Removed SEOCopilotTest
+import useSEOCopilotStore from '../../stores/seoCopilotStore';
 
 // Zustand store
 import { useSEODashboardStore } from '../../stores/seoDashboardStore';
@@ -37,38 +42,47 @@ const SEODashboard: React.FC = () => {
     setError,
     runSEOAnalysis,
     checkAndRunInitialAnalysis,
+    refreshSEOAnalysis,
+    getAnalysisFreshness,
   } = useSEODashboardStore();
+
+  // Sync dashboard analysis to Copilot store so readables have URL/context
+  const setCopilotAnalysisData = useSEOCopilotStore(state => state.setAnalysisData);
+  useEffect(() => {
+    if (analysisData) {
+      setCopilotAnalysisData(analysisData as any);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[CopilotSync] Pushed analysis to Copilot store', analysisData?.url);
+      }
+    }
+  }, [analysisData, setCopilotAnalysisData]);
 
   useEffect(() => {
     // Simulate fetching dashboard data
     const fetchData = async () => {
-      setLoading(true);
       try {
-        // Try to get the website URL from the database
-        let websiteUrl = null;
-        try {
-          websiteUrl = await userDataAPI.getWebsiteURL();
-          console.log('Fetched website URL from database:', websiteUrl);
-        } catch (error) {
-          console.warn('Could not fetch website URL from database:', error);
-        }
+        setLoading(true);
         
-        // Mock data for now
+        // Get user's website URL from user data
+        const userData = await userDataAPI.getUserData();
+        const websiteUrl = userData?.website_url || 'https://alwrity.com';
+        
+        // Mock data for demonstration
         const mockData = {
           health_score: {
-            score: 85,
+            score: 84,
             change: 5,
             trend: 'up',
-            label: 'GOOD',
+            label: 'EXCELLENT',
             color: '#4CAF50'
           },
-          key_insight: 'Your SEO is performing well with room for improvement',
-          priority_alert: 'No critical issues detected',
+          key_insight: 'Your website has excellent technical SEO foundation with room for improvement',
+          priority_alert: 'Mobile page speed could be optimized further',
           metrics: {
-            traffic: { value: 12500, change: 12, trend: 'up', description: 'Organic traffic', color: '#4CAF50' },
-            rankings: { value: 8.5, change: -0.3, trend: 'down', description: 'Average ranking', color: '#2196F3' },
-            mobile: { value: 92, change: 3, trend: 'up', description: 'Mobile speed', color: '#FF9800' },
-            keywords: { value: 150, change: 5, trend: 'up', description: 'Keywords tracked', color: '#9C27B0' }
+            traffic: { value: 12500, change: 15, trend: 'up', description: 'Organic traffic', color: '#4CAF50' },
+            rankings: { value: 8.5, change: 2.3, trend: 'up', description: 'Average ranking', color: '#2196F3' },
+            mobile: { value: 92, change: -3, trend: 'down', description: 'Mobile speed', color: '#FF9800' },
+            keywords: { value: 150, change: 12, trend: 'up', description: 'Keywords tracked', color: '#9C27B0' }
           },
           platforms: {
             google: { status: 'connected', connected: true, last_sync: '2024-01-15T10:30:00Z', data_points: 1250 },
@@ -76,6 +90,12 @@ const SEODashboard: React.FC = () => {
             yandex: { status: 'disconnected', connected: false }
           },
           ai_insights: [
+            {
+              insight: 'Your website has excellent technical SEO foundation',
+              priority: 'low',
+              category: 'technical',
+              action_required: false
+            },
             {
               insight: 'Consider adding more internal links to improve page authority',
               priority: 'medium',
@@ -103,14 +123,15 @@ const SEODashboard: React.FC = () => {
     };
 
     fetchData();
-  }, [setData, setLoading, setError]);
+  }, []);
 
   useEffect(() => {
     // Run initial SEO analysis if no data exists
     if (!loading && !error && data) {
-      checkAndRunInitialAnalysis();
+      // Call via store to avoid changing function identity in deps
+      useSEODashboardStore.getState().checkAndRunInitialAnalysis();
     }
-  }, [loading, error, data, checkAndRunInitialAnalysis]);
+  }, [loading, error, data]);
 
   if (loading) {
     return <Skeleton variant="rectangular" height={200} />;
@@ -121,84 +142,127 @@ const SEODashboard: React.FC = () => {
   }
 
   return (
-    <DashboardContainer>
-      <Container maxWidth="xl">
-        <AnimatePresence>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            {/* Header */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
-                🔍 SEO Dashboard
-              </Typography>
-              <Typography variant="subtitle1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                AI-powered insights and actionable recommendations
-              </Typography>
-            </Box>
+    <SEOCopilotKitProvider enableDebugMode={false}>
+      <DashboardContainer>
+        <Container maxWidth="xl">
+          <AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              {/* Header */}
+              <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="h4" sx={{ color: 'white', fontWeight: 700 }}>
+                    🔍 SEO Dashboard
+                  </Typography>
+                  <Typography variant="subtitle1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                    AI-powered insights and actionable recommendations
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {(() => {
+                    const freshness = getAnalysisFreshness();
+                    const chipColor = freshness.isStale ? 'rgba(255, 193, 7, 0.25)' : 'rgba(76, 175, 80, 0.25)';
+                    const chipBorder = freshness.isStale ? 'rgba(255, 193, 7, 0.45)' : 'rgba(76, 175, 80, 0.45)';
+                    return (
+                      <Chip
+                        label={`Freshness: ${freshness.label}`}
+                        size="small"
+                        sx={{
+                          bgcolor: chipColor,
+                          border: `1px solid ${chipBorder}`,
+                          color: 'white',
+                          fontWeight: 600
+                        }}
+                      />
+                    );
+                  })()}
+                  <Button
+                    onClick={refreshSEOAnalysis}
+                    disabled={analysisLoading}
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      color: 'white',
+                      borderColor: 'rgba(255, 255, 255, 0.6)',
+                      '&:hover': { borderColor: 'rgba(255, 255, 255, 0.9)' }
+                    }}
+                  >
+                    {analysisLoading ? 'Refreshing…' : 'Refresh'}
+                  </Button>
+                </Box>
+              </Box>
 
-            {/* Executive Summary */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ color: 'white', fontWeight: 600, mb: 2 }}>
-                📊 Performance Overview
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={6} sm={3}>
-                  <GlassCard sx={{ p: 2 }}>
-                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                      Organic Traffic
-                    </Typography>
-                    <Typography variant="h5" sx={{ color: '#4CAF50' }}>
-                      {data.metrics.traffic.value}
-                    </Typography>
-                  </GlassCard>
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                  <GlassCard sx={{ p: 2 }}>
-                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                      Average Ranking
-                    </Typography>
-                    <Typography variant="h5" sx={{ color: '#2196F3' }}>
-                      {data.metrics.rankings.value}
-                    </Typography>
-                  </GlassCard>
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                  <GlassCard sx={{ p: 2 }}>
-                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                      Mobile Speed
-                    </Typography>
-                    <Typography variant="h5" sx={{ color: '#FF9800' }}>
-                      {data.metrics.mobile.value}
-                    </Typography>
-                  </GlassCard>
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                  <GlassCard sx={{ p: 2 }}>
-                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                      Keywords Tracked
-                    </Typography>
-                    <Typography variant="h5" sx={{ color: '#9C27B0' }}>
-                      {data.metrics.keywords.value}
-                    </Typography>
-                  </GlassCard>
-                </Grid>
-              </Grid>
-            </Box>
+              {/* CopilotKit Test Panel removed */}
 
-            {/* SEO Analyzer Panel */}
-            <SEOAnalyzerPanel
-              analysisData={analysisData}
-              onRunAnalysis={runSEOAnalysis}
-              loading={analysisLoading}
-              error={analysisError}
-            />
-          </motion.div>
-        </AnimatePresence>
-      </Container>
-    </DashboardContainer>
+              {/* Executive Summary */}
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h6" sx={{ color: 'white', fontWeight: 600, mb: 2 }}>
+                  📊 Performance Overview
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={6} sm={3}>
+                    <GlassCard sx={{ p: 2 }}>
+                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Organic Traffic
+                      </Typography>
+                      <Typography variant="h5" sx={{ color: '#4CAF50' }}>
+                        {data.metrics.traffic.value}
+                      </Typography>
+                    </GlassCard>
+                  </Grid>
+                  <Grid item xs={6} sm={3}>
+                    <GlassCard sx={{ p: 2 }}>
+                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Average Ranking
+                      </Typography>
+                      <Typography variant="h5" sx={{ color: '#2196F3' }}>
+                        {data.metrics.rankings.value}
+                      </Typography>
+                    </GlassCard>
+                  </Grid>
+                  <Grid item xs={6} sm={3}>
+                    <GlassCard sx={{ p: 2 }}>
+                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Mobile Speed
+                      </Typography>
+                      <Typography variant="h5" sx={{ color: '#FF9800' }}>
+                        {data.metrics.mobile.value}
+                      </Typography>
+                    </GlassCard>
+                  </Grid>
+                  <Grid item xs={6} sm={3}>
+                    <GlassCard sx={{ p: 2 }}>
+                      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Keywords Tracked
+                      </Typography>
+                      <Typography variant="h5" sx={{ color: '#9C27B0' }}>
+                        {data.metrics.keywords.value}
+                      </Typography>
+                    </GlassCard>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* SEO Analyzer Panel */}
+              <SEOAnalyzerPanel
+                analysisData={analysisData}
+                onRunAnalysis={runSEOAnalysis}
+                loading={analysisLoading}
+                error={analysisError}
+              />
+
+              {/* Copilot Suggestions Panel */}
+              <Box sx={{ mt: 4 }}>
+                <SEOCopilotSuggestions />
+              </Box>
+            </motion.div>
+          </AnimatePresence>
+        </Container>
+      </DashboardContainer>
+    </SEOCopilotKitProvider>
   );
 };
 
