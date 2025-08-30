@@ -23,8 +23,7 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Avatar,
-  Badge
+  Avatar
 } from '@mui/material';
 import {
   CheckCircle as HealthyIcon,
@@ -98,6 +97,7 @@ const SystemStatusIndicator: React.FC<SystemStatusIndicatorProps> = ({ className
   const [error, setError] = useState<string | null>(null);
   const [dashboardOpen, setDashboardOpen] = useState(false);
   const [chartData, setChartData] = useState<any[]>([]);
+  const [cachePerf, setCachePerf] = useState<{ hits: number; misses: number; hit_rate: number } | null>(null);
 
   const fetchStatus = async () => {
     setLoading(true);
@@ -137,6 +137,9 @@ const SystemStatusIndicator: React.FC<SystemStatusIndicatorProps> = ({ className
         const result = await response.json();
         if (result.status === 'success') {
           setDetailedStats(result.data);
+          if (result.data?.cache_performance) {
+            setCachePerf(result.data.cache_performance);
+          }
           
           // Generate chart data
           const chartData = result.data.top_endpoints.slice(0, 5).map((endpoint: any, index: number) => ({
@@ -156,10 +159,16 @@ const SystemStatusIndicator: React.FC<SystemStatusIndicatorProps> = ({ className
 
   useEffect(() => {
     fetchStatus();
-    
+    // Prime cache performance occasionally even when dashboard is closed
+    fetchDetailedStats();
+
     // Refresh every 30 seconds
     const interval = setInterval(fetchStatus, 30000);
-    return () => clearInterval(interval);
+    const cacheInterval = setInterval(fetchDetailedStats, 60000);
+    return () => {
+      clearInterval(interval);
+      clearInterval(cacheInterval);
+    };
   }, []);
 
   useEffect(() => {
@@ -239,56 +248,46 @@ const SystemStatusIndicator: React.FC<SystemStatusIndicatorProps> = ({ className
     );
   }
 
+  const total = statusData?.recent_requests ?? 0;
+  const failed = statusData?.recent_errors ?? 0;
+  const passed = Math.max(0, total - failed);
+
   return (
     <>
-      <Box className={className} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Tooltip title={tooltipContent} arrow placement="bottom">
-          <Box 
-            sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-            onClick={handleDashboardClick}
-          >
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              {statusData ? getStatusIcon(statusData.status) : <UnknownIcon />}
-            </motion.div>
-          </Box>
-        </Tooltip>
-        
-        <Chip
-          label={statusData?.status || 'Unknown'}
-          size="small"
-          color={getStatusColor(statusData?.status || 'unknown')}
+      <Tooltip title={tooltipContent} arrow placement="bottom">
+        <Button
           variant="outlined"
-          sx={{ height: 24, fontSize: '0.75rem' }}
-        />
-        
-        <IconButton
-          size="small"
-          onClick={fetchStatus}
-          disabled={loading}
-          sx={{ p: 0.5 }}
-        >
-          <RefreshIcon sx={{ fontSize: 16 }} />
-        </IconButton>
-
-        {/* Debug button to test dashboard opening */}
-        <IconButton
-          size="small"
           onClick={handleDashboardClick}
-          sx={{ p: 0.5, color: 'primary.main' }}
-          title="Open Dashboard (Debug)"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            px: 1,
+            py: 0.5,
+            minHeight: 34,
+            borderRadius: 2,
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.1))',
+            borderColor: 'rgba(255,255,255,0.35)',
+            color: 'white',
+            boxShadow: '0 10px 28px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.2)'
+          }}
         >
-          <AnalyticsIcon sx={{ fontSize: 16 }} />
-        </IconButton>
-        
-        {error && (
-          <Alert severity="error" sx={{ fontSize: '0.75rem', py: 0 }}>
-            {error}
-          </Alert>
-        )}
-      </Box>
+          {statusData ? getStatusIcon(statusData.status) : <UnknownIcon sx={{ color: 'grey.200' }} />}
+          <Chip
+            label={`System • ${(statusData?.status || 'unknown').toUpperCase()}`}
+            size="small"
+            color={getStatusColor(statusData?.status || 'unknown')}
+            sx={{ height: 22, fontSize: '0.70rem' }}
+          />
+          <IconButton
+            size="small"
+            onClick={(e) => { e.stopPropagation(); fetchStatus(); fetchDetailedStats(); }}
+            sx={{ ml: 0.5, color: 'rgba(255,255,255,0.9)' }}
+          >
+            <RefreshIcon sx={{ fontSize: 16 }} />
+          </IconButton>
+        </Button>
+      </Tooltip>
 
       {/* Enhanced Monitoring Dashboard */}
       <Dialog 

@@ -9,9 +9,11 @@ import {
   useMediaQuery
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 // Shared components
 import DashboardHeader from '../shared/DashboardHeader';
+import SystemStatusIndicator from '../ContentPlanningDashboard/components/SystemStatusIndicator';
 import SearchFilter from '../shared/SearchFilter';
 import ToolCard from '../shared/ToolCard';
 import CategoryHeader from '../shared/CategoryHeader';
@@ -33,6 +35,7 @@ import { toolCategories } from '../../data/toolCategories';
 const MainDashboard: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
   
   // Zustand store hooks
   const {
@@ -56,19 +59,10 @@ const MainDashboard: React.FC = () => {
 
   const handleToolClick = (tool: Tool) => {
     console.log('Navigating to tool:', tool.path);
-    
-    // Handle SEO Dashboard navigation
-    if (tool.path === '/seo-dashboard') {
-      window.location.href = '/seo-dashboard';
+    if (tool.path) {
+      navigate(tool.path);
       return;
     }
-    
-    // Handle Content Planning Dashboard navigation
-    if (tool.path === '/content-planning') {
-      window.location.href = '/content-planning';
-      return;
-    }
-    
     showSnackbar(`Launching ${tool.name}...`, 'info');
   };
 
@@ -128,18 +122,8 @@ const MainDashboard: React.FC = () => {
             <DashboardHeader
               title="🚀 Alwrity Content Hub"
               subtitle="Your AI-powered content creation suite"
-              statusChips={[
-                {
-                  label: 'Active',
-                  color: '#4CAF50',
-                  icon: <span>✓</span>,
-                },
-                {
-                  label: 'Premium',
-                  color: '#FFD700',
-                  icon: <span>★</span>,
-                },
-              ]}
+              statusChips={[]}
+              rightContent={<SystemStatusIndicator />}
             />
 
             {/* Search and Filter */}

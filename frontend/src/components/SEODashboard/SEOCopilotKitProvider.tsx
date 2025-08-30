@@ -29,6 +29,22 @@ const SEOCopilotKitProvider: React.FC<SEOCopilotKitProviderProps> = ({
   // Get the CopilotKit API key from environment variables
   const publicApiKey = process.env.REACT_APP_COPILOTKIT_API_KEY;
 
+  // Derive a friendly site/brand name from the URL for personalization
+  const domainRootName = useMemo(() => {
+    const url = analysisData?.url;
+    if (!url) return '';
+    try {
+      const withProto = url.startsWith('http') ? url : `https://${url}`;
+      const host = new URL(withProto).hostname;
+      const parts = host.split('.').filter(Boolean);
+      const root = parts.length >= 2 ? parts[parts.length - 2] : parts[0] || '';
+      if (!root) return '';
+      return root.charAt(0).toUpperCase() + root.slice(1);
+    } catch {
+      return '';
+    }
+  }, [analysisData?.url]);
+
   // Suggestions model: progressive disclosure
   const topLevelGroups = useMemo(() => ([
     { title: 'Content analysis', message: 'Content analysis' },
@@ -115,9 +131,12 @@ const SEOCopilotKitProvider: React.FC<SEOCopilotKitProviderProps> = ({
   return (
     <CopilotKit publicApiKey={publicApiKey}>
       <CopilotSidebar
+        className="alwrity-copilot-sidebar"
         labels={{
-          title: "SEO Assistant",
-          initial: "Hi! 👋 I'm your SEO expert assistant. I can help you analyze your website, generate meta descriptions, check page speed, and much more. What would you like to work on today?",
+          title: domainRootName ? `ALwrity SEO • ${domainRootName}` : "ALwrity SEO Assistant",
+          initial: domainRootName
+            ? `Hi! 👋 I'm your SEO assistant for ${domainRootName}. I can analyze your site, generate meta descriptions, check page speed, and more. What would you like to work on today?`
+            : "Hi! 👋 I'm your SEO expert assistant. I can help you analyze your website, generate meta descriptions, check page speed, and much more. What would you like to work on today?",
         }}
         suggestions={displayedSuggestions}
         makeSystemMessage={(context: string, additionalInstructions?: string) => {
@@ -125,6 +144,7 @@ const SEOCopilotKitProvider: React.FC<SEOCopilotKitProviderProps> = ({
           const urlLine = websiteUrl ? `The user's current website URL is ${websiteUrl}. If the user does not provide a URL explicitly, default to this URL.` : '';
           const guidance = `
 You are ALwrity's SEO Expert Assistant. ${urlLine}
+When greeting the user, personalize messages${domainRootName ? ` for ${domainRootName}` : ''} and keep a professional, friendly tone.
 Never ask for the URL if you already have it in context unless the user wants to switch URLs.
 Focus on actionable recommendations and use the registered tools.
           `.trim();
@@ -200,6 +220,164 @@ Focus on actionable recommendations and use the registered tools.
               position: relative;
               width: 100%;
               height: 100%;
+            }
+
+            /* ALwrity glassomorphic styling for Copilot sidebar */
+            .alwrity-copilot-sidebar {
+              --alwrity-bg: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.08));
+              --alwrity-border: rgba(255,255,255,0.22);
+              --alwrity-shadow: 0 18px 50px rgba(0,0,0,0.35);
+              --alwrity-accent: #667eea;
+              --alwrity-accent2: #764ba2;
+              --alwrity-text: rgba(255,255,255,0.92);
+              --alwrity-subtext: rgba(255,255,255,0.7);
+            }
+            .alwrity-copilot-sidebar * {
+              font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, 'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+            }
+            .alwrity-copilot-sidebar .copilot-sidebar-container,
+            .alwrity-copilot-sidebar .copilotkit-sidebar,
+            .alwrity-copilot-sidebar .copilotkit-chat-container {
+              background: var(--alwrity-bg) !important;
+              backdrop-filter: blur(22px) !important;
+              -webkit-backdrop-filter: blur(22px) !important;
+              border: 1px solid var(--alwrity-border) !important;
+              box-shadow: var(--alwrity-shadow) !important;
+              color: var(--alwrity-text) !important;
+            }
+            .alwrity-copilot-sidebar .copilotkit-title,
+            .alwrity-copilot-sidebar .copilot-title {
+              color: var(--alwrity-text) !important;
+              font-weight: 700 !important;
+              letter-spacing: 0.2px !important;
+            }
+            .alwrity-copilot-sidebar .copilotkit-sidebar,
+            .alwrity-copilot-sidebar .copilot-sidebar-container {
+              z-index: 1200 !important;
+            }
+            .alwrity-copilot-sidebar .copilotkit-subtitle,
+            .alwrity-copilot-sidebar .copilot-subtitle,
+            .alwrity-copilot-sidebar .copilotkit-initial-message {
+              color: var(--alwrity-subtext) !important;
+            }
+            /* Suggestions: border, glow, depth, enterprise look */
+            .alwrity-copilot-sidebar .copilot-suggestion,
+            .alwrity-copilot-sidebar .copilotkit-suggestion,
+            .alwrity-copilot-sidebar .copilotkit-suggestions button,
+            .alwrity-copilot-sidebar .copilot-suggestions button {
+              position: relative;
+              background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.08)) !important;
+              border: 1.5px solid rgba(255,255,255,0.32) !important;
+              color: var(--alwrity-text) !important;
+              box-shadow: 0 10px 28px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.2) !important;
+              transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+              border-radius: 12px !important;
+              overflow: hidden;
+              backdrop-filter: blur(16px);
+              -webkit-backdrop-filter: blur(16px);
+            }
+            .alwrity-copilot-sidebar .copilot-suggestion::before,
+            .alwrity-copilot-sidebar .copilotkit-suggestion::before,
+            .alwrity-copilot-sidebar .copilotkit-suggestions button::before,
+            .alwrity-copilot-sidebar .copilot-suggestions button::before {
+              content: "";
+              position: absolute;
+              top: 0;
+              left: -120%;
+              width: 120%;
+              height: 100%;
+              background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+              transition: left 0.6s ease;
+            }
+            .alwrity-copilot-sidebar .copilot-suggestion:hover::before,
+            .alwrity-copilot-sidebar .copilotkit-suggestion:hover::before,
+            .alwrity-copilot-sidebar .copilotkit-suggestions button:hover::before,
+            .alwrity-copilot-sidebar .copilot-suggestions button:hover::before {
+              left: 120%;
+            }
+            .alwrity-copilot-sidebar .copilot-suggestion:hover,
+            .alwrity-copilot-sidebar .copilotkit-suggestion:hover,
+            .alwrity-copilot-sidebar .copilotkit-suggestions button:hover,
+            .alwrity-copilot-sidebar .copilot-suggestions button:hover {
+              transform: translateY(-4px) scale(1.015);
+              box-shadow: 0 18px 44px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.18) inset !important;
+              border-color: rgba(255,255,255,0.45) !important;
+            }
+            .alwrity-copilot-sidebar .copilot-suggestion:active,
+            .alwrity-copilot-sidebar .copilotkit-suggestion:active,
+            .alwrity-copilot-sidebar .copilotkit-suggestions button:active,
+            .alwrity-copilot-sidebar .copilot-suggestions button:active {
+              transform: translateY(-1px) scale(0.995);
+              box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important;
+            }
+            .alwrity-copilot-sidebar .copilot-suggestion:focus-visible,
+            .alwrity-copilot-sidebar .copilotkit-suggestion:focus-visible,
+            .alwrity-copilot-sidebar .copilotkit-suggestions button:focus-visible,
+            .alwrity-copilot-sidebar .copilot-suggestions button:focus-visible {
+              outline: none !important;
+              box-shadow: 0 0 0 2px rgba(255,255,255,0.45), 0 0 0 4px rgba(102,126,234,0.35) !important;
+            }
+            .alwrity-copilot-sidebar .copilot-suggestion .icon, 
+            .alwrity-copilot-sidebar .copilotkit-suggestion .icon, 
+            .alwrity-copilot-sidebar .copilotkit-suggestions button .icon {
+              filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+            }
+            .alwrity-copilot-sidebar .copilotkit-suggestions,
+            .alwrity-copilot-sidebar .copilot-suggestions {
+              display: grid;
+              grid-template-columns: 1fr;
+              gap: 10px;
+            }
+            @media (min-width: 420px) {
+              .alwrity-copilot-sidebar .copilotkit-suggestions,
+              .alwrity-copilot-sidebar .copilot-suggestions {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+              }
+            }
+
+            /* Reduce motion for users who prefer it */
+            @media (prefers-reduced-motion: reduce) {
+              .alwrity-copilot-sidebar .copilot-suggestion,
+              .alwrity-copilot-sidebar .copilotkit-suggestion,
+              .alwrity-copilot-sidebar .copilotkit-suggestions button,
+              .alwrity-copilot-sidebar .copilot-suggestions button {
+                transition: none !important;
+              }
+              .alwrity-copilot-sidebar .copilot-suggestion::before,
+              .alwrity-copilot-sidebar .copilotkit-suggestion::before,
+              .alwrity-copilot-sidebar .copilotkit-suggestions button::before,
+              .alwrity-copilot-sidebar .copilot-suggestions button::before {
+                display: none !important;
+              }
+            }
+
+            /* Scrollbar styling (webkit) */
+            .alwrity-copilot-sidebar ::-webkit-scrollbar {
+              width: 10px;
+              height: 10px;
+            }
+            .alwrity-copilot-sidebar ::-webkit-scrollbar-thumb {
+              background: rgba(255,255,255,0.25);
+              border: 2px solid rgba(0,0,0,0.1);
+              border-radius: 10px;
+            }
+            .alwrity-copilot-sidebar ::-webkit-scrollbar-track {
+              background: rgba(255,255,255,0.08);
+              border-radius: 10px;
+            }
+            .alwrity-copilot-sidebar .copilot-primary,
+            .alwrity-copilot-sidebar .copilotkit-primary-button,
+            .alwrity-copilot-sidebar button[type="submit"] {
+              background: linear-gradient(90deg, var(--alwrity-accent), var(--alwrity-accent2)) !important;
+              border: 1px solid rgba(255,255,255,0.35) !important;
+              color: white !important;
+            }
+            .alwrity-copilot-sidebar .copilot-input,
+            .alwrity-copilot-sidebar .copilotkit-input {
+              background: rgba(255,255,255,0.14) !important;
+              color: var(--alwrity-text) !important;
+              border: 1px solid rgba(255,255,255,0.22) !important;
             }
 
             .seo-copilotkit-loading {

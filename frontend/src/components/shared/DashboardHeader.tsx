@@ -6,7 +6,8 @@ import { DashboardHeaderProps } from './types';
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({ 
   title, 
   subtitle, 
-  statusChips = [] 
+  statusChips = [],
+  rightContent
 }) => {
   return (
     <ShimmerHeader sx={{ mb: 5 }}>
@@ -33,23 +34,26 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             {subtitle}
           </Typography>
         </Box>
-        {statusChips.length > 0 && (
-          <Box sx={{ display: 'flex', gap: 1.5 }}>
-            {statusChips.map((chip, index) => (
-              <Chip 
-                key={index}
-                icon={chip.icon} 
-                label={chip.label} 
-                sx={{ 
-                  background: `${chip.color}20`,
-                  border: `1px solid ${chip.color}40`,
-                  color: chip.color,
-                  fontWeight: 700,
-                }}
-              />
-            ))}
-          </Box>
-        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          {statusChips.length > 0 && (
+            <Box sx={{ display: 'flex', gap: 1.5 }}>
+              {statusChips.map((chip, index) => (
+                <Chip 
+                  key={index}
+                  icon={chip.icon} 
+                  label={chip.label} 
+                  sx={{ 
+                    background: `${chip.color}20`,
+                    border: `1px solid ${chip.color}40`,
+                    color: chip.color,
+                    fontWeight: 700,
+                  }}
+                />
+              ))}
+            </Box>
+          )}
+          {rightContent}
+        </Box>
       </Box>
     </ShimmerHeader>
   );

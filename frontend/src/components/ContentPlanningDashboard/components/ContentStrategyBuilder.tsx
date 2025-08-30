@@ -622,8 +622,8 @@ const ContentStrategyBuilder: React.FC = () => {
       suggestions={suggestions}
       observabilityHooks={{
         onChatExpanded: () => console.log("Strategy assistant opened"),
-        onMessageSent: (message) => console.log("Strategy message sent", { message }),
-        onFeedbackGiven: (messageId, type) => console.log("Strategy feedback", { messageId, type })
+        onMessageSent: (message: any) => console.log("Strategy message sent", { message }),
+        onFeedbackGiven: (messageId: string, type: string) => console.log("Strategy feedback", { messageId, type })
       }}
     >
       <Box sx={{ p: 3 }}>

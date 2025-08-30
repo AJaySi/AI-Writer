@@ -7,6 +7,7 @@ import Wizard from './components/OnboardingWizard/Wizard';
 import MainDashboard from './components/MainDashboard/MainDashboard';
 import SEODashboard from './components/SEODashboard/SEODashboard';
 import ContentPlanningDashboard from './components/ContentPlanningDashboard/ContentPlanningDashboard';
+import FacebookWriter from './components/FacebookWriter/FacebookWriter';
 
 import { apiClient } from './api/client';
 
@@ -180,7 +181,9 @@ const App: React.FC = () => {
             <Route path="/onboarding" element={<Wizard />} />
             <Route path="/dashboard" element={<MainDashboard />} />
             <Route path="/seo" element={<SEODashboard />} />
+            <Route path="/seo-dashboard" element={<SEODashboard />} />
             <Route path="/content-planning" element={<ContentPlanningDashboard />} />
+            <Route path="/facebook-writer" element={<FacebookWriter />} />
           </Routes>
         </ConditionalCopilotKit>
       </Router>

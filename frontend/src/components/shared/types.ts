@@ -83,6 +83,7 @@ export interface DashboardHeaderProps {
     color: string;
     icon: React.ReactElement;
   }>;
+  rightContent?: React.ReactNode;
 }
 
 export interface LoadingSkeletonProps {
