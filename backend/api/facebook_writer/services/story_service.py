@@ -3,6 +3,12 @@
 from typing import Dict, Any, List
 from ..models.story_models import FacebookStoryRequest, FacebookStoryResponse
 from .base_service import FacebookWriterBaseService
+try:
+    from ...services.llm_providers.text_to_image_generation.gen_gemini_images import (
+        generate_gemini_images_base64,
+    )
+except Exception:
+    generate_gemini_images_base64 = None  # type: ignore
 
 
 class FacebookStoryService(FacebookWriterBaseService):
@@ -38,10 +44,28 @@ class FacebookStoryService(FacebookWriterBaseService):
             # Generate visual suggestions and engagement tips
             visual_suggestions = self._generate_visual_suggestions(actual_story_type, request.visual_options)
             engagement_tips = self._generate_engagement_tips("story")
+            # Optional: generate one story image (9:16) using Gemini
+            images_base64: List[str] = []
+            try:
+                if generate_gemini_images_base64 is not None:
+                    img_prompt = request.visual_options.background_image_prompt or (
+                        f"Facebook story background for {request.business_type}. "
+                        f"Style: {actual_tone}. Type: {actual_story_type}. Vertical mobile 9:16, high contrast, legible overlay space."
+                    )
+                    images_base64 = generate_gemini_images_base64(
+                        img_prompt,
+                        enhance_prompt=False,
+                        aspect_ratio="9:16",
+                        max_retries=2,
+                        initial_retry_delay=1.0,
+                    ) or []
+            except Exception:
+                images_base64 = []
             
             return FacebookStoryResponse(
                 success=True,
                 content=content,
+                images_base64=images_base64[:1],
                 visual_suggestions=visual_suggestions,
                 engagement_tips=engagement_tips,
                 metadata={
@@ -75,6 +99,28 @@ class FacebookStoryService(FacebookWriterBaseService):
             f"Create a {story_type} story"
         )
         
+        # Advanced writing flags
+        advanced_lines = []
+        if getattr(request, "use_hook", True):
+            advanced_lines.append("- Start with a compelling hook in the first line")
+        if getattr(request, "use_story", True):
+            advanced_lines.append("- Use a mini narrative with a clear flow")
+        if getattr(request, "use_cta", True):
+            cta_text = request.visual_options.call_to_action or "Add a clear call-to-action"
+            advanced_lines.append(f"- Include a CTA: {cta_text}")
+        if getattr(request, "use_question", True):
+            advanced_lines.append("- Ask a question to prompt replies or taps")
+        if getattr(request, "use_emoji", True):
+            advanced_lines.append("- Use a few relevant emojis for tone and scannability")
+        if getattr(request, "use_hashtags", True):
+            advanced_lines.append("- Include 1-3 relevant hashtags if appropriate")
+
+        advanced_str = "\n".join(advanced_lines)
+
+        # Visual details
+        v = request.visual_options
+        interactive_types_str = ", ".join(v.interactive_types) if v.interactive_types else "None specified"
+
         prompt = f"""
         {base_prompt}
         
@@ -86,12 +132,20 @@ class FacebookStoryService(FacebookWriterBaseService):
         Content Requirements:
         - Include: {request.include or 'N/A'}
         - Avoid: {request.avoid or 'N/A'}
+        {('\n' + advanced_str) if advanced_str else ''}
         
         Visual Options:
-        - Background Type: {request.visual_options.background_type}
-        - Text Overlay: {request.visual_options.text_overlay}
-        - Stickers/Emojis: {request.visual_options.stickers}
-        - Interactive Elements: {request.visual_options.interactive_elements}
+        - Background Type: {v.background_type}
+        - Background Visual Prompt: {v.background_image_prompt or 'N/A'}
+        - Gradient Style: {v.gradient_style or 'N/A'}
+        - Text Overlay: {v.text_overlay}
+        - Text Style: {v.text_style or 'N/A'}
+        - Text Color: {v.text_color or 'N/A'}
+        - Text Position: {v.text_position or 'N/A'}
+        - Stickers/Emojis: {v.stickers}
+        - Interactive Elements: {v.interactive_elements}
+        - Interactive Types: {interactive_types_str}
+        - Call To Action: {v.call_to_action or 'N/A'}
         
         Please create a Facebook Story that:
         1. Is optimized for mobile viewing (vertical format)
@@ -137,14 +191,28 @@ class FacebookStoryService(FacebookWriterBaseService):
             ])
         
         # Add general suggestions based on visual options
-        if visual_options.text_overlay:
+        if getattr(visual_options, "text_overlay", True):
             suggestions.append("Use bold, readable fonts for text overlays")
-        
-        if visual_options.stickers:
+            if getattr(visual_options, "text_style", None):
+                suggestions.append(f"Match text style to tone: {visual_options.text_style}")
+            if getattr(visual_options, "text_color", None):
+                suggestions.append(f"Ensure sufficient contrast with text color: {visual_options.text_color}")
+            if getattr(visual_options, "text_position", None):
+                suggestions.append(f"Place text at {visual_options.text_position} to avoid occluding subject")
+
+        if getattr(visual_options, "stickers", True):
             suggestions.append("Add relevant emojis and stickers to increase engagement")
         
-        if visual_options.interactive_elements:
+        if getattr(visual_options, "interactive_elements", True):
             suggestions.append("Include polls, questions, or swipe-up actions")
+            if getattr(visual_options, "interactive_types", None):
+                suggestions.append(f"Try interactive types: {', '.join(visual_options.interactive_types)}")
+
+        if getattr(visual_options, "background_type", None) in {"Image", "Video"} and getattr(visual_options, "background_image_prompt", None):
+            suggestions.append("Source visuals based on background prompt for consistency")
+
+        if getattr(visual_options, "call_to_action", None):
+            suggestions.append(f"Overlay CTA copy near focal point: {visual_options.call_to_action}")
         
         return suggestions
     

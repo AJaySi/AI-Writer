@@ -40,7 +40,7 @@ const TechnicalUI: React.FC<{ args: any; respond: (data: any) => void }> = ({ ar
         {['full', 'core_web_vitals', 'mobile_friendliness', 'security'].map((s) => (
           <label key={s} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <input type="radio" name="scope" value={s} checked={scope === s} onChange={() => setScope(s)} />
-            {s.replaceAll('_', ' ')}
+            {s.split('_').join(' ')}
           </label>
         ))}
       </div>

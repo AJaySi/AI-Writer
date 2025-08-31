@@ -2,6 +2,7 @@
 
 from typing import Dict, Any, List
 from ..models import *
+from ..models.carousel_models import CarouselSlide
 from .base_service import FacebookWriterBaseService
 
 
