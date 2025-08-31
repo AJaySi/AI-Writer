@@ -50,6 +50,8 @@ from api.component_logic import router as component_logic_router
 
 # Import SEO tools router
 from routers.seo_tools import router as seo_tools_router
+# Import Facebook Writer endpoints
+from api.facebook_writer.routers import facebook_router
 
 # Import user data endpoints
 # Import content planning endpoints
@@ -367,6 +369,8 @@ app.include_router(component_logic_router)
 
 # Include SEO tools router
 app.include_router(seo_tools_router)
+# Include Facebook Writer router
+app.include_router(facebook_router)
 
 # Include user data router
 # Include content planning router
