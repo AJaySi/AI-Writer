@@ -213,3 +213,36 @@ Reference (Gemini image generation best practices): https://ai.google.dev/gemini
 - Predictive state edits observable in real-time.
 - Monitoring reflects API usage in the header control.
 - Clean, reproducible flows for post + hashtags; extendable to ads and other tools.
+
+---
+
+## 9) Immediate Next Steps (Page About Implementation)
+
+### 9.1 Frontend API Client
+- Add `pageAboutGenerate` method to `frontend/src/services/facebookWriterApi.ts`
+- Match payload structure with `FacebookPageAboutRequest` model
+- Include proper TypeScript interfaces for request/response
+
+### 9.2 CopilotKit Action
+- Create `generateFacebookPageAbout` action in `frontend/src/components/FacebookWriter/RegisterFacebookActions.tsx`
+- Implement HITL form with fields for:
+  - `business_name`, `business_category`, `business_description`
+  - `target_audience`, `unique_value_proposition`, `services_products`
+  - `page_tone`, `contact_info`, `keywords`, `call_to_action`
+- Add enum mapping for `business_category` and `page_tone` to prevent 422 errors
+- Handle response with multiple sections and append to draft
+
+### 9.3 UI Integration
+- Add "Page About" suggestion chip in `FacebookWriter.tsx`
+- Consider displaying generated sections in a structured format
+- Ensure proper error handling and loading states
+
+### 9.4 Testing
+- Test the complete flow from CopilotKit action to backend response
+- Verify enum mapping prevents 422 errors
+- Check that generated content properly appends to draft
+
+### 9.5 Documentation Update
+- Update this document once Page About is implemented
+- Mark all Facebook Writer endpoints as complete
+- Plan next phase: testing, observability, and optimization

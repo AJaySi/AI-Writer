@@ -1,0 +1,382 @@
+/* ALwrity Co-Pilot Custom Styling */
+
+/* CopilotKit trigger button styling (without ALwrity icon) */
+.alwrity-copilot-sidebar .copilot-sidebar-trigger,
+.alwrity-copilot-sidebar [data-testid="copilot-sidebar-trigger"],
+.alwrity-copilot-sidebar .copilot-sidebar-trigger-button,
+.alwrity-copilot-sidebar button[aria-label*="copilot"],
+.alwrity-copilot-sidebar button[aria-label*="assistant"],
+.alwrity-copilot-sidebar .copilot-sidebar-trigger > button,
+.alwrity-copilot-sidebar .copilot-sidebar-trigger > div,
+.alwrity-copilot-sidebar button[class*="trigger"],
+.alwrity-copilot-sidebar button[class*="floating"],
+.alwrity-copilot-sidebar button[class*="assistant"],
+.alwrity-copilot-sidebar button[class*="copilot"],
+.alwrity-copilot-sidebar [data-testid*="trigger"],
+.alwrity-copilot-sidebar [data-testid*="assistant"],
+.alwrity-copilot-sidebar [data-testid*="copilot"] {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  box-shadow: 0 4px 12px rgba(10, 102, 194, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Hover effects for trigger buttons */
+.alwrity-copilot-sidebar .copilot-sidebar-trigger:hover,
+.alwrity-copilot-sidebar [data-testid="copilot-sidebar-trigger"]:hover,
+.alwrity-copilot-sidebar .copilot-sidebar-trigger-button:hover,
+.alwrity-copilot-sidebar button[aria-label*="copilot"]:hover,
+.alwrity-copilot-sidebar button[aria-label*="assistant"]:hover,
+.alwrity-copilot-sidebar .copilot-sidebar-trigger > button:hover,
+.alwrity-copilot-sidebar .copilot-sidebar-trigger > div:hover,
+.alwrity-copilot-sidebar button[class*="trigger"]:hover,
+.alwrity-copilot-sidebar button[class*="floating"]:hover,
+.alwrity-copilot-sidebar button[class*="assistant"]:hover,
+.alwrity-copilot-sidebar button[class*="copilot"]:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 6px 20px rgba(10, 102, 194, 0.4) !important;
+}
+
+/* Custom sidebar header */
+.alwrity-copilot-sidebar .copilot-sidebar-header {
+  background: linear-gradient(135deg, #0a66c2 0%, #0056b3 100%) !important;
+  border-bottom: 2px solid #ffffff20 !important;
+}
+
+/* Sidebar title styling - no icon */
+.alwrity-copilot-sidebar .copilot-sidebar-title {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+/* Icon display removed - no ALwrity image in chat window */
+
+/* Debug borders removed for clean appearance */
+
+/* Additional trigger button styling (without icon) */
+.alwrity-copilot-sidebar [data-testid="copilot-sidebar-trigger"],
+.alwrity-copilot-sidebar [data-testid="copilot-sidebar-trigger-button"],
+.alwrity-copilot-sidebar [data-testid="copilot-sidebar-trigger-icon"],
+.alwrity-copilot-sidebar .copilot-sidebar-trigger,
+.alwrity-copilot-sidebar .copilot-sidebar-trigger-button,
+.alwrity-copilot-sidebar .copilot-sidebar-trigger-icon,
+.alwrity-copilot-sidebar button[aria-label*="copilot"],
+.alwrity-copilot-sidebar button[aria-label*="assistant"],
+.alwrity-copilot-sidebar button[aria-label*="chat"],
+.alwrity-copilot-sidebar button[aria-label*="open"],
+.alwrity-copilot-sidebar button[aria-label*="toggle"] {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  box-shadow: 0 4px 12px rgba(10, 102, 194, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Premium Message Styling - Enhanced Speech Bubbles */
+.alwrity-copilot-sidebar .copilot-message,
+.alwrity-copilot-sidebar [data-testid="copilot-message"],
+.alwrity-copilot-sidebar .message,
+.alwrity-copilot-sidebar .chat-message,
+.alwrity-copilot-sidebar .assistant-message,
+.alwrity-copilot-sidebar .user-message {
+  border-radius: 16px !important;
+  margin: 12px 0 !important;
+  padding: 16px 20px !important;
+  max-width: 85% !important;
+  position: relative !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.2s ease !important;
+  line-height: 1.5 !important;
+  font-size: 14px !important;
+}
+
+/* User Message Styling */
+.alwrity-copilot-sidebar .copilot-message.user,
+.alwrity-copilot-sidebar [data-testid="copilot-message"].user,
+.alwrity-copilot-sidebar .message.user,
+.alwrity-copilot-sidebar .chat-message.user,
+.alwrity-copilot-sidebar .user-message {
+  background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%) !important;
+  border: 1px solid #d1e7ff !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  color: #1a365d !important;
+  font-weight: 500 !important;
+}
+
+.alwrity-copilot-sidebar .copilot-message.user::before,
+.alwrity-copilot-sidebar [data-testid="copilot-message"].user::before,
+.alwrity-copilot-sidebar .message.user::before,
+.alwrity-copilot-sidebar .chat-message.user::before,
+.alwrity-copilot-sidebar .user-message::before {
+  content: '' !important;
+  position: absolute !important;
+  right: -8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 0 !important;
+  height: 0 !important;
+  border-left: 8px solid #d1e7ff !important;
+  border-top: 6px solid transparent !important;
+  border-bottom: 6px solid transparent !important;
+}
+
+/* Assistant Message Styling */
+.alwrity-copilot-sidebar .copilot-message.assistant,
+.alwrity-copilot-sidebar [data-testid="copilot-message"].assistant,
+.alwrity-copilot-sidebar .message.assistant,
+.alwrity-copilot-sidebar .chat-message.assistant,
+.alwrity-copilot-sidebar .assistant-message {
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%) !important;
+  border: 1px solid #e1e8ed !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  color: #2d3748 !important;
+  font-weight: 400 !important;
+}
+
+.alwrity-copilot-sidebar .copilot-message.assistant::before,
+.alwrity-copilot-sidebar [data-testid="copilot-message"].assistant::before,
+.alwrity-copilot-sidebar .message.assistant::before,
+.alwrity-copilot-sidebar .chat-message.assistant::before,
+.alwrity-copilot-sidebar .assistant-message::before {
+  content: '' !important;
+  position: absolute !important;
+  left: -8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 0 !important;
+  height: 0 !important;
+  border-right: 8px solid #e1e8ed !important;
+  border-top: 6px solid transparent !important;
+  border-bottom: 6px solid transparent !important;
+}
+
+/* Message Hover Effects */
+.alwrity-copilot-sidebar .copilot-message:hover,
+.alwrity-copilot-sidebar [data-testid="copilot-message"]:hover,
+.alwrity-copilot-sidebar .message:hover,
+.alwrity-copilot-sidebar .chat-message:hover,
+.alwrity-copilot-sidebar .assistant-message:hover,
+.alwrity-copilot-sidebar .user-message:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Message Content Typography */
+.alwrity-copilot-sidebar .copilot-message p,
+.alwrity-copilot-sidebar [data-testid="copilot-message"] p,
+.alwrity-copilot-sidebar .message p,
+.alwrity-copilot-sidebar .chat-message p,
+.alwrity-copilot-sidebar .assistant-message p,
+.alwrity-copilot-sidebar .user-message p {
+  margin: 0 0 12px 0 !important;
+  line-height: 1.6 !important;
+}
+
+.alwrity-copilot-sidebar .copilot-message p:last-child,
+.alwrity-copilot-sidebar [data-testid="copilot-message"] p:last-child,
+.alwrity-copilot-sidebar .message p:last-child,
+.alwrity-copilot-sidebar .chat-message p:last-child,
+.alwrity-copilot-sidebar .assistant-message p:last-child,
+.alwrity-copilot-sidebar .user-message p:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Code Blocks in Messages */
+.alwrity-copilot-sidebar .copilot-message code,
+.alwrity-copilot-sidebar [data-testid="copilot-message"] code,
+.alwrity-copilot-sidebar .message code,
+.alwrity-copilot-sidebar .chat-message code,
+.alwrity-copilot-sidebar .assistant-message code,
+.alwrity-copilot-sidebar .user-message code {
+  background: #f7fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  padding: 2px 6px !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+  font-size: 13px !important;
+  color: #2d3748 !important;
+}
+
+/* Custom Button Styling */
+.alwrity-copilot-sidebar .copilot-button,
+.alwrity-copilot-sidebar button,
+.alwrity-copilot-sidebar .btn {
+  background: linear-gradient(135deg, #0a66c2 0%, #0056b3 100%) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  color: white !important;
+  font-weight: 600 !important;
+  padding: 10px 20px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 8px rgba(10, 102, 194, 0.25) !important;
+}
+
+.alwrity-copilot-sidebar .copilot-button:hover,
+.alwrity-copilot-sidebar button:hover,
+.alwrity-copilot-sidebar .btn:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #004494 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 16px rgba(10, 102, 194, 0.35) !important;
+}
+
+/* Custom Input Styling */
+.alwrity-copilot-sidebar .copilot-input,
+.alwrity-copilot-sidebar input,
+.alwrity-copilot-sidebar textarea {
+  border: 2px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  padding: 14px 18px !important;
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+  background: #ffffff !important;
+  color: #2d3748 !important;
+}
+
+.alwrity-copilot-sidebar .copilot-input:focus,
+.alwrity-copilot-sidebar input:focus,
+.alwrity-copilot-sidebar textarea:focus {
+  border-color: #0a66c2 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.1) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Premium Suggestion Chips */
+.alwrity-copilot-sidebar .copilot-suggestion,
+.alwrity-copilot-sidebar .suggestion,
+.alwrity-copilot-sidebar .chip {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 24px !important;
+  padding: 10px 18px !important;
+  margin: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-size: 13px !important;
+  color: #475569 !important;
+  font-weight: 500 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+.alwrity-copilot-sidebar .copilot-suggestion:hover,
+.alwrity-copilot-sidebar .suggestion:hover,
+.alwrity-copilot-sidebar .chip:hover {
+  background: linear-gradient(135deg, #0a66c2 0%, #0056b3 100%) !important;
+  color: white !important;
+  border-color: #0a66c2 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(10, 102, 194, 0.25) !important;
+}
+
+/* Loading States */
+.alwrity-copilot-sidebar .copilot-loading,
+.alwrity-copilot-sidebar .loading {
+  color: #0a66c2 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+/* Typing Indicator */
+.alwrity-copilot-sidebar .typing-indicator,
+.alwrity-copilot-sidebar .is-typing {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 8px 16px !important;
+  color: #64748b !important;
+  font-style: italic !important;
+}
+
+.alwrity-copilot-sidebar .typing-dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: #0a66c2 !important;
+  animation: typing 1.4s infinite ease-in-out !important;
+}
+
+.alwrity-copilot-sidebar .typing-dot:nth-child(1) { animation-delay: -0.32s !important; }
+.alwrity-copilot-sidebar .typing-dot:nth-child(2) { animation-delay: -0.16s !important; }
+
+@keyframes typing {
+  0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* Scrollbar Customization */
+.alwrity-copilot-sidebar .copilot-sidebar-content::-webkit-scrollbar,
+.alwrity-copilot-sidebar .sidebar-content::-webkit-scrollbar,
+.alwrity-copilot-sidebar .chat-content::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+.alwrity-copilot-sidebar .copilot-sidebar-content::-webkit-scrollbar-track,
+.alwrity-copilot-sidebar .sidebar-content::-webkit-scrollbar-track,
+.alwrity-copilot-sidebar .chat-content::-webkit-scrollbar-track {
+  background: #f8fafc !important;
+  border-radius: 4px !important;
+}
+
+.alwrity-copilot-sidebar .copilot-sidebar-content::-webkit-scrollbar-thumb,
+.alwrity-copilot-sidebar .sidebar-content::-webkit-scrollbar-thumb,
+.alwrity-copilot-sidebar .chat-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #0a66c2 0%, #0056b3 100%) !important;
+  border-radius: 4px !important;
+  border: 1px solid #f8fafc !important;
+}
+
+.alwrity-copilot-sidebar .copilot-sidebar-content::-webkit-scrollbar-thumb:hover,
+.alwrity-copilot-sidebar .sidebar-content::-webkit-scrollbar-thumb:hover,
+.alwrity-copilot-sidebar .chat-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #004494 100%) !important;
+}
+
+/* Message Timestamps */
+.alwrity-copilot-sidebar .message-timestamp,
+.alwrity-copilot-sidebar .timestamp {
+  font-size: 11px !important;
+  color: #94a3b8 !important;
+  margin-top: 4px !important;
+  text-align: right !important;
+  font-weight: 400 !important;
+}
+
+/* Tool Call Styling */
+.alwrity-copilot-sidebar .tool-call,
+.alwrity-copilot-sidebar .function-call {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  margin: 8px 0 !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+  font-size: 12px !important;
+  color: #475569 !important;
+  border-left: 4px solid #0a66c2 !important;
+}
+
+/* Error Message Styling */
+.alwrity-copilot-sidebar .error-message,
+.alwrity-copilot-sidebar .error {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%) !important;
+  border: 1px solid #fecaca !important;
+  color: #dc2626 !important;
+  border-left: 4px solid #dc2626 !important;
+}
+
+/* Success Message Styling */
+.alwrity-copilot-sidebar .success-message,
+.alwrity-copilot-sidebar .success {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%) !important;
+  border: 1px solid #bbf7d0 !important;
+  color: #16a34a !important;
+  border-left: 4px solid #16a34a !important;
+}

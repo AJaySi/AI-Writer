@@ -9,9 +9,6 @@ import {
   PersonalizationData, 
   DashboardLayout, 
   CopilotSuggestion,
-  SEOCategory,
-  SEOExperienceLevel,
-  BusinessType,
   TimeRange,
   ChartType
 } from '../types/seoCopilotTypes';

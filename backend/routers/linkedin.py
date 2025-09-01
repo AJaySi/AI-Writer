@@ -12,15 +12,15 @@ from typing import Dict, Any
 import time
 from loguru import logger
 
-from ..models.linkedin_models import (
+from models.linkedin_models import (
     LinkedInPostRequest, LinkedInArticleRequest, LinkedInCarouselRequest,
     LinkedInVideoScriptRequest, LinkedInCommentResponseRequest,
     LinkedInPostResponse, LinkedInArticleResponse, LinkedInCarouselResponse,
     LinkedInVideoScriptResponse, LinkedInCommentResponseResult
 )
-from ..services.linkedin_service import linkedin_service
-from ..middleware.monitoring_middleware import DatabaseAPIMonitor
-from ..services.database import get_db_session
+from services.linkedin_service import linkedin_service
+from middleware.monitoring_middleware import DatabaseAPIMonitor
+from services.database import get_db_session
 from sqlalchemy.orm import Session
 
 # Initialize router

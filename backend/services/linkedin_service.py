@@ -14,7 +14,7 @@ from datetime import datetime
 from loguru import logger
 import traceback
 
-from ..models.linkedin_models import (
+from models.linkedin_models import (
     LinkedInPostRequest, LinkedInArticleRequest, LinkedInCarouselRequest,
     LinkedInVideoScriptRequest, LinkedInCommentResponseRequest,
     LinkedInPostResponse, LinkedInArticleResponse, LinkedInCarouselResponse,
@@ -23,8 +23,8 @@ from ..models.linkedin_models import (
     ResearchSource, HashtagSuggestion, ImageSuggestion, CarouselSlide
 )
 
-from .llm_providers.main_text_generation import llm_text_gen
-from .llm_providers.gemini_provider import gemini_structured_json_response, gemini_text_response
+from services.llm_providers.main_text_generation import llm_text_gen
+from services.llm_providers.gemini_provider import gemini_structured_json_response, gemini_text_response
 
 
 class LinkedInContentService:

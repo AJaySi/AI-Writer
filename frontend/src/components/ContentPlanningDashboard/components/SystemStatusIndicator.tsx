@@ -279,13 +279,26 @@ const SystemStatusIndicator: React.FC<SystemStatusIndicatorProps> = ({ className
             color={getStatusColor(statusData?.status || 'unknown')}
             sx={{ height: 22, fontSize: '0.70rem' }}
           />
-          <IconButton
-            size="small"
+          <Box
+            component="div"
             onClick={(e) => { e.stopPropagation(); fetchStatus(); fetchDetailedStats(); }}
-            sx={{ ml: 0.5, color: 'rgba(255,255,255,0.9)' }}
+            sx={{ 
+              ml: 0.5, 
+              color: 'rgba(255,255,255,0.9)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.1)',
+              }
+            }}
           >
             <RefreshIcon sx={{ fontSize: 16 }} />
-          </IconButton>
+          </Box>
         </Button>
       </Tooltip>
 

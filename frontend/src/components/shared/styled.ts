@@ -4,10 +4,7 @@ import { styled } from '@mui/material/styles';
 // Shared styled components for dashboard components
 export const DashboardContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
-  background:
-    'radial-gradient(1200px 600px at 10% -10%, rgba(255,255,255,0.08) 0%, transparent 60%),\
-     radial-gradient(900px 500px at 110% 10%, rgba(255,255,255,0.06) 0%, transparent 60%),\
-     linear-gradient(135deg, #0f1226 0%, #1b1e3b 35%, #2a2f59 70%, #3a3f7a 100%)',
+  background: 'radial-gradient(1200px 600px at 10% -10%, rgba(255,255,255,0.08) 0%, transparent 60%), radial-gradient(900px 500px at 110% 10%, rgba(255,255,255,0.06) 0%, transparent 60%), linear-gradient(135deg, #0f1226 0%, #1b1e3b 35%, #2a2f59 70%, #3a3f7a 100%)',
   padding: theme.spacing(5, 4, 6, 4),
   position: 'relative',
   color: 'rgba(255,255,255,0.9)',

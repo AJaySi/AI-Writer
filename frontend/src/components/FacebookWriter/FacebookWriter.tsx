@@ -253,7 +253,8 @@ const FacebookWriter: React.FC = () => {
     { title: '📚 Story', message: 'Use tool generateFacebookStory to create a Facebook Story script with tone and visuals.' },
     { title: '🎬 Reel script', message: 'Use tool generateFacebookReel to draft a 30-60 seconds fast-paced product demo reel with hook, scenes, and CTA.' },
     { title: '🖼️ Carousel', message: 'Use tool generateFacebookCarousel to create a 5-slide Product showcase carousel with a main caption and CTA.' },
-    { title: '📅 Event', message: 'Use tool generateFacebookEvent to create a Virtual Webinar event description with title, highlights, and CTA.' }
+    { title: '📅 Event', message: 'Use tool generateFacebookEvent to create a Virtual Webinar event description with title, highlights, and CTA.' },
+    { title: 'ℹ️ Page About', message: 'Use tool generateFacebookPageAbout to create a comprehensive Facebook Page About section with business details and contact information.' }
   ];
   const editSuggestions = [
     { title: '🙂 Make it casual', message: 'Use tool editFacebookDraft with operation Casual' },

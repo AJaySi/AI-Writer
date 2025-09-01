@@ -146,6 +146,49 @@ export const facebookWriterApi = {
     const { data } = await apiClient.post('/api/facebook-writer/event/generate', payload);
     return data;
   }
+  ,
+  async groupPostGenerate(payload: {
+    group_name: string;
+    group_type: string;
+    post_purpose: string;
+    business_type: string;
+    topic: string;
+    target_audience: string;
+    value_proposition: string;
+    group_rules?: { no_promotion?: boolean; value_first?: boolean; no_links?: boolean; community_focused?: boolean; relevant_only?: boolean };
+    include?: string;
+    avoid?: string;
+    call_to_action?: string;
+  }): Promise<any> {
+    const { data } = await apiClient.post('/api/facebook-writer/group-post/generate', payload);
+    return data;
+  },
+  async pageAboutGenerate(payload: {
+    business_name: string;
+    business_category: string;
+    custom_category?: string;
+    business_description: string;
+    target_audience: string;
+    unique_value_proposition: string;
+    services_products: string;
+    company_history?: string;
+    mission_vision?: string;
+    achievements?: string;
+    page_tone: string;
+    custom_tone?: string;
+    contact_info?: {
+      website?: string;
+      phone?: string;
+      email?: string;
+      address?: string;
+      hours?: string;
+    };
+    keywords?: string;
+    call_to_action?: string;
+  }): Promise<any> {
+    const { data } = await apiClient.post('/api/facebook-writer/page-about/generate', payload);
+    return data;
+  }
 };
 
 
