@@ -37,4 +37,9 @@ crawl4ai>=0.2.0
 
 # Utilities
 pydantic>=2.5.2,<3.0.0
-typing-extensions>=4.8.0 
+typing-extensions>=4.8.0
+
+# Story Generators dependencies
+Pillow>=10.0.0
+moviepy>=1.0.3
+python-magic>=0.4.27 

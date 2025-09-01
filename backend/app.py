@@ -61,6 +61,11 @@ from api.user_data import router as user_data_router
 # Import strategy copilot endpoints
 from api.content_planning.strategy_copilot import router as strategy_copilot_router
 
+# Import story generators
+from api.story_generators.routers.story_writer import router as story_writer_router
+from api.story_generators.routers.story_illustrator import router as story_illustrator_router
+from api.story_generators.routers.story_video_generator import router as story_video_generator_router
+
 # Import database service
 from services.database import init_database, close_database
 
@@ -377,6 +382,11 @@ app.include_router(facebook_router)
 app.include_router(content_planning_router)
 app.include_router(user_data_router)
 app.include_router(strategy_copilot_router)
+
+# Include story generator routers
+app.include_router(story_writer_router, prefix="/api")
+app.include_router(story_illustrator_router, prefix="/api") 
+app.include_router(story_video_generator_router, prefix="/api")
 
 # SEO Dashboard endpoints
 @app.get("/api/seo-dashboard/data")
