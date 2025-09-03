@@ -54,7 +54,8 @@ class QualityHandler:
                 citation_coverage=quality_analysis.get('metrics', {}).get('citation_coverage', 0.0),
                 content_length=quality_analysis.get('content_length', 0),
                 word_count=quality_analysis.get('word_count', 0),
-                analysis_timestamp=quality_analysis.get('analysis_timestamp', '')
+                analysis_timestamp=quality_analysis.get('analysis_timestamp', ''),
+                recommendations=quality_analysis.get('recommendations', [])
             )
         except Exception as e:
             logger.warning(f"Quality metrics creation failed: {e}")

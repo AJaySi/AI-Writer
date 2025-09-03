@@ -1,11 +1,53 @@
 """
 LinkedIn Services Package
 
-Contains specialized services for LinkedIn content generation.
+This package provides comprehensive LinkedIn content generation and management services
+including content generation, image generation, and various LinkedIn-specific utilities.
 """
 
-from .quality_handler import QualityHandler
+# Import existing services
 from .content_generator import ContentGenerator
-from .research_handler import ResearchHandler
+from .content_generator_prompts import (
+    PostPromptBuilder,
+    ArticlePromptBuilder,
+    CarouselPromptBuilder,
+    VideoScriptPromptBuilder,
+    CommentResponsePromptBuilder,
+    CarouselGenerator,
+    VideoScriptGenerator
+)
 
-__all__ = ["QualityHandler", "ContentGenerator", "ResearchHandler"]
+# Import new image generation services
+from .image_generation import (
+    LinkedInImageGenerator,
+    LinkedInImageEditor,
+    LinkedInImageStorage
+)
+from .image_prompts import LinkedInPromptGenerator
+
+__all__ = [
+    # Content Generation
+    'ContentGenerator',
+    
+    # Prompt Builders
+    'PostPromptBuilder',
+    'ArticlePromptBuilder', 
+    'CarouselPromptBuilder',
+    'VideoScriptPromptBuilder',
+    'CommentResponsePromptBuilder',
+    
+    # Specialized Generators
+    'CarouselGenerator',
+    'VideoScriptGenerator',
+    
+    # Image Generation Services
+    'LinkedInImageGenerator',
+    'LinkedInImageEditor',
+    'LinkedInImageStorage',
+    'LinkedInPromptGenerator'
+]
+
+# Version information
+__version__ = "2.0.0"
+__author__ = "Alwrity Team"
+__description__ = "LinkedIn Content and Image Generation Services"

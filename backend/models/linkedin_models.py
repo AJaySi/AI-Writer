@@ -254,6 +254,7 @@ class ContentQualityMetrics(BaseModel):
     content_length: int = Field(..., description="Content length in characters")
     word_count: int = Field(..., description="Word count")
     analysis_timestamp: str = Field(..., description="Timestamp of quality analysis")
+    recommendations: Optional[List[str]] = Field(default_factory=list, description="List of improvement recommendations")
 
 
 # New Citation Model

@@ -32,6 +32,19 @@ export function useLinkedInWriter() {
   const [groundingEnabled, setGroundingEnabled] = useState(false);
   const [searchQueries, setSearchQueries] = useState<string[]>([]);
 
+  // Progress state (lightweight custom system)
+  type ProgressStatus = 'pending' | 'active' | 'completed' | 'error';
+  type ProgressStep = { 
+    id: string; 
+    label: string; 
+    status: ProgressStatus; 
+    message?: string;
+    details?: any;
+    timestamp?: string;
+  };
+  const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
+  const [progressActive, setProgressActive] = useState<boolean>(false);
+
   // Chat history state
   const [historyVersion, setHistoryVersion] = useState<number>(0);
   const [chatHistory, setChatHistory] = useState<ChatMsg[]>([]);
@@ -43,6 +56,7 @@ export function useLinkedInWriter() {
   const [showPreferencesModal, setShowPreferencesModal] = useState(false);
   const [showContextModal, setShowContextModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [justGeneratedContent, setJustGeneratedContent] = useState(false);
 
   // Update suggestions when context changes
   const updateSuggestions = useCallback(() => {
@@ -61,6 +75,13 @@ export function useLinkedInWriter() {
     const updatedActions = [...(currentPrefs.last_used_actions || []), actionName].slice(-5);
     savePreferences({ last_used_actions: updatedActions });
     setUserPreferences(prev => ({ ...prev, last_used_actions: updatedActions }));
+    
+    // Mark content as just generated for content creation actions
+    if (['generateLinkedInPost', 'generateLinkedInArticle', 'generateLinkedInCarousel', 'generateLinkedInVideoScript'].includes(actionName)) {
+      setJustGeneratedContent(true);
+      // Reset the flag after 30 seconds
+      setTimeout(() => setJustGeneratedContent(false), 30000);
+    }
     
     // Update suggestions after action usage
     setTimeout(() => updateSuggestions(), 100);
@@ -91,6 +112,75 @@ export function useLinkedInWriter() {
     };
 
     loadInitialData();
+  }, []);
+
+  // Listen for lightweight progress events
+  useEffect(() => {
+    const handleProgressInit = (event: CustomEvent) => {
+      const steps: Array<{ id: string; label: string; message?: string }> = event.detail?.steps || [];
+      const initialized: ProgressStep[] = steps.map((s, index) => ({
+        id: s.id,
+        label: s.label,
+        message: s.message,
+        status: index === 0 ? 'active' : 'pending',
+        timestamp: new Date().toISOString()
+      }));
+      setProgressSteps(initialized);
+      setProgressActive(true);
+    };
+
+    const handleProgressStep = (event: CustomEvent) => {
+      const { id, status, details, message } = event.detail || {};
+      if (!id) return;
+      setProgressSteps(prev => {
+        const updated = prev.map(step => step.id === id ? { 
+          ...step, 
+          status: (status || 'completed') as ProgressStatus, 
+          details, 
+          message,
+          timestamp: new Date().toISOString() 
+        } : step);
+        // Mark next pending as active if current completed
+        if ((status || 'completed') === 'completed') {
+          const nextIdx = updated.findIndex(s => s.status === 'pending');
+          if (nextIdx !== -1) {
+            updated[nextIdx] = { 
+              ...updated[nextIdx], 
+              status: 'active', 
+              timestamp: new Date().toISOString() 
+            };
+          }
+        }
+        return updated;
+      });
+    };
+
+    const handleProgressComplete = () => {
+      setProgressSteps(prev => prev.map(s => s.status === 'completed' ? s : { ...s, status: 'completed', timestamp: new Date().toISOString() }));
+      setProgressActive(false);
+      // Keep progress visible for a moment to show completion, then hide
+      setTimeout(() => {
+        setProgressSteps([]);
+      }, 1500);
+    };
+
+    const handleProgressError = (event: CustomEvent) => {
+      const { id, details } = event.detail || {};
+      setProgressSteps(prev => prev.map(s => (id ? (s.id === id) : (s.status === 'active')) ? { ...s, status: 'error', details, timestamp: new Date().toISOString() } : s));
+      setProgressActive(false);
+    };
+
+    window.addEventListener('linkedinwriter:progressInit', handleProgressInit as EventListener);
+    window.addEventListener('linkedinwriter:progressStep', handleProgressStep as EventListener);
+    window.addEventListener('linkedinwriter:progressComplete', handleProgressComplete as EventListener);
+    window.addEventListener('linkedinwriter:progressError', handleProgressError as EventListener);
+
+    return () => {
+      window.removeEventListener('linkedinwriter:progressInit', handleProgressInit as EventListener);
+      window.removeEventListener('linkedinwriter:progressStep', handleProgressStep as EventListener);
+      window.removeEventListener('linkedinwriter:progressComplete', handleProgressComplete as EventListener);
+      window.removeEventListener('linkedinwriter:progressError', handleProgressError as EventListener);
+    };
   }, []);
 
   // Listen for grounding data updates from CopilotKit actions
@@ -150,6 +240,9 @@ export function useLinkedInWriter() {
       setCurrentAction(null);
       // Auto-show preview when new content is generated
       setShowPreview(true);
+      // Hide progress tracker when content is generated
+      setProgressActive(false);
+      setProgressSteps([]);
     };
 
     const handleAppendDraft = (event: CustomEvent) => {
@@ -271,6 +364,7 @@ export function useLinkedInWriter() {
     showPreferencesModal,
     showContextModal,
     showPreview,
+    justGeneratedContent,
     
     // Setters
     setDraft,
@@ -288,6 +382,7 @@ export function useLinkedInWriter() {
     setShowPreferencesModal,
     setShowContextModal,
     setShowPreview,
+    setJustGeneratedContent: setJustGeneratedContent,
     
     // Handlers
     handleDraftChange,
@@ -313,6 +408,10 @@ export function useLinkedInWriter() {
     setCitations,
     setQualityMetrics,
     setGroundingEnabled,
-    setSearchQueries
+    setSearchQueries,
+
+    // Progress (exposed to UI)
+    progressSteps,
+    progressActive
   };
 }

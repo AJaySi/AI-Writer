@@ -54,6 +54,8 @@ from routers.seo_tools import router as seo_tools_router
 from api.facebook_writer.routers import facebook_router
 # Import LinkedIn content generation router
 from routers.linkedin import router as linkedin_router
+# Import LinkedIn image generation router
+from api.linkedin_image_generation import router as linkedin_image_router
 
 # Import user data endpoints
 # Import content planning endpoints
@@ -375,6 +377,8 @@ app.include_router(seo_tools_router)
 app.include_router(facebook_router)
 # Include LinkedIn content generation router
 app.include_router(linkedin_router)
+# Include LinkedIn image generation router
+app.include_router(linkedin_image_router)
 
 # Include user data router
 # Include content planning router

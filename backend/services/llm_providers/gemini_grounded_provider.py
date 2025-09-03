@@ -111,11 +111,11 @@ class GeminiGroundedProvider:
             Enhanced prompt for grounded generation
         """
         content_type_instructions = {
-            "linkedin_post": "Generate a professional LinkedIn post that is factually accurate and cites current sources. Include engaging hashtags and a call-to-action.",
-            "linkedin_article": "Generate a comprehensive LinkedIn article with proper structure, factual accuracy, and source citations. Include an engaging title and conclusion.",
-            "linkedin_carousel": "Generate LinkedIn carousel content with multiple slides, each containing factual information with proper source attribution.",
-            "linkedin_video_script": "Generate a video script with hook, main content, and conclusion. Ensure all claims are factually grounded.",
-            "linkedin_comment_response": "Generate a professional comment response that adds value to the conversation."
+            "linkedin_post": "You are an expert LinkedIn content strategist. Generate a highly engaging, professional LinkedIn post that drives meaningful engagement, establishes thought leadership, and includes compelling hooks, actionable insights, and strategic hashtags. Every element should be optimized for maximum engagement and shareability.",
+            "linkedin_article": "You are a senior content strategist and industry thought leader. Generate a comprehensive, SEO-optimized LinkedIn article with compelling headlines, structured content, data-driven insights, and practical takeaways. Include proper source citations and engagement elements throughout.",
+            "linkedin_carousel": "You are a visual content strategist specializing in LinkedIn carousels. Generate compelling, story-driven carousel content with clear visual hierarchy, actionable insights per slide, and strategic engagement elements. Each slide should provide immediate value while building anticipation for the next.",
+            "linkedin_video_script": "You are a video content strategist and LinkedIn engagement expert. Generate a compelling video script optimized for LinkedIn's algorithm with attention-grabbing hooks, strategic timing, and engagement-driven content. Include specific visual and audio recommendations for maximum impact.",
+            "linkedin_comment_response": "You are a LinkedIn engagement specialist and industry expert. Generate thoughtful, value-adding comment responses that encourage further discussion, demonstrate expertise, and build meaningful professional relationships. Focus on genuine engagement over generic responses."
         }
         
         instruction = content_type_instructions.get(content_type, "Generate professional content with factual accuracy.")
@@ -123,15 +123,29 @@ class GeminiGroundedProvider:
         grounded_prompt = f"""
         {instruction}
         
-        IMPORTANT: Use current, factual information from reliable sources. Cite specific sources for any claims, statistics, or recent developments.
+        CRITICAL REQUIREMENTS FOR LINKEDIN CONTENT:
+        - Use ONLY current, factual information from reliable sources (2024-2025)
+        - Cite specific sources for ALL claims, statistics, and recent developments
+        - Ensure content is optimized for LinkedIn's algorithm and engagement patterns
+        - Include strategic hashtags and engagement elements throughout
         
         User Request: {prompt}
         
-        Requirements:
-        - Ensure all factual claims are backed by current sources
-        - Use professional, engaging language appropriate for LinkedIn
-        - Include relevant industry insights and trends
-        - Make content shareable and valuable for the target audience
+        CONTENT QUALITY STANDARDS:
+        - All factual claims must be backed by current, authoritative sources
+        - Use professional yet conversational language that encourages engagement
+        - Include relevant industry insights, trends, and data points
+        - Make content highly shareable with clear value proposition
+        - Optimize for LinkedIn's professional audience and engagement metrics
+        
+        ENGAGEMENT OPTIMIZATION:
+        - Include thought-provoking questions and calls-to-action
+        - Use storytelling elements and real-world examples
+        - Ensure content provides immediate, actionable value
+        - Optimize for comments, shares, and professional networking
+        - Include industry-specific terminology and insights
+        
+        REMEMBER: This content will be displayed on LinkedIn with full source attribution and grounding data. Every claim must be verifiable, and the content should position the author as a thought leader in their industry.
         """
         
         return grounded_prompt.strip()

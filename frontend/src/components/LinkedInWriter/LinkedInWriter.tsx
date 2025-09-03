@@ -5,7 +5,7 @@ import '@copilotkit/react-ui/styles.css';
 import './styles/alwrity-copilot.css';
 import RegisterLinkedInActions from './RegisterLinkedInActions';
 import RegisterLinkedInEditActions from './RegisterLinkedInEditActions';
-import { Header, ContentEditor, LoadingIndicator, WelcomeMessage } from './components';
+import { Header, ContentEditor, LoadingIndicator, WelcomeMessage, ProgressTracker } from './components';
 import { useLinkedInWriter } from './hooks/useLinkedInWriter';
 import { useCopilotPersistence } from './utils/enhancedPersistence';
 
@@ -34,6 +34,7 @@ const LinkedInWriter: React.FC<LinkedInWriterProps> = ({ className = '' }) => {
     showPreferencesModal,
     showContextModal,
     showPreview,
+    justGeneratedContent,
     
     // Grounding data
     researchSources,
@@ -41,6 +42,8 @@ const LinkedInWriter: React.FC<LinkedInWriterProps> = ({ className = '' }) => {
     qualityMetrics,
     groundingEnabled,
     searchQueries,
+    progressSteps,
+    progressActive,
     
     // Setters
     setDraft,
@@ -65,7 +68,9 @@ const LinkedInWriter: React.FC<LinkedInWriterProps> = ({ className = '' }) => {
     summarizeHistory
   } = useLinkedInWriter();
 
-    // Get enhanced persistence functionality
+
+
+  // Get enhanced persistence functionality
   const {
     persistenceManager,
     copilotContext,
@@ -287,18 +292,29 @@ const LinkedInWriter: React.FC<LinkedInWriterProps> = ({ className = '' }) => {
     const hasCTA = /\b(call now|sign up|join|try|learn more|cta|comment|share|connect|message|dm|reach out)\b/i.test(draft || '');
     const hasHashtags = /#[A-Za-z0-9_]+/.test(draft || '');
     const isLong = (draft || '').length > 500;
+    
+    // Debug logging for suggestions
+    console.log('[LinkedIn Writer] Generating suggestions:', {
+      hasContent,
+      justGeneratedContent,
+      draftLength: draft?.length || 0
+    });
 
     if (!hasContent) {
       // Initial suggestions for content creation
-      return [
+      const initialSuggestions = [
         { title: '📝 LinkedIn Post', message: 'Use tool generateLinkedInPost to create a professional LinkedIn post for your industry.' },
         { title: '📄 Article', message: 'Use tool generateLinkedInArticle to write a thought leadership article.' },
         { title: '🎠 Carousel', message: 'Use tool generateLinkedInCarousel to create a multi-slide carousel presentation.' },
         { title: '🎬 Video Script', message: 'Use tool generateLinkedInVideoScript to draft a video script for LinkedIn.' },
-        { title: '💬 Comment Response', message: 'Use tool generateLinkedInCommentResponse to craft a professional comment reply.' }
+        { title: '💬 Comment Response', message: 'Use tool generateLinkedInCommentResponse to craft a professional comment reply.' },
+        { title: '🖼️ Generate Post Image', message: 'Use tool generateLinkedInImagePrompts to create professional images for your LinkedIn content.' },
+        { title: '🎨 Visual Content', message: 'Create engaging visual content with AI-generated images optimized for LinkedIn.' }
       ];
+      console.log('[LinkedIn Writer] Initial suggestions:', initialSuggestions);
+      return initialSuggestions;
     } else {
-      // Refinement suggestions for existing content - use direct edit actions
+        // Refinement suggestions for existing content - use direct edit actions
       const refinementSuggestions = [
         { title: '🙂 Make it casual', message: 'Use tool editLinkedInDraft with operation Casual' },
         { title: '💼 Make it professional', message: 'Use tool editLinkedInDraft with operation Professional' },
@@ -307,6 +323,21 @@ const LinkedInWriter: React.FC<LinkedInWriterProps> = ({ className = '' }) => {
         { title: '✂️ Shorten', message: 'Use tool editLinkedInDraft with operation Shorten' },
         { title: '➕ Lengthen', message: 'Use tool editLinkedInDraft with operation Lengthen' }
       ];
+      
+      // Add special suggestions when content was just generated
+      if (justGeneratedContent) {
+        console.log('[LinkedIn Writer] Adding post-generation suggestions');
+        refinementSuggestions.unshift(
+          { 
+            title: '🎉 Content Generated! Next Steps:', 
+            message: 'Great! Your content is ready. Now let\'s enhance it with images and make it perfect for LinkedIn.' 
+          },
+          { 
+            title: '🖼️ Generate Post Image', 
+            message: 'Use tool generateLinkedInImagePrompts to create professional images for this LinkedIn post' 
+          }
+        );
+      }
 
       // Add contextual suggestions based on content analysis
       if (!hasCTA) {
@@ -318,7 +349,31 @@ const LinkedInWriter: React.FC<LinkedInWriterProps> = ({ className = '' }) => {
       if (isLong) {
         refinementSuggestions.push({ title: '📝 Summarize intro', message: 'Use tool editLinkedInDraft with operation Shorten' });
       }
+      
+      // Add image generation suggestion when there's content
+      if (draft && draft.trim().length > 0) {
+        console.log('[LinkedIn Writer] Adding image generation suggestion');
+        // Make image generation suggestion more prominent
+        refinementSuggestions.push({ 
+          title: '🖼️ Generate Post Image', 
+          message: 'Use tool generateLinkedInImagePrompts to create professional images for this LinkedIn post'
+        });
+        
+        // Add contextual image suggestions based on content type
+        if (draft.includes('digital transformation') || draft.includes('technology') || draft.includes('innovation')) {
+          refinementSuggestions.push({ 
+            title: '🚀 Tech-Focused Image', 
+            message: 'Use tool generateLinkedInImagePrompts to create technology-themed professional images for this post' 
+          });
+        } else if (draft.includes('business') || draft.includes('strategy') || draft.includes('growth')) {
+          refinementSuggestions.push({ 
+            title: '💼 Business Image', 
+            message: 'Use tool generateLinkedInImagePrompts to create business-focused professional images for this post' 
+          });
+        }
+      }
 
+      console.log('[LinkedIn Writer] Final suggestions:', refinementSuggestions);
       return refinementSuggestions;
     }
   };
@@ -342,7 +397,19 @@ const LinkedInWriter: React.FC<LinkedInWriterProps> = ({ className = '' }) => {
         draft={draft}
         getHistoryLength={getHistoryLength}
       />
-      
+      {/* Lightweight progress tracker under header */}
+      <div style={{ 
+        padding: '6px 16px',
+        transition: 'all 300ms ease',
+        opacity: progressActive || progressSteps.length > 0 ? 1 : 0,
+        transform: progressActive || progressSteps.length > 0 ? 'translateY(0)' : 'translateY(-10px)',
+        height: progressActive || progressSteps.length > 0 ? 'auto' : 0,
+        overflow: 'hidden'
+      }}>
+        <ProgressTracker steps={progressSteps as any} active={progressActive} />
+      </div>
+
+
       {/* Debug: Enhanced Persistence Test Buttons (remove in production) */}
 
 

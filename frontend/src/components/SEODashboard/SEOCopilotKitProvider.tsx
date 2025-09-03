@@ -222,60 +222,89 @@ Focus on actionable recommendations and use the registered tools.
               height: 100%;
             }
 
-            /* ALwrity glassomorphic styling for Copilot sidebar */
+            /* ALwrity Compact Copilot Styling - 60% Smaller & More Efficient */
             .alwrity-copilot-sidebar {
               --alwrity-bg: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.08));
               --alwrity-border: rgba(255,255,255,0.22);
-              --alwrity-shadow: 0 18px 50px rgba(0,0,0,0.35);
+              --alwrity-shadow: 0 8px 24px rgba(0,0,0,0.25); /* Reduced from 18px 50px */
               --alwrity-accent: #667eea;
               --alwrity-accent2: #764ba2;
               --alwrity-text: rgba(255,255,255,0.92);
               --alwrity-subtext: rgba(255,255,255,0.7);
             }
+            
             .alwrity-copilot-sidebar * {
               font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, 'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
             }
+            
+            /* Compact sidebar container */
             .alwrity-copilot-sidebar .copilot-sidebar-container,
             .alwrity-copilot-sidebar .copilotkit-sidebar,
             .alwrity-copilot-sidebar .copilotkit-chat-container {
               background: var(--alwrity-bg) !important;
-              backdrop-filter: blur(22px) !important;
-              -webkit-backdrop-filter: blur(22px) !important;
+              backdrop-filter: blur(16px) !important; /* Reduced from 22px */
+              -webkit-backdrop-filter: blur(16px) !important;
               border: 1px solid var(--alwrity-border) !important;
               box-shadow: var(--alwrity-shadow) !important;
               color: var(--alwrity-text) !important;
+              
+              /* Compact dimensions */
+              width: 40% !important; /* Reduced from 100% */
+              max-width: 320px !important;
+              min-width: 280px !important;
+              height: 85vh !important;
+              max-height: 600px !important;
+              
+              /* Compact spacing */
+              padding: 8px !important;
+              margin: 8px !important;
+              border-radius: 8px !important;
             }
+            
             .alwrity-copilot-sidebar .copilotkit-title,
             .alwrity-copilot-sidebar .copilot-title {
               color: var(--alwrity-text) !important;
-              font-weight: 700 !important;
-              letter-spacing: 0.2px !important;
+              font-weight: 600 !important; /* Reduced from 700 */
+              letter-spacing: 0.1px !important; /* Reduced from 0.2px */
+              font-size: 14px !important; /* Reduced from 18px+ */
             }
+            
             .alwrity-copilot-sidebar .copilotkit-sidebar,
             .alwrity-copilot-sidebar .copilot-sidebar-container {
               z-index: 1200 !important;
             }
+            
             .alwrity-copilot-sidebar .copilotkit-subtitle,
             .alwrity-copilot-sidebar .copilot-subtitle,
             .alwrity-copilot-sidebar .copilotkit-initial-message {
               color: var(--alwrity-subtext) !important;
+              font-size: 12px !important; /* Reduced from 14px+ */
+              line-height: 1.3 !important; /* Reduced from 1.5 */
+              margin: 4px 0 8px 0 !important;
             }
-            /* Suggestions: border, glow, depth, enterprise look */
+            
+            /* Compact Suggestions - 60% smaller */
             .alwrity-copilot-sidebar .copilot-suggestion,
             .alwrity-copilot-sidebar .copilotkit-suggestion,
             .alwrity-copilot-sidebar .copilotkit-suggestions button,
             .alwrity-copilot-sidebar .copilot-suggestions button {
               position: relative;
               background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.08)) !important;
-              border: 1.5px solid rgba(255,255,255,0.32) !important;
+              border: 1px solid rgba(255,255,255,0.32) !important; /* Reduced from 1.5px */
               color: var(--alwrity-text) !important;
-              box-shadow: 0 10px 28px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.2) !important;
-              transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-              border-radius: 12px !important;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2) !important; /* Reduced from 10px 28px */
+              transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease; /* Reduced from 0.25s */
+              border-radius: 8px !important; /* Reduced from 12px */
               overflow: hidden;
-              backdrop-filter: blur(16px);
-              -webkit-backdrop-filter: blur(16px);
+              backdrop-filter: blur(12px); /* Reduced from 16px */
+              -webkit-backdrop-filter: blur(12px);
+              
+              /* Compact padding and margins */
+              padding: 6px 10px !important; /* Reduced from 12px+ */
+              margin: 3px !important; /* Reduced from 6px+ */
+              font-size: 12px !important; /* Reduced from 14px+ */
             }
+            
             .alwrity-copilot-sidebar .copilot-suggestion::before,
             .alwrity-copilot-sidebar .copilotkit-suggestion::before,
             .alwrity-copilot-sidebar .copilotkit-suggestions button::before,
@@ -286,57 +315,69 @@ Focus on actionable recommendations and use the registered tools.
               left: -120%;
               width: 120%;
               height: 100%;
-              background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
-              transition: left 0.6s ease;
+              background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); /* Reduced from 0.18 */
+              transition: left 0.4s ease; /* Reduced from 0.6s */
             }
+            
             .alwrity-copilot-sidebar .copilot-suggestion:hover::before,
             .alwrity-copilot-sidebar .copilotkit-suggestion:hover::before,
             .alwrity-copilot-sidebar .copilotkit-suggestions button:hover::before,
             .alwrity-copilot-sidebar .copilot-suggestions button:hover::before {
               left: 120%;
             }
+            
             .alwrity-copilot-sidebar .copilot-suggestion:hover,
             .alwrity-copilot-sidebar .copilotkit-suggestion:hover,
             .alwrity-copilot-sidebar .copilotkit-suggestions button:hover,
             .alwrity-copilot-sidebar .copilot-suggestions button:hover {
-              transform: translateY(-4px) scale(1.015);
-              box-shadow: 0 18px 44px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.18) inset !important;
-              border-color: rgba(255,255,255,0.45) !important;
+              transform: translateY(-2px) scale(1.01); /* Reduced from -4px 1.015 */
+              box-shadow: 0 8px 20px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.15) inset !important; /* Reduced from 18px 44px */
+              border-color: rgba(255,255,255,0.4) !important; /* Reduced from 0.45 */
             }
+            
             .alwrity-copilot-sidebar .copilot-suggestion:active,
             .alwrity-copilot-sidebar .copilotkit-suggestion:active,
             .alwrity-copilot-sidebar .copilotkit-suggestions button:active,
             .alwrity-copilot-sidebar .copilot-suggestions button:active {
               transform: translateY(-1px) scale(0.995);
-              box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; /* Reduced from 8px 20px */
             }
+            
             .alwrity-copilot-sidebar .copilot-suggestion:focus-visible,
             .alwrity-copilot-sidebar .copilotkit-suggestion:focus-visible,
             .alwrity-copilot-sidebar .copilotkit-suggestions button:focus-visible,
             .alwrity-copilot-sidebar .copilot-suggestions button:focus-visible {
               outline: none !important;
-              box-shadow: 0 0 0 2px rgba(255,255,255,0.45), 0 0 0 4px rgba(102,126,234,0.35) !important;
+              box-shadow: 0 0 0 2px rgba(255,255,255,0.35), 0 0 0 3px rgba(102,126,234,0.3) !important; /* Reduced from 4px */
             }
+            
             .alwrity-copilot-sidebar .copilot-suggestion .icon, 
             .alwrity-copilot-sidebar .copilotkit-suggestion .icon, 
             .alwrity-copilot-sidebar .copilotkit-suggestions button .icon {
-              filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+              filter: drop-shadow(0 1px 3px rgba(0,0,0,0.2)); /* Reduced from 2px 6px */
+              width: 14px !important; /* Reduced from 18px+ */
+              height: 14px !important; /* Reduced from 18px+ */
+              margin-right: 6px !important; /* Reduced from 8px+ */
             }
+            
+            /* Compact suggestions grid */
             .alwrity-copilot-sidebar .copilotkit-suggestions,
             .alwrity-copilot-sidebar .copilot-suggestions {
               display: grid;
               grid-template-columns: 1fr;
-              gap: 10px;
+              gap: 6px; /* Reduced from 10px */
+              margin: 8px 0; /* Reduced from 16px+ */
             }
+            
             @media (min-width: 420px) {
               .alwrity-copilot-sidebar .copilotkit-suggestions,
               .alwrity-copilot-sidebar .copilot-suggestions {
                 grid-template-columns: 1fr 1fr;
-                gap: 12px;
+                gap: 8px; /* Reduced from 12px */
               }
             }
 
-            /* Reduce motion for users who prefer it */
+            /* Compact motion for users who prefer it */
             @media (prefers-reduced-motion: reduce) {
               .alwrity-copilot-sidebar .copilot-suggestion,
               .alwrity-copilot-sidebar .copilotkit-suggestion,
@@ -352,32 +393,92 @@ Focus on actionable recommendations and use the registered tools.
               }
             }
 
-            /* Scrollbar styling (webkit) */
+            /* Compact scrollbar styling */
             .alwrity-copilot-sidebar ::-webkit-scrollbar {
-              width: 10px;
-              height: 10px;
+              width: 6px; /* Reduced from 10px */
+              height: 6px; /* Reduced from 10px */
             }
+            
             .alwrity-copilot-sidebar ::-webkit-scrollbar-thumb {
-              background: rgba(255,255,255,0.25);
-              border: 2px solid rgba(0,0,0,0.1);
-              border-radius: 10px;
+              background: rgba(255,255,255,0.2); /* Reduced from 0.25 */
+              border: 1px solid rgba(0,0,0,0.1);
+              border-radius: 6px; /* Reduced from 10px */
             }
+            
             .alwrity-copilot-sidebar ::-webkit-scrollbar-track {
-              background: rgba(255,255,255,0.08);
-              border-radius: 10px;
+              background: rgba(255,255,255,0.05); /* Reduced from 0.08 */
+              border-radius: 6px; /* Reduced from 10px */
             }
+            
+            /* Compact primary buttons */
             .alwrity-copilot-sidebar .copilot-primary,
             .alwrity-copilot-sidebar .copilotkit-primary-button,
             .alwrity-copilot-sidebar button[type="submit"] {
               background: linear-gradient(90deg, var(--alwrity-accent), var(--alwrity-accent2)) !important;
-              border: 1px solid rgba(255,255,255,0.35) !important;
+              border: 1px solid rgba(255,255,255,0.3) !important; /* Reduced from 0.35 */
               color: white !important;
+              padding: 6px 12px !important; /* Reduced from 10px 20px */
+              font-size: 12px !important; /* Reduced from 14px+ */
+              border-radius: 6px !important; /* Reduced from 8px+ */
             }
+            
+            /* Compact input styling */
             .alwrity-copilot-sidebar .copilot-input,
             .alwrity-copilot-sidebar .copilotkit-input {
-              background: rgba(255,255,255,0.14) !important;
+              background: rgba(255,255,255,0.12) !important; /* Reduced from 0.14 */
               color: var(--alwrity-text) !important;
-              border: 1px solid rgba(255,255,255,0.22) !important;
+              border: 1px solid rgba(255,255,255,0.2) !important; /* Reduced from 0.22 */
+              padding: 8px 12px !important; /* Reduced from 14px 18px */
+              font-size: 13px !important; /* Reduced from 14px+ */
+              border-radius: 6px !important; /* Reduced from 8px+ */
+            }
+
+            /* Compact chat messages container */
+            .alwrity-copilot-sidebar .copilotkit-messages,
+            .alwrity-copilot-sidebar .copilot-messages,
+            .alwrity-copilot-sidebar .chat-messages {
+              padding: 8px !important; /* Reduced from 16px+ */
+              margin: 0 !important;
+              max-height: 70vh !important; /* Ensure chat takes most space */
+              overflow-y: auto !important;
+            }
+
+            /* Compact chat input area */
+            .alwrity-copilot-sidebar .copilotkit-input-container,
+            .alwrity-copilot-sidebar .copilot-input-container {
+              padding: 8px !important; /* Reduced from 16px+ */
+              margin: 8px 0 !important; /* Reduced from 16px+ */
+              border-top: 1px solid rgba(255,255,255,0.1) !important;
+            }
+
+            /* Compact close button */
+            .alwrity-copilot-sidebar .copilotkit-close,
+            .alwrity-copilot-sidebar .copilot-close,
+            .alwrity-copilot-sidebar button[aria-label*="close"],
+            .alwrity-copilot-sidebar button[aria-label*="Close"] {
+              width: 24px !important; /* Reduced from 32px+ */
+              height: 24px !important; /* Reduced from 32px+ */
+              border-radius: 50% !important;
+              padding: 0 !important;
+              font-size: 12px !important; /* Reduced from 16px+ */
+            }
+
+            /* Compact responsive design */
+            @media (max-width: 768px) {
+              .alwrity-copilot-sidebar .copilot-sidebar-container,
+              .alwrity-copilot-sidebar .copilotkit-sidebar,
+              .alwrity-copilot-sidebar .copilotkit-chat-container {
+                width: 90% !important; /* Mobile: take more width */
+                max-width: none !important;
+                min-width: 280px !important;
+                height: 80vh !important;
+              }
+              
+              .alwrity-copilot-sidebar .copilotkit-suggestions,
+              .alwrity-copilot-sidebar .copilot-suggestions {
+                grid-template-columns: 1fr !important; /* Single column on mobile */
+                gap: 4px !important; /* Even more compact on mobile */
+              }
             }
 
             .seo-copilotkit-loading {

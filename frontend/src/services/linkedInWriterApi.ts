@@ -155,6 +155,7 @@ export interface ContentQualityMetrics {
   content_length: number;
   word_count: number;
   analysis_timestamp: string;
+  recommendations?: string[];
 }
 
 export interface ArticleContent {

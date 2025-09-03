@@ -178,7 +178,8 @@ class LinkedInService:
                     research_sources=research_sources
                 )
             else:
-                content_result = await content_generator.generate_fallback_article_content(request)
+                logger.error("Grounding not enabled - cannot generate LinkedIn article without AI provider")
+                raise Exception("Grounding not enabled - cannot generate LinkedIn article without AI provider")
             
             # Step 3-5: Use content generator for processing and response building
             return await content_generator.generate_article(
@@ -235,7 +236,8 @@ class LinkedInService:
                     research_sources=research_sources
                 )
             else:
-                content_result = await content_generator.generate_fallback_carousel_content(request)
+                logger.error("Grounding not enabled - cannot generate LinkedIn carousel without AI provider")
+                raise Exception("Grounding not enabled - cannot generate LinkedIn carousel without AI provider")
             
             # Step 3-5: Use content generator for processing and response building
             
@@ -280,7 +282,7 @@ class LinkedInService:
                     success=False,
                     error=result['error']
                 )
-            
+                
         except Exception as e:
             logger.error(f"Error generating LinkedIn carousel: {str(e)}")
             return LinkedInCarouselResponse(
@@ -327,7 +329,8 @@ class LinkedInService:
                     research_sources=research_sources
                 )
             else:
-                content_result = await content_generator.generate_fallback_video_script_content(request)
+                logger.error("Grounding not enabled - cannot generate LinkedIn video script without AI provider")
+                raise Exception("Grounding not enabled - cannot generate LinkedIn video script without AI provider")
             
             # Step 3-5: Use content generator for processing and response building
             
@@ -410,7 +413,8 @@ class LinkedInService:
                     research_sources=research_sources
                 )
             else:
-                response_result = await content_generator.generate_fallback_comment_response(request)
+                logger.error("Grounding not enabled - cannot generate LinkedIn comment response without AI provider")
+                raise Exception("Grounding not enabled - cannot generate LinkedIn comment response without AI provider")
             
             # Step 3-5: Use content generator for processing and response building
             
@@ -423,11 +427,18 @@ class LinkedInService:
             )
             
             if result['success']:
-                return LinkedInCommentResponseResult(
-                    success=True,
+                # Convert to LinkedInCommentResponseResult
+                from models.linkedin_models import CommentResponse
+                comment_response = CommentResponse(
                     response=result['response'],
                     alternative_responses=result.get('alternative_responses', []),
-                    tone_analysis=result.get('tone_analysis'),
+                    tone_analysis=result.get('tone_analysis')
+                )
+                
+                return LinkedInCommentResponseResult(
+                    success=True,
+                    data=comment_response,
+                    research_sources=result['research_sources'],
                     generation_metadata=result['generation_metadata'],
                     grounding_status=result['grounding_status']
                 )
