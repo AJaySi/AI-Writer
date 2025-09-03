@@ -20,9 +20,15 @@ export enum LinkedInTone {
 }
 
 export enum SearchEngine {
-  METAPHOR = 'metaphor',
   GOOGLE = 'google',
   TAVILY = 'tavily'
+}
+
+export enum GroundingLevel {
+  NONE = 'none',
+  BASIC = 'basic',
+  ENHANCED = 'enhanced',
+  ENTERPRISE = 'enterprise'
 }
 
 // Request interfaces
@@ -38,6 +44,8 @@ export interface LinkedInPostRequest {
   research_enabled?: boolean;
   search_engine?: SearchEngine;
   max_length?: number;
+  grounding_level?: GroundingLevel;
+  include_citations?: boolean;
 }
 
 export interface LinkedInArticleRequest {
@@ -51,6 +59,8 @@ export interface LinkedInArticleRequest {
   research_enabled?: boolean;
   search_engine?: SearchEngine;
   word_count?: number;
+  grounding_level?: GroundingLevel;
+  include_citations?: boolean;
 }
 
 export interface LinkedInCarouselRequest {
@@ -91,6 +101,10 @@ export interface ResearchSource {
   url: string;
   content: string;
   relevance_score?: number;
+  credibility_score?: number;
+  domain_authority?: number;
+  source_type?: string;
+  publication_date?: string;
 }
 
 export interface HashtagSuggestion {
@@ -112,6 +126,35 @@ export interface PostContent {
   hashtags: HashtagSuggestion[];
   call_to_action?: string;
   engagement_prediction?: Record<string, any>;
+  // Grounding data
+  citations?: Citation[];
+  source_list?: string;
+  quality_metrics?: ContentQualityMetrics;
+  grounding_enabled?: boolean;
+  search_queries?: string[];
+}
+
+export interface Citation {
+  type: string;
+  reference: string;
+  position?: number;
+  source_index?: number;
+  text?: string;
+  start_index?: number;
+  end_index?: number;
+  source_indices?: number[];
+}
+
+export interface ContentQualityMetrics {
+  overall_score: number;
+  factual_accuracy: number;
+  source_verification: number;
+  professional_tone: number;
+  industry_relevance: number;
+  citation_coverage: number;
+  content_length: number;
+  word_count: number;
+  analysis_timestamp: string;
 }
 
 export interface ArticleContent {
@@ -122,6 +165,12 @@ export interface ArticleContent {
   seo_metadata?: Record<string, any>;
   image_suggestions: ImageSuggestion[];
   reading_time?: number;
+  // Grounding data
+  citations?: Citation[];
+  source_list?: string;
+  quality_metrics?: ContentQualityMetrics;
+  grounding_enabled?: boolean;
+  search_queries?: string[];
 }
 
 export interface CarouselSlide {

@@ -174,6 +174,7 @@ const App: React.FC = () => {
       publicApiKey={process.env.REACT_APP_COPILOTKIT_API_KEY}
       showDevConsole={false}
       onError={(e) => console.error("CopilotKit Error:", e)}
+      
     >
       <Router>
         <ConditionalCopilotKit>

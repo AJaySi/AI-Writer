@@ -24,6 +24,13 @@ export function useLinkedInWriter() {
   const [pendingEdit, setPendingEdit] = useState<{ src: string; target: string } | null>(null);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [currentAction, setCurrentAction] = useState<string | null>(null);
+  
+  // Grounding data state
+  const [researchSources, setResearchSources] = useState<any[]>([]);
+  const [citations, setCitations] = useState<any[]>([]);
+  const [qualityMetrics, setQualityMetrics] = useState<any>(null);
+  const [groundingEnabled, setGroundingEnabled] = useState(false);
+  const [searchQueries, setSearchQueries] = useState<string[]>([]);
 
   // Chat history state
   const [historyVersion, setHistoryVersion] = useState<number>(0);
@@ -86,6 +93,42 @@ export function useLinkedInWriter() {
     loadInitialData();
   }, []);
 
+  // Listen for grounding data updates from CopilotKit actions
+  useEffect(() => {
+    const handleGroundingDataUpdate = (event: CustomEvent) => {
+      console.log('[LinkedIn Writer] Received grounding data event:', event.detail);
+      
+      const { researchSources, citations, qualityMetrics, groundingEnabled, searchQueries } = event.detail;
+      
+      console.log('[LinkedIn Writer] Extracted data:', {
+        researchSources: researchSources?.length || 0,
+        citations: citations?.length || 0,
+        qualityMetrics: !!qualityMetrics,
+        groundingEnabled,
+        searchQueries: searchQueries?.length || 0
+      });
+      
+      setResearchSources(researchSources || []);
+      setCitations(citations || []);
+      setQualityMetrics(qualityMetrics || null);
+      setGroundingEnabled(groundingEnabled || false);
+      setSearchQueries(searchQueries || []);
+      
+      console.log('[LinkedIn Writer] Grounding data updated:', {
+        sourcesCount: researchSources?.length || 0,
+        citationsCount: citations?.length || 0,
+        hasQualityMetrics: !!qualityMetrics,
+        groundingEnabled
+      });
+    };
+
+    window.addEventListener('linkedinwriter:updateGroundingData', handleGroundingDataUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('linkedinwriter:updateGroundingData', handleGroundingDataUpdate as EventListener);
+    };
+  }, []);
+
   // Save context changes to localStorage
   useEffect(() => {
     if (context) {
@@ -105,6 +148,8 @@ export function useLinkedInWriter() {
       setIsGenerating(false);
       setLoadingMessage('');
       setCurrentAction(null);
+      // Auto-show preview when new content is generated
+      setShowPreview(true);
     };
 
     const handleAppendDraft = (event: CustomEvent) => {
@@ -256,6 +301,18 @@ export function useLinkedInWriter() {
     updateSuggestions,
     getHistoryLength,
     savePreferences,
-    summarizeHistory
+    summarizeHistory,
+    
+    // Grounding data
+    researchSources,
+    citations,
+    qualityMetrics,
+    groundingEnabled,
+    searchQueries,
+    setResearchSources,
+    setCitations,
+    setQualityMetrics,
+    setGroundingEnabled,
+    setSearchQueries
   };
 }

@@ -18,7 +18,10 @@ from models.linkedin_models import (
     LinkedInPostResponse, LinkedInArticleResponse, LinkedInCarouselResponse,
     LinkedInVideoScriptResponse, LinkedInCommentResponseResult
 )
-from services.linkedin_service import linkedin_service
+from services.linkedin_service import LinkedInService
+
+# Initialize the LinkedIn service instance
+linkedin_service = LinkedInService()
 from middleware.monitoring_middleware import DatabaseAPIMonitor
 from services.database import get_db_session
 from sqlalchemy.orm import Session
@@ -117,7 +120,7 @@ async def generate_post(
             raise HTTPException(status_code=422, detail="Industry cannot be empty")
         
         # Generate post content
-        response = await linkedin_service.generate_post(request)
+        response = await linkedin_service.generate_linkedin_post(request)
         
         # Log successful request
         duration = time.time() - start_time
@@ -187,7 +190,7 @@ async def generate_article(
             raise HTTPException(status_code=422, detail="Industry cannot be empty")
         
         # Generate article content
-        response = await linkedin_service.generate_article(request)
+        response = await linkedin_service.generate_linkedin_article(request)
         
         # Log successful request
         duration = time.time() - start_time
@@ -259,7 +262,7 @@ async def generate_carousel(
             raise HTTPException(status_code=422, detail="Slide count must be between 3 and 15")
         
         # Generate carousel content
-        response = await linkedin_service.generate_carousel(request)
+        response = await linkedin_service.generate_linkedin_carousel(request)
         
         # Log successful request
         duration = time.time() - start_time
@@ -331,7 +334,7 @@ async def generate_video_script(
             raise HTTPException(status_code=422, detail="Video length must be between 15 and 300 seconds")
         
         # Generate video script content
-        response = await linkedin_service.generate_video_script(request)
+        response = await linkedin_service.generate_linkedin_video_script(request)
         
         # Log successful request
         duration = time.time() - start_time
@@ -400,7 +403,7 @@ async def generate_comment_response(
             raise HTTPException(status_code=422, detail="Comment cannot be empty")
         
         # Generate comment response
-        response = await linkedin_service.generate_comment_response(request)
+        response = await linkedin_service.generate_linkedin_comment_response(request)
         
         # Log successful request
         duration = time.time() - start_time

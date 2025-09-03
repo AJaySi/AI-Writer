@@ -23,7 +23,6 @@ export const VALID_TONES = [
 ] as const;
 
 export const VALID_SEARCH_ENGINES = [
-  'metaphor',
   'google',
   'tavily'
 ] as const;
@@ -158,8 +157,12 @@ export function mapIndustry(industry: string | undefined): string {
 }
 
 export function mapSearchEngine(engine: string | undefined): SearchEngine {
+  // Force Google for now until METAPHOR issue is resolved
+  return SearchEngine.GOOGLE;
+  
+  /* Original logic - commented out temporarily
   const eng = normalizeEnum(engine);
-  if (!eng) return SearchEngine.METAPHOR;
+  if (!eng) return SearchEngine.GOOGLE;
   
   const exact = VALID_SEARCH_ENGINES.find(v => v.toLowerCase() === eng);
   if (exact) return exact as SearchEngine;
@@ -167,7 +170,8 @@ export function mapSearchEngine(engine: string | undefined): SearchEngine {
   if (eng.includes('google')) return SearchEngine.GOOGLE;
   if (eng.includes('tavily')) return SearchEngine.TAVILY;
   
-  return SearchEngine.METAPHOR;
+  return SearchEngine.GOOGLE;
+  */
 }
 
 export function mapResponseType(responseType: string | undefined): string {

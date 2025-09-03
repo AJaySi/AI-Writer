@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCopilotAction } from '@copilotkit/react-core';
-import { linkedInWriterApi, LinkedInPostRequest } from '../../services/linkedInWriterApi';
+import { linkedInWriterApi, LinkedInPostRequest, GroundingLevel } from '../../services/linkedInWriterApi';
 import {
   mapPostType,
   mapTone,
@@ -49,7 +49,9 @@ const RegisterLinkedInActions: React.FC = () => {
         include_call_to_action: args?.include_call_to_action ?? (prefs.include_call_to_action ?? true),
         research_enabled: args?.research_enabled ?? (prefs.research_enabled ?? true),
         search_engine: mapSearchEngine(args?.search_engine || prefs.search_engine),
-        max_length: args?.max_length || prefs.max_length || 2000
+        max_length: args?.max_length || prefs.max_length || 2000,
+        grounding_level: 'enhanced' as GroundingLevel,
+        include_citations: true
       });
       
       if (res.success && res.data) {
@@ -60,6 +62,24 @@ const RegisterLinkedInActions: React.FC = () => {
         let fullContent = content;
         if (hashtags) fullContent += `\n\n${hashtags}`;
         if (cta) fullContent += `\n\n${cta}`;
+        
+        // Debug: Log the full response structure
+        console.log('[LinkedIn Writer] Full API response:', res);
+        console.log('[LinkedIn Writer] Research sources:', res.research_sources);
+        console.log('[LinkedIn Writer] Citations:', res.data?.citations);
+        console.log('[LinkedIn Writer] Quality metrics:', res.data?.quality_metrics);
+        console.log('[LinkedIn Writer] Grounding enabled:', res.data?.grounding_enabled);
+        
+        // Update grounding data
+        window.dispatchEvent(new CustomEvent('linkedinwriter:updateGroundingData', { 
+          detail: {
+            researchSources: res.research_sources || [],
+            citations: res.data?.citations || [],
+            qualityMetrics: res.data?.quality_metrics || null,
+            groundingEnabled: res.data?.grounding_enabled || false,
+            searchQueries: res.data?.search_queries || []
+          }
+        }));
         
         window.dispatchEvent(new CustomEvent('linkedinwriter:updateDraft', { detail: fullContent }));
         return { success: true, content: fullContent };
@@ -90,11 +110,32 @@ const RegisterLinkedInActions: React.FC = () => {
         seo_optimization: args?.seo_optimization ?? (prefs.seo_optimization ?? true),
         research_enabled: args?.research_enabled ?? (prefs.research_enabled ?? true),
         search_engine: mapSearchEngine(args?.search_engine || prefs.search_engine),
-        word_count: args?.word_count || prefs.word_count || 1500
+        word_count: args?.word_count || prefs.word_count || 1500,
+        grounding_level: 'enhanced' as GroundingLevel,
+        include_citations: true
       });
       
       if (res.success && res.data) {
         const content = `# ${res.data.title}\n\n${res.data.content}`;
+        
+        // Debug: Log the full response structure
+        console.log('[LinkedIn Writer] Full API response:', res);
+        console.log('[LinkedIn Writer] Research sources:', res.research_sources);
+        console.log('[LinkedIn Writer] Citations:', res.data?.citations);
+        console.log('[LinkedIn Writer] Quality metrics:', res.data?.quality_metrics);
+        console.log('[LinkedIn Writer] Grounding enabled:', res.data?.grounding_enabled);
+        
+        // Update grounding data
+        window.dispatchEvent(new CustomEvent('linkedinwriter:updateGroundingData', { 
+          detail: {
+            researchSources: res.research_sources || [],
+            citations: res.data?.citations || [],
+            qualityMetrics: res.data?.quality_metrics || null,
+            groundingEnabled: res.data?.grounding_enabled || false,
+            searchQueries: res.data?.search_queries || []
+          }
+        }));
+        
         window.dispatchEvent(new CustomEvent('linkedinwriter:updateDraft', { detail: content }));
         return { success: true, content };
       }

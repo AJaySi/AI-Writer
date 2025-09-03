@@ -32,7 +32,7 @@ const PostHITL: React.FC<PostHITLProps> = ({ args, respond }) => {
     include_hashtags: args?.include_hashtags ?? (prefs.include_hashtags ?? true),
     include_call_to_action: args?.include_call_to_action ?? (prefs.include_call_to_action ?? true),
     research_enabled: args?.research_enabled ?? (prefs.research_enabled ?? true),
-    search_engine: args?.search_engine || prefs.search_engine || 'metaphor',
+    search_engine: args?.search_engine || prefs.search_engine || 'google',
     max_length: args?.max_length || prefs.max_length || 2000
   });
   const [loading, setLoading] = React.useState(false);

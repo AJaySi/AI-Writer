@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { CopilotSidebar } from '@copilotkit/react-ui';
-import { useCopilotReadable, useCopilotAction } from '@copilotkit/react-core';
+import { useCopilotReadable, useCopilotAction, useCopilotContext } from '@copilotkit/react-core';
 import '@copilotkit/react-ui/styles.css';
 import './styles/alwrity-copilot.css';
 import RegisterLinkedInActions from './RegisterLinkedInActions';
 import RegisterLinkedInEditActions from './RegisterLinkedInEditActions';
 import { Header, ContentEditor, LoadingIndicator, WelcomeMessage } from './components';
 import { useLinkedInWriter } from './hooks/useLinkedInWriter';
+import { useCopilotPersistence } from './utils/enhancedPersistence';
 
 const useCopilotActionTyped = useCopilotAction as any;
 
@@ -34,6 +35,13 @@ const LinkedInWriter: React.FC<LinkedInWriterProps> = ({ className = '' }) => {
     showContextModal,
     showPreview,
     
+    // Grounding data
+    researchSources,
+    citations,
+    qualityMetrics,
+    groundingEnabled,
+    searchQueries,
+    
     // Setters
     setDraft,
     setIsPreviewing,
@@ -56,6 +64,74 @@ const LinkedInWriter: React.FC<LinkedInWriterProps> = ({ className = '' }) => {
     savePreferences,
     summarizeHistory
   } = useLinkedInWriter();
+
+    // Get enhanced persistence functionality
+  const {
+    persistenceManager,
+    copilotContext,
+    saveChatHistory,
+    loadChatHistory,
+    addChatMessage,
+    saveUserPreferences: savePersistedPreferences,
+    loadUserPreferences: loadPersistedPreferences,
+    saveConversationContext,
+    loadConversationContext,
+    saveDraftContent,
+    loadDraftContent,
+    saveLastSession,
+    loadLastSession,
+    getStorageStats
+  } = useCopilotPersistence();
+  
+  // Sync component state with enhanced persistence
+  useEffect(() => {
+    console.log('[LinkedIn Writer] Component mounted, enhanced persistence enabled');
+    
+    // Load persisted data on component mount
+    const loadPersistedData = () => {
+      try {
+        // Load chat history
+        const chatHistory = loadChatHistory();
+        console.log(`📖 Loaded ${chatHistory.length} persisted chat messages`);
+        
+        // Load user preferences
+        const persistedPrefs = loadPersistedPreferences();
+        console.log('📖 Loaded persisted user preferences:', persistedPrefs);
+        
+        // Load conversation context
+        const conversationContext = loadConversationContext();
+        console.log('📖 Loaded persisted conversation context:', conversationContext);
+        
+        // Load draft content
+        const persistedDraft = loadDraftContent();
+        if (persistedDraft && !draft) {
+          console.log('📖 Restoring persisted draft content');
+          // Note: We'll need to integrate this with the useLinkedInWriter hook
+        }
+        
+        // Load last session
+        const lastSession = loadLastSession();
+        if (lastSession) {
+          console.log('📖 Last session:', lastSession);
+        }
+        
+        // Get storage statistics
+        const stats = getStorageStats();
+        console.log('📊 Persistence stats:', stats);
+        
+      } catch (error) {
+        console.error('❌ Error loading persisted data:', error);
+      }
+    };
+    
+    // Load data after a short delay to allow CopilotKit to initialize
+    setTimeout(loadPersistedData, 1000);
+    
+    // Save session data when component unmounts
+    return () => {
+      saveLastSession();
+    };
+  }, []);
 
   // Handle preview changes
   const handleConfirmChanges = () => {
@@ -81,6 +157,9 @@ const LinkedInWriter: React.FC<LinkedInWriterProps> = ({ className = '' }) => {
     const updated = { ...userPreferences, ...prefs };
     setUserPreferences(updated);
     savePreferences(prefs);
+    
+    // Also save to enhanced persistence
+    savePersistedPreferences(prefs);
   };
 
   // Share current draft and context with CopilotKit for better context awareness
@@ -89,6 +168,13 @@ const LinkedInWriter: React.FC<LinkedInWriterProps> = ({ className = '' }) => {
     value: draft,
     categories: ['social', 'linkedin', 'draft']
   });
+  
+  // Auto-save draft content when it changes
+  useEffect(() => {
+    if (draft && draft.trim().length > 0) {
+      saveDraftContent(draft);
+    }
+  }, [draft, saveDraftContent]);
 
   useCopilotReadable({
     description: 'User context and notes for LinkedIn content',
@@ -256,6 +342,9 @@ const LinkedInWriter: React.FC<LinkedInWriterProps> = ({ className = '' }) => {
         draft={draft}
         getHistoryLength={getHistoryLength}
       />
+      
+      {/* Debug: Enhanced Persistence Test Buttons (remove in production) */}
+
 
       {/* Main Content */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -266,9 +355,9 @@ const LinkedInWriter: React.FC<LinkedInWriterProps> = ({ className = '' }) => {
           currentAction={currentAction}
         />
 
-        {/* Content Area */}
-        {draft || isGenerating ? (
-          /* Editor Panel - Show when there's content or generating */
+         {/* Content Area */}
+        {draft || isGenerating ? (<>
+          {/* Editor Panel - Show when there's content or generating */}
           <ContentEditor
             isPreviewing={isPreviewing}
             pendingEdit={pendingEdit}
@@ -277,12 +366,20 @@ const LinkedInWriter: React.FC<LinkedInWriterProps> = ({ className = '' }) => {
             showPreview={showPreview}
             isGenerating={isGenerating}
             loadingMessage={loadingMessage}
+            // Grounding data
+            researchSources={researchSources}
+            citations={citations}
+            qualityMetrics={qualityMetrics}
+            groundingEnabled={groundingEnabled}
+            searchQueries={searchQueries}
             onConfirmChanges={handleConfirmChanges}
             onDiscardChanges={handleDiscardChanges}
             onDraftChange={handleDraftChange}
             onPreviewToggle={handlePreviewToggle}
           />
-        ) : (
+ 
+          
+        </>) : (
           /* Welcome Message - Show when no content */
           <WelcomeMessage
             draft={draft}

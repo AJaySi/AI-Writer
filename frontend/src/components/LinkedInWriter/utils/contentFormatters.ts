@@ -5,11 +5,73 @@ export function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-// Format draft content with proper LinkedIn styling
-export function formatDraftContent(content: string): string {
+// Format draft content with proper LinkedIn styling and inline citations
+export function formatDraftContent(content: string, citations?: any[], researchSources?: any[]): string {
   if (!content) return '';
   
   let formatted = escapeHtml(content);
+  
+  // Insert inline citations if available
+  if (citations && citations.length > 0 && researchSources && researchSources.length > 0) {
+    console.log('🔍 [formatDraftContent] Processing citations:', {
+      citationsCount: citations.length,
+      researchSourcesCount: researchSources.length,
+      citations: citations,
+      contentLength: content.length
+    });
+
+    // Create a map of citation references to source numbers
+    const citationMap = new Map();
+    citations.forEach((citation, index) => {
+      if (citation.reference && citation.reference.startsWith('Source ')) {
+        const sourceNum = citation.reference.replace('Source ', '');
+        citationMap.set(citation.reference, sourceNum);
+      }
+    });
+    
+    console.log('🔍 [formatDraftContent] Citation map created:', citationMap);
+
+    // Since citation references don't exist in the content text,
+    // we need to insert citations strategically throughout the content
+    const citationEntries = Array.from(citationMap.entries());
+    const totalCitations = citationEntries.length;
+    
+    if (totalCitations > 0) {
+      // Split content into sentences for strategic citation placement
+      const sentences = formatted.split(/[.!?]+/).filter(s => s.trim().length > 0);
+      const sentencesWithCitations: string[] = [];
+      
+      citationEntries.forEach(([reference, sourceNum], index) => {
+        // Distribute citations across sentences
+        const targetSentenceIndex = Math.floor((index / totalCitations) * sentences.length);
+        const targetSentence = sentences[targetSentenceIndex] || sentences[sentences.length - 1];
+        
+        // Add citation to the end of the target sentence using a superscript marker
+        const citeHtml = ` <sup class="liw-cite" data-source-index="${sourceNum}">[${sourceNum}]</sup>`;
+        const sentenceWithCitation = targetSentence.trim() + citeHtml;
+        sentencesWithCitations[targetSentenceIndex] = sentenceWithCitation;
+        
+        console.log(`✅ [formatDraftContent] Added citation [${sourceNum}] to sentence ${targetSentenceIndex + 1}`);
+      });
+      
+      // Reconstruct content with citations
+      formatted = sentences.map((sentence, index) => {
+        return sentencesWithCitations[index] || sentence;
+      }).join('. ') + '.';
+      
+      console.log(`✅ [formatDraftContent] Inserted ${totalCitations} citations strategically throughout content`);
+      
+      // Debug: Show sample of content with citations
+      const sampleContent = formatted.substring(0, 500) + (formatted.length > 500 ? '...' : '');
+      console.log('🔍 [formatDraftContent] Sample content with citations:', sampleContent);
+      
+      // Debug: Count citation markers in final content
+      const citationMarkers = (formatted.match(/\[\d+\]/g) || []).length;
+      console.log(`🔍 [formatDraftContent] Found ${citationMarkers} citation markers in final content`);
+    }
+    
+    console.log('🔍 [formatDraftContent] Final formatted content length:', formatted.length);
+  }
   
   // Format hashtags
   formatted = formatted.replace(/#(\w+)/g, '<span style="color: #0a66c2; font-weight: 600;">#$1</span>');
