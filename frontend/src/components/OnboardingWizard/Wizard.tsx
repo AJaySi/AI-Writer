@@ -28,6 +28,7 @@ import ApiKeyStep from './ApiKeyStep';
 import WebsiteStep from './WebsiteStep';
 import ResearchStep from './ResearchStep';
 import PersonalizationStep from './PersonalizationStep';
+import SocialConnectionsStep from './SocialConnectionsStep';
 import IntegrationsStep from './IntegrationsStep';
 import FinalStep from './FinalStep';
 
@@ -36,6 +37,7 @@ const steps = [
   { label: 'Website', description: 'Set up your website', icon: '🌐' },
   { label: 'Research', description: 'Configure research tools', icon: '🔍' },
   { label: 'Personalization', description: 'Customize your experience', icon: '⚙️' },
+  { label: 'Social Media', description: 'Connect your platforms', icon: '📱' },
   { label: 'Integrations', description: 'Connect additional services', icon: '🔗' },
   { label: 'Finish', description: 'Complete setup', icon: '✅' }
 ];
@@ -186,6 +188,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete }) => {
       <WebsiteStep key="website" onContinue={handleNext} updateHeaderContent={updateHeaderContent} />,
       <ResearchStep key="research" onContinue={handleNext} updateHeaderContent={updateHeaderContent} />,
       <PersonalizationStep key="personalization" onContinue={handleNext} updateHeaderContent={updateHeaderContent} />,
+      <SocialConnectionsStep key="social-connections" onContinue={handleNext} updateHeaderContent={updateHeaderContent} />,
       <IntegrationsStep key="integrations" onContinue={handleNext} updateHeaderContent={updateHeaderContent} />,
       <FinalStep key="final" onContinue={handleComplete} updateHeaderContent={updateHeaderContent} />
     ];
