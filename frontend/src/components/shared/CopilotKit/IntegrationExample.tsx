@@ -5,8 +5,9 @@
  */
 
 import React from 'react';
-import { PlatformPersonaProvider, PlatformPersonaChat } from '../PersonaContext';
-import { PlatformType } from '../../types/PlatformPersonaTypes';
+import { PlatformPersonaProvider } from '../PersonaContext';
+import { PlatformPersonaChat } from './PlatformPersonaChat';
+import { PlatformType } from '../../../types/PlatformPersonaTypes';
 
 // Example: LinkedIn Writer Integration
 export const LinkedInWriterWithPersonaChat: React.FC = () => {

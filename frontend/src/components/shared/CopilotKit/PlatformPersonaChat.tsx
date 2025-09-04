@@ -4,10 +4,10 @@
  * Provides intelligent, contextual assistance based on user's writing persona
  */
 
-import React, { useCallback, useMemo } from 'react';
-import { CopilotChat, CopilotChatProps } from '@copilotkit/react-chat';
+import React, { useCallback, useMemo, useState } from 'react';
+import { CopilotSidebar } from '@copilotkit/react-ui';
 import { usePlatformPersonaContext } from '../PersonaContext';
-import { PlatformType, WritingPersona, PlatformAdaptation } from '../../types/PlatformPersonaTypes';
+import { PlatformType, WritingPersona, PlatformAdaptation } from '../../../types/PlatformPersonaTypes';
 
 // Platform-specific chat configurations
 interface PlatformChatConfig {
@@ -173,6 +173,7 @@ export const PlatformPersonaChat: React.FC<PlatformPersonaChatProps> = ({
   customSystemMessage
 }) => {
   const { corePersona, platformPersona, loading, error } = usePlatformPersonaContext();
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Generate platform-specific chat configuration
   const chatConfig = useMemo(() => 
@@ -196,17 +197,6 @@ export const PlatformPersonaChat: React.FC<PlatformPersonaChatProps> = ({
   const makeSystemMessage = useCallback((contextString: string) => {
     return `${systemMessage}\n\nCurrent Context: ${contextString}`;
   }, [systemMessage]);
-
-  // Custom CopilotChat props
-  const copilotChatProps: CopilotChatProps = {
-    makeSystemMessage,
-    placeholder: chatConfig.placeholder,
-    className: `platform-persona-chat ${className}`,
-    showWelcomeMessage,
-    showSuggestedPrompts,
-    suggestedPrompts: showSuggestedPrompts ? chatConfig.suggestedPrompts : undefined,
-    welcomeMessage: showWelcomeMessage ? chatConfig.welcomeMessage : undefined
-  };
 
   // Loading state
   if (loading) {
@@ -286,8 +276,39 @@ export const PlatformPersonaChat: React.FC<PlatformPersonaChatProps> = ({
         </div>
       )}
 
-      {/* CopilotKit Chat Component */}
-      <CopilotChat {...copilotChatProps} />
+      {/* Chat Toggle Button */}
+      <div className="text-center">
+        <button
+          onClick={() => setIsChatOpen(!isChatOpen)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          {isChatOpen ? 'Close Chat' : 'Open AI Assistant'}
+        </button>
+      </div>
+
+      {/* CopilotKit Sidebar */}
+      {isChatOpen && (
+        <CopilotSidebar 
+          className="alwrity-copilot-sidebar platform-persona-chat"
+          labels={{
+            title: `${platform.charAt(0).toUpperCase() + platform.slice(1)} Content Assistant`,
+            initial: chatConfig.welcomeMessage
+          }}
+          suggestions={chatConfig.suggestedPrompts}
+          makeSystemMessage={makeSystemMessage}
+          observabilityHooks={{
+            onChatExpanded: () => {
+              console.log(`[${platform}] Persona chat opened`);
+            },
+            onMessageSent: (message: any) => {
+              const text = typeof message === 'string' ? message : (message?.content ?? '');
+              if (text) {
+                console.log(`[${platform}] User message:`, { content_length: text.length });
+              }
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

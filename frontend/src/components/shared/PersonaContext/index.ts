@@ -9,7 +9,7 @@ export {
   usePlatformPersonaContext 
 } from './PlatformPersonaProvider';
 
-export { PersonaTestComponent } from './PersonaTestComponent';
+// PersonaTestComponent removed - functionality integrated into main components
 
 // Re-export types for convenience
 export type { 

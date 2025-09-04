@@ -317,8 +317,8 @@ class PersonaAnalysisService:
     def _build_persona_analysis_prompt(self, onboarding_data: Dict[str, Any]) -> str:
         """Build the main persona analysis prompt."""
         
-        website_analysis = onboarding_data.get("website_analysis", {})
-        research_prefs = onboarding_data.get("research_preferences", {})
+        website_analysis = onboarding_data.get("website_analysis", {}) or {}
+        research_prefs = onboarding_data.get("research_preferences", {}) or {}
         
         prompt = f"""
 PERSONA GENERATION TASK: Create a comprehensive writing persona based on user onboarding data.
@@ -328,7 +328,7 @@ ONBOARDING DATA ANALYSIS:
 Website Analysis:
 - URL: {website_analysis.get('website_url', 'Not provided')}
 - Writing Style: {json.dumps(website_analysis.get('writing_style', {}), indent=2)}
-- Content Characteristics: {json.dumps(website_analysis.get('content_characteristics', {}), indent=2)}
+- Content Characteristics: {json.dumps(website_analysis.get('content_characteristics', {}) or {}, indent=2)}
 - Target Audience: {json.dumps(website_analysis.get('target_audience', {}), indent=2)}
 - Content Type: {json.dumps(website_analysis.get('content_type', {}), indent=2)}
 - Style Patterns: {json.dumps(website_analysis.get('style_patterns', {}), indent=2)}
@@ -521,8 +521,8 @@ Generate a platform-optimized persona adaptation that maintains brand consistenc
                 linguistic_fingerprint=core_persona.get("linguistic_fingerprint", {}),
                 platform_adaptations={"platforms": list(platform_personas.keys())},
                 onboarding_session_id=onboarding_data.get("session_info", {}).get("session_id"),
-                source_website_analysis=onboarding_data.get("website_analysis"),
-                source_research_preferences=onboarding_data.get("research_preferences"),
+                source_website_analysis=onboarding_data.get("website_analysis") or {},
+                source_research_preferences=onboarding_data.get("research_preferences") or {},
                 ai_analysis_version="gemini_v1.0",
                 confidence_score=core_persona.get("confidence_score", 0.0)
             )

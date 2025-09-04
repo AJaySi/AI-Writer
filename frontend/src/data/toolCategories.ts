@@ -248,19 +248,21 @@ export const toolCategories: ToolCategories = {
     tools: [
       {
         name: 'Facebook Content Writer',
-        description: 'Engaging Facebook posts and ads',
+        description: 'Engaging Facebook posts and ads with AI persona optimization',
         icon: React.createElement(SocialIcon),
-        status: 'active',
+        status: 'premium',
         path: '/facebook-writer',
-        features: ['Engagement Focused', 'Ad Copy', 'Post Scheduling']
+        features: ['Persona-Aware AI', 'Engagement Focused', 'Ad Copy', 'Post Scheduling', 'Platform Optimization'],
+        isHighlighted: true
       },
       {
         name: 'LinkedIn Content Writer',
-        description: 'Professional LinkedIn content',
+        description: 'Professional LinkedIn content with AI persona optimization',
         icon: React.createElement(BusinessIcon),
-        status: 'active',
+        status: 'premium',
         path: '/linkedin-writer',
-        features: ['Professional Tone', 'Thought Leadership', 'B2B Focus']
+        features: ['Persona-Aware AI', 'Professional Tone', 'Thought Leadership', 'B2B Focus', 'Platform Optimization'],
+        isHighlighted: true
       },
       {
         name: 'Twitter Content Writer',

@@ -4,14 +4,13 @@
  * Integrates with existing persona API client and injects data into CopilotKit
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useCopilotReadable } from '@copilotkit/react-core';
 import { 
   WritingPersona, 
   PlatformAdaptation, 
   PlatformType,
-  UserPersonasResponse,
-  PlatformPersonaResponse
+  UserPersonasResponse
 } from '../../../types/PlatformPersonaTypes';
 import { 
   getUserPersonas, 
@@ -50,8 +49,36 @@ export const PlatformPersonaProvider: React.FC<PlatformPersonaProviderProps> = (
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Add request throttling
+  const lastRequestTime = useRef<number>(0);
+  const requestInProgress = useRef<boolean>(false);
+  const dataCacheTime = useRef<number>(0);
+  
+  // Cache duration: 5 minutes
+  const CACHE_DURATION = 5 * 60 * 1000;
+
   // Fetch persona data function
-  const fetchPersonas = async () => {
+  const fetchPersonas = useCallback(async () => {
+    const now = Date.now();
+    
+    // Prevent multiple simultaneous requests
+    if (requestInProgress.current) {
+      console.log('🔄 Request already in progress, skipping...');
+      return;
+    }
+    
+    // Check cache validity
+    if (corePersona && platformPersona && (now - dataCacheTime.current) < CACHE_DURATION) {
+      console.log('✅ Using cached persona data');
+      return;
+    }
+    
+    // Rate limiting: minimum 2 seconds between requests
+    if (now - lastRequestTime.current < 2000) {
+      console.log('⏱️ Rate limit: waiting before next request...');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -65,12 +92,58 @@ export const PlatformPersonaProvider: React.FC<PlatformPersonaProviderProps> = (
       // Handle core persona data
       if (userPersonasResponse.personas && userPersonasResponse.personas.length > 0) {
         const primaryPersona = userPersonasResponse.personas[0];
-        setCorePersona(primaryPersona);
+        
+        // Convert API response to WritingPersona format
+        const convertedPersona: WritingPersona = {
+          id: primaryPersona.persona_id,
+          user_id: userId,
+          persona_name: primaryPersona.persona_name,
+          archetype: primaryPersona.archetype,
+          core_belief: primaryPersona.core_belief,
+          brand_voice_description: primaryPersona.core_belief, // Use core_belief as fallback
+          linguistic_fingerprint: {
+            sentence_metrics: {
+              average_sentence_length_words: 15,
+              preferred_sentence_type: "compound",
+              active_to_passive_ratio: "80:20",
+              sentence_complexity: "moderate",
+              paragraph_structure: "standard"
+            },
+            lexical_features: {
+              go_to_words: ["leverage", "optimize", "strategic"],
+              go_to_phrases: ["Let's explore", "Here's the thing"],
+              avoid_words: ["utilize", "synergize"],
+              contractions: "moderate",
+              vocabulary_level: "professional",
+              industry_terminology: [],
+              emotional_tone_words: []
+            },
+            rhetorical_devices: {
+              metaphors: "tech_mechanics",
+              analogies: "everyday_to_tech",
+              rhetorical_questions: "occasional",
+              storytelling_approach: "case_study",
+              persuasion_techniques: ["logic", "credibility"]
+            }
+          },
+          platform_adaptations: [],
+          onboarding_session_id: 1,
+          source_website_analysis: {},
+          source_research_preferences: {},
+          ai_analysis_version: "1.0",
+          confidence_score: primaryPersona.confidence_score,
+          analysis_date: primaryPersona.created_at,
+          created_at: primaryPersona.created_at,
+          updated_at: primaryPersona.created_at,
+          is_active: true
+        };
+        
+        setCorePersona(convertedPersona);
         
         console.log('✅ Core persona loaded:', {
-          name: primaryPersona.persona_name,
-          archetype: primaryPersona.archetype,
-          confidence: primaryPersona.confidence_score
+          name: convertedPersona.persona_name,
+          archetype: convertedPersona.archetype,
+          confidence: convertedPersona.confidence_score
         });
       } else {
         console.warn('⚠️ No core personas found for user');
@@ -79,12 +152,87 @@ export const PlatformPersonaProvider: React.FC<PlatformPersonaProviderProps> = (
 
       // Handle platform-specific persona data
       if (platformPersonaResponse) {
-        setPlatformPersona(platformPersonaResponse);
+        // Convert API response to PlatformAdaptation format
+        const convertedPlatformPersona: PlatformAdaptation = {
+          id: 1,
+          writing_persona_id: corePersona?.id || 1,
+          platform_type: platform,
+          sentence_metrics: {
+            optimal_length: "150-300 words",
+            character_limit: platform === 'linkedin' ? 3000 : 280,
+            sentence_structure: "varied",
+            paragraph_breaks: "frequent",
+            readability_score: 8.5
+          },
+          lexical_features: {
+            hashtag_strategy: "3-5 relevant hashtags",
+            platform_specific_terms: [],
+            engagement_phrases: ["What do you think?", "Share your thoughts"],
+            call_to_action_style: "gentle"
+          },
+          rhetorical_devices: {
+            question_frequency: "occasional",
+            story_elements: "personal_anecdotes",
+            visual_descriptions: "minimal",
+            interactive_elements: "questions"
+          },
+          tonal_range: {
+            default_tone: "professional_friendly",
+            permissible_tones: ["inspiring", "thoughtful"],
+            forbidden_tones: ["salesy", "academic"],
+            emotional_range: "moderate",
+            formality_level: "semi_formal"
+          },
+          stylistic_constraints: {
+            punctuation_preferences: "standard",
+            formatting_rules: "clean",
+            emoji_usage: "minimal",
+            link_placement: "end",
+            media_integration: "encouraged"
+          },
+          content_format_rules: {
+            character_limit: platform === 'linkedin' ? 3000 : 280,
+            optimal_length: platform === 'linkedin' ? "150-300 words" : "120-150 characters",
+            word_count: platform === 'linkedin' ? "150-300" : "20-25",
+            hashtag_limit: platform === 'instagram' ? 30 : 3,
+            media_requirements: "optional",
+            link_restrictions: "unlimited"
+          },
+          engagement_patterns: {
+            posting_frequency: "2-3 times per week",
+            best_timing: "9 AM - 11 AM, 1 PM - 3 PM",
+            interaction_style: "conversational",
+            response_strategy: "within 2 hours",
+            community_approach: "collaborative"
+          },
+          posting_frequency: {
+            frequency: "2-3 times per week",
+            optimal_days: ["Tuesday", "Wednesday", "Thursday"],
+            optimal_times: ["9:00 AM", "1:00 PM"],
+            seasonal_adjustments: "moderate"
+          },
+          content_types: {
+            primary_content: ["thought_leadership", "industry_insights"],
+            secondary_content: ["personal_stories", "tips"],
+            content_mix: "70% professional, 30% personal",
+            seasonal_content: ["trending_topics", "industry_events"]
+          },
+          platform_best_practices: {
+            algorithm_tips: ["post_consistently", "engage_with_community"],
+            engagement_tactics: ["ask_questions", "share_stories"],
+            content_strategies: ["value_first", "authentic_voice"],
+            growth_hacks: ["cross_promotion", "collaboration"]
+          },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        setPlatformPersona(convertedPlatformPersona);
         
         console.log('✅ Platform persona loaded:', {
-          platform: platformPersonaResponse.platform_type,
-          characterLimit: platformPersonaResponse.content_format_rules?.character_limit,
-          optimalLength: platformPersonaResponse.content_format_rules?.optimal_length
+          platform: convertedPlatformPersona.platform_type,
+          characterLimit: convertedPlatformPersona.content_format_rules?.character_limit,
+          optimalLength: convertedPlatformPersona.content_format_rules?.optimal_length
         });
       } else {
         console.warn(`⚠️ No platform-specific persona found for ${platform}`);
@@ -101,13 +249,16 @@ export const PlatformPersonaProvider: React.FC<PlatformPersonaProviderProps> = (
       }
     } finally {
       setLoading(false);
+      lastRequestTime.current = Date.now();
+      dataCacheTime.current = Date.now();
+      requestInProgress.current = false;
     }
-  };
+  }, [userId, platform, corePersona]);
 
   // Initial data fetch
   useEffect(() => {
     fetchPersonas();
-  }, [platform, userId]);
+  }, [fetchPersonas]);
 
   // Refresh function for manual updates
   const refreshPersonas = async () => {
@@ -200,7 +351,6 @@ export const PlatformPersonaProvider: React.FC<PlatformPersonaProviderProps> = (
     </PlatformPersonaContext.Provider>
   );
 };
-
 // Custom hook to use the context
 export const usePlatformPersonaContext = () => {
   const context = useContext(PlatformPersonaContext);
@@ -212,3 +362,4 @@ export const usePlatformPersonaContext = () => {
 
 // Export the context for direct access if needed
 export { PlatformPersonaContext };
+

@@ -4,7 +4,6 @@
  */
 
 export { PlatformPersonaChat } from './PlatformPersonaChat';
-export { PlatformPersonaChatTest } from './PlatformPersonaChatTest';
 export { IntegrationExample } from './IntegrationExample';
 
 // Re-export types for convenience

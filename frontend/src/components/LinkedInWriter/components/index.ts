@@ -20,6 +20,4 @@ export { default as ImageGenerationSuggestions } from './ImageGenerationSuggesti
 export { default as ImageGenerationDemo } from './ImageGenerationDemo';
 export { default as ImageGenerationTest } from './ImageGenerationTest';
 
-// Persona Integration Components
-export { default as LinkedInWriterPersonaTest } from '../LinkedInWriterPersonaTest';
-export { EnhancedLinkedInWriter, LinkedInWriterInlinePersona } from '../LinkedInWriterWithPersona';
+// Persona Integration Components - Now integrated into main LinkedInWriter
