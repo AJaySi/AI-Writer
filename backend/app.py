@@ -48,6 +48,9 @@ from api.onboarding import (
 # Import component logic endpoints
 from api.component_logic import router as component_logic_router
 
+# Import subscription API endpoints
+from api.subscription_api import router as subscription_router
+
 # Import SEO tools router
 from routers.seo_tools import router as seo_tools_router
 # Import Facebook Writer endpoints
@@ -370,6 +373,9 @@ async def research_preferences_data():
 
 # Include component logic router
 app.include_router(component_logic_router)
+
+# Include subscription and usage tracking router
+app.include_router(subscription_router)
 
 # Include SEO tools router
 app.include_router(seo_tools_router)
