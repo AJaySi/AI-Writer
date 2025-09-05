@@ -414,6 +414,10 @@ async def business_info_update(business_info_id: int, request: 'BusinessInfoRequ
 # Include component logic router
 app.include_router(component_logic_router)
 
+# Include GSC router
+from routers.gsc_auth import router as gsc_auth_router
+app.include_router(gsc_auth_router)
+
 # Include SEO tools router
 app.include_router(seo_tools_router)
 # Include Facebook Writer router

@@ -24,6 +24,10 @@ __pycache__/
 .env.test.local
 .env.production.local
 
+# Google OAuth credentials
+gsc_credentials.json
+**/gsc_credentials.json
+
 # Build outputs
 build/
 dist/
