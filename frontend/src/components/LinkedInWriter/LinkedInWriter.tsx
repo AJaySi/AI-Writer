@@ -425,31 +425,60 @@ const LinkedInWriterContent: React.FC<LinkedInWriterProps> = ({ className = '' }
                   cursor: 'help',
                   position: 'relative'
                 }}
-                title={`Complete Persona Details:
-                
-🎭 PERSONA: ${corePersona.persona_name}
-📋 ARCHETYPE: ${corePersona.archetype}
-💭 CORE BELIEF: ${corePersona.core_belief}
-📊 CONFIDENCE: ${corePersona.confidence_score}%
+                title={`🎭 YOUR PERSONALIZED WRITING ASSISTANT
 
-📝 LINGUISTIC FINGERPRINT:
-• Sentence Length: ${corePersona.linguistic_fingerprint?.sentence_metrics?.average_sentence_length_words || 'Unknown'} words average
-• Voice Ratio: ${corePersona.linguistic_fingerprint?.sentence_metrics?.active_to_passive_ratio || 'Unknown'}
-• Go-to Words: ${corePersona.linguistic_fingerprint?.lexical_features?.go_to_words?.join(', ') || 'None specified'}
-• Avoid Words: ${corePersona.linguistic_fingerprint?.lexical_features?.avoid_words?.join(', ') || 'None specified'}
+🤔 WHAT IS A PERSONA?
+A persona is your unique writing style profile that AI uses to create content that sounds exactly like you. It's like having a digital twin of your writing voice!
 
-🎯 PLATFORM OPTIMIZATION (LinkedIn):
-• Character Limit: ${platformPersona?.content_format_rules?.character_limit || '3000'} characters
-• Optimal Length: ${platformPersona?.content_format_rules?.optimal_length || '150-300 words'}
-• Engagement Pattern: ${platformPersona?.engagement_patterns?.posting_frequency || '2-3 times per week'}
-• Hashtag Strategy: ${platformPersona?.lexical_features?.hashtag_strategy || '3-5 relevant hashtags'}
+🎯 HOW DOES IT HELP YOU?
+✅ Generates content that matches your natural writing style
+✅ Maintains consistent voice across all your LinkedIn posts
+✅ Saves time by understanding your preferences automatically
+✅ Optimizes content for LinkedIn's algorithm and your audience
+✅ Provides personalized suggestions based on your industry
 
-✨ This persona is actively optimizing your content generation and AI assistance!`}
+🧠 HOW WAS IT CREATED?
+Your persona was built by analyzing:
+• Your website content and writing patterns
+• Your research preferences and content goals
+• Your target audience and industry focus
+• Your communication style and tone preferences
+• LinkedIn-specific optimization requirements
+
+🤖 HOW DOES COPILOTKIT USE IT?
+The AI assistant now knows:
+• Your preferred sentence length and structure
+• Your go-to words and phrases to use/avoid
+• Your professional tone and communication style
+• LinkedIn-specific optimization strategies
+• Your engagement patterns and posting preferences
+
+🚀 HYPER-PERSONALIZATION ACHIEVED!
+Instead of generic content, you get:
+• Content that sounds authentically like you
+• Industry-specific insights and terminology
+• LinkedIn algorithm-optimized posts
+• Professional networking strategies
+• Personalized engagement tactics
+
+📊 YOUR PERSONA DETAILS:
+🎭 Name: ${corePersona.persona_name}
+📋 Style: ${corePersona.archetype}
+💭 Philosophy: ${corePersona.core_belief}
+📈 Confidence: ${corePersona.confidence_score}% accuracy
+
+🎯 LINKEDIN OPTIMIZATION:
+• Optimal length: ${platformPersona?.content_format_rules?.optimal_length || '150-300 words'}
+• Posting frequency: ${platformPersona?.engagement_patterns?.posting_frequency || '2-3 times per week'}
+• Hashtag strategy: ${platformPersona?.lexical_features?.hashtag_strategy || '3-5 relevant hashtags'}
+• Engagement style: ${platformPersona?.engagement_patterns?.interaction_style || 'conversational'}
+
+💡 TRY THIS: Ask the AI to "generate a LinkedIn post about [your topic]" and watch how it automatically applies your persona to create content that sounds like you!`}
               >
                 <span style={{ color: '#0073b1' }}>🎭</span>
-                <span><strong>Persona Active:</strong> {corePersona.persona_name} ({corePersona.archetype})</span>
+                <span><strong>🎭 Your Writing Assistant:</strong> {corePersona.persona_name} ({corePersona.archetype})</span>
                 <span style={{ marginLeft: 'auto', fontSize: '11px' }}>
-                  Confidence: {corePersona.confidence_score}% | 
+                  {corePersona.confidence_score}% accuracy | 
                   Platform: LinkedIn Optimized
                 </span>
                 <span style={{ fontSize: '10px', color: '#999', marginLeft: '8px' }}>

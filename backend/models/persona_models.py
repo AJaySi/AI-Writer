@@ -115,7 +115,7 @@ class PlatformPersona(Base):
     
     def to_dict(self):
         """Convert model to dictionary."""
-        return {
+        result = {
             'id': self.id,
             'writing_persona_id': self.writing_persona_id,
             'platform_type': self.platform_type,
@@ -134,6 +134,19 @@ class PlatformPersona(Base):
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'is_active': self.is_active
         }
+        
+        # Add LinkedIn-specific fields if this is a LinkedIn persona
+        if self.platform_type.lower() == "linkedin" and self.algorithm_considerations:
+            linkedin_data = self.algorithm_considerations
+            if isinstance(linkedin_data, dict):
+                result.update({
+                    'professional_networking': linkedin_data.get('professional_networking', {}),
+                    'linkedin_features': linkedin_data.get('linkedin_features', {}),
+                    'algorithm_optimization': linkedin_data.get('algorithm_optimization', {}),
+                    'professional_context_optimization': linkedin_data.get('professional_context_optimization', {})
+                })
+        
+        return result
 
 class PersonaAnalysisResult(Base):
     """Stores AI analysis results used to generate personas."""

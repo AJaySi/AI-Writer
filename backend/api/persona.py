@@ -45,6 +45,24 @@ class PersonaGenerationResponse(BaseModel):
     data_sufficiency: Optional[float] = None
     platforms_generated: List[str] = []
 
+class LinkedInPersonaValidationRequest(BaseModel):
+    """Request model for LinkedIn persona validation."""
+    persona_data: Dict[str, Any]
+
+class LinkedInPersonaValidationResponse(BaseModel):
+    """Response model for LinkedIn persona validation."""
+    is_valid: bool
+    quality_score: float
+    completeness_score: float
+    professional_context_score: float
+    linkedin_optimization_score: float
+    missing_fields: List[str]
+    incomplete_fields: List[str]
+    recommendations: List[str]
+    quality_issues: List[str]
+    strengths: List[str]
+    validation_details: Dict[str, Any]
+
 # Dependency to get persona service
 def get_persona_service() -> PersonaAnalysisService:
     """Get the persona analysis service instance."""
@@ -380,6 +398,211 @@ async def get_supported_platforms():
                 "description": "Newsletter platform for building subscriber relationships",
                 "format": "email newsletter",
                 "subscription_focus": True
+                    }
+    ]
+}
+
+class LinkedInOptimizationRequest(BaseModel):
+    """Request model for LinkedIn algorithm optimization."""
+    persona_data: Dict[str, Any]
+
+
+class LinkedInOptimizationResponse(BaseModel):
+    """Response model for LinkedIn algorithm optimization."""
+    optimized_persona: Dict[str, Any]
+    optimization_applied: bool
+    optimization_details: Dict[str, Any]
+
+
+async def validate_linkedin_persona(
+    request: LinkedInPersonaValidationRequest,
+    persona_service: PersonaAnalysisService = Depends(get_persona_service)
+):
+    """
+    Validate LinkedIn persona data for completeness and quality.
+
+    This endpoint provides comprehensive validation of LinkedIn persona data,
+    including core fields, LinkedIn-specific optimizations, professional context,
+    and content quality assessments.
+    """
+    try:
+        logger.info("Validating LinkedIn persona data")
+
+        # Get LinkedIn persona service
+        from services.persona.linkedin.linkedin_persona_service import LinkedInPersonaService
+        linkedin_service = LinkedInPersonaService()
+
+        # Validate the persona data
+        validation_results = linkedin_service.validate_linkedin_persona(request.persona_data)
+
+        logger.info(f"LinkedIn persona validation completed: Quality Score: {validation_results['quality_score']:.1f}%")
+
+        return LinkedInPersonaValidationResponse(**validation_results)
+
+    except Exception as e:
+        logger.error(f"Error validating LinkedIn persona: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to validate LinkedIn persona: {str(e)}"
+        )
+
+
+async def optimize_linkedin_persona(
+    request: LinkedInOptimizationRequest,
+    persona_service: PersonaAnalysisService = Depends(get_persona_service)
+):
+    """
+    Optimize LinkedIn persona data for maximum algorithm performance.
+
+    This endpoint applies comprehensive LinkedIn algorithm optimization to persona data,
+    including content quality optimization, multimedia strategy, engagement optimization,
+    timing optimization, and professional context optimization.
+    """
+    try:
+        logger.info("Optimizing LinkedIn persona for algorithm performance")
+
+        # Get LinkedIn persona service
+        from services.persona.linkedin.linkedin_persona_service import LinkedInPersonaService
+        linkedin_service = LinkedInPersonaService()
+
+        # Apply algorithm optimization
+        optimized_persona = linkedin_service.optimize_for_linkedin_algorithm(request.persona_data)
+
+        # Extract optimization details
+        optimization_details = optimized_persona.get("algorithm_optimization", {})
+        
+        logger.info("✅ LinkedIn persona algorithm optimization completed successfully")
+
+        return LinkedInOptimizationResponse(
+            optimized_persona=optimized_persona,
+            optimization_applied=True,
+            optimization_details={
+                "optimization_categories": list(optimization_details.keys()),
+                "total_optimization_strategies": sum(len(strategies) if isinstance(strategies, list) else 1 
+                                                   for category in optimization_details.values() 
+                                                   for strategies in category.values() if isinstance(category, dict)),
+                "optimization_timestamp": datetime.utcnow().isoformat()
             }
-        ]
-    }
+        )
+
+    except Exception as e:
+        logger.error(f"Error optimizing LinkedIn persona: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to optimize LinkedIn persona: {str(e)}"
+        )
+
+
+class FacebookPersonaValidationRequest(BaseModel):
+    """Request model for Facebook persona validation."""
+    persona_data: Dict[str, Any]
+
+
+class FacebookPersonaValidationResponse(BaseModel):
+    """Response model for Facebook persona validation."""
+    is_valid: bool
+    quality_score: float
+    completeness_score: float
+    facebook_optimization_score: float
+    engagement_strategy_score: float
+    content_format_score: float
+    audience_targeting_score: float
+    community_building_score: float
+    missing_fields: List[str]
+    incomplete_fields: List[str]
+    recommendations: List[str]
+    quality_issues: List[str]
+    strengths: List[str]
+    validation_details: Dict[str, Any]
+
+
+class FacebookOptimizationRequest(BaseModel):
+    """Request model for Facebook algorithm optimization."""
+    persona_data: Dict[str, Any]
+
+
+class FacebookOptimizationResponse(BaseModel):
+    """Response model for Facebook algorithm optimization."""
+    optimized_persona: Dict[str, Any]
+    optimization_applied: bool
+    optimization_details: Dict[str, Any]
+
+
+async def validate_facebook_persona(
+    request: FacebookPersonaValidationRequest,
+    persona_service: PersonaAnalysisService = Depends(get_persona_service)
+):
+    """
+    Validate Facebook persona data for completeness and quality.
+
+    This endpoint provides comprehensive validation of Facebook persona data,
+    including core fields, Facebook-specific optimizations, engagement strategies,
+    content formats, audience targeting, and community building assessments.
+    """
+    try:
+        logger.info("Validating Facebook persona data")
+
+        # Get Facebook persona service
+        from services.persona.facebook.facebook_persona_service import FacebookPersonaService
+        facebook_service = FacebookPersonaService()
+
+        # Validate the persona data
+        validation_results = facebook_service.validate_facebook_persona(request.persona_data)
+
+        logger.info(f"Facebook persona validation completed: Quality Score: {validation_results['quality_score']:.1f}%")
+
+        return FacebookPersonaValidationResponse(**validation_results)
+
+    except Exception as e:
+        logger.error(f"Error validating Facebook persona: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to validate Facebook persona: {str(e)}"
+        )
+
+
+async def optimize_facebook_persona(
+    request: FacebookOptimizationRequest,
+    persona_service: PersonaAnalysisService = Depends(get_persona_service)
+):
+    """
+    Optimize Facebook persona data for maximum algorithm performance.
+
+    This endpoint applies comprehensive Facebook algorithm optimization to persona data,
+    including engagement optimization, content quality optimization, timing optimization,
+    audience targeting optimization, and community building strategies.
+    """
+    try:
+        logger.info("Optimizing Facebook persona for algorithm performance")
+
+        # Get Facebook persona service
+        from services.persona.facebook.facebook_persona_service import FacebookPersonaService
+        facebook_service = FacebookPersonaService()
+
+        # Apply algorithm optimization
+        optimized_persona = facebook_service.optimize_for_facebook_algorithm(request.persona_data)
+
+        # Extract optimization details
+        optimization_details = optimized_persona.get("algorithm_optimization", {})
+        
+        logger.info("✅ Facebook persona algorithm optimization completed successfully")
+
+        # Use the optimization metadata from the service
+        optimization_metadata = optimized_persona.get("optimization_metadata", {})
+        
+        return FacebookOptimizationResponse(
+            optimized_persona=optimized_persona,
+            optimization_applied=True,
+            optimization_details={
+                "optimization_categories": optimization_metadata.get("optimization_categories", []),
+                "total_optimization_strategies": optimization_metadata.get("total_optimization_strategies", 0),
+                "optimization_timestamp": optimization_metadata.get("optimization_timestamp", datetime.utcnow().isoformat())
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error optimizing Facebook persona: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to optimize Facebook persona: {str(e)}"
+        )

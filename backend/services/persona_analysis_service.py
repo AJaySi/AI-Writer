@@ -12,13 +12,19 @@ import json
 from services.database import get_db_session
 from models.onboarding import OnboardingSession, WebsiteAnalysis, ResearchPreferences
 from models.persona_models import WritingPersona, PlatformPersona, PersonaAnalysisResult
-from services.llm_providers.gemini_provider import gemini_structured_json_response
+from services.persona.core_persona import CorePersonaService, OnboardingDataCollector
+from services.persona.linkedin.linkedin_persona_service import LinkedInPersonaService
+from services.persona.facebook.facebook_persona_service import FacebookPersonaService
 
 class PersonaAnalysisService:
     """Service for analyzing onboarding data and generating writing personas using Gemini AI."""
     
     def __init__(self):
         """Initialize the persona analysis service."""
+        self.core_persona_service = CorePersonaService()
+        self.data_collector = OnboardingDataCollector()
+        self.linkedin_service = LinkedInPersonaService()
+        self.facebook_service = FacebookPersonaService()
         logger.info("PersonaAnalysisService initialized")
     
     def generate_persona_from_onboarding(self, user_id: int, onboarding_session_id: int = None) -> Dict[str, Any]:
@@ -36,20 +42,20 @@ class PersonaAnalysisService:
             logger.info(f"Generating persona for user {user_id}")
             
             # Get onboarding data
-            onboarding_data = self._collect_onboarding_data(user_id, onboarding_session_id)
+            onboarding_data = self.data_collector.collect_onboarding_data(user_id, onboarding_session_id)
             
             if not onboarding_data:
                 logger.warning(f"No onboarding data found for user {user_id}")
                 return {"error": "No onboarding data available for persona generation"}
             
             # Generate core persona using Gemini
-            core_persona = self._generate_core_persona(onboarding_data)
+            core_persona = self.core_persona_service.generate_core_persona(onboarding_data)
             
             if "error" in core_persona:
                 return core_persona
             
             # Generate platform-specific adaptations
-            platform_personas = self._generate_platform_adaptations(core_persona, onboarding_data)
+            platform_personas = self.core_persona_service.generate_platform_adaptations(core_persona, onboarding_data)
             
             # Save to database
             saved_persona = self._save_persona_to_db(user_id, core_persona, platform_personas, onboarding_data)
@@ -60,7 +66,7 @@ class PersonaAnalysisService:
                 "platform_personas": platform_personas,
                 "analysis_metadata": {
                     "confidence_score": core_persona.get("confidence_score", 0.0),
-                    "data_sufficiency": self._calculate_data_sufficiency(onboarding_data),
+                    "data_sufficiency": self.data_collector.calculate_data_sufficiency(onboarding_data),
                     "generated_at": datetime.utcnow().isoformat()
                 }
             }
@@ -69,318 +75,114 @@ class PersonaAnalysisService:
             logger.error(f"Error generating persona for user {user_id}: {str(e)}")
             return {"error": f"Failed to generate persona: {str(e)}"}
     
-    def _collect_onboarding_data(self, user_id: int, session_id: int = None) -> Optional[Dict[str, Any]]:
-        """Collect comprehensive onboarding data for persona analysis."""
-        try:
-            session = get_db_session()
-            
-            # Find onboarding session
-            if session_id:
-                onboarding_session = session.query(OnboardingSession).filter(
-                    OnboardingSession.id == session_id,
-                    OnboardingSession.user_id == user_id
-                ).first()
-            else:
-                onboarding_session = session.query(OnboardingSession).filter(
-                    OnboardingSession.user_id == user_id
-                ).order_by(OnboardingSession.updated_at.desc()).first()
-            
-            if not onboarding_session:
-                return None
-            
-            # Get website analysis
-            website_analysis = session.query(WebsiteAnalysis).filter(
-                WebsiteAnalysis.session_id == onboarding_session.id
-            ).first()
-            
-            # Get research preferences
-            research_prefs = session.query(ResearchPreferences).filter(
-                ResearchPreferences.session_id == onboarding_session.id
-            ).first()
-            
-            # Compile comprehensive data
-            onboarding_data = {
-                "session_info": {
-                    "session_id": onboarding_session.id,
-                    "current_step": onboarding_session.current_step,
-                    "progress": onboarding_session.progress,
-                    "started_at": onboarding_session.started_at.isoformat() if onboarding_session.started_at else None
-                },
-                "website_analysis": website_analysis.to_dict() if website_analysis else None,
-                "research_preferences": research_prefs.to_dict() if research_prefs else None
-            }
-            
-            session.close()
-            return onboarding_data
-            
-        except Exception as e:
-            logger.error(f"Error collecting onboarding data: {str(e)}")
-            return None
-    
-    def _generate_core_persona(self, onboarding_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate core writing persona using Gemini structured response."""
-        
-        # Build analysis prompt
-        prompt = self._build_persona_analysis_prompt(onboarding_data)
-        
-        # Define schema for structured response
-        persona_schema = {
-            "type": "object",
-            "properties": {
-                "identity": {
-                    "type": "object",
-                    "properties": {
-                        "persona_name": {"type": "string"},
-                        "archetype": {"type": "string"},
-                        "core_belief": {"type": "string"},
-                        "brand_voice_description": {"type": "string"}
-                    },
-                    "required": ["persona_name", "archetype", "core_belief"]
-                },
-                "linguistic_fingerprint": {
-                    "type": "object",
-                    "properties": {
-                        "sentence_metrics": {
-                            "type": "object",
-                            "properties": {
-                                "average_sentence_length_words": {"type": "number"},
-                                "preferred_sentence_type": {"type": "string"},
-                                "active_to_passive_ratio": {"type": "string"},
-                                "complexity_level": {"type": "string"}
-                            }
-                        },
-                        "lexical_features": {
-                            "type": "object",
-                            "properties": {
-                                "go_to_words": {"type": "array", "items": {"type": "string"}},
-                                "go_to_phrases": {"type": "array", "items": {"type": "string"}},
-                                "avoid_words": {"type": "array", "items": {"type": "string"}},
-                                "contractions": {"type": "string"},
-                                "filler_words": {"type": "string"},
-                                "vocabulary_level": {"type": "string"}
-                            }
-                        },
-                        "rhetorical_devices": {
-                            "type": "object",
-                            "properties": {
-                                "metaphors": {"type": "string"},
-                                "analogies": {"type": "string"},
-                                "rhetorical_questions": {"type": "string"},
-                                "storytelling_style": {"type": "string"}
-                            }
-                        }
-                    }
-                },
-                "tonal_range": {
-                    "type": "object",
-                    "properties": {
-                        "default_tone": {"type": "string"},
-                        "permissible_tones": {"type": "array", "items": {"type": "string"}},
-                        "forbidden_tones": {"type": "array", "items": {"type": "string"}},
-                        "emotional_range": {"type": "string"}
-                    }
-                },
-                "stylistic_constraints": {
-                    "type": "object",
-                    "properties": {
-                        "punctuation": {
-                            "type": "object",
-                            "properties": {
-                                "ellipses": {"type": "string"},
-                                "em_dash": {"type": "string"},
-                                "exclamation_points": {"type": "string"}
-                            }
-                        },
-                        "formatting": {
-                            "type": "object",
-                            "properties": {
-                                "paragraphs": {"type": "string"},
-                                "lists": {"type": "string"},
-                                "markdown": {"type": "string"}
-                            }
-                        }
-                    }
-                },
-                "confidence_score": {"type": "number"},
-                "analysis_notes": {"type": "string"}
-            },
-            "required": ["identity", "linguistic_fingerprint", "tonal_range", "confidence_score"]
-        }
-        
-        try:
-            # Generate structured response using Gemini
-            response = gemini_structured_json_response(
-                prompt=prompt,
-                schema=persona_schema,
-                temperature=0.2,  # Low temperature for consistent analysis
-                max_tokens=8192,
-                system_prompt="You are an expert writing style analyst and persona developer. Analyze the provided data to create a precise, actionable writing persona."
-            )
-            
-            if "error" in response:
-                logger.error(f"Gemini API error: {response['error']}")
-                return {"error": f"AI analysis failed: {response['error']}"}
-            
-            logger.info("✅ Core persona generated successfully")
-            return response
-            
-        except Exception as e:
-            logger.error(f"Error generating core persona: {str(e)}")
-            return {"error": f"Failed to generate core persona: {str(e)}"}
-    
-    def _generate_platform_adaptations(self, core_persona: Dict[str, Any], onboarding_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate platform-specific persona adaptations."""
-        
-        platforms = ["twitter", "linkedin", "instagram", "facebook", "blog", "medium", "substack"]
-        platform_personas = {}
-        
-        for platform in platforms:
-            try:
-                platform_persona = self._generate_single_platform_persona(core_persona, platform, onboarding_data)
-                if "error" not in platform_persona:
-                    platform_personas[platform] = platform_persona
-                else:
-                    logger.warning(f"Failed to generate {platform} persona: {platform_persona['error']}")
-            except Exception as e:
-                logger.error(f"Error generating {platform} persona: {str(e)}")
-        
-        return platform_personas
-    
-    def _generate_single_platform_persona(self, core_persona: Dict[str, Any], platform: str, onboarding_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate persona adaptation for a specific platform."""
-        
-        prompt = self._build_platform_adaptation_prompt(core_persona, platform, onboarding_data)
-        
-        # Platform-specific schema
-        platform_schema = {
-            "type": "object",
-            "properties": {
-                "platform_type": {"type": "string"},
-                "sentence_metrics": {
-                    "type": "object",
-                    "properties": {
-                        "max_sentence_length": {"type": "number"},
-                        "optimal_sentence_length": {"type": "number"},
-                        "sentence_variety": {"type": "string"}
-                    }
-                },
-                "lexical_adaptations": {
-                    "type": "object",
-                    "properties": {
-                        "platform_specific_words": {"type": "array", "items": {"type": "string"}},
-                        "hashtag_strategy": {"type": "string"},
-                        "emoji_usage": {"type": "string"},
-                        "mention_strategy": {"type": "string"}
-                    }
-                },
-                "content_format_rules": {
-                    "type": "object",
-                    "properties": {
-                        "character_limit": {"type": "number"},
-                        "paragraph_structure": {"type": "string"},
-                        "call_to_action_style": {"type": "string"},
-                        "link_placement": {"type": "string"}
-                    }
-                },
-                "engagement_patterns": {
-                    "type": "object",
-                    "properties": {
-                        "posting_frequency": {"type": "string"},
-                        "optimal_posting_times": {"type": "array", "items": {"type": "string"}},
-                        "engagement_tactics": {"type": "array", "items": {"type": "string"}},
-                        "community_interaction": {"type": "string"}
-                    }
-                },
-                "platform_best_practices": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                }
-            },
-            "required": ["platform_type", "sentence_metrics", "content_format_rules", "engagement_patterns"]
-        }
-        
-        try:
-            response = gemini_structured_json_response(
-                prompt=prompt,
-                schema=platform_schema,
-                temperature=0.2,
-                max_tokens=4096,
-                system_prompt=f"You are an expert in {platform} content strategy and platform-specific writing optimization."
-            )
-            
-            return response
-            
-        except Exception as e:
-            logger.error(f"Error generating {platform} persona: {str(e)}")
-            return {"error": f"Failed to generate {platform} persona: {str(e)}"}
     
     def _build_persona_analysis_prompt(self, onboarding_data: Dict[str, Any]) -> str:
-        """Build the main persona analysis prompt."""
+        """Build the main persona analysis prompt with comprehensive data."""
         
+        # Get enhanced analysis data
+        enhanced_analysis = onboarding_data.get("enhanced_analysis", {})
         website_analysis = onboarding_data.get("website_analysis", {}) or {}
         research_prefs = onboarding_data.get("research_preferences", {}) or {}
         
         prompt = f"""
-PERSONA GENERATION TASK: Create a comprehensive writing persona based on user onboarding data.
+COMPREHENSIVE PERSONA GENERATION TASK: Create a highly detailed, data-driven writing persona based on extensive AI analysis of user's website and content strategy.
 
-ONBOARDING DATA ANALYSIS:
+=== COMPREHENSIVE ONBOARDING DATA ANALYSIS ===
 
-Website Analysis:
+WEBSITE ANALYSIS OVERVIEW:
 - URL: {website_analysis.get('website_url', 'Not provided')}
-- Writing Style: {json.dumps(website_analysis.get('writing_style', {}), indent=2)}
-- Content Characteristics: {json.dumps(website_analysis.get('content_characteristics', {}) or {}, indent=2)}
-- Target Audience: {json.dumps(website_analysis.get('target_audience', {}), indent=2)}
-- Content Type: {json.dumps(website_analysis.get('content_type', {}), indent=2)}
-- Style Patterns: {json.dumps(website_analysis.get('style_patterns', {}), indent=2)}
+- Analysis Date: {website_analysis.get('analysis_date', 'Not provided')}
+- Status: {website_analysis.get('status', 'Not provided')}
 
-Research Preferences:
-- Research Depth: {research_prefs.get('research_depth', 'Not set')}
-- Content Types: {research_prefs.get('content_types', [])}
-- Auto Research: {research_prefs.get('auto_research', False)}
-- Factual Content: {research_prefs.get('factual_content', False)}
+=== DETAILED STYLE ANALYSIS ===
+{json.dumps(enhanced_analysis.get('comprehensive_style_analysis', {}), indent=2)}
 
-PERSONA GENERATION REQUIREMENTS:
+=== CONTENT INSIGHTS ===
+{json.dumps(enhanced_analysis.get('content_insights', {}), indent=2)}
 
-1. IDENTITY CREATION:
-   - Create a memorable persona name that captures the essence of the writing style
-   - Define a clear archetype (e.g., "The Pragmatic Futurist", "The Thoughtful Educator")
-   - Articulate a core belief that drives the writing philosophy
-   - Write a comprehensive brand voice description
+=== AUDIENCE INTELLIGENCE ===
+{json.dumps(enhanced_analysis.get('audience_intelligence', {}), indent=2)}
 
-2. LINGUISTIC FINGERPRINT (Quantitative Analysis):
-   - Calculate average sentence length based on website analysis
-   - Determine preferred sentence types (simple, compound, complex)
-   - Analyze active vs passive voice ratio
-   - Identify go-to words and phrases from the content analysis
-   - List words and phrases to avoid
-   - Determine contraction usage patterns
-   - Assess vocabulary complexity level
+=== BRAND VOICE ANALYSIS ===
+{json.dumps(enhanced_analysis.get('brand_voice_analysis', {}), indent=2)}
 
-3. RHETORICAL ANALYSIS:
-   - Identify metaphor patterns and themes
-   - Analyze analogy usage
-   - Assess rhetorical question frequency and style
-   - Determine storytelling approach
+=== TECHNICAL WRITING METRICS ===
+{json.dumps(enhanced_analysis.get('technical_writing_metrics', {}), indent=2)}
 
-4. TONAL RANGE:
-   - Define the default tone
-   - List permissible tones for different contexts
-   - Identify forbidden tones that don't match the brand
-   - Describe emotional range and expression
+=== COMPETITIVE ANALYSIS ===
+{json.dumps(enhanced_analysis.get('competitive_analysis', {}), indent=2)}
 
-5. STYLISTIC CONSTRAINTS:
-   - Define punctuation preferences and rules
-   - Set formatting guidelines
-   - Establish paragraph structure preferences
+=== CONTENT STRATEGY INSIGHTS ===
+{json.dumps(enhanced_analysis.get('content_strategy_insights', {}), indent=2)}
 
-ANALYSIS INSTRUCTIONS:
-- Base your analysis on the actual data provided from the website analysis
-- If data is limited, make reasonable inferences but note the confidence level
-- Ensure the persona is actionable and specific enough for AI content generation
-- Provide a confidence score (0-100) based on data availability and quality
-- Include analysis notes explaining your reasoning
+=== RESEARCH PREFERENCES ===
+{json.dumps(enhanced_analysis.get('research_preferences', {}), indent=2)}
 
-Generate a comprehensive persona profile that can be used to replicate this writing style across different platforms.
+=== LEGACY DATA (for compatibility) ===
+Website Analysis: {json.dumps(website_analysis.get('writing_style', {}), indent=2)}
+Content Characteristics: {json.dumps(website_analysis.get('content_characteristics', {}) or {}, indent=2)}
+Target Audience: {json.dumps(website_analysis.get('target_audience', {}), indent=2)}
+Style Patterns: {json.dumps(website_analysis.get('style_patterns', {}), indent=2)}
+
+=== COMPREHENSIVE PERSONA GENERATION REQUIREMENTS ===
+
+1. IDENTITY CREATION (Based on Brand Analysis):
+   - Create a memorable persona name that captures the essence of the brand personality and writing style
+   - Define a clear archetype that reflects the brand's positioning and audience appeal
+   - Articulate a core belief that drives the writing philosophy and brand values
+   - Write a comprehensive brand voice description incorporating all style elements
+
+2. LINGUISTIC FINGERPRINT (Quantitative Analysis from Technical Metrics):
+   - Calculate precise average sentence length from sentence structure analysis
+   - Determine preferred sentence types based on paragraph organization patterns
+   - Analyze active vs passive voice ratio from voice characteristics
+   - Extract go-to words and phrases from vocabulary patterns and style analysis
+   - List words and phrases to avoid based on brand alignment guidelines
+   - Determine contraction usage patterns from formality level
+   - Assess vocabulary complexity level from readability scores
+
+3. RHETORICAL ANALYSIS (From Style Patterns):
+   - Identify metaphor patterns and themes from rhetorical devices
+   - Analyze analogy usage from content strategy insights
+   - Assess rhetorical question frequency from engagement tips
+   - Determine storytelling approach from content flow analysis
+
+4. TONAL RANGE (From Comprehensive Style Analysis):
+   - Define the default tone from tone analysis and brand personality
+   - List permissible tones based on emotional appeal and audience considerations
+   - Identify forbidden tones from avoid elements and brand alignment
+   - Describe emotional range from psychographic profile and engagement level
+
+5. STYLISTIC CONSTRAINTS (From Technical Writing Metrics):
+   - Define punctuation preferences from paragraph structure analysis
+   - Set formatting guidelines from content structure insights
+   - Establish paragraph structure preferences from organization patterns
+   - Include transition phrase preferences from style patterns
+
+6. PLATFORM-SPECIFIC ADAPTATIONS (From Content Strategy):
+   - Incorporate SEO optimization strategies
+   - Include conversion optimization techniques
+   - Apply engagement tips for different platforms
+   - Use competitive advantages for differentiation
+
+7. CONTENT STRATEGY INTEGRATION:
+   - Incorporate best practices from content strategy insights
+   - Include AI generation tips for consistent output
+   - Apply content calendar suggestions for timing
+   - Use competitive advantages for positioning
+
+=== ENHANCED ANALYSIS INSTRUCTIONS ===
+- Base your analysis on ALL the comprehensive data provided above
+- Use the detailed technical metrics for precise linguistic analysis
+- Incorporate brand voice analysis for authentic personality
+- Apply audience intelligence for targeted communication
+- Include competitive analysis for market positioning
+- Use content strategy insights for practical application
+- Ensure the persona reflects the brand's unique elements and competitive advantages
+- Provide a confidence score (0-100) based on data richness and quality
+- Include detailed analysis notes explaining your reasoning and data sources
+
+Generate a comprehensive, data-driven persona profile that can be used to replicate this writing style across different platforms while maintaining brand authenticity and competitive positioning.
 """
         
         return prompt
@@ -442,6 +244,7 @@ Generate a platform-optimized persona adaptation that maintains brand consistenc
         
         return prompt
     
+    
     def _get_platform_constraints(self, platform: str) -> Dict[str, Any]:
         """Get platform-specific constraints and best practices."""
         
@@ -454,14 +257,8 @@ Generate a platform-optimized persona adaptation that maintains brand consistenc
                 "thread_support": True,
                 "link_shortening": True
             },
-            "linkedin": {
-                "character_limit": 3000,
-                "optimal_length": "150-300 words",
-                "professional_tone": True,
-                "hashtag_limit": 5,
-                "rich_media": True,
-                "long_form": True
-            },
+            "linkedin": self.linkedin_service.get_linkedin_constraints(),
+            "facebook": self.facebook_service.get_facebook_constraints(),
             "instagram": {
                 "caption_limit": 2200,
                 "optimal_length": "125-150 words",
@@ -533,6 +330,24 @@ Generate a platform-optimized persona adaptation that maintains brand consistenc
             
             # Create platform-specific persona records
             for platform, platform_data in platform_personas.items():
+                # Prepare platform-specific data
+                platform_specific_data = {}
+                if platform.lower() == "linkedin":
+                    platform_specific_data = {
+                        "professional_networking": platform_data.get("professional_networking", {}),
+                        "linkedin_features": platform_data.get("linkedin_features", {}),
+                        "algorithm_optimization": platform_data.get("algorithm_optimization", {}),
+                        "professional_context_optimization": platform_data.get("professional_context_optimization", {})
+                    }
+                elif platform.lower() == "facebook":
+                    platform_specific_data = {
+                        "facebook_algorithm_optimization": platform_data.get("facebook_algorithm_optimization", {}),
+                        "facebook_engagement_strategies": platform_data.get("facebook_engagement_strategies", {}),
+                        "facebook_content_formats": platform_data.get("facebook_content_formats", {}),
+                        "facebook_audience_targeting": platform_data.get("facebook_audience_targeting", {}),
+                        "facebook_community_building": platform_data.get("facebook_community_building", {})
+                    }
+                
                 platform_persona = PlatformPersona(
                     writing_persona_id=writing_persona.id,
                     platform_type=platform,
@@ -543,7 +358,8 @@ Generate a platform-optimized persona adaptation that maintains brand consistenc
                     stylistic_constraints=core_persona.get("stylistic_constraints", {}),
                     content_format_rules=platform_data.get("content_format_rules", {}),
                     engagement_patterns=platform_data.get("engagement_patterns", {}),
-                    platform_best_practices={"practices": platform_data.get("platform_best_practices", [])}
+                    platform_best_practices={"practices": platform_data.get("platform_best_practices", [])},
+                    algorithm_considerations=platform_specific_data if platform_specific_data else platform_data.get("algorithm_considerations", {})
                 )
                 session.add(platform_persona)
             
@@ -565,9 +381,10 @@ Generate a platform-optimized persona adaptation that maintains brand consistenc
             session.add(analysis_result)
             
             session.commit()
+            persona_id = writing_persona.id
             session.close()
             
-            logger.info(f"✅ Persona saved to database with ID: {writing_persona.id}")
+            logger.info(f"✅ Persona saved to database with ID: {persona_id}")
             return writing_persona
             
         except Exception as e:
@@ -581,26 +398,108 @@ Generate a platform-optimized persona adaptation that maintains brand consistenc
         """Calculate how sufficient the onboarding data is for persona generation."""
         score = 0.0
         
-        website_analysis = onboarding_data.get("website_analysis", {})
-        research_prefs = onboarding_data.get("research_preferences", {})
+        # Get enhanced analysis data
+        enhanced_analysis = onboarding_data.get("enhanced_analysis", {})
+        website_analysis = onboarding_data.get("website_analysis", {}) or {}
+        research_prefs = onboarding_data.get("research_preferences", {}) or {}
         
-        # Website analysis components (70% of score)
-        if website_analysis.get("writing_style"):
-            score += 25
-        if website_analysis.get("content_characteristics"):
-            score += 20
-        if website_analysis.get("target_audience"):
-            score += 15
-        if website_analysis.get("style_patterns"):
-            score += 10
+        # Enhanced scoring based on comprehensive data availability
         
-        # Research preferences components (30% of score)
+        # Comprehensive Style Analysis (25% of score)
+        style_analysis = enhanced_analysis.get("comprehensive_style_analysis", {})
+        if style_analysis.get("tone_analysis"):
+            score += 5
+        if style_analysis.get("voice_characteristics"):
+            score += 5
+        if style_analysis.get("brand_personality"):
+            score += 5
+        if style_analysis.get("formality_level"):
+            score += 5
+        if style_analysis.get("emotional_appeal"):
+            score += 5
+        
+        # Content Insights (20% of score)
+        content_insights = enhanced_analysis.get("content_insights", {})
+        if content_insights.get("sentence_structure_analysis"):
+            score += 4
+        if content_insights.get("vocabulary_level"):
+            score += 4
+        if content_insights.get("readability_score"):
+            score += 4
+        if content_insights.get("content_flow"):
+            score += 4
+        if content_insights.get("visual_elements_usage"):
+            score += 4
+        
+        # Audience Intelligence (15% of score)
+        audience_intel = enhanced_analysis.get("audience_intelligence", {})
+        if audience_intel.get("demographics"):
+            score += 3
+        if audience_intel.get("expertise_level"):
+            score += 3
+        if audience_intel.get("industry_focus"):
+            score += 3
+        if audience_intel.get("psychographic_profile"):
+            score += 3
+        if audience_intel.get("pain_points"):
+            score += 3
+        
+        # Technical Writing Metrics (15% of score)
+        tech_metrics = enhanced_analysis.get("technical_writing_metrics", {})
+        if tech_metrics.get("vocabulary_patterns"):
+            score += 3
+        if tech_metrics.get("rhetorical_devices"):
+            score += 3
+        if tech_metrics.get("paragraph_structure"):
+            score += 3
+        if tech_metrics.get("style_consistency"):
+            score += 3
+        if tech_metrics.get("unique_elements"):
+            score += 3
+        
+        # Content Strategy Insights (15% of score)
+        strategy_insights = enhanced_analysis.get("content_strategy_insights", {})
+        if strategy_insights.get("tone_recommendations"):
+            score += 3
+        if strategy_insights.get("best_practices"):
+            score += 3
+        if strategy_insights.get("competitive_advantages"):
+            score += 3
+        if strategy_insights.get("content_strategy"):
+            score += 3
+        if strategy_insights.get("ai_generation_tips"):
+            score += 3
+        
+        # Research Preferences (10% of score)
         if research_prefs.get("research_depth"):
-            score += 10
+            score += 5
         if research_prefs.get("content_types"):
-            score += 10
-        if research_prefs.get("writing_style"):
-            score += 10
+            score += 5
+        
+        # Legacy compatibility - add points for basic data if enhanced data is missing
+        if score < 50:  # If enhanced data is insufficient, fall back to legacy scoring
+            legacy_score = 0.0
+            
+            # Website analysis components (70% of legacy score)
+            if website_analysis.get("writing_style"):
+                legacy_score += 25
+            if website_analysis.get("content_characteristics"):
+                legacy_score += 20
+            if website_analysis.get("target_audience"):
+                legacy_score += 15
+            if website_analysis.get("style_patterns"):
+                legacy_score += 10
+            
+            # Research preferences components (30% of legacy score)
+            if research_prefs.get("research_depth"):
+                legacy_score += 10
+            if research_prefs.get("content_types"):
+                legacy_score += 10
+            if research_prefs.get("writing_style"):
+                legacy_score += 10
+            
+            # Use the higher of enhanced or legacy score
+            score = max(score, legacy_score)
         
         return min(score, 100.0)
     

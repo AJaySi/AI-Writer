@@ -16,7 +16,19 @@ from api.persona import (
     validate_persona_generation_readiness,
     generate_persona_preview,
     get_supported_platforms,
-    PersonaGenerationRequest
+    validate_linkedin_persona,
+    optimize_linkedin_persona,
+    validate_facebook_persona,
+    optimize_facebook_persona,
+    PersonaGenerationRequest,
+    LinkedInPersonaValidationRequest,
+    LinkedInPersonaValidationResponse,
+    LinkedInOptimizationRequest,
+    LinkedInOptimizationResponse,
+    FacebookPersonaValidationRequest,
+    FacebookPersonaValidationResponse,
+    FacebookOptimizationRequest,
+    FacebookOptimizationResponse
 )
 
 from services.persona_replication_engine import PersonaReplicationEngine
@@ -88,6 +100,34 @@ async def generate_preview_endpoint(
 async def get_supported_platforms_endpoint():
     """Get list of supported platforms for persona generation."""
     return await get_supported_platforms()
+
+@router.post("/linkedin/validate", response_model=LinkedInPersonaValidationResponse)
+async def validate_linkedin_persona_endpoint(
+    request: LinkedInPersonaValidationRequest
+):
+    """Validate LinkedIn persona data for completeness and quality."""
+    return await validate_linkedin_persona(request)
+
+@router.post("/linkedin/optimize", response_model=LinkedInOptimizationResponse)
+async def optimize_linkedin_persona_endpoint(
+    request: LinkedInOptimizationRequest
+):
+    """Optimize LinkedIn persona data for maximum algorithm performance."""
+    return await optimize_linkedin_persona(request)
+
+@router.post("/facebook/validate", response_model=FacebookPersonaValidationResponse)
+async def validate_facebook_persona_endpoint(
+    request: FacebookPersonaValidationRequest
+):
+    """Validate Facebook persona data for completeness and quality."""
+    return await validate_facebook_persona(request)
+
+@router.post("/facebook/optimize", response_model=FacebookOptimizationResponse)
+async def optimize_facebook_persona_endpoint(
+    request: FacebookOptimizationRequest
+):
+    """Optimize Facebook persona data for maximum algorithm performance."""
+    return await optimize_facebook_persona(request)
 
 @router.post("/generate-content")
 async def generate_content_with_persona_endpoint(

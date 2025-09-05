@@ -418,31 +418,60 @@ Always use the most appropriate tool for the user's request.`.trim();
                 borderRadius: '8px',
                 border: '1px solid rgba(24, 119, 242, 0.2)'
               }}
-              title={`Complete Persona Details:
-              
-🎭 PERSONA: ${corePersona.persona_name}
-📋 ARCHETYPE: ${corePersona.archetype}
-💭 CORE BELIEF: ${corePersona.core_belief}
-📊 CONFIDENCE: ${corePersona.confidence_score}%
+              title={`🎭 YOUR PERSONALIZED WRITING ASSISTANT
 
-📝 LINGUISTIC FINGERPRINT:
-• Sentence Length: ${corePersona.linguistic_fingerprint?.sentence_metrics?.average_sentence_length_words || 'Unknown'} words average
-• Voice Ratio: ${corePersona.linguistic_fingerprint?.sentence_metrics?.active_to_passive_ratio || 'Unknown'}
-• Go-to Words: ${corePersona.linguistic_fingerprint?.lexical_features?.go_to_words?.join(', ') || 'None specified'}
-• Avoid Words: ${corePersona.linguistic_fingerprint?.lexical_features?.avoid_words?.join(', ') || 'None specified'}
+🤔 WHAT IS A PERSONA?
+A persona is your unique writing style profile that AI uses to create content that sounds exactly like you. It's like having a digital twin of your writing voice!
 
-🎯 PLATFORM OPTIMIZATION (Facebook):
-• Character Limit: ${platformPersona?.content_format_rules?.character_limit || '63206'} characters
-• Optimal Length: ${platformPersona?.content_format_rules?.optimal_length || '40-80 characters'}
-• Engagement Pattern: ${platformPersona?.engagement_patterns?.posting_frequency || '1-2 times per day'}
-• Hashtag Strategy: ${platformPersona?.lexical_features?.hashtag_strategy || '1-2 relevant hashtags'}
+🎯 HOW DOES IT HELP YOU?
+✅ Generates content that matches your natural writing style
+✅ Maintains consistent voice across all your Facebook posts
+✅ Saves time by understanding your preferences automatically
+✅ Optimizes content for Facebook's algorithm and your audience
+✅ Provides personalized suggestions based on your industry
 
-✨ This persona is actively optimizing your content generation and AI assistance!`}
+🧠 HOW WAS IT CREATED?
+Your persona was built by analyzing:
+• Your website content and writing patterns
+• Your research preferences and content goals
+• Your target audience and industry focus
+• Your communication style and tone preferences
+• Facebook-specific optimization requirements
+
+🤖 HOW DOES COPILOTKIT USE IT?
+The AI assistant now knows:
+• Your preferred sentence length and structure
+• Your go-to words and phrases to use/avoid
+• Your professional tone and communication style
+• Facebook-specific optimization strategies
+• Your engagement patterns and posting preferences
+
+🚀 HYPER-PERSONALIZATION ACHIEVED!
+Instead of generic content, you get:
+• Content that sounds authentically like you
+• Industry-specific insights and terminology
+• Facebook algorithm-optimized posts
+• Community engagement strategies
+• Personalized conversion tactics
+
+📊 YOUR PERSONA DETAILS:
+🎭 Name: ${corePersona.persona_name}
+📋 Style: ${corePersona.archetype}
+💭 Philosophy: ${corePersona.core_belief}
+📈 Confidence: ${corePersona.confidence_score}% accuracy
+
+🎯 FACEBOOK OPTIMIZATION:
+• Optimal length: ${platformPersona?.content_format_rules?.optimal_length || '40-80 words'}
+• Posting frequency: ${platformPersona?.engagement_patterns?.posting_frequency || '1-2 times per day'}
+• Hashtag strategy: ${platformPersona?.lexical_features?.hashtag_strategy || '1-2 relevant hashtags'}
+• Engagement style: ${platformPersona?.engagement_patterns?.interaction_style || 'community-focused'}
+
+💡 TRY THIS: Ask the AI to "generate a Facebook post about [your topic]" and watch how it automatically applies your persona to create content that sounds like you!`}
             >
               <span style={{ color: '#1877f2' }}>🎭</span>
-              <span><strong>Persona Active:</strong> {corePersona.persona_name} ({corePersona.archetype})</span>
+              <span><strong>🎭 Your Writing Assistant:</strong> {corePersona.persona_name} ({corePersona.archetype})</span>
               <span style={{ marginLeft: 'auto', fontSize: '11px' }}>
-                Confidence: {corePersona.confidence_score}% | 
+                {corePersona.confidence_score}% accuracy | 
                 Platform: Facebook Optimized
               </span>
               <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)', marginLeft: '8px' }}>
