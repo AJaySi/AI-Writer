@@ -96,28 +96,35 @@ export const SearchContainer = styled(Box)(({ theme }) => ({
 }));
 
 export const CategoryChip = styled(Chip, {
-  shouldForwardProp: (prop) => prop !== 'active' && prop !== 'toolCount',
-})<{ active?: boolean; toolCount?: number }>(({ theme, active, toolCount }) => ({
+  shouldForwardProp: (prop) => prop !== 'active' && prop !== 'toolCount' && prop !== 'gradient',
+})<{ active?: boolean; toolCount?: number; gradient?: string }>(({ theme, active, toolCount, gradient }) => ({
   background: active 
-    ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.2) 100%)' 
-    : 'rgba(255, 255, 255, 0.1)',
+    ? (gradient || 'linear-gradient(135deg, rgba(76, 175, 80, 0.4) 0%, rgba(139, 195, 74, 0.3) 50%, rgba(255, 255, 255, 0.2) 100%)')
+    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.05) 100%)',
   color: 'white',
   fontWeight: active ? 700 : 600,
   fontSize: '0.9rem',
   padding: theme.spacing(1, 2),
   border: active 
-    ? '2px solid rgba(255, 255, 255, 0.6)' 
-    : '1px solid rgba(255, 255, 255, 0.2)',
+    ? '2px solid rgba(255, 255, 255, 0.6)'
+    : '1px solid rgba(255, 255, 255, 0.25)',
   boxShadow: active 
-    ? '0 6px 20px rgba(255, 255, 255, 0.2), 0 0 0 1px rgba(255,255,255,0.1)' 
-    : 'none',
+    ? '0 6px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+    : '0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
   transform: active ? 'translateY(-2px) scale(1.05)' : 'none',
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   position: 'relative',
   '&:hover': {
-    background: 'rgba(255, 255, 255, 0.25)',
+    background: active 
+      ? (gradient || 'linear-gradient(135deg, rgba(76, 175, 80, 0.5) 0%, rgba(139, 195, 74, 0.4) 50%, rgba(255, 255, 255, 0.25) 100%)')
+      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.1) 100%)',
     transform: 'translateY(-2px)',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    boxShadow: active 
+      ? '0 8px 25px rgba(76, 175, 80, 0.4), 0 0 0 1px rgba(76, 175, 80, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+      : '0 4px 15px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+    border: active 
+      ? '2px solid rgba(76, 175, 80, 0.8)' 
+      : '1px solid rgba(255, 255, 255, 0.4)',
   },
   '& .MuiChip-label': {
     padding: theme.spacing(0.5, 1),

@@ -6,7 +6,12 @@ export const getToolsForCategory = (category: Category, selectedSubCategory: str
     if (selectedSubCategory && category.subCategories[selectedSubCategory]) {
       return category.subCategories[selectedSubCategory].tools;
     }
-    return [];
+    // When no subcategory is selected, return all tools from all subcategories
+    const allTools: Tool[] = [];
+    Object.values(category.subCategories).forEach(subCategory => {
+      allTools.push(...subCategory.tools);
+    });
+    return allTools;
   }
   return category.tools;
 };
@@ -19,7 +24,9 @@ export const getFilteredCategories = (
   const filtered: ToolCategories = {};
 
   Object.entries(toolCategories).forEach(([categoryName, category]) => {
-    if (selectedCategory && categoryName !== selectedCategory) {
+    // If there's a search query, search across ALL categories regardless of selected category
+    // If no search query, respect the selected category filter
+    if (!searchQuery && selectedCategory && categoryName !== selectedCategory) {
       return;
     }
 
@@ -60,6 +67,14 @@ export const getStatusConfig = (status: string) => {
       return { color: '#FF9800', icon: '⚠', label: 'Good' };
     case 'needs_action':
       return { color: '#F44336', icon: '✗', label: 'Needs Action' };
+    case 'premium':
+      return { color: '#9C27B0', icon: '⭐', label: 'Premium' };
+    case 'beta':
+      return { color: '#FF9800', icon: '🧪', label: 'Beta' };
+    case 'pro':
+      return { color: '#2196F3', icon: '💎', label: 'Pro' };
+    case 'active':
+      return { color: '#4CAF50', icon: '✓', label: 'Active' };
     default:
       return { color: '#9E9E9E', icon: 'ℹ', label: 'Unknown' };
   }
@@ -74,6 +89,14 @@ export const getStatusColor = (status: string) => {
       return '#FF9800';
     case 'needs_action':
       return '#F44336';
+    case 'premium':
+      return '#9C27B0';
+    case 'beta':
+      return '#FF9800';
+    case 'pro':
+      return '#2196F3';
+    case 'active':
+      return '#4CAF50';
     default:
       return '#9E9E9E';
   }
@@ -88,6 +111,14 @@ export const getStatusIcon = (status: string) => {
       return '⚠';
     case 'needs_action':
       return '✗';
+    case 'premium':
+      return '⭐';
+    case 'beta':
+      return '🧪';
+    case 'pro':
+      return '💎';
+    case 'active':
+      return '✓';
     default:
       return 'ℹ';
   }

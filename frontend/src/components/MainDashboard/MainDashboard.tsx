@@ -22,6 +22,7 @@ import LoadingSkeleton from '../shared/LoadingSkeleton';
 import ErrorDisplay from '../shared/ErrorDisplay';
 import EmptyState from '../shared/EmptyState';
 import ContentLifecyclePillars from './ContentLifecyclePillars';
+import AnalyticsInsights from './components/AnalyticsInsights';
 
 // Shared types and utilities
 import { Tool } from '../shared/types';
@@ -244,6 +245,9 @@ const MainDashboard: React.FC = () => {
             {/* Content Lifecycle Pillars - First Panel */}
             <ContentLifecyclePillars />
 
+            {/* Analytics Insights - Good/Bad/Ugly */}
+            <AnalyticsInsights />
+
             {/* Search and Filter */}
             <SearchFilter
               searchQuery={searchQuery}
@@ -267,8 +271,8 @@ const MainDashboard: React.FC = () => {
                   transition={{ duration: 0.5, delay: categoryIndex * 0.1 }}
                 >
                   <Box sx={{ mb: 5 }}>
-                    {/* Only show Category Header when no specific category is selected (showing all tools) */}
-                    {selectedCategory === null && (
+                    {/* Show Category Header when no specific category is selected OR when searching across all categories */}
+                    {(selectedCategory === null || searchQuery) && (
                       <CategoryHeader
                         categoryName={categoryName}
                         category={category}
