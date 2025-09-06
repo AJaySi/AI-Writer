@@ -40,4 +40,7 @@ crawl4ai>=0.2.0
 
 # Utilities
 pydantic>=2.5.2,<3.0.0
-typing-extensions>=4.8.0 
+typing-extensions>=4.8.0
+
+# Hallucination Detection dependencies
+exa-py>=1.0.0 
