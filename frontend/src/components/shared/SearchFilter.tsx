@@ -26,6 +26,15 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
   toolCategories,
   theme
 }) => {
+  // Helper function to get tool count from a category
+  const getToolCount = (category: any): number => {
+    if ('tools' in category) {
+      return category.tools.length;
+    } else if ('subCategories' in category) {
+      return Object.values(category.subCategories).reduce((total: number, subCat: any) => total + subCat.tools.length, 0);
+    }
+    return 0;
+  };
   return (
     <SearchContainer>
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 3 }}>
@@ -74,13 +83,14 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
         </Tooltip>
       </Box>
 
-      {/* Enhanced Category Filter */}
+      {/* Enhanced Category Filter with Tool Count Badges */}
       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
         <CategoryChip
           label="All Tools"
           onClick={() => onCategoryChange(null)}
           active={selectedCategory === null}
           theme={theme}
+          toolCount={Object.values(toolCategories).reduce((total, category) => total + getToolCount(category), 0)}
         />
         {Object.keys(toolCategories).map((category) => (
           <CategoryChip
@@ -89,6 +99,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
             onClick={() => onCategoryChange(category)}
             active={selectedCategory === category}
             theme={theme}
+            toolCount={getToolCount(toolCategories[category])}
           />
         ))}
       </Box>

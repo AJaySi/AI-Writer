@@ -96,15 +96,24 @@ export const SearchContainer = styled(Box)(({ theme }) => ({
 }));
 
 export const CategoryChip = styled(Chip, {
-  shouldForwardProp: (prop) => prop !== 'active',
-})<{ active?: boolean }>(({ theme, active }) => ({
-  background: active ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.1)',
+  shouldForwardProp: (prop) => prop !== 'active' && prop !== 'toolCount',
+})<{ active?: boolean; toolCount?: number }>(({ theme, active, toolCount }) => ({
+  background: active 
+    ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.2) 100%)' 
+    : 'rgba(255, 255, 255, 0.1)',
   color: 'white',
-  fontWeight: 600,
+  fontWeight: active ? 700 : 600,
   fontSize: '0.9rem',
   padding: theme.spacing(1, 2),
-  border: `1px solid ${active ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255, 255, 255, 0.2)'}`,
+  border: active 
+    ? '2px solid rgba(255, 255, 255, 0.6)' 
+    : '1px solid rgba(255, 255, 255, 0.2)',
+  boxShadow: active 
+    ? '0 6px 20px rgba(255, 255, 255, 0.2), 0 0 0 1px rgba(255,255,255,0.1)' 
+    : 'none',
+  transform: active ? 'translateY(-2px) scale(1.05)' : 'none',
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  position: 'relative',
   '&:hover': {
     background: 'rgba(255, 255, 255, 0.25)',
     transform: 'translateY(-2px)',
@@ -112,7 +121,29 @@ export const CategoryChip = styled(Chip, {
   },
   '& .MuiChip-label': {
     padding: theme.spacing(0.5, 1),
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
   },
+  // Tool count badge
+  ...(toolCount && {
+    '&::after': {
+      content: `"${toolCount}"`,
+      position: 'absolute',
+      top: -6,
+      right: -6,
+      backgroundColor: active ? '#4caf50' : 'rgba(255, 255, 255, 0.8)',
+      color: active ? 'white' : 'rgba(0, 0, 0, 0.8)',
+      borderRadius: '10px',
+      padding: '2px 6px',
+      fontSize: '0.7rem',
+      fontWeight: 700,
+      minWidth: '18px',
+      textAlign: 'center',
+      boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+      border: active ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(0,0,0,0.1)',
+    },
+  }),
 }));
 
 export const EnhancedGlassCard = styled(GlassCard)(({ theme }) => ({

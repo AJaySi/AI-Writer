@@ -77,13 +77,24 @@ export interface SearchFilterProps {
 
 export interface DashboardHeaderProps {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   statusChips?: Array<{
     label: string;
     color: string;
     icon: React.ReactElement;
   }>;
   rightContent?: React.ReactNode;
+  customIcon?: string;
+  workflowControls?: {
+    onStartWorkflow: () => void;
+    onPauseWorkflow?: () => void;
+    onStopWorkflow?: () => void;
+    onResumePlanModal?: () => void;
+    isWorkflowActive: boolean;
+    completedTasks: number;
+    totalTasks: number;
+    isLoading: boolean;
+  };
 }
 
 export interface LoadingSkeletonProps {

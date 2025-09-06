@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Article as ArticleIcon,
   Search as SearchIcon,
-  TrendingUp as TrendingUpIcon,
   Campaign as CampaignIcon,
   Analytics as AnalyticsIcon,
   Psychology as PsychologyIcon,
