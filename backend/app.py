@@ -379,6 +379,9 @@ app.include_router(facebook_router)
 app.include_router(linkedin_router)
 # Include LinkedIn image generation router
 app.include_router(linkedin_image_router)
+# Include Hallucination Detection router
+from routers.hallucination_detection import router as hallucination_router
+app.include_router(hallucination_router)
 
 # Include user data router
 # Include content planning router
