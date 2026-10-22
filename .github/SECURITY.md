@@ -97,7 +97,7 @@ We maintain a security hall of fame to recognize researchers who help improve AL
 For security-related questions or concerns:
 - **Email**: [security@alwrity.com](mailto:security@alwrity.com)
 - **GitHub**: Create a private security advisory
-- **Response Time: Within 48 hours
+- **Response Time**: Within 48 hours
 
 ## 📜 Legal
 
@@ -109,4 +109,5 @@ By reporting a security vulnerability, you agree to:
 ## 🔄 Policy Updates
 
 This security policy may be updated from time to time. We will notify users of any significant changes through our standard communication channels.
+
 **Last Updated**: October 2026
