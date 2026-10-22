@@ -1,3 +1,136 @@
+# Contributing to ALwrity
+
+Thank you for your interest in contributing to ALwrity! 🚀 We welcome contributions from the community and appreciate your help in making this AI-powered digital marketing platform even better.
+
+## 🤝 How to Contribute
+
+### 1. **Report Issues**
+- Use our [GitHub Issues](https://github.com/ALwrity/ALwrity/issues) to report bugs or request features
+- Check existing issues before creating new ones
+- Provide clear descriptions and steps to reproduce bugs
+
+### 2. **Submit Pull Requests**
+- Fork the repository
+- Create a feature branch: `git checkout -b feature/amazing-feature`
+- Make your changes and test thoroughly
+- Submit a pull request with a clear description
+
+### 3. **Code Contributions**
+- Follow our coding standards (see below)
+- Add tests for new functionality
+- Update documentation as needed
+- Ensure all tests pass before submitting
+
+## 🛠️ Development Setup
+
+### Prerequisites
+- **Python 3.10+** (Backend: FastAPI, SQLAlchemy, AI integrations)
+- **Node.js 18+** (Frontend: React, TypeScript, Material-UI)
+- **Git** (Version control)
+- **API Keys** (Gemini, OpenAI, Anthropic, etc.)
+
+### Quick Start
+```bash
+# Clone the repository
+git clone https://github.com/AJaySi/ALwrity.git
+cd ALwrity
+
+# Backend setup
+cd backend
+pip install -r requirements.txt
+cp env_template.txt .env  # Configure your API keys
+python start_alwrity_backend.py
+
+# Frontend setup (in a new terminal)
+cd frontend
+npm install
+cp env_template.txt .env  # Configure your environment
+npm start
+```
+
+### Environment Configuration
+1. **Backend**: Copy `backend/env_template.txt` to `backend/.env`
+2. **Frontend**: Copy `frontend/env_template.txt` to `frontend/.env`
+3. **API Keys**: Add your AI service API keys to the respective `.env` files
+
+## 📝 Coding Standards
+
+### Python (Backend)
+- **Style**: Follow PEP 8 guidelines, use Black formatter
+- **Type Hints**: Use type hints for all function parameters and return values
+- **Documentation**: Add comprehensive docstrings using Google style
+- **Error Handling**: Use proper exception handling with meaningful error messages
+- **Logging**: Use structured logging with appropriate levels
+- **API Design**: Follow RESTful principles, use FastAPI best practices
+- **Database**: Use SQLAlchemy ORM, implement proper migrations
+
+### TypeScript/React (Frontend)
+- **TypeScript**: Strict mode enabled, no `any` types
+- **Components**: Functional components with hooks, proper prop typing
+- **State Management**: Use React hooks, consider context for global state
+- **Styling**: Material-UI components, consistent theming
+- **Error Boundaries**: Implement error boundaries for better UX
+- **Performance**: Use React.memo, useMemo, useCallback where appropriate
+- **Testing**: Jest + React Testing Library for unit tests
+
+### ALwrity-Specific Guidelines
+- **AI Integration**: Always handle API rate limits and errors gracefully
+- **Content Generation**: Implement proper validation and sanitization
+- **SEO Features**: Follow SEO best practices in generated content
+- **User Experience**: Maintain consistent UI/UX across all features
+- **Security**: Validate all inputs, implement proper authentication
+
+## 🧪 Testing
+
+### Backend Testing
+```bash
+cd backend
+python -m pytest
+```
+
+### Frontend Testing
+```bash
+cd frontend
+npm test
+```
+
+## 📋 Pull Request Guidelines
+
+### Before Submitting
+- [ ] Code follows project style guidelines
+- [ ] Self-review completed
+- [ ] Tests added/updated and passing
+- [ ] Documentation updated
+- [ ] No merge conflicts
+
+### PR Description Template
+```markdown
+## Description
+Brief description of changes
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Testing
+- [ ] Backend tests pass
+- [ ] Frontend tests pass
+- [ ] Manual testing completed
+
+## Screenshots (if applicable)
+Add screenshots to help explain your changes
+```
+
+## 🏷️ Issue Labels
+
+We use the following labels to categorize issues:
+- `bug`: Something isn't working
+- `enhancement`: New feature or request
+- `documentation`: Improvements or additions to documentation
+- `good first issue`: Good for newcomers
+- `help wanted`: Extra attention is needed
 - `priority: high`: High priority issues
 - `priority: low`: Low priority issues
 
