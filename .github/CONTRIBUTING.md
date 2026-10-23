@@ -85,7 +85,7 @@ npm start
 ### Backend Testing
 ```bash
 cd backend
-python -m pytest test/
+python -m pytest
 ```
 
 ### Frontend Testing

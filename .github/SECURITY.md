@@ -90,14 +90,14 @@ The following are considered out of scope for our security program:
 
 We maintain a security hall of fame to recognize researchers who help improve ALwrity's security:
 
-- [Your name could be here!]
+- Be the first to be listed here by responsibly reporting a vulnerability.
 
 ## 📞 Contact
 
 For security-related questions or concerns:
 - **Email**: [security@alwrity.com](mailto:security@alwrity.com)
 - **GitHub**: Create a private security advisory
-- **Response Time**: 24-48 hours
+- **Response Time**: Within 48 hours
 
 ## 📜 Legal
 
@@ -110,4 +110,4 @@ By reporting a security vulnerability, you agree to:
 
 This security policy may be updated from time to time. We will notify users of any significant changes through our standard communication channels.
 
-**Last Updated**: September 2024
+**Last Updated**: October 2026
