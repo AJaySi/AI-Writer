@@ -9,7 +9,7 @@ Before you begin, ensure you have the following installed on your system:
 ### System Requirements
 
 - **Operating System**: Windows 10/11, macOS 10.15+, or Linux (Ubuntu 18.04+)
-- **Python**: Version 3.10 or higher
+- **Python**: Version 3.10 or higher, but not 3.14 (Pillow fails to build). Tested on 3.12.
 - **Node.js**: Version 18 or higher
 - **Git**: Latest version for version control
 - **Memory**: Minimum 4GB RAM (8GB recommended)
@@ -74,6 +74,7 @@ cd ALwrity
 # Navigate to backend directory
 cd backend
 
+# Ubuntu/Debian only, if the next command fails: sudo apt install python3-venv
 # Create virtual environment (recommended)
 python -m venv venv
 
@@ -112,6 +113,10 @@ DATABASE_URL=sqlite:///./alwrity.db
 # Security
 SECRET_KEY=your_secret_key_here
 
+# Required: the backend will not start without this.
+# Generate it with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+OAUTH_TOKEN_ENCRYPTION_KEY=paste_generated_key_here
+
 # Optional: Additional AI Services
 TAVILY_API_KEY=your_tavily_api_key_here
 SERPER_API_KEY=your_serper_api_key_here
@@ -147,7 +152,7 @@ python scripts/init_alpha_subscription_tiers.py
 python start_alwrity_backend.py
 
 # The server will be available at: http://localhost:8000
-# API documentation: http://localhost:8000/api/docs
+# API documentation: http://localhost:8000/docs
 # Health check: http://localhost:8000/health
 ```
 
@@ -209,7 +214,7 @@ npm start
 1. **Health Check**: Visit `http://localhost:8000/health`
    - Should return: `{"status": "healthy"}`
 
-2. **API Documentation**: Visit `http://localhost:8000/api/docs`
+2. **API Documentation**: Visit `http://localhost:8000/docs`
    - Should display interactive API documentation
 
 3. **Database Check**: Verify database file exists
