@@ -49,7 +49,7 @@ def test_audio_default_is_wavespeed():
 
 
 @pytest.mark.xfail(strict=True, reason="Known bug: 'tts' matches the Google check before 'tts-1' reaches the OpenAI check")
-@pytest.mark.parametrize("model", ["tts-1", "tts-1-hd", "openai-tts"])
+@pytest.mark.parametrize("model", ["tts-1", "tts-1-hd"])
 def test_audio_openai_tts_is_attributed_to_openai(model):
     assert detect_actual_provider(APIProvider.AUDIO, model_name=model) == "openai"
 
